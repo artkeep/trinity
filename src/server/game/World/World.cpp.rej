@@ -1,0 +1,28 @@
+***************
+*** 1217,1224 ****
+      // MySQL ping time interval
+      m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig.GetIntDefault("MaxPingTime", 1800);
+  	
+- 	// Balance Battleground
+- 	m_int_configs[CONFIG_BALANCE_MINIMUM] = sConfig.GetIntDefault("Battleground.Balance", 1800);
+  
+      sScriptMgr.OnConfigLoad(reload);
+  }
+--- 1217,1233 ----
+      // MySQL ping time interval
+      m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig.GetIntDefault("MaxPingTime", 1800);
+  	
++     // Balance Battleground
++     m_int_configs[CONFIG_BALANCE_MINIMUM] = sConfig.GetIntDefault("Battleground.Balance", 1800);
++ 
++     // Настройки авто анонса
++     m_bool_configs[CONFIG_ANNOUNCE_BAN_ACCOUNT_ENABLED]            = sConfig.GetBoolDefault("Announce.Ban.Account.Enabled", true);
++     m_bool_configs[CONFIG_ANNOUNCE_BAN_CHARACTER_ENABLED]          = sConfig.GetBoolDefault("Announce.Ban.Character.Enabled", true);
++     m_bool_configs[CONFIG_ANNOUNCE_BAN_IP_ENABLED]                 = sConfig.GetBoolDefault("Announce.Ban.IP.Enabled", true);
++     m_bool_configs[CONFIG_ANNOUNCE_MUTE_CHARACTER_ENABLED]         = sConfig.GetBoolDefault("Announce.Mute.Character.Enabled", true);
++     m_bool_configs[CONFIG_ANNOUNCE_KICK_CHARACTER_ENABLED]         = sConfig.GetBoolDefault("Announce.Kick.Character.Enabled", true);
++     m_bool_configs[CONFIG_ANNOUNCE_DELETE_ACCOUNT_ENABLED]         = sConfig.GetBoolDefault("Announce.Delete.Account.Enabled", true);
++     m_bool_configs[CONFIG_ANNOUNCE_DELETE_CHARACTER_ENABLED]       = sConfig.GetBoolDefault("Announce.Delete.Character.Enabled", true);
+  
+      sScriptMgr.OnConfigLoad(reload);
+  }

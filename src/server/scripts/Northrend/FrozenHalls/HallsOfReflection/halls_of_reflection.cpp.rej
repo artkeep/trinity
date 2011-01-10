@@ -1,0 +1,85 @@
+***************
+*** 657,663 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 657,663 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 740,746 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 740,746 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 840,846 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 840,846 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 910,916 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 910,916 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 976,982 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 976,982 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())

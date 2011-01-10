@@ -1,0 +1,49 @@
+***************
+*** 1067,1073 ****
+      UnitMods unitMod = UNIT_MOD_ARMOR;
+  
+      // hunter and warlock pets gain 35% of owner's armor value
+-     if (isPet())
+          bonus_armor = 0.35f * float(m_owner->GetArmor());
+  
+      value  = GetModifierValue(unitMod, BASE_VALUE);
+--- 1069,1075 ----
+      UnitMods unitMod = UNIT_MOD_ARMOR;
+  
+      // hunter and warlock pets gain 35% of owner's armor value
++     if(isPet()&&!IsPetGhoul())
+          bonus_armor = 0.35f * float(m_owner->GetArmor());
+  
+      value  = GetModifierValue(unitMod, BASE_VALUE);
+***************
+*** 1092,1103 ****
+          case ENTRY_SUCCUBUS:    multiplicator = 9.1f;   break;
+          case ENTRY_FELHUNTER:   multiplicator = 9.5f;   break;
+          case ENTRY_FELGUARD:    multiplicator = 11.0f;  break;
+-         case ENTRY_GHOUL:       multiplicator = 5.4f;   break;
+          default:                multiplicator = 10.0f;  break;
+      }
+  
+      float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
+      value  *= GetModifierValue(unitMod, BASE_PCT);
+      value  += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
+      value  *= GetModifierValue(unitMod, TOTAL_PCT);
+  
+--- 1094,1110 ----
+          case ENTRY_SUCCUBUS:    multiplicator = 9.1f;   break;
+          case ENTRY_FELHUNTER:   multiplicator = 9.5f;   break;
+          case ENTRY_FELGUARD:    multiplicator = 11.0f;  break;
++         case ENTRY_GHOUL:       multiplicator = 10.0f;   break;
++         case ENTRY_VIPER:       multiplicator = 0.0f;   break;
++         case ENTRY_VEN_SNAKE:   multiplicator = 0.0f;   break;
+          default:                multiplicator = 10.0f;  break;
+      }
+  
+      float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
+      value  *= GetModifierValue(unitMod, BASE_PCT);
++ 	if (GetEntry()==ENTRY_GHOUL)
++     value  += GetModifierValue(unitMod, TOTAL_VALUE) + (stamina+GetCreateStat(STAT_STAMINA)) * multiplicator;
++ 	else
+      value  += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
+      value  *= GetModifierValue(unitMod, TOTAL_PCT);
+  

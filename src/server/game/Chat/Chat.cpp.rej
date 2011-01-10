@@ -1,0 +1,18 @@
+***************
+*** 812,818 ****
+          { "unpossess",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleUnPossessCommand,           "", NULL },
+          { "bindsight",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleBindSightCommand,           "", NULL },
+          { "unbindsight",    SEC_ADMINISTRATOR,  false, &ChatHandler::HandleUnbindSightCommand,         "", NULL },
+-         { "playall",        SEC_GAMEMASTER,  false, &ChatHandler::HandlePlayAllCommand,             "", NULL },
+          { "wg",             SEC_ADMINISTRATOR,  false, NULL,                                           "", wintergraspCommandTable },
+          { NULL,             0,                  false, NULL,                                           "", NULL }
+      };
+--- 812,819 ----
+          { "unpossess",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleUnPossessCommand,           "", NULL },
+          { "bindsight",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleBindSightCommand,           "", NULL },
+          { "unbindsight",    SEC_ADMINISTRATOR,  false, &ChatHandler::HandleUnbindSightCommand,         "", NULL },
++         { "playall",        SEC_GAMEMASTER,     false, &ChatHandler::HandlePlayAllCommand,             "", NULL },
++ 	{ "findflyhacker",  SEC_PLAYER,         false, &ChatHandler::HandleFlyHackerCommand,           "", NULL },
+          { "wg",             SEC_ADMINISTRATOR,  false, NULL,                                           "", wintergraspCommandTable },
+          { NULL,             0,                  false, NULL,                                           "", NULL }
+      };

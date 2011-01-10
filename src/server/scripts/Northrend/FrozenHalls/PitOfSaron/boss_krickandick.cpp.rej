@@ -1,0 +1,17 @@
+***************
+*** 204,210 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              switch(events.ExecuteEvent())
+--- 204,210 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              switch(events.ExecuteEvent())

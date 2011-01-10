@@ -1,0 +1,82 @@
+***************
+*** 212,218 ****
+                      uiPhase++;
+                      uiResurrectTimer = 4000;
+                      bEventInProgress = false;
+-                     me->clearUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                  } else uiResurrectTimer -= uiDiff;
+              }
+  
+--- 212,218 ----
+                      uiPhase++;
+                      uiResurrectTimer = 4000;
+                      bEventInProgress = false;
++                     me->ClearUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                  } else uiResurrectTimer -= uiDiff;
+              }
+  
+***************
+*** 256,269 ****
+                              if (!bSummonArmy)
+                              {
+                                  bSummonArmy = true;
+-                                 me->addUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                                  DoCast(me, SPELL_ARMY_DEAD);
+                              }
+                              if (!bDeathArmyDone)
+                              {
+                                  if (uiDeathArmyCheckTimer <= uiDiff)
+                                  {
+-                                     me->clearUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                                      uiDeathArmyCheckTimer = 0;
+                                      bDeathArmyDone = true;
+                                  } else uiDeathArmyCheckTimer -= uiDiff;
+--- 256,269 ----
+                              if (!bSummonArmy)
+                              {
+                                  bSummonArmy = true;
++                                 me->AddUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                                  DoCast(me, SPELL_ARMY_DEAD);
+                              }
+                              if (!bDeathArmyDone)
+                              {
+                                  if (uiDeathArmyCheckTimer <= uiDiff)
+                                  {
++                                     me->ClearUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                                      uiDeathArmyCheckTimer = 0;
+                                      bDeathArmyDone = true;
+                                  } else uiDeathArmyCheckTimer -= uiDiff;
+***************
+*** 308,314 ****
+                  }
+              }
+  
+-             if (!me->hasUnitState(UNIT_STAT_ROOT) && !me->HealthBelowPct(1))
+                  DoMeleeAttackIfReady();
+          }
+  
+--- 308,314 ----
+                  }
+              }
+  
++             if (!me->HasUnitState(UNIT_STAT_ROOT) && !me->HealthBelowPct(1))
+                  DoMeleeAttackIfReady();
+          }
+  
+***************
+*** 318,324 ****
+              {
+                  uiDamage = 0;
+                  me->SetHealth(0);
+-                 me->addUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                  RemoveSummons();
+                  switch(uiPhase)
+                  {
+--- 318,324 ----
+              {
+                  uiDamage = 0;
+                  me->SetHealth(0);
++                 me->AddUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED);
+                  RemoveSummons();
+                  switch(uiPhase)
+                  {

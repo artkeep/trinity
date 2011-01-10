@@ -1,0 +1,23 @@
+***************
+*** 118,127 ****
+  
+  #
+  #    MaxPingTime
+- #        Description: Time (in seconds) between database pings.
+- #        Default:     1800 - (30 minutes)
+- 
+- MaxPingTime = 1800
+  
+  #
+  #    WorldServerPort
+--- 118,127 ----
+  
+  #
+  #    MaxPingTime
++ #        Description: Time (in minutes) between database pings.
++ #        Default:     30 - (minutes)
++ 
++ MaxPingTime = 30
+  
+  #
+  #    WorldServerPort

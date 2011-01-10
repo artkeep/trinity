@@ -1,0 +1,136 @@
+***************
+*** 441,447 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 441,447 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 497,503 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 497,503 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 555,561 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 555,561 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 612,618 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 612,618 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 672,678 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 672,678 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 738,744 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 738,744 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 811,817 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 811,817 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+***************
+*** 878,884 ****
+  
+              events.Update(diff);
+  
+-             if (me->hasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())
+--- 878,884 ----
+  
+              events.Update(diff);
+  
++             if (me->HasUnitState(UNIT_STAT_CASTING))
+                  return;
+  
+              while (uint32 eventId = events.ExecuteEvent())

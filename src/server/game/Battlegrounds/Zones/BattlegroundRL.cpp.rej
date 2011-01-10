@@ -1,0 +1,32 @@
+***************
+*** 50,61 ****
+  {
+      Battleground::Update(diff);
+  
+-     /*if (GetStatus() == STATUS_IN_PROGRESS)
+      {
+-         // update something
+-     }*/
+  }
+  
+  void BattlegroundRL::StartingEventCloseDoors()
+  {
+      for (uint32 i = BG_RL_OBJECT_DOOR_1; i <= BG_RL_OBJECT_DOOR_2; ++i)
+--- 50,66 ----
+  {
+      Battleground::Update(diff);
+  
++     if (GetStatus() == STATUS_IN_PROGRESS)
+      {
++         if (GetStartTime() >= 47*MINUTE*IN_MILLISECONDS) // after 47 minutes without one team loose the arena closes with no winner and no rating change
++ 		{
++ 			UpdateArenaWorldState();
++ 			CheckArenaAfterTimerConditions();
++ 		}
++     }
+  }
+  
++ 
+  void BattlegroundRL::StartingEventCloseDoors()
+  {
+      for (uint32 i = BG_RL_OBJECT_DOOR_1; i <= BG_RL_OBJECT_DOOR_2; ++i)

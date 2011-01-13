@@ -978,7 +978,7 @@ class npc_valkyr_icc : public CreatureScript
                         me->GetMotionMaster()->MovePoint(POINT_VALKYR_END,x,y,z+15);
                         break;
                     case POINT_VALKYR_END:
-                        me->ForcedDespawn();
+                        me->DespawnOrUnsummon();
                         break;
                     case POINT_VALKYR_ZET:
                         bCanCast = true;
@@ -1055,13 +1055,13 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
         {
             PrepareAuraScript(spell_lich_king_necrotic_plague_AuraScript)
 
-            void OnApply(AuraEffect const* aurEff, AuraApplication const* aurApp)
+            void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (InstanceScript* instance = aurApp->GetBase()->GetCaster()->GetInstanceScript())
+                if (InstanceScript* instance = GetCaster()->GetInstanceScript())
                 {
-                    aurApp->GetBase()->SetStackAmount(instance->GetData(DATA_NECROTIC_STACK));
-                    instance->SetData(DATA_NECROTIC_STACK, aurApp->GetBase()->GetStackAmount() + 1);
-                    if(aurApp->GetBase()->GetStackAmount() >= 30)
+                    SetStackAmount(instance->GetData(DATA_NECROTIC_STACK));
+                    instance->SetData(DATA_NECROTIC_STACK, GetStackAmount() + 1);
+                    if(GetStackAmount() >= 30)
                         instance->SetData(DATA_BEEN_WAITING, DONE);
                 }
             }
@@ -1088,18 +1088,18 @@ class spell_lich_king_infection : public SpellScriptLoader
         {
             PrepareAuraScript(spell_lich_king_infection_AuraScript)
 
-            void OnPeriodic(AuraEffect const* aurEff, AuraApplication const* aurApp)
+            void OnPeriodic(AuraEffect const* aurEff)
             {
                 PreventDefaultAction();
-                if(aurApp->GetTarget()->GetHealthPct() < 90 || !aurApp->GetBase()->GetCaster())
+                if(GetTarget()->GetHealthPct() < 90 || !GetCaster())
                     return;
 
-                aurApp->GetTarget()->RemoveAurasDueToSpell(SPELL_INFEST);
+                GetTarget()->RemoveAurasDueToSpell(SPELL_INFEST);
             }
 
             void Register()
             {
-                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_infection_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+               OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_infection_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
             }
         };
 
@@ -1119,21 +1119,21 @@ class spell_lich_king_valkyr_summon : public SpellScriptLoader
         {
             PrepareAuraScript(spell_lich_king_valkyr_summon_AuraScript);
 
-            void OnApply(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
             {
-                if (Unit* caster = aurApp->GetBase()->GetCaster())
+                if (Unit* caster = GetCaster())
                 {
-                    uint8 spawnMod = caster->GetMap()->GetSpawnMode();
-                    aurApp->GetBase()->SetDuration(spawnMod == 1 || spawnMod == 3 ? 3000 : 1000);
+                    uint32 spawnMod = caster->GetMap()->GetSpawnMode();
+                    SetDuration(spawnMod == 1 || spawnMod == 3 ? 3000 : 1000);
                 }
             }
 
-            void HandleTriggerSpell(AuraEffect const* aurEff, AuraApplication const* aurApp)
+            void HandleTriggerSpell(AuraEffect const* aurEff)
             {
                 PreventDefaultAction();
-                if (Unit* caster = aurApp->GetBase()->GetCaster())
+                if (Unit* caster = GetCaster())
                 {
-                    int triggerSpellId = GetSpellProto()->EffectTriggerSpell[aurEff->GetEffIndex()];
+                    uint8 triggerSpellId = GetSpellProto()->EffectTriggerSpell[aurEff->GetEffIndex()];
                     float x, y, z;
                     caster->GetPosition(x, y, z);
                     caster->CastSpell(x, y, z + 6, triggerSpellId, true, NULL, NULL, GetCasterGUID(), caster);
@@ -1163,9 +1163,9 @@ class spell_lich_king_winter : public SpellScriptLoader
         {
             PrepareAuraScript(spell_lich_king_winter_AuraScript)
 
-            void OnRemove(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
             {
-                if (Unit* caster = aurApp->GetBase()->GetCaster())
+                if (Unit* caster = GetCaster())
                 {
                     caster->CastSpell(caster, SPELL_QUAKE, true);
                     DoScriptText(SAY_BROKEN_ARENA, caster);
@@ -1194,14 +1194,14 @@ class spell_lich_king_quake : public SpellScriptLoader
         {
             PrepareAuraScript(spell_lich_king_quake_AuraScript)
 
-            void OnRemove(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
             {
-                if(!aurApp->GetBase()->GetCaster() || !aurApp->GetBase()->GetOwner())
+                if(!GetCaster() || !GetOwner())
                     return;
 
-                aurApp->GetBase()->GetCaster()->CastSpell(aurApp->GetBase()->GetCaster(), SPELL_WMO_DAMAGE, true);
-                if (InstanceScript* instance = aurApp->GetTarget()->GetInstanceScript())
-                    if (Creature* lichKing = Unit::GetCreature(*aurApp->GetTarget(), instance->GetData64(DATA_LICH_KING)))
+                GetCaster()->CastSpell(GetCaster(), SPELL_WMO_DAMAGE, true);
+                if (InstanceScript* instance = GetTarget()->GetInstanceScript())
+                    if (Creature* lichKing = Unit::GetCreature(*GetTarget(), instance->GetData64(DATA_LICH_KING)))
                         lichKing->AI()->DoAction(ACTION_PHASESWITCH_2);
             }
 

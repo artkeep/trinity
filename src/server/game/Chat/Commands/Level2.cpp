@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -54,7 +54,7 @@ bool ChatHandler::HandleMuteCommand(const char* args)
         return false;
 
     char *mutereason = strtok(NULL, "\r");
-    std::string mutereasonstr = GetTrinityString(LANG_NO_REASON_MESSAGE);
+    std::string mutereasonstr = "No reason";
     if (mutereason != NULL)
          mutereasonstr = mutereason;
 

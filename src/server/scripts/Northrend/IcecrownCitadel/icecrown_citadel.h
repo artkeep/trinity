@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,10 +18,13 @@
 #ifndef DEF_ICECROWN_CITADEL_H
 #define DEF_ICECROWN_CITADEL_H
 
-enum eBerserkSpells
+#define ICCScriptName "instance_icecrown_citadel"
+
+enum eSharedSpells
 {
-    SPELL_BERSERK                         = 26662
-};
+    SPELL_BERSERK   = 26662,
+    SPELL_BERSERK2  = 47008
+}; 
 
 enum eEnums
 {
@@ -31,14 +34,14 @@ enum eEnums
 
 enum eAchievements
 {
-    ACHIEV_BONED_10                             = 4534,
-    ACHIEV_BONED_25                             = 4610,
-    AVHIEV_FULL_HOUSE_10                        = 4535,
-    AVHIEV_FULL_HOUSE_25                        = 4611,
+    //ACHIEV_BONED_10                             = 4534,
+    //ACHIEV_BONED_25                             = 4610,
+    //AVHIEV_FULL_HOUSE_10                        = 4535,
+    //AVHIEV_FULL_HOUSE_25                        = 4611,
     ACHIEV_MESS_10                              = 4537,
     ACHIEV_MESS_25                              = 4613,
-    ACHIEVMENT_ONCE_BITTEN_TWICE_SHY_10         = 4539,
-    ACHIEVMENT_ONCE_BITTEN_TWICE_SHY_25         = 4618,
+    //ACHIEVMENT_ONCE_BITTEN_TWICE_SHY_10         = 4539,
+    //ACHIEVMENT_ONCE_BITTEN_TWICE_SHY_25         = 4618,
     ACHIEV_ALL_YOU_CAN_EAT_10                   = 4580,
     ACHIEV_ALL_YOU_CAN_EAT_25                   = 4620,
     ACHIEV_BEEN_WAITING_A_LONG_TIME_FOR_THIS_10 = 4601,
@@ -47,16 +50,53 @@ enum eAchievements
     ACHIEV_NECK_DEEP_IN_VILE_25                 = 4622
 };
 
+enum eAchievementCriteria
+{
+    // Lord Marrowgar
+    CRITERIA_BONED_10N                  = 12775,
+    CRITERIA_BONED_25N                  = 12962,
+    CRITERIA_BONED_10H                  = 13393,
+    CRITERIA_BONED_25H                  = 13394,
+
+    // Rotface
+    CRITERIA_DANCES_WITH_OOZES_10N      = 12984,
+    CRITERIA_DANCES_WITH_OOZES_25N      = 12966,
+    CRITERIA_DANCES_WITH_OOZES_10H      = 12985,
+    CRITERIA_DANCES_WITH_OOZES_25H      = 12983,
+
+    // Professor Putricide
+    CRITERIA_NAUSEA_10N                 = 12987,
+    CRITERIA_NAUSEA_25N                 = 12968,
+    CRITERIA_NAUSEA_10H                 = 12988,
+    CRITERIA_NAUSEA_25H                 = 12981,
+
+    // Blood Prince Council
+    CRITERIA_ORB_WHISPERER_10N          = 13033,
+    CRITERIA_ORB_WHISPERER_25N          = 12969,
+    CRITERIA_ORB_WHISPERER_10H          = 13034,
+    CRITERIA_ORB_WHISPERER_25H          = 13032,
+
+    // Blood-Queen Lana'thel
+    CRITERIA_KILL_LANA_THEL_10M         = 13340,
+    CRITERIA_KILL_LANA_THEL_25M         = 13360,
+    CRITERIA_ONCE_BITTEN_TWICE_SHY_10N  = 12780,
+    CRITERIA_ONCE_BITTEN_TWICE_SHY_25N  = 13012,
+    CRITERIA_ONCE_BITTEN_TWICE_SHY_10V  = 13011,
+    CRITERIA_ONCE_BITTEN_TWICE_SHY_25V  = 13013,
+};
+
 enum ePutricideActions
 {
+    // Festergut
     ACTION_FESTERGUT_COMBAT     = -366260,
     ACTION_FESTERGUT_GAS        = -366261,
     ACTION_FESTERGUT_DEATH      = -366262,
 
+    // Rotface
     ACTION_ROTFACE_COMBAT       = -366270,
-    ACTION_ROTFACE_GAS          = -366271,
+    ACTION_ROTFACE_OOZE         = -366271,
     ACTION_ROTFACE_DEATH        = -366272,
-    ACTION_ROTFACE_OOZE         = -366273
+    ACTION_CHANGE_PHASE         = -366780
 };
 
 enum Data
@@ -65,7 +105,7 @@ enum Data
     DATA_DEATHWHISPER_EVENT,
     DATA_GUNSHIP_BATTLE_EVENT,
     DATA_SAURFANG_EVENT,
-    DATA_FESTERGURT_EVENT,
+    DATA_FESTERGUT_EVENT,
     DATA_ROTFACE_EVENT,
     DATA_PROFESSOR_PUTRICIDE_EVENT,
     DATA_BLOOD_PRINCE_COUNCIL_EVENT,
@@ -78,11 +118,12 @@ enum Data
 
 enum Data64
 {
-    DATA_MARROWGAR,
-    DATA_DEATHWHISPER,
+    // Encounter States/Boss GUIDs
+    DATA_LORD_MARROWGAR             = 0,
+    DATA_LADY_DEATHWHISPER          = 1,
     DATA_SAURFANG,
     DATA_GUNSHIP_BATTLE,
-    DATA_FESTERGURT,
+    DATA_FESTERGUT,
     DATA_ROTFACE,
     DATA_PROFESSOR_PUTRICIDE,
     DATA_PRINCE_VALANAR_ICC,
@@ -92,30 +133,41 @@ enum Data64
     DATA_VALITHRIA_DREAMWALKER,
     DATA_SINDRAGOSA,
     DATA_LICH_KING,
+
+	// Additional data
     DATA_TIRION,
     DATA_ANGLE,
-    DATA_BONED,
     DATA_ALL_YOU_CAN_EAT,
     DATA_BEEN_WAITING,
     DATA_NECK_DEEP,
     DATA_BLOOD_PRINCES_CONTROL,
     DATA_NECROTIC_STACK,
     DATA_PUTRICIDE_TABLE,
+
+	//Achievements
+    DATA_BONED_ACHIEVEMENT,
+	DATA_OOZE_DANCE_ACHIEVEMENT,
+	DATA_NAUSEA_ACHIEVEMENT,
+	DATA_ORB_WHISPERER_ACHIEVEMENT
 };
 
 enum eCreatures
 {
-    CREATURE_MARROWGAR               = 36612,
-    CREATURE_BONE_SPIKE              = 36619,
-    CREATURE_COLD_FLAME              = 36672,
-    CREATURE_DEATHWHISPER            = 36855,
-    CREATURE_ADHERENT                = 37949,
-    CREATURE_EMPOWERED_ADHERENT      = 38136,
-    CREATURE_REANIMATED_ADHERENT     = 38010,
-    CREATURE_FANATIC                 = 37890,
-    CREATURE_DEFORMED_FANATIC        = 38135,
-    CREATURE_REANIMATED_FANATIC      = 38009,
-    CREATURE_SHADE                   = 38222,
+    // Lord Marrowgar
+    NPC_LORD_MARROWGAR                          = 36612,
+    NPC_COLDFLAME                               = 36672,
+    NPC_BONE_SPIKE                              = 36619,
+
+    // Lady Deathwhisper
+    NPC_LADY_DEATHWHISPER                       = 36855,
+    NPC_CULT_FANATIC                            = 37890,
+    NPC_DEFORMED_FANATIC                        = 38135,
+    NPC_REANIMATED_FANATIC                      = 38009,
+    NPC_CULT_ADHERENT                           = 37949,
+    NPC_EMPOWERED_ADHERENT                      = 38136,
+    NPC_REANIMATED_ADHERENT                     = 38010,
+    NPC_VENGEFUL_SHADE                          = 38222,
+
     CREATURE_GUNSHIP                 = 30343,
     CREATURE_KOR_KRON_GENERAL        = 37189,
     CREATURE_ALLIANCE_COMMANDER      = 37190,
@@ -139,7 +191,7 @@ enum eCreatures
     CREATURE_GARROSH_HELLSCREAM      = 39372,
     CREATURE_KING_VARIAN_WRYNN       = 39371,
     CREATURE_SAURFANG                = 37813,
-    CREATURE_FESTERGURT              = 36626,
+    CREATURE_FESTERGUT              = 36626,
     CREATURE_PUDDLE_STALKER          = 37013,
     CREATURE_ORANGE_GAS_STALKER      = 36659,
     CREATURE_VILE_GAS_STALKER        = 38548,
@@ -270,4 +322,52 @@ enum eGameobjects
     LICH_TELEPORT                  = 202223
 };
 
+enum eGameobjects_TrinityCore
+{
+    // Lord Marrogar
+    GO_DOODAD_ICECROWN_ICEWALL02            = 201910,
+    GO_ICEWALL                              = 201911,
+    GO_LORD_MARROWGAR_S_ENTRANCE            = 201857,
+
+    // Lady Deathwhisper
+    GO_ORATORY_OF_THE_DAMNED_ENTRANCE       = 201563,
+    GO_LADY_DEATHWHISPER_ELEVATOR           = 202220,
+
+    // Deathbringer Saurfang
+    GO_SAURFANG_S_DOOR                      = 201825,
+    GO_DEATHBRINGER_S_CACHE_10N             = 202239,
+    GO_DEATHBRINGER_S_CACHE_25N             = 202240,
+    GO_DEATHBRINGER_S_CACHE_10H             = 202238,
+    GO_DEATHBRINGER_S_CACHE_25H             = 202241,
+    GO_SCOURGE_TRANSPORTER_SAURFANG         = 202244,
+
+    // Professor Putricide
+    GO_ORANGE_PLAGUE_MONSTER_ENTRANCE       = 201371,
+    GO_GREEN_PLAGUE_MONSTER_ENTRANCE        = 201370,
+    GO_SCIENTIST_AIRLOCK_DOOR_COLLISION     = 201612,
+    GO_SCIENTIST_AIRLOCK_DOOR_ORANGE        = 201613,
+    GO_SCIENTIST_AIRLOCK_DOOR_GREEN         = 201614,
+    GO_DOODAD_ICECROWN_ORANGETUBES02        = 201617,
+    GO_DOODAD_ICECROWN_GREENTUBES02         = 201618,
+    GO_SCIENTIST_ENTRANCE                   = 201372,
+    GO_DRINK_ME                             = 201584,
+
+    // Blood Prince Council
+    GO_CRIMSON_HALL_DOOR                    = 201376,
+    GO_BLOOD_ELF_COUNCIL_DOOR               = 201378,
+    GO_BLOOD_ELF_COUNCIL_DOOR_RIGHT         = 201377,
+
+    // Blood-Queen Lana'thel
+    GO_DOODAD_ICECROWN_BLOODPRINCE_DOOR_01  = 201746,
+    GO_DOODAD_ICECROWN_GRATE_01             = 201755,
+
+    // Valithria Dreamwalker
+    GO_GREEN_DRAGON_BOSS_ENTRANCE           = 201375,
+    GO_GREEN_DRAGON_BOSS_EXIT               = 201374,
+
+    // Sindragosa
+    GO_SINDRAGOSA_ENTRANCE_DOOR             = 201373,
+    GO_SINDRAGOSA_SHORTCUT_ENTRANCE_DOOR    = 201369,
+    GO_SINDRAGOSA_SHORTCUT_EXIT_DOOR        = 201379
+};
 #endif

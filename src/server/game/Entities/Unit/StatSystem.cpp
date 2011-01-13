@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include "Unit.h"
@@ -181,12 +183,6 @@ bool Player::UpdateAllStats()
         UpdateResistances(i);
 
     return true;
-}
-
-void Player::ApplySpellPenetrationBonus(int32 amount, bool apply)
-{
-    m_baseSpellPenetration += apply ? amount : -amount;
-    ApplyModInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, -amount, apply);
 }
 
 void Player::UpdateResistances(uint32 school)
@@ -1070,7 +1066,7 @@ void Guardian::UpdateArmor()
     UnitMods unitMod = UNIT_MOD_ARMOR;
 
     // hunter and warlock pets gain 35% of owner's armor value
-    if (isPet()&&!IsPetGhoul())
+    if(isPet()&&!IsPetGhoul())
         bonus_armor = float(CalculatePctN(m_owner->GetArmor(), 35));
 
     value  = GetModifierValue(unitMod, BASE_VALUE);
@@ -1106,7 +1102,7 @@ void Guardian::UpdateMaxHealth()
 	if (GetEntry()==ENTRY_GHOUL)
     value  += GetModifierValue(unitMod, TOTAL_VALUE) + (stamina+GetCreateStat(STAT_STAMINA)) * multiplicator;
 	else
-        value  += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
+    value  += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
     value  *= GetModifierValue(unitMod, TOTAL_PCT);
 
     SetMaxHealth((uint32)value);

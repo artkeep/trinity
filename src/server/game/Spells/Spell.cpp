@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -51,8 +51,6 @@
 #include "ConditionMgr.h"
 #include "DisableMgr.h"
 #include "SpellScript.h"
-#include "OutdoorPvPWG.h"
-#include "OutdoorPvPMgr.h"
 
 #define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILLISECONDS)
 
@@ -866,20 +864,8 @@ void Spell::prepareDataForTriggerSystem(AuraEffect const * /*triggeredByAura*/)
             }
             else // Ranged spell attack
             {
-                if (IsRangedWeaponSpell(GetSpellInfo()))
-                {
-                    m_procAttacker = PROC_FLAG_DONE_SPELL_RANGED_DMG_CLASS;
-                    m_procVictim   = PROC_FLAG_TAKEN_SPELL_RANGED_DMG_CLASS;
-                }
-                else
-                {
-                    m_procAttacker = PROC_FLAG_DONE_SPELL_MELEE_DMG_CLASS;
-                    if (m_attackType == OFF_ATTACK)
-                        m_procAttacker |= PROC_FLAG_DONE_OFFHAND_ATTACK;
-                    else
-                        m_procAttacker |= PROC_FLAG_DONE_MAINHAND_ATTACK;
-                    m_procVictim   = PROC_FLAG_TAKEN_MELEE_AUTO_ATTACK;
-                }
+                m_procAttacker = PROC_FLAG_DONE_SPELL_RANGED_DMG_CLASS;
+                m_procVictim   = PROC_FLAG_TAKEN_SPELL_RANGED_DMG_CLASS;
             }
             break;
         default:
@@ -947,10 +933,6 @@ void Spell::AddUnitTarget(Unit* pVictim, uint32 effIndex)
 
     if (!CheckTarget(pVictim, effIndex))
         return;
-		
-	// Skip if has aura "Recently Reapaired"
- 	if (pVictim->HasAura(62705))
- 	    return;	
 
     // Check for effect immune skip if immuned
     bool immuned = pVictim->IsImmunedToSpellEffect(m_spellInfo, effIndex);
@@ -1219,8 +1201,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         {
             m_needComboPoints = false;
             // Restore spell mods for a miss/dodge/parry Cold Blood
-            // TODO: check how broad is this rule, for now only Cold Blood
-            if (m_caster->ToPlayer())
+            // TODO: check how broad this rule should be
+            if (m_caster->GetTypeId() == TYPEID_PLAYER)
                 if ((missInfo == SPELL_MISS_MISS) ||
                     (missInfo == SPELL_MISS_DODGE) ||
                     (missInfo == SPELL_MISS_PARRY))
@@ -1235,19 +1217,13 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             positive = false;
         else if (!m_healing)
         {
-            if (mask)
-            {
-                for (uint8 effIndex = 0; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
-                    // If at least one effect negative spell is negative hit
-                    if (mask & (1 << effIndex) && !IsPositiveEffect(m_spellInfo->Id, effIndex))
-                    {
-                        positive = false;
-                        break;
-                    }
-            }
-            else
-                // If there is no effect mask determine from spell proto
-                positive = IsPositiveSpell(m_spellInfo->Id);
+            for (uint8 i = 0; i< MAX_SPELL_EFFECTS; ++i)
+                // If at least one effect negative spell is negative hit
+                if (mask & (1<<i) && !IsPositiveEffect(m_spellInfo->Id, i))
+                {
+                    positive = false;
+                    break;
+                }
         }
         switch(m_spellInfo->DmgClass)
         {
@@ -1283,8 +1259,9 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // Do healing and triggers
     if (m_healing > 0)
     {
+        bool crit = caster->isSpellCrit(unitTarget, m_spellInfo, m_spellSchoolMask);
         uint32 addhealth = m_healing;
-        if (target->crit)
+        if (crit)
         {
             procEx |= PROC_EX_CRITICAL_HIT;
             addhealth = caster->SpellCriticalHealingBonus(m_spellInfo, addhealth, NULL);
@@ -1296,7 +1273,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (canEffectTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unitTarget, procAttacker, procVictim, procEx, addhealth, m_attackType, m_spellInfo, m_triggeredByAuraSpell);
 
-        int32 gain = caster->HealBySpell(unitTarget, m_spellInfo, addhealth, target->crit);
+        int32 gain = caster->HealBySpell(unitTarget, m_spellInfo, addhealth, crit);
         unitTarget->getHostileRefManager().threatAssist(caster, float(gain) * 0.5f, m_spellInfo);
     }
     // Do damage and triggers
@@ -1518,18 +1495,11 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask, bool 
 
                 ((UnitAura*)m_spellAura)->SetDiminishGroup(m_diminishGroup);
 
-                bool positive = true;
+                bool positive = IsPositiveSpell(m_spellAura->GetId());
                 AuraApplication * aurApp = m_spellAura->GetApplicationOfTarget(m_originalCaster->GetGUID());
                 if (aurApp)
                     positive = aurApp->IsPositive();
-                else
-                    for (uint32 effIndex = 0; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
-                        if (effectMask & (1 << effIndex))
-                            if (!IsPositiveEffect(aurSpellInfo->Id, effIndex))
-                            {
-                                positive = false;
-                                break;
-                            }
+
                 duration = m_originalCaster->ModSpellDuration(aurSpellInfo, unit, duration, positive);
 
                 // Haste modifies duration of channeled spells
@@ -2744,6 +2714,18 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                         maxSize = m_caster->HasAura(62970) ? 6 : 5; // Glyph of Wild Growth
                         power = POWER_HEALTH;
                     }
+                    else if (m_spellInfo->SpellFamilyFlags[2] == 0x0100) // Starfall
+                    {
+                        // Remove targets not in LoS or in stealth
+                        for (std::list<Unit*>::iterator itr = unitList.begin() ; itr != unitList.end();)
+                        {
+                            if ((*itr)->HasStealthAura() || (*itr)->HasInvisibilityAura() || !(*itr)->IsWithinLOSInMap(m_caster))
+                                itr = unitList.erase(itr);
+                            else
+                                ++itr;
+                        }
+                        break;
+                    }
                     else
                         break;
 
@@ -2784,18 +2766,6 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                         unitList.sort(Trinity::PowerPctOrderPred((Powers)power));
                         unitList.resize(maxSize);
                     }
-                    // Replenishment: refresh existing auras
-                    if (m_spellInfo->Id == 57669)
-                        for (std::list<Unit *>::iterator itr = unitList.begin(); itr != unitList.end();)
-                            if (AuraEffect * aurEff = (*itr)->GetAuraEffect(SPELL_AURA_PERIODIC_ENERGIZE, SPELLFAMILY_GENERIC, 3184, EFFECT_0))
-                            {
-                                aurEff->SetAmount((*itr)->GetMaxPower(POWER_MANA) * 25 / 10000);
-                                aurEff->GetBase()->RefreshDuration();
-
-                                itr = unitList.erase(itr);
-                            }
-                            else
-                                ++itr;
                 }
             }
 
@@ -4789,8 +4759,6 @@ void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTar
 
 SpellCastResult Spell::CheckCast(bool strict)
 {
-	OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
-
     // check death state
     if (!m_IsTriggeredSpell && !m_caster->isAlive() && !(m_spellInfo->Attributes & SPELL_ATTR0_PASSIVE) && !(m_spellInfo->Attributes & SPELL_ATTR0_CASTABLE_WHILE_DEAD))
         return SPELL_FAILED_CASTER_DEAD;
@@ -5122,11 +5090,9 @@ SpellCastResult Spell::CheckCast(bool strict)
 
     // Triggered spells also have range check
     // TODO: determine if there is some flag to enable/disable the check
+    castResult = CheckRange(strict);
     if (castResult != SPELL_CAST_OK)
-        if (!m_IsTriggeredSpell || m_targets.HasDst())
         return castResult;
-        else
-            return SPELL_FAILED_DONT_REPORT;
 
     if (!m_IsTriggeredSpell)
     {
@@ -5138,56 +5104,6 @@ SpellCastResult Spell::CheckCast(bool strict)
         if (castResult != SPELL_CAST_OK)
             return castResult;
     }
-
-    // Dispel check - only if the first effect is dispel
-    if (!m_IsTriggeredSpell && (m_spellInfo->Effect[EFFECT_0] == SPELL_EFFECT_DISPEL))
-        if (Unit const * target = m_targets.getUnitTarget())
-            if (!GetSpellRadius(m_spellInfo, EFFECT_0, target->IsFriendlyTo(m_caster)))
-            {
-                bool check = true;
-                uint32 dispelMask = GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[EFFECT_0]));
-
-                for (uint8 effIndex = EFFECT_1; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
-                {
-                    if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_DISPEL)
-                        dispelMask |= GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[effIndex]));
-                    // If there is any other effect don't check
-                    else if (m_spellInfo->Effect[effIndex])
-                    {
-                        check = false;
-                        break;
-                    }
-                }
-
-                if (check)
-                {
-                    bool failed = true;
-
-                    Unit::AuraMap const & auras = target->GetOwnedAuras();
-                    for (Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
-                    {
-                        Aura * aura = itr->second;
-                        AuraApplication * aurApp = aura->GetApplicationOfTarget(target->GetGUID());
-                        if (!aurApp)
-                            continue;
-
-                        if ((1 << aura->GetSpellProto()->Dispel) & dispelMask)
-                        {
-                            bool positive = aurApp->IsPositive() ? !(aura->GetSpellProto()->AttributesEx & SPELL_ATTR1_NEGATIVE) : false;
-
-                            // Can only dispel positive auras on enemies and negative on allies
-                            if (positive != target->IsFriendlyTo(m_caster))
-                            {
-                                failed = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (failed)
-                        return SPELL_FAILED_NOTHING_TO_DISPEL;
-                }
-            }
 
     for (int i = 0; i < MAX_SPELL_EFFECTS; i++)
     {
@@ -5701,16 +5617,8 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_originalCaster && m_originalCaster->GetTypeId() == TYPEID_PLAYER && m_originalCaster->isAlive())
                 {
                     if (AreaTableEntry const* pArea = GetAreaEntryByAreaID(m_originalCaster->GetAreaId()))
-                    {
                         if (pArea->flags & AREA_FLAG_NO_FLY_ZONE)
                             return m_IsTriggeredSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_NOT_HERE;
-                        // Wintergrasp Antifly check
-                        if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
-                        {
-                          if (m_originalCaster->GetZoneId() == 4197 && pvpWG && pvpWG != 0  && pvpWG->isWarTime()==true)
-                          return m_IsTriggeredSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_NOT_HERE;
-                        }
-                    }
                 }
                 break;
             }
@@ -6288,7 +6196,6 @@ SpellCastResult Spell::CheckItems()
                         return SPELL_FAILED_DONT_REPORT;
                     }
                 }
-				break;
             case SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC:
             {
                 Item* targetItem = m_targets.getItemTarget();

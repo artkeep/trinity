@@ -215,7 +215,7 @@ public:
                         if (me->IsWithinMeleeRange(pBronjham))
                         {
                             pBronjham->CastSpell(pBronjham, SPELL_CONSUME_SOUL, true);
-                            me->ForcedDespawn();
+                            me->DespawnOrUnsummon();
                         }
                         else
                         {
@@ -226,7 +226,7 @@ public:
                         }
                     }
                     else
-                        me->ForcedDespawn();
+                        me->DespawnOrUnsummon();
                 }
                 uiCheckTimer = 500;
             }

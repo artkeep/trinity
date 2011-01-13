@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -55,7 +55,6 @@
 #include "BattlegroundMgr.h"
 #include "OutdoorPvP.h"
 #include "OutdoorPvPMgr.h"
-#include "OutdoorPvPWG.h"
 #include "ArenaTeam.h"
 #include "Chat.h"
 #include "Spell.h"
@@ -68,6 +67,7 @@
 #include "DisableMgr.h"
 #include "WeatherMgr.h"
 #include "LFGMgr.h"
+#include "CharacterDatabaseCleaner.h"
 #include <cmath>
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
@@ -520,16 +520,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     rest_type=REST_TYPE_NO;
     ////////////////////Rest System/////////////////////
 
-    //movement anticheat
-    m_anti_lastmovetime = 0;   //last movement time
-    m_anti_NextLenCheck = 0;
-    m_anti_MovedLen = 0.0f;
-    m_anti_BeginFallZ = INVALID_HEIGHT;
-    m_anti_lastalarmtime = 0;    //last time when alarm generated
-    m_anti_alarmcount = 0;       //alarm counter
-    m_CanFly=false;
-    /////////////////////////////////
-
     m_mailsLoaded = false;
     m_mailsUpdated = false;
     unReadMails = 0;
@@ -577,6 +567,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_baseFeralAP = 0;
     m_baseManaRegen = 0;
     m_baseHealthRegen = 0;
+    m_spellPenetrationItemMod = 0;
 
     // Honor System
     m_lastHonorUpdateTime = time(NULL);
@@ -833,7 +824,6 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     InitPrimaryProfessions();                               // to max set before any spell added
 
     // apply original stats mods before spell loading or item equipment that call before equip _RemoveStatsMods()
-    UpdateSkillsForLevel();
     UpdateMaxHealth();                                      // Update max Health (for add bonus from stamina)
     SetFullHealth();
     if (getPowerType() == POWER_MANA)
@@ -1315,7 +1305,8 @@ void Player::Update(uint32 p_time)
     if (now > m_Last_tick)
         UpdateItemDuration(uint32(now - m_Last_tick));
 
-    if (now > m_Last_tick + IN_MILLISECONDS)
+    // check every second
+    if (now > m_Last_tick + 1)
         UpdateSoulboundTradeItems();
 
     if (!m_timedquests.empty())
@@ -1573,6 +1564,7 @@ void Player::setDeathState(DeathState s)
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DEATH_AT_MAP, 1);
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DEATH, 1);
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DEATH_IN_DUNGEON, 1);
+        GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL,ACHIEVEMENT_CRITERIA_CONDITION_NO_DEATH);
     }
     Unit::setDeathState(s);
 
@@ -1895,7 +1887,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     if (duel && GetMapId() != mapid && GetMap()->GetGameObject(GetUInt64Value(PLAYER_DUEL_ARBITER)))
         DuelComplete(DUEL_FLED);
 
-    if (GetMapId() == mapid && !m_transport)
+    if ((GetMapId() == mapid && !m_transport) || (GetTransport() && GetMapId() == 628))
     {
         //lets reset far teleport flag if it wasn't reset during chained teleports
         SetSemaphoreTeleportFar(false);
@@ -1986,6 +1978,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 // and we already will found "current" battleground
                 // just need check that this is targeted map or leave
                 if (bg->GetMapId() != mapid)
+
                     LeaveBattleground(false);                   // don't teleport to entry point
             }
 
@@ -2253,7 +2246,7 @@ void Player::Regenerate(Powers power)
             }
         }   break;
         case POWER_ENERGY:                                  // Regenerate energy (rogue)
-            addvalue += 0.01f * m_regenTimer * sWorld->getRate(RATE_POWER_ENERGY);
+            addvalue += 0.01f * m_regenTimer;
             break;
         case POWER_RUNIC_POWER:
         {
@@ -3947,10 +3940,11 @@ void Player::RemoveArenaSpellCooldowns(bool removeActivePetCooldowns)
         next = itr;
         ++next;
         SpellEntry const * entry = sSpellStore.LookupEntry(itr->first);
-        // check if spellentry is present and if the cooldown is less or equal to 10 min
+        // check if spellentry is present and if the cooldown is less or equal to 15 min
         if (entry &&
-            entry->RecoveryTime <= 10 * MINUTE * IN_MILLISECONDS &&
-            entry->CategoryRecoveryTime <= 10 * MINUTE * IN_MILLISECONDS)
+            entry->RecoveryTime <= 15 * MINUTE * IN_MILLISECONDS &&
+            entry->CategoryRecoveryTime <= 15 * MINUTE * IN_MILLISECONDS &&
+            itr->second.end - time(NULL) <= 15 * MINUTE)
         {
             // remove & notify
             RemoveSpellCooldown(itr->first, true);
@@ -4819,6 +4813,12 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     UpdateZone(newzone,newarea);
     sOutdoorPvPMgr->HandlePlayerResurrects(this, newzone);
 
+    if (InBattleground())
+    {
+        if (Battleground* bg = GetBattleground())
+            bg->HandlePlayerResurrect(this);
+    }
+
     // update visibility
     UpdateObjectVisibility();
 
@@ -5531,7 +5531,7 @@ float Player::GetSpellCritFromIntellect()
     return crit*100.0f;
 }
 
-float Player::GetRatingMultiplier(CombatRating cr) const
+float Player::GetRatingCoefficient(CombatRating cr) const
 {
     uint8 level = getLevel();
 
@@ -5539,17 +5539,15 @@ float Player::GetRatingMultiplier(CombatRating cr) const
         level = GT_MAX_LEVEL;
 
     GtCombatRatingsEntry const *Rating = sGtCombatRatingsStore.LookupEntry(cr*GT_MAX_LEVEL+level-1);
-    // gtOCTClassCombatRatingScalarStore.dbc starts with 1, CombatRating with zero, so cr+1
-    GtOCTClassCombatRatingScalarEntry const *classRating = sGtOCTClassCombatRatingScalarStore.LookupEntry((getClass()-1)*GT_MAX_RATING+cr+1);
-    if (!Rating || !classRating)
+    if (Rating == NULL)
         return 1.0f;                                        // By default use minimum coefficient (not must be called)
 
-    return classRating->ratio / Rating->ratio;
+    return Rating->ratio;
 }
 
 float Player::GetRatingBonusValue(CombatRating cr) const
 {
-    return float(GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + cr)) * GetRatingMultiplier(cr);
+    return float(GetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + cr)) / GetRatingCoefficient(cr);
 }
 
 float Player::GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const
@@ -5617,20 +5615,20 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
     {
         case CR_HASTE_MELEE:
         {
-            float RatingChange = value * GetRatingMultiplier(cr);
+            float RatingChange = value / GetRatingCoefficient(cr);
             ApplyAttackTimePercentMod(BASE_ATTACK,RatingChange,apply);
             ApplyAttackTimePercentMod(OFF_ATTACK,RatingChange,apply);
             break;
         }
         case CR_HASTE_RANGED:
         {
-            float RatingChange = value * GetRatingMultiplier(cr);
+            float RatingChange = value / GetRatingCoefficient(cr);
             ApplyAttackTimePercentMod(RANGED_ATTACK, RatingChange, apply);
             break;
         }
         case CR_HASTE_SPELL:
         {
-            float RatingChange = value * GetRatingMultiplier(cr);
+            float RatingChange = value / GetRatingCoefficient(cr);
             ApplyCastTimePercentMod(RatingChange,apply);
             break;
         }
@@ -5743,9 +5741,9 @@ void Player::SetRegularAttackTime()
             ItemPrototype const *proto = tmpitem->GetProto();
             if (proto->Delay)
                 SetAttackTime(WeaponAttackType(i), proto->Delay);
-            else
-                SetAttackTime(WeaponAttackType(i), BASE_ATTACK_TIME);
         }
+        else
+            SetAttackTime(WeaponAttackType(i), BASE_ATTACK_TIME);  // If there is no weapon reset attack time to base (might have been changed from forms)
     }
 }
 
@@ -7383,8 +7381,8 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     ItemPrototype const *proto = item->GetProto();
 
     if (!proto)
-        return;
-		
+        return;	
+
     // not apply/remove mods for broken item
     if (item->IsBroken())
         return;
@@ -7392,10 +7390,6 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     sLog->outDetail("applying mods for item %u ",item->GetGUIDLow());
 
     uint8 attacktype = Player::GetAttackBySlot(slot);
-
-    // check disarm only on mod apply to allow remove item mods
-    if (!CanUseAttackType(attacktype))
-        return;
 
     if (proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
         CorrectMetaGemEnchants(slot, apply);
@@ -7596,9 +7590,10 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
                 ApplyHealthRegenBonus(int32(val), apply);
                 break;
             case ITEM_MOD_SPELL_PENETRATION:
-                ApplySpellPenetrationBonus(int32(val), apply);
+                ApplyModInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, -val, apply);
+                m_spellPenetrationItemMod += apply ? val : -val;
                 break;
-            // depricated item mods
+            // deprecated item mods
             case ITEM_MOD_SPELL_HEALING_DONE:
             case ITEM_MOD_SPELL_DAMAGE_DONE:
                 break;
@@ -7607,18 +7602,14 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
 
     // Apply Spell Power from ScalingStatValue if set
     if (ssv)
-    {
         if (int32 spellbonus = ssv->getSpellBonus(proto->ScalingStatValue))
             ApplySpellPowerBonus(spellbonus, apply);
-    }
 
     // If set ScalingStatValue armor get it or use item armor
     uint32 armor = proto->Armor;
     if (ssv)
-    {
         if (uint32 ssvarmor = ssv->getArmorMod(proto->ScalingStatValue))
             armor = ssvarmor;
-    }
 
     if (armor)
     {
@@ -7665,6 +7656,42 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
         HandleStatModifier(UNIT_MOD_RESISTANCE_ARCANE, BASE_VALUE, float(proto->ArcaneRes), apply);
 
     WeaponAttackType attType = BASE_ATTACK;
+
+    if (slot == EQUIPMENT_SLOT_RANGED && (
+        proto->InventoryType == INVTYPE_RANGED || proto->InventoryType == INVTYPE_THROWN ||
+        proto->InventoryType == INVTYPE_RANGEDRIGHT))
+    {
+        attType = RANGED_ATTACK;
+    }
+    else if (slot == EQUIPMENT_SLOT_OFFHAND)
+    {
+        attType = OFF_ATTACK;
+    }
+
+    if(CanUseAttackType(attType))
+        _ApplyWeaponDamage(slot, proto, ssv, apply);
+
+    int32 extraDPS = ssv->getDPSMod(proto->ScalingStatValue);
+
+   // Apply feral bonus from ScalingStatValue if set
+    if (ssv)
+    {
+        if (int32 feral_bonus = ssv->getFeralBonus(proto->ScalingStatValue))
+            ApplyFeralAPBonus(feral_bonus, apply);
+    }
+    // Druids get feral AP bonus from weapon dps (lso use DPS from ScalingStatValue)
+    if (getClass() == CLASS_DRUID)
+    {
+        int32 feral_bonus = proto->getFeralBonus(extraDPS);
+        if (feral_bonus > 0)
+            ApplyFeralAPBonus(feral_bonus, apply);
+    }
+
+ }
+
+void Player::_ApplyWeaponDamage(uint8 slot, ItemPrototype const *proto, ScalingStatValuesEntry const *ssv, bool apply) 
+{
+    WeaponAttackType attType = BASE_ATTACK;
     float damage = 0.0f;
 
     if (slot == EQUIPMENT_SLOT_RANGED && (
@@ -7681,6 +7708,7 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
     float minDamage = proto->Damage[0].DamageMin;
     float maxDamage = proto->Damage[0].DamageMax;
     int32 extraDPS = 0;
+
     // If set dpsMod in ScalingStatValue use it for min (70% from average), max (130% from average) damage
     if (ssv)
     {
@@ -7692,11 +7720,11 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
             maxDamage = 1.3f * average;
         }
     }
+
     if (minDamage > 0)
     {
         damage = apply ? minDamage : BASE_MINDAMAGE;
         SetBaseWeaponDamage(attType, MINDAMAGE, damage);
-        //sLog->outError("applying mindam: assigning %f to weapon mindamage, now is: %f", damage, GetWeaponDamageRange(attType, MINDAMAGE));
     }
 
     if (maxDamage  > 0)
@@ -7705,24 +7733,7 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
         SetBaseWeaponDamage(attType, MAXDAMAGE, damage);
     }
 
-    // Apply feral bonus from ScalingStatValue if set
-    if (ssv)
-    {
-        if (int32 feral_bonus = ssv->getFeralBonus(proto->ScalingStatValue))
-            ApplyFeralAPBonus(feral_bonus, apply);
-    }
-    // Druids get feral AP bonus from weapon dps (lso use DPS from ScalingStatValue)
-    if (getClass() == CLASS_DRUID)
-    {
-        int32 feral_bonus = proto->getFeralBonus(extraDPS);
-        if (feral_bonus > 0)
-            ApplyFeralAPBonus(feral_bonus, apply);
-    }
-
-    if (IsInFeralForm() || !CanUseAttackType(attType))
-        return;
-
-    if (proto->Delay)
+    if (proto->Delay && !IsInFeralForm())
     {
         if (slot == EQUIPMENT_SLOT_RANGED)
             SetAttackTime(RANGED_ATTACK, apply ? proto->Delay: BASE_ATTACK_TIME);
@@ -7731,6 +7742,10 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
         else if (slot == EQUIPMENT_SLOT_OFFHAND)
             SetAttackTime(OFF_ATTACK, apply ? proto->Delay: BASE_ATTACK_TIME);
     }
+
+    // No need to modify any physical damage for ferals as it is calculated from stats only
+    if (IsInFeralForm())
+        return;
 
     if (CanModifyStats() && (damage || proto->Delay))
         UpdateDamagePhysical(attType);
@@ -8758,6 +8773,9 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 4384:
             NumberOfFields = 30;
             break;
+        case 4710:
+            NumberOfFields    = 28;
+            break;
          default:
             NumberOfFields = 12;
             break;
@@ -8777,7 +8795,6 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                                                             // 7 1 - Arena season in progress, 0 - end of season
     data << uint32(0xC77) << uint32(sWorld->getBoolConfig(CONFIG_ARENA_SEASON_IN_PROGRESS));
                                                             // 8 Arena season id
-    data << uint32(0xF3D) << uint32(sWorld->getIntConfig(CONFIG_ARENA_SEASON_ID));
     // May be send timer to start Wintergrasp
     if(sWorld->GetWintergrapsState()==4354)
         data << uint32(0x1102) << sWorld->GetWintergrapsTimer();
@@ -9255,6 +9272,32 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(0xe10) << uint32(0x0);           // 7 gold
                 data << uint32(0xe11) << uint32(0x0);           // 8 green
                 data << uint32(0xe1a) << uint32(0x0);           // 9 show
+            }
+            break;
+        case 4710:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_IC)
+                bg->FillInitialWorldStates(data);
+            else
+            {
+                data << uint32(4221) << uint32(1); // 7 BG_IC_ALLIANCE_RENFORT_SET
+                data << uint32(4222) << uint32(1); // 8 BG_IC_HORDE_RENFORT_SET
+                data << uint32(4226) << uint32(300); // 9 BG_IC_ALLIANCE_RENFORT
+                data << uint32(4227) << uint32(300); // 10 BG_IC_HORDE_RENFORT
+                data << uint32(4322) << uint32(1); // 11 BG_IC_GATE_FRONT_H_WS_OPEN
+                data << uint32(4321) << uint32(1); // 12 BG_IC_GATE_WEST_H_WS_OPEN
+                data << uint32(4320) << uint32(1); // 13 BG_IC_GATE_EAST_H_WS_OPEN
+                data << uint32(4323) << uint32(1); // 14 BG_IC_GATE_FRONT_A_WS_OPEN
+                data << uint32(4324) << uint32(1); // 15 BG_IC_GATE_WEST_A_WS_OPEN
+                data << uint32(4325) << uint32(1); // 16 BG_IC_GATE_EAST_A_WS_OPEN
+                data << uint32(4317) << uint32(1); // 17 unknown
+                
+                data << uint32(4301) << uint32(1); // 18 BG_IC_DOCKS_UNCONTROLLED
+                data << uint32(4296) << uint32(1); // 19 BG_IC_HANGAR_UNCONTROLLED
+                data << uint32(4306) << uint32(1); // 20 BG_IC_QUARRY_UNCONTROLLED
+                data << uint32(4311) << uint32(1); // 21 BG_IC_REFINERY_UNCONTROLLED
+                data << uint32(4294) << uint32(1); // 22 BG_IC_WORKSHOP_UNCONTROLLED
+                data << uint32(4243) << uint32(1); // 23 unknown
+                data << uint32(4345) << uint32(1); // 24 unknown
             }
             break;
         default:
@@ -10142,9 +10185,6 @@ uint8 Player::_CanStoreItem_InSpecificSlot(uint8 bag, uint8 slot, ItemPosCountVe
 
     uint32 need_space;
 
-    if (pSrcItem && pSrcItem->IsBag() && !((Bag*)pSrcItem)->IsEmpty() && !IsBagPos(uint16(bag) << 8 | slot))
-        return EQUIP_ERR_CAN_ONLY_DO_WITH_EMPTY_BAGS;
-
     // empty specific slot - check item fit to slot
     if (!pItem2 || swap)
     {
@@ -10217,9 +10257,6 @@ uint8 Player::_CanStoreItem_InBag(uint8 bag, ItemPosCountVec &dest, ItemPrototyp
     if (!pBag || pBag == pSrcItem)
         return EQUIP_ERR_ITEM_DOESNT_GO_INTO_BAG;
 
-    if (pSrcItem && pSrcItem->IsBag() && !((Bag*)pSrcItem)->IsEmpty())
-        return EQUIP_ERR_CAN_ONLY_DO_WITH_EMPTY_BAGS;
-
     ItemPrototype const* pBagProto = pBag->GetProto();
     if (!pBagProto)
         return EQUIP_ERR_ITEM_DOESNT_GO_INTO_BAG;
@@ -10278,10 +10315,6 @@ uint8 Player::_CanStoreItem_InBag(uint8 bag, ItemPosCountVec &dest, ItemPrototyp
 
 uint8 Player::_CanStoreItem_InInventorySlots(uint8 slot_begin, uint8 slot_end, ItemPosCountVec &dest, ItemPrototype const *pProto, uint32& count, bool merge, Item* pSrcItem, uint8 skip_bag, uint8 skip_slot) const
 {
-    //this is never called for non-bag slots so we can do this
-    if (pSrcItem && pSrcItem->IsBag() && !((Bag*)pSrcItem)->IsEmpty())
-        return EQUIP_ERR_CAN_ONLY_DO_WITH_EMPTY_BAGS;
-
     for (uint32 j = slot_begin; j < slot_end; j++)
     {
         // skip specific slot already processed in first called _CanStoreItem_InSpecificSlot
@@ -11075,6 +11108,10 @@ uint8 Player::CanEquipItem(uint8 slot, uint16 &dest, Item *pItem, bool swap, boo
                             return EQUIP_ERR_NOT_DURING_ARENA_MATCH;
                 }
 
+                // prevent equip item in process logout
+                if (GetSession()->isLogingOut())
+                    return EQUIP_ERR_YOU_ARE_STUNNED;
+
                 if (isInCombat()&& pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
                     return EQUIP_ERR_CANT_DO_RIGHT_NOW;         // maybe exist better err
 
@@ -11212,6 +11249,10 @@ uint8 Player::CanUnequipItem(uint16 pos, bool swap) const
                 return EQUIP_ERR_NOT_DURING_ARENA_MATCH;
     }
 
+    // prevent unequip item in process logout
+    if (GetSession()->isLogingOut())
+        return EQUIP_ERR_YOU_ARE_STUNNED;
+
     if (!swap && pItem->IsBag() && !((Bag*)pItem)->IsEmpty())
         return EQUIP_ERR_CAN_ONLY_DO_WITH_EMPTY_BAGS;
 
@@ -11236,7 +11277,6 @@ uint8 Player::CanBankItem(uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *pI
 
     if (pItem->IsBindedNotWith(this))
         return EQUIP_ERR_DONT_OWN_THAT_ITEM;
-
     // Currency tokens are not supposed to be swapped out of their hidden bag
     uint8 pItemslot = pItem->GetSlot();
     if (pItemslot >= CURRENCYTOKEN_SLOT_START && pItemslot < CURRENCYTOKEN_SLOT_END)
@@ -11245,7 +11285,6 @@ uint8 Player::CanBankItem(uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *pI
                 GetName(), GetGUIDLow(), pItem->GetGUIDLow(), pProto->ItemId);
         return EQUIP_ERR_ITEMS_CANT_BE_SWAPPED;
     }
-
     // check count of items (skip for auto move for same player from bank)
     uint8 res = CanTakeMoreSimilarItems(pItem);
     if (res != EQUIP_ERR_OK)
@@ -13184,6 +13223,7 @@ void Player::AddEnchantmentDuration(Item *item,EnchantmentSlot slot,uint32 durat
             m_enchantDuration.erase(itr);
             break;
         }
+
     }
     if (item && duration > 0)
     {
@@ -13201,9 +13241,6 @@ void Player::ApplyEnchantment(Item *item,bool apply)
 void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool apply_dur, bool ignore_condition)
 {
     if (!item || !item->IsEquipped())
-        return;
-
-    if (!CanUseAttackType(Player::GetAttackBySlot(item->GetSlot())))
         return;
 
     if (slot >= MAX_ENCHANTMENT_SLOT)
@@ -13503,8 +13540,9 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ApplyHealthRegenBonus(enchant_amount, apply);
                             sLog->outDebug("+ %u HEALTH_REGENERATION", enchant_amount);
                             break;
-                        case ITEM_MOD_SPELL_PENETRATION:
-                            ApplySpellPenetrationBonus(enchant_amount, apply);
+                         case ITEM_MOD_SPELL_PENETRATION:
+                             ApplyModInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, enchant_amount, apply);
+                            m_spellPenetrationItemMod += apply ? int32(enchant_amount) : -int32(enchant_amount);
                             sLog->outDebug("+ %u SPELL_PENETRATION", enchant_amount);
                             break;
                         case ITEM_MOD_BLOCK_VALUE:
@@ -14273,14 +14311,13 @@ bool Player::CanCompleteQuest(uint32 quest_id)
 {
     if (quest_id)
     {
-        RewardedQuestSet::iterator rewItr = m_RewardedQuests.find(quest_id);
-        if (rewItr != m_RewardedQuests.end())
-            return false;                                   // not allow re-complete quest
-
         Quest const* qInfo = sObjectMgr->GetQuestTemplate(quest_id);
-
         if (!qInfo)
             return false;
+
+        RewardedQuestSet::iterator rewItr = m_RewardedQuests.find(quest_id);
+        if (!qInfo->IsRepeatable() && rewItr != m_RewardedQuests.end())
+            return false;                                   // not allow re-complete quest
 
         // auto complete quest
         if ((qInfo->IsAutoComplete() || qInfo->GetFlags() & QUEST_FLAGS_AUTOCOMPLETE) && CanTakeQuest(qInfo, false))
@@ -14681,7 +14718,6 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
         SetWeeklyQuestStatus(quest_id);
 
     RemoveActiveQuest(quest_id);
-
     m_RewardedQuests.insert(quest_id);
     m_RewardedQuestsSave[quest_id] = true;
 
@@ -14895,7 +14931,7 @@ bool Player::SatisfyQuestPreviousQuest(Quest const* qInfo, bool msg)
 
 
             // If any of the negative previous quests active, return true
-            if (*iter < 0 && m_QuestStatus.find(prevId) != m_QuestStatus.end())
+            if (*iter < 0 && GetQuestStatus(prevId) != QUEST_STATUS_NONE)
             {
                 // skip one-from-all exclusive group
                 if (qPrevInfo->GetExclusiveGroup() >= 0)
@@ -14916,10 +14952,8 @@ bool Player::SatisfyQuestPreviousQuest(Quest const* qInfo, bool msg)
                     if (exclude_Id == prevId)
                         continue;
 
-                    QuestStatusMap::iterator i_exstatus = m_QuestStatus.find(exclude_Id);
-
                     // alternative quest from group also must be active
-                    if (m_QuestStatus.find(exclude_Id) != m_QuestStatus.end())
+                    if (GetQuestStatus(exclude_Id) != QUEST_STATUS_NONE)
                     {
                         if (msg)
                             SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
@@ -15038,8 +15072,8 @@ bool Player::SatisfyQuestExclusiveGroup(Quest const* qInfo, bool msg)
             return false;
         }
 
-        // alternative quest already started or completed
-        if (m_QuestStatus.find(exclude_Id) != m_QuestStatus.end() || m_RewardedQuests.find(exclude_Id) != m_RewardedQuests.end())
+        // alternative quest already started or completed - but don't check rewarded states if both are repeatable
+        if (GetQuestStatus(exclude_Id) != QUEST_STATUS_NONE || (!(qInfo->IsRepeatable() && Nquest->IsRepeatable()) && m_RewardedQuests.find(exclude_Id) != m_RewardedQuests.end()))
         {
             if (msg)
                 SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
@@ -15056,7 +15090,7 @@ bool Player::SatisfyQuestNextChain(Quest const* qInfo, bool msg)
         return true;
 
     // next quest in chain already started or completed
-    if (m_QuestStatus.find(nextQuest) != m_QuestStatus.end() || m_RewardedQuests.find(nextQuest) != m_RewardedQuests.end())
+    if (GetQuestStatus(nextQuest) != QUEST_STATUS_NONE) // GetQuestStatus returns QUEST_STATUS_COMPLETED for rewarded quests
     {
         if (msg)
             SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
@@ -15077,12 +15111,10 @@ bool Player::SatisfyQuestPrevChain(Quest const* qInfo, bool msg)
 
     for (Quest::PrevChainQuests::const_iterator iter = qInfo->prevChainQuests.begin(); iter != qInfo->prevChainQuests.end(); ++iter)
     {
-        uint32 prevId = *iter;
-
-        QuestStatusMap::iterator i_prevstatus = m_QuestStatus.find(prevId);
+        QuestStatusMap::const_iterator itr = m_QuestStatus.find(*iter);
 
         // If any of the previous quests in chain active, return false
-        if (i_prevstatus != m_QuestStatus.end())
+        if (itr != m_QuestStatus.end() && itr->second.m_status != QUEST_STATUS_NONE)
         {
             if (msg)
                 SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
@@ -15220,8 +15252,9 @@ QuestStatus Player::GetQuestStatus(uint32 quest_id) const
         if (itr != m_QuestStatus.end())
             return itr->second.m_status;
 
-        if (m_RewardedQuests.find(quest_id) != m_RewardedQuests.end())
-            return QUEST_STATUS_COMPLETE;
+        if (Quest const* qInfo = sObjectMgr->GetQuestTemplate(quest_id))
+            if (!qInfo->IsRepeatable() && m_RewardedQuests.find(quest_id) != m_RewardedQuests.end())
+                return QUEST_STATUS_COMPLETE;
     }
     return QUEST_STATUS_NONE;
 }
@@ -18252,45 +18285,45 @@ void Player::_SaveInventory(SQLTransaction& trans)
     if (m_itemUpdateQueue.empty())
         return;
 
-    uint32 lowGuid = GetGUIDLow();
+	uint32 lowGuid = GetGUIDLow();
+    // do not save if the update queue is corrupt
+    bool error = false;
     for (size_t i = 0; i < m_itemUpdateQueue.size(); ++i)
     {
         Item *item = m_itemUpdateQueue[i];
-        if (!item)
+        if (!item || item->GetState() == ITEM_REMOVED)
             continue;
+
+        Item *test = GetItemByPos(item->GetBagSlot(), item->GetSlot());
+
+        if (test == NULL)
+        {
+            sLog->outCrash("Player(GUID: %u Name: %s)::_SaveInventory - the bag(%d) and slot(%d) values for the item with guid %d (state %d) are incorrect, the player doesn't have an item at that position!", GetGUIDLow(), GetName(), item->GetBagSlot(), item->GetSlot(), item->GetGUIDLow(), (int32)item->GetState());
+            //error = true;
+            //Should the above line really be commented out?
+        }
+        else if (test != item)
+        {
+            sLog->outError("Player(GUID: %u Name: %s)::_SaveInventory - the bag(%d) and slot(%d) values for the item with guid %d are incorrect, the item with guid %d is there instead!", GetGUIDLow(), GetName(), item->GetBagSlot(), item->GetSlot(), item->GetGUIDLow(), test->GetGUIDLow());
+            error = true;
+        }
+    }
+
+    if (error)
+    {
+        sLog->outError("Player::_SaveInventory - one or more errors occurred save aborted!");
+        ChatHandler(this).SendSysMessage(LANG_ITEM_SAVE_FAILED);
+        return;
+    }
+
+    for (size_t i = 0; i < m_itemUpdateQueue.size(); i++)
+    {
+        Item *item = m_itemUpdateQueue[i];
+        if (!item) continue;
 
         Bag *container = item->GetContainer();
         uint32 bag_guid = container ? container->GetGUIDLow() : 0;
-
-        if (item->GetState() != ITEM_REMOVED)
-        {
-            Item *test = GetItemByPos(item->GetBagSlot(), item->GetSlot());
-            if (test == NULL)
-            {
-                uint32 bagTestGUID = 0;
-                if (Item* test2 = GetItemByPos(INVENTORY_SLOT_BAG_0, item->GetBagSlot()))
-                    bagTestGUID = test2->GetGUIDLow();
-                sLog->outError("Player(GUID: %u Name: %s)::_SaveInventory - the bag(%u) and slot(%u) values for the item with guid %u (state %d) are incorrect, the player doesn't have an item at that position!", lowGuid, GetName(), item->GetBagSlot(), item->GetSlot(), item->GetGUIDLow(), (int32)item->GetState());
-                // according to the test that was just performed nothing should be in this slot, delete
-                trans->PAppend("DELETE FROM character_inventory WHERE bag=%u AND slot=%u AND guid=%u", bagTestGUID, item->GetSlot(), lowGuid);
-                // also THIS item should be somewhere else, cheat attempt
-                item->FSetState(ITEM_REMOVED); // we are IN updateQueue right now, can't use SetState which modifies the queue
-                DeleteRefundReference(item->GetGUIDLow());
-                // don't skip, let the switch delete it
-                //continue;
-            }
-            else if (test != item)
-            {
-                sLog->outError("Player(GUID: %u Name: %s)::_SaveInventory - the bag(%u) and slot(%u) values for the item with guid %u are incorrect, the item with guid %u is there instead!", lowGuid, GetName(), item->GetBagSlot(), item->GetSlot(), item->GetGUIDLow(), test->GetGUIDLow());
-                // save all changes to the item...
-                if (item->GetState() != ITEM_NEW) // only for existing items, no dupes
-                    item->SaveToDB(trans);
-                // ...but do not save position in invntory
-                continue;
-            }
-        }
-
-        PreparedStatement* stmt = NULL;
+		PreparedStatement* stmt = NULL;
         switch (item->GetState())
         {
             case ITEM_NEW:
@@ -18424,7 +18457,7 @@ void Player::_SaveDailyQuestStatus(SQLTransaction& trans)
         for (DFQuestsDoneList::iterator itr = m_DFQuests.begin(); itr != m_DFQuests.end(); ++itr)
         {
             trans->PAppend("INSERT INTO character_queststatus_daily (guid,quest,time) VALUES ('%u', '%u','" UI64FMTD "')",
-            GetGUIDLow(),(*itr),uint64(m_lastDailyQuestTime));
+            GetGUIDLow(),(*itr),uint64(m_lastDailyQuestTime)); 
         }
     }
 }
@@ -18720,6 +18753,7 @@ void Player::SendResetFailedNotify(uint32 mapid)
 
 /// Reset all solo instances and optionally send a message on success for each
 void Player::ResetInstances(uint8 method, bool isRaid)
+
 {
     // method can be INSTANCE_RESET_ALL, INSTANCE_RESET_CHANGE_DIFFICULTY, INSTANCE_RESET_GROUP_JOIN
 
@@ -19365,7 +19399,7 @@ void Player::RemoveSpellMods(Spell * spell)
 {
     if (!spell)
         return;
-
+    
     if (spell->m_appliedMods.empty())
         return;
 
@@ -21470,7 +21504,7 @@ void Player::SetDailyQuestStatus(uint32 quest_id)
         } else
         {
             m_DFQuests.insert(quest_id);
-            m_lastDailyQuestTime = time(NULL);
+            m_lastDailyQuestTime = time(NULL); 
             m_DailyQuestChanged = true;
         }
     }
@@ -22831,10 +22865,10 @@ void Player::ResyncRunes(uint8 count)
     GetSession()->SendPacket(&data);
 }
 
-void Player::AddRunePower(uint8 mask)
+void Player::AddRunePower(uint8 index)
 {
     WorldPacket data(SMSG_ADD_RUNE_POWER, 4);
-    data << uint32(mask);                                   // mask (0x00-0x3F probably)
+    data << uint32(1 << index);                             // mask (0x00-0x3F probably)
     GetSession()->SendPacket(&data);
 }
 
@@ -22868,19 +22902,6 @@ void Player::InitRunes()
 
     for (uint32 i = 0; i < NUM_RUNE_TYPES; ++i)
         SetFloatValue(PLAYER_RUNE_REGEN_1 + i, 0.1f);
-}
-
-void Player::UpdateRuneRegen(uint8 index)
-{
-    if (index >= NUM_RUNE_TYPES)
-        return;
-
-    uint32 cooldown = GetRuneBaseCooldown(index);
-    if (cooldown <= 0)
-        return;
-
-    float regen = float(1 * IN_MILLISECONDS) / float(cooldown);
-    SetFloatValue(PLAYER_RUNE_REGEN_1 + index, regen);
 }
 
 bool Player::IsBaseRuneSlotsOnCooldown(RuneType runeType) const
@@ -23205,9 +23226,7 @@ uint8 Player::CanEquipUniqueItem(ItemPrototype const* itemProto, uint8 except_sl
 void Player::HandleFall(MovementInfo const& movementInfo)
 {
     // calculate total z distance of the fall
-    float z_diff = (m_lastFallZ >= m_anti_BeginFallZ ? m_lastFallZ : m_anti_BeginFallZ) - movementInfo.pos.GetPositionZ();
-    
-    m_anti_BeginFallZ=INVALID_HEIGHT;
+    float z_diff = m_lastFallZ - movementInfo.pos.GetPositionZ();
     //sLog->outDebug("zDiff = %f", z_diff);
 
     //Players with low fall distance, Feather Fall or physical immunity (charges used) are ignored
@@ -24439,7 +24458,7 @@ float Player::GetAverageItemLevel()
     for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
     {
         // don't check tabard, ranged, offhand or chest
-        if (i == EQUIPMENT_SLOT_TABARD || i == EQUIPMENT_SLOT_RANGED || i == EQUIPMENT_SLOT_OFFHAND || i == EQUIPMENT_SLOT_CHEST)
+        if (i == EQUIPMENT_SLOT_TABARD || i == EQUIPMENT_SLOT_RANGED || i == EQUIPMENT_SLOT_OFFHAND || i == EQUIPMENT_SLOT_BODY)
             continue;
 
         if (m_items[i] && m_items[i]->GetProto())

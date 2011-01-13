@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -170,11 +170,11 @@ public:
 
                     bAchievement = false;
                     break;
-                case ACTION_WATER_ELEMENT_KILLED:
+                /*case ACTION_WATER_ELEMENT_KILLED:
                     uint32 damage = me->CountPctFromMaxHealth(3);
                     me->ModifyHealth(-int32(damage));
                     me->LowerPlayerDamageReq(damage);
-                    break;
+                    break;*/
             }
         }
 
@@ -376,7 +376,7 @@ public:
                         {
                             if (pIchoron->AI())
                                 pIchoron->AI()->DoAction(ACTION_WATER_ELEMENT_HIT);
-                            me->ForcedDespawn();
+                            me->DespawnOrUnsummon();
                         }
                     }
                 }
@@ -388,9 +388,9 @@ public:
         void JustDied(Unit* /*pKiller*/)
         {
             DoCast(me, SPELL_SPLASH);
-            if (Creature* pIchoron = Unit::GetCreature(*me, pInstance->GetData64(DATA_ICHORON)))
+            /*if (Creature* pIchoron = Unit::GetCreature(*me, pInstance->GetData64(DATA_ICHORON)))
                 if (pIchoron->AI())
-                    pIchoron->AI()->DoAction(ACTION_WATER_ELEMENT_KILLED);
+                    pIchoron->AI()->DoAction(ACTION_WATER_ELEMENT_KILLED);*/
         }
     };
 

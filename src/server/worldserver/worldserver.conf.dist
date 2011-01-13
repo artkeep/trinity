@@ -379,6 +379,17 @@ MapUpdate.Threads = 1
 CleanCharacterDB = 0
 
 #
+#    PersistentCharacterCleanFlags
+#        Description: Determines the character clean flags that remain set after cleanups.
+#                     This is a bitmask value, check /doc/CharacterDBCleanup.txt for more
+#                     information.
+#        Example:     14 - (Cleaning up skills, talents and spells will remain enabled after the
+#                           next cleanup)
+#        Default:     0  - (All cleanup methods will be disabled after the next cleanup)
+
+PersistentCharacterCleanFlags = 0
+
+#
 ###################################################################################################
 
 ###################################################################################################
@@ -2103,6 +2114,12 @@ Rate.Reputation.LowLevel.Kill = 1
 #        XP rates Premium modifier
 #        Default: 1
 #
+#    Rate.XP.Kill.Premium
+#    Rate.XP.Quest.Premium
+#    Rate.XP.Explore.Premium
+#        XP rates Premium modifier
+#        Default: 1
+#
 #    Rate.Reputation.RecruitAFriendBonus
 #        Description: Reputation bonus rate for recruit-a-friend.
 #        Default:     0.1
@@ -2833,7 +2850,7 @@ DungeonFinder.Enable = 0
 #
 ##########################################################
 
-OutdoorPvP.Wintergrasp.Enabled = 1
+LevelReq.Auction = 1
 OutdoorPvP.Wintergrasp.SaveState.Period = 10000
 OutdoorPvP.Wintergrasp.StartTime = 30
 OutdoorPvP.Wintergrasp.BattleTime = 30

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -265,7 +265,7 @@ class Channel
         void UnBan(uint64 good, const char *badname);
         void Password(uint64 p, const char *pass);
         void SetMode(uint64 p, const char *p2n, bool mod, bool set);
-        void SetOwner(uint64 p, bool exclaim = false);
+        void SetOwner(uint64 p, bool exclaim = true);
         void SetOwner(uint64 p, const char *newname);
         void SendWhoOwner(uint64 p);
         void SetModerator(uint64 p, const char *newname) { SetMode(p, newname, true, true); }

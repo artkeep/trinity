@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -193,12 +193,6 @@ void WorldSession::HandleLootOpcode(WorldPacket & recv_data)
     recv_data >> guid;
 
     // Check possible cheat
-		if (!IS_ITEM_GUID(guid)); //Takoye ne proidyot
-	       else
-	       {
-	               KickPlayer();//Te6e KuK
-	               return;
-	       }
     if (!_player->isAlive())
         return;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -132,12 +132,12 @@ enum BattlegroundBuffObjects
 
 enum BattlegroundRandomRewards
 {
-    BG_REWARD_WINNER_HONOR_FIRST    = 20,
+    BG_REWARD_WINNER_HONOR_FIRST    = 30,
     BG_REWARD_WINNER_ARENA_FIRST    = 25,
-    BG_REWARD_WINNER_HONOR_LAST     = 12,
+    BG_REWARD_WINNER_HONOR_LAST     = 15,
     BG_REWARD_WINNER_ARENA_LAST     = 0,
-    BG_REWARD_LOSER_HONOR_FIRST    = 3,
-    BG_REWARD_LOSER_HONOR_LAST     = 3
+    BG_REWARD_LOSER_HONOR_FIRST    = 5,
+    BG_REWARD_LOSER_HONOR_LAST     = 5
 };
 
 const uint32 Buff_Entries[3] = { BG_OBJECTID_SPEEDBUFF_ENTRY, BG_OBJECTID_REGENBUFF_ENTRY, BG_OBJECTID_BERSERKERBUFF_ENTRY };
@@ -208,7 +208,10 @@ enum ScoreType
     SCORE_SECONDARY_OBJECTIVES  = 17,
     //SOTA
     SCORE_DESTROYED_DEMOLISHER  = 18,
-    SCORE_DESTROYED_WALL        = 19
+    SCORE_DESTROYED_WALL        = 19,
+    //IC
+    SCORE_BASE_ASSAULTED        = 20,
+    SCORE_BASE_DEFENDED         = 21
 };
 
 enum ArenaType
@@ -476,6 +479,7 @@ class Battleground
         void PlaySoundToTeam(uint32 SoundID, uint32 TeamID);
         void PlaySoundToAll(uint32 SoundID);
         void CastSpellOnTeam(uint32 SpellID, uint32 TeamID);
+        void RemoveAuraOnTeam(uint32 SpellID, uint32 TeamID);
         void RewardHonorToTeam(uint32 Honor, uint32 TeamID);
         void RewardReputationToTeam(uint32 faction_id, uint32 Reputation, uint32 TeamID);
         void UpdateWorldState(uint32 Field, uint32 Value);
@@ -533,6 +537,11 @@ class Battleground
         void EventPlayerLoggedOut(Player* player);
         virtual void EventPlayerDamagedGO(Player* /*plr*/, GameObject* /*go*/, uint8 /*hitType*/, uint32 /*destroyedEvent*/) {}
         virtual void EventPlayerUsedGO(Player* /*player*/, GameObject* /*go*/){}
+
+        // this function can be used by spell to interact with the BG map
+        virtual void DoAction(uint32 /*action*/, uint64 /*var*/) {}
+
+        virtual void HandlePlayerResurrect(Player* /*player*/) {}
 
         /* Death related */
         virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);

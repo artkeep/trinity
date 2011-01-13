@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -3562,39 +3562,6 @@ bool ChatHandler::HandleRespawnCommand(const char* /*args*/)
     TypeContainerVisitor<Trinity::WorldObjectWorker<Trinity::RespawnDo>, GridTypeMapContainer > obj_worker(worker);
     cell.Visit(p, obj_worker, *pl->GetMap());
 
-    return true;
-}
-
-bool ChatHandler::HandleGMFlyCommand(const char *args)
-{
-    if (!*args)
-        return false;
-
-    Player *target = getSelectedPlayer();
-    if (!target)
-        target = m_session->GetPlayer();
-
-    WorldPacket data(12);
-    if (strncmp(args, "on", 3) == 0)
-    {
-        data.SetOpcode(SMSG_MOVE_SET_CAN_FLY);
-        ((Player*)(target))->SetCanFly(true);
-    }
-    else if (strncmp(args, "off", 4) == 0)
-    {
-        data.SetOpcode(SMSG_MOVE_UNSET_CAN_FLY);
-        ((Player*)(target))->SetCanFly(false);
-    }
-    else
-    {
-        SendSysMessage(LANG_USE_BOL);
-        return false;
-    }
-
-    data.append(target->GetPackGUID());
-    data << uint32(0);                                      // unknown
-    target->SendMessageToSet(&data, true);
-    PSendSysMessage(LANG_COMMAND_FLYMODE_STATUS, GetNameLink(target).c_str(), args);
     return true;
 }
 

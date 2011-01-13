@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -186,10 +186,6 @@ class WorldSession
         bool PlayerLoading() const { return m_playerLoading; }
         bool PlayerLogout() const { return m_playerLogout; }
         bool PlayerLogoutWithSave() const { return m_playerLogout && m_playerSave; }
-
-        inline bool Anti__CheatOccurred(uint32 CurTime,const char* Reason,float Speed,const char* Op=NULL,
-                                float Val1=0.0f,uint32 Val2=0,MovementInfo* MvInfo=NULL);
-        bool Anti__ReportCheat(const char* Reason,float Speed,const char* Op=NULL,float Val1=0.0f,uint32 Val2=0,MovementInfo* MvInfo=NULL);
 
         void SizeError(WorldPacket const& packet, uint32 size) const;
 

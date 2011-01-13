@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -283,6 +283,9 @@ enum AuraScriptHookType
     AURA_SCRIPT_HOOK_EFFECT_CALC_PERIODIC,
     AURA_SCRIPT_HOOK_EFFECT_CALC_SPELLMOD,
     AURA_SCRIPT_HOOK_EFFECT_ABSORB,
+    AURA_SCRIPT_HOOK_EFFECT_AFTER_ABSORB,
+    AURA_SCRIPT_HOOK_EFFECT_MANASHIELD,
+    AURA_SCRIPT_HOOK_EFFECT_AFTER_MANASHIELD,
     /*AURA_SCRIPT_HOOK_APPLY,
     AURA_SCRIPT_HOOK_REMOVE,*/
 };
@@ -304,7 +307,6 @@ class AuraScript : public _SpellScript
         typedef void(CLASSNAME::*AuraEffectCalcPeriodicFnType)(AuraEffect const *, bool &, int32 &); \
         typedef void(CLASSNAME::*AuraEffectCalcSpellModFnType)(AuraEffect const *, SpellModifier *&); \
         typedef void(CLASSNAME::*AuraEffectAbsorbFnType)(AuraEffect *, DamageInfo &, uint32 &); \
-        //typedef void(CLASSNAME::*AuraAbsorbFnType)(AuraEffect *, DamageInfo &); \
 
         AURASCRIPT_FUNCTION_TYPE_DEFINES(AuraScript)
 
@@ -372,6 +374,14 @@ class AuraScript : public _SpellScript
             private:
                 AuraEffectAbsorbFnType pEffectHandlerScript;
         };
+        class EffectManaShieldHandler : public EffectBase
+        {
+            public:
+                EffectManaShieldHandler(AuraEffectAbsorbFnType _pEffectHandlerScript, uint8 _effIndex);
+                void Call(AuraScript * auraScript, AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount);
+            private:
+                AuraEffectAbsorbFnType pEffectHandlerScript;
+        };
 
         #define AURASCRIPT_FUNCTION_CAST_DEFINES(CLASSNAME) \
         class EffectPeriodicHandlerFunction : public AuraScript::EffectPeriodicHandler { public: EffectPeriodicHandlerFunction(AuraEffectPeriodicFnType _pEffectHandlerScript,uint8 _effIndex, uint16 _effName) : AuraScript::EffectPeriodicHandler((AuraScript::AuraEffectPeriodicFnType)_pEffectHandlerScript, _effIndex, _effName) {} }; \
@@ -381,6 +391,7 @@ class AuraScript : public _SpellScript
         class EffectCalcSpellModHandlerFunction : public AuraScript::EffectCalcSpellModHandler { public: EffectCalcSpellModHandlerFunction(AuraEffectCalcSpellModFnType _pEffectHandlerScript,uint8 _effIndex, uint16 _effName) : AuraScript::EffectCalcSpellModHandler((AuraScript::AuraEffectCalcSpellModFnType)_pEffectHandlerScript, _effIndex, _effName) {} }; \
         class EffectApplyHandlerFunction : public AuraScript::EffectApplyHandler { public: EffectApplyHandlerFunction(AuraEffectApplicationModeFnType _pEffectHandlerScript,uint8 _effIndex, uint16 _effName, AuraEffectHandleModes _mode) : AuraScript::EffectApplyHandler((AuraScript::AuraEffectApplicationModeFnType)_pEffectHandlerScript, _effIndex, _effName, _mode) {} }; \
         class EffectAbsorbFunction : public AuraScript::EffectAbsorbHandler { public: EffectAbsorbFunction(AuraEffectAbsorbFnType _pEffectHandlerScript,uint8 _effIndex) : AuraScript::EffectAbsorbHandler((AuraScript::AuraEffectAbsorbFnType)_pEffectHandlerScript, _effIndex) {} }; \
+        class EffectManaShieldFunction : public AuraScript::EffectManaShieldHandler { public: EffectManaShieldFunction(AuraEffectAbsorbFnType _pEffectHandlerScript,uint8 _effIndex) : AuraScript::EffectManaShieldHandler((AuraScript::AuraEffectAbsorbFnType)_pEffectHandlerScript, _effIndex) {} }; \
 
         #define PrepareAuraScript(CLASSNAME) AURASCRIPT_FUNCTION_TYPE_DEFINES(CLASSNAME) AURASCRIPT_FUNCTION_CAST_DEFINES(CLASSNAME)
 
@@ -447,11 +458,21 @@ class AuraScript : public _SpellScript
         HookList<EffectAbsorbHandler> OnEffectAbsorb;
         #define AuraEffectAbsorbFn(F, I) EffectAbsorbFunction(&F, I)
 
-        // executed after aura absorbtions reduced damage
-        // example: AfterAbsorb += AuraAbsorbFn(class::function);
-        // where function is: void function (AuraEffect * aurEff, DamageInfo & dmgInfo);
-        //HookList<AbsorbHandler> AfterAbsorb;
-        //#define AuraAbsorbFn(F) EffectAbsorbFunction(&F)
+        // executed after absorb aura effect reduced damage to target - absorbAmount is real amount absorbed by aura
+        // example: AfterEffectAbsorb += AuraEffectAbsorbFn(class::function, EffectIndexSpecifier);
+        // where function is: void function (AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount);
+        HookList<EffectAbsorbHandler> AfterEffectAbsorb;
+
+        // executed when mana shield aura effect is going to reduce damage
+        // example: OnEffectManaShield += AuraEffectAbsorbFn(class::function, EffectIndexSpecifier);
+        // where function is: void function (AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount);
+        HookList<EffectManaShieldHandler> OnEffectManaShield;
+        #define AuraEffectManaShieldFn(F, I) EffectManaShieldFunction(&F, I)
+
+        // executed after mana shield aura effect reduced damage to target - absorbAmount is real amount absorbed by aura
+        // example: AfterEffectManaShield += AuraEffectAbsorbFn(class::function, EffectIndexSpecifier);
+        // where function is: void function (AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount);
+        HookList<EffectManaShieldHandler> AfterEffectManaShield;
 
         // AuraScript interface - hook/effect execution manipulators
 

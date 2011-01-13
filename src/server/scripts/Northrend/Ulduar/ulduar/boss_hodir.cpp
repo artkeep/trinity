@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -132,7 +132,7 @@ public:
         {
         }
 
-		uint32 uiEncounterTime;
+        uint32 uiEncounterTime;
         uint32 uiCheckIntenseColdTimer;
         bool bMoreThanTwoIntenseCold;
         bool CheeseTheFreeze;
@@ -142,7 +142,7 @@ public:
         void Reset()
         {
             _Reset();
-			summons.DespawnAll();
+            summons.DespawnAll();
             me->SetReactState(REACT_DEFENSIVE);
             // Spawn NPC Helpers
             for (uint8 i = 0; i < RAID_MODE(NORMAL_COUNT, RAID_COUNT); i++)
@@ -237,6 +237,7 @@ public:
         {
             if (!UpdateVictim())
                 return;
+
             if (CheckWipe())
                 Reset();
                 
@@ -379,7 +380,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new boss_hodir_AI (pCreature);
     }
@@ -484,7 +485,7 @@ public:
             {
                 if (GameObject *pSnowdrift = me->FindNearestGameObject(194173, 2))
                     me->RemoveGameObject(pSnowdrift, true);
-                me->ForcedDespawn();
+                me->DespawnOrUnsummon();
             }
             else DespawnTimer -= diff;
         }
@@ -924,11 +925,11 @@ class spell_block_of_ice : public SpellScriptLoader
 
     class spell_block_of_ice_AuraScript : public AuraScript
     {
-        PrepareAuraScript(spell_block_of_ice_AuraScript)
+        PrepareAuraScript(spell_block_of_ice_AuraScript);
 
-        void ApplyEffect(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+        void ApplyEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
-            if (Unit* pTarget = aurApp->GetTarget())
+            if (Unit* pTarget = GetTarget())
             {
                 pTarget->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 pTarget->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_PULL_TOWARDS, true);
@@ -940,9 +941,9 @@ class spell_block_of_ice : public SpellScriptLoader
 
         }
 
-        void RemoveEffect(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+        void RemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
-            if (Unit* pTarget = aurApp->GetTarget())
+            if (Unit* pTarget = GetTarget())
             {
                 pTarget->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 pTarget->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_PULL_TOWARDS, false);

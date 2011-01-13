@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -372,7 +372,7 @@ uint32 Group::RemoveMember(const uint64 &guid, const RemoveMethod &method /* = G
         return m_memberSlots.size();
 
     // remove member and change leader (if need) only if strong more 2 members _before_ member remove (BG allow 1 member group)
-   if (GetMembersCount() > (isBGGroup() ? 1u : 2u))
+    if (GetMembersCount() > (isBGGroup() ? 1u : 2u))
     {
         bool leaderChanged = _removeMember(guid);
 

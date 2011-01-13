@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,14 +73,14 @@ enum RZnums
     SPELL_FOCUSED_EYEBEAM_VISUAL_LEFT   = 63702,
     //bras mort
     SPELL_ARM_DEAD_DAMAGE_KOLOGARN_N    = 63629,
-	SPELL_ARM_DEAD_DAMAGE_KOLOGARN_H	= 63979
+    SPELL_ARM_DEAD_DAMAGE_KOLOGARN_H    = 63979
 };
 
 enum Actions
 {
     ACTION_EYES,
-	ACTION_RUBBLE,
-	ACTION_LEFT_ARM,
+    ACTION_RUBBLE,
+    ACTION_LEFT_ARM,
     ACTION_RIGHT_ARM
 };
 
@@ -97,6 +97,11 @@ class boss_kologarn : public CreatureScript
 public:
     boss_kologarn() : CreatureScript("boss_kologarn") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new boss_kologarnAI (pCreature);
+    }
+
     struct boss_kologarnAI : public BossAI
     {
         boss_kologarnAI(Creature* pCreature) : BossAI(pCreature, TYPE_KOLOGARN), vehicle(me->GetVehicleKit()), lSummons(me)
@@ -110,7 +115,7 @@ public:
             ASSERT(vehicle);
         }
 
-		SummonList lSummons;
+        SummonList lSummons;
         Vehicle *vehicle;
         uint32 m_uiSpellTimer;
         uint32 m_uiStoneShoutTimer;
@@ -161,42 +166,42 @@ public:
             switch(urand(0, 1))
             {
                 case 0:
-				    DoScriptText(SAY_SLAY_01, me);
-					break;
+                    DoScriptText(SAY_SLAY_01, me);
+                    break;
                 case 1:
-				    DoScriptText(SAY_SLAY_02, me);
-					break;
+                    DoScriptText(SAY_SLAY_02, me);
+                    break;
             }
         }
 
         void DoAction(const int32 action)
-	    {
-		    switch(action)
-		    {
-		    case ACTION_RUBBLE:
-			    m_uiRubble++;
-			    break;
-		    case ACTION_EYES:
-			    bEyes = false;
-			    break;
-		    case ACTION_RIGHT_ARM:
-			    bArms = false;
+        {
+            switch(action)
+            {
+            case ACTION_RUBBLE:
+                m_uiRubble++;
+                break;
+            case ACTION_EYES:
+                bEyes = false;
+                break;
+            case ACTION_RIGHT_ARM:
+                bArms = false;
                 bRight = false;
                 m_uiRespawnRight = 30000;
                 me->DealDamage(me, RAID_MODE(543855,2300925));
-			    break;
+                break;
             case ACTION_LEFT_ARM:
-			    bArms = false;
+                bArms = false;
                 bLeft = false;
                 m_uiRespawnLeft = 30000;
                 me->DealDamage(me, RAID_MODE(543855,2300925));
-			    break;
-		    }
-	    }
+                break;
+            }
+        }
 
         void JustDied(Unit* pKiller)
         {
-		    _JustDied();
+            _JustDied();
             lSummons.DespawnAll();
             if (pKiller->GetGUID() == me->GetGUID())
                 return;
@@ -238,7 +243,7 @@ public:
 
         void UpdateAI(const uint32 diff)
         {
-		    //Return since we have no target
+            //Return since we have no target
             if (!UpdateVictim())
                 return;
 
@@ -295,7 +300,7 @@ public:
             else 
                 m_uiCheckTimer -= diff;
 
-		     if (me->HasUnitState(UNIT_STAT_CASTING))
+             if (me->HasUnitState(UNIT_STAT_CASTING))
                 return;
 
             if (m_uiFocusedEyebeamTimer <= diff)
@@ -308,12 +313,12 @@ public:
                         if (Creature* eye = me->SummonCreature(NPC_RIGHT_EYE, mTarget->GetPositionX()+3, mTarget->GetPositionY()+3, mTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, duration))
                         {
                             eye->AddThreat(mTarget, 999999.0f);
-					        eye->GetMotionMaster()->MoveChase(mTarget, 0 ,0);
+                            eye->GetMotionMaster()->MoveChase(mTarget, 0 ,0);
                         }
-				        if (Creature* eye = me->SummonCreature(NPC_LEFT_EYE, mTarget->GetPositionX()+3, mTarget->GetPositionY()-3, mTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, duration))
+                        if (Creature* eye = me->SummonCreature(NPC_LEFT_EYE, mTarget->GetPositionX()+3, mTarget->GetPositionY()-3, mTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, duration))
                         {
                             eye->AddThreat(mTarget, 999999.0f);
-					        eye->GetMotionMaster()->MoveChase(mTarget, 0, 0);
+                            eye->GetMotionMaster()->MoveChase(mTarget, 0, 0);
                         }
                         m_uiFocusedEyebeamTimer = urand(28000,35000);
                     }
@@ -336,17 +341,13 @@ public:
             {
                 if (!bRight && !bLeft)
                     DoCast(me->getVictim(), RAID_MODE(SPELL_STONE_SHOUT, SPELL_STONE_SHOUT_H));
-			    m_uiStoneShoutTimer = urand(400,600);
+                m_uiStoneShoutTimer = urand(400,600);
             }else m_uiStoneShoutTimer -= diff;
 
             DoMeleeAttackIfReady();
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new boss_kologarnAI(pCreature);
-    }
 };
 
 // Rubble
@@ -462,8 +463,8 @@ public:
                 if (pTemp->isAlive()) 
                 {
                     //pTemp->CastSpell(pTemp, RAID_MODE(SPELL_ARM_DEAD_DAMAGE_KOLOGARN_N, SPELL_ARM_DEAD_DAMAGE_KOLOGARN_H), true);
-				    pTemp->AI()->DoAction(ACTION_LEFT_ARM);
-				    DoScriptText(SAY_LEFT_DIED, pTemp);
+                    pTemp->AI()->DoAction(ACTION_LEFT_ARM);
+                    DoScriptText(SAY_LEFT_DIED, pTemp);
                 }
             for (uint8 i = 0 ; i < 5 ; i++)
                 if (Creature* pTemp = me->SummonCreature(MOB_RUBBLE, LeftArmX, LeftArmY, LeftArmZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
@@ -588,7 +589,7 @@ public:
                 {
                     //pTemp->CastSpell(pTemp, RAID_MODE(SPELL_ARM_DEAD_DAMAGE_KOLOGARN_N, SPELL_ARM_DEAD_DAMAGE_KOLOGARN_H), true);
                     pTemp->AI()->DoAction(ACTION_RIGHT_ARM);
-				    DoScriptText(SAY_RIGHT_DIED, pTemp);
+                    DoScriptText(SAY_RIGHT_DIED, pTemp);
                 }
             for (uint8 i = 0 ; i < 5 ; i++)
                 if (Creature* pTemp = me->SummonCreature(MOB_RUBBLE, RightArmX, RightArmY, RightArmZ, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
@@ -624,7 +625,7 @@ public:
                 if (Unit* pGripTarget = Unit::GetUnit(*me, uiGripTarget))
                 {
                     pGripTarget->ExitVehicle();
-                    pGripTarget->GetMotionMaster()->MoveJump(1767.80, -18.38, 448.808, 10, 10);
+                    pGripTarget->GetMotionMaster()->MoveJump(1767.80f, -18.38f, 448.808f, 10, 10);
 
                     if (pGripTarget->HasAura(RAID_MODE(SPELL_STONE_AURA,SPELL_STONE_AURA_H)))
                     {

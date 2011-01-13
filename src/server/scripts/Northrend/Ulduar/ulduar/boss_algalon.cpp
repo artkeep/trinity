@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,7 +31,7 @@ enum Spells
     SPELL_QUANTUM_STRIKE            = 64395,
     H_SPELL_QUANTUM_STRIKE          = 64592,
     SPELL_BLACK_HOLE_EXPLOSION      = 64122,
-	H_SPELL_BLACK_HOLE_EXPLOSION    = 65108,
+    H_SPELL_BLACK_HOLE_EXPLOSION    = 65108,
     SPELL_ARCANE_BARAGE             = 64599,
     H_SPELL_ARCANE_BARAGE           = 64607,
     SPELL_BLACK_HOLE_PASSIVE        = 46228,
@@ -133,12 +133,12 @@ public:
         bool bHasSpawnedBlackHoles ;
         bool bIsEnraged;
         bool Summon;
-		bool hasHit;
+        bool hasHit;
         bool hasCastedBigBang;
 
         void EnterCombat(Unit* who)
         {
-		    _EnterCombat();
+            _EnterCombat();
             if (Summon)
             {
                 if (instance)
@@ -163,7 +163,6 @@ public:
             uiPhase = 1;
 
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-
             uiPhaseTimer = 0;
             uiAscendTimer = 360000;
             uiQuantumStrikeTimer = 4000 + rand()%10000;
@@ -189,13 +188,13 @@ public:
                 if (Creature* pTemp = Unit::GetCreature(*me, *itr))
                 {
                     if (pTemp->isAlive())
-                        pTemp->ForcedDespawn();
+                        pTemp->DespawnOrUnsummon();
                 }
             }
             m_lCollapsingStarGUIDList.clear();
         }
 
-		void DespawnLivingConstellation()
+        void DespawnLivingConstellation()
         {
             if (m_lLivingConstellationGUIDList.empty())
                 return;
@@ -205,10 +204,10 @@ public:
                 if (Creature* pTemp = Unit::GetCreature(*me, *itr))
                 {
                     if (pTemp->isAlive())
-                        pTemp->ForcedDespawn();
+                        pTemp->DespawnOrUnsummon();
                 }
             }
-            m_lCollapsingStarGUIDList.clear();
+            m_lLivingConstellationGUIDList.clear();
         }
 
         void JustSummoned(Creature* pSummoned)
@@ -219,7 +218,7 @@ public:
                     pSummoned->AI()->AttackStart(pTarget);
                 m_lCollapsingStarGUIDList.push_back(pSummoned->GetGUID());
             }
-			if (pSummoned->GetEntry() == CREATURE_LIVING_CONSTELLATION)
+            if (pSummoned->GetEntry() == CREATURE_LIVING_CONSTELLATION)
             {
                 if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
                     pSummoned->AI()->AttackStart(pTarget);
@@ -229,6 +228,7 @@ public:
 
         void JumpToNextStep(uint32 time)
         {
+            DoScriptText(SAY_SUMMON_COLLAPSING_STAR, me);
             uiPhaseTimer = time ;
             uiStep ++ ;
         }
@@ -276,7 +276,7 @@ public:
                                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                                 me->SetReactState(REACT_AGGRESSIVE);
                                 Summon = true;
-								if (instance)
+                                if (instance)
                                     instance->SetData(TYPE_UNIVERSE_GLOBE, GO_STATE_ACTIVE);
                                 break;
                         }
@@ -456,11 +456,11 @@ public:
 
             DoMeleeAttackIfReady();
 
-			EnterEvadeIfOutOfCombatArea(diff);
+            EnterEvadeIfOutOfCombatArea(diff);
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new boss_algalonAI(pCreature);
     }
@@ -641,7 +641,7 @@ public:
             if (Creature* blackHole = me->FindNearestCreature(CREATURE_BLACK_HOLE, 5.0f))
             {
                 me->DisappearAndDie() ;
-                blackHole->ForcedDespawn() ;
+                blackHole->DespawnOrUnsummon() ;
             }
         }
     };
@@ -751,7 +751,7 @@ void AddSC_boss_algalon()
 {
     new boss_algalon();
     new mob_collapsing_star();
-	new mob_black_hole();
+    new mob_black_hole();
     new mob_living_constellation();
     new mob_algalon_stalker_asteroid_target();
     new go_celestial_planetarium_access();

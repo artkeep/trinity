@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -253,13 +253,17 @@ void LFGMgr::Update(uint32 diff)
     // Check if a proposal can be formed with the new groups being added
     for (LfgGuidListMap::iterator it = m_newToQueue.begin(); it != m_newToQueue.end(); ++it)
     {
+        uint8 queueId = it->first;
         LfgGuidList& newToQueue = it->second;
-        LfgGuidList& currentQueue = m_currentQueue[it->first];
+        LfgGuidList& currentQueue = m_currentQueue[queueId];
         LfgGuidList firstNew;
         while (!newToQueue.empty())
         {
-            sLog->outDebug("LFGMgr::Update: QueueId %u: checking [" UI64FMTD "] newToQueue(%u), currentQueue(%u)", it->first, newToQueue.front(), uint32(newToQueue.size()), uint32(currentQueue.size()));
-            firstNew.push_back(newToQueue.front());
+            uint64 frontguid = newToQueue.front();
+            sLog->outDebug("LFGMgr::Update: QueueId %u: checking [" UI64FMTD "] newToQueue(%u), currentQueue(%u)", queueId, frontguid, uint32(newToQueue.size()), uint32(currentQueue.size()));
+            firstNew.push_back(frontguid);
+            newToQueue.pop_front();
+
             LfgGuidList temporalList = currentQueue;
             if (LfgProposal* pProposal = FindNewGroups(firstNew, temporalList)) // Group found!
             {
@@ -295,10 +299,7 @@ void LFGMgr::Update(uint32 diff)
                     UpdateProposal(m_lfgProposalId, guid, true);
             }
             else
-            {
-                currentQueue.push_back(newToQueue.front());// Group not found, add this group to the queue.
-                newToQueue.pop_front();
-            }
+                currentQueue.push_back(frontguid);         // Lfg group not found, add this group to the queue.
             firstNew.clear();
         }
     }

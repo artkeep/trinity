@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,6 +24,41 @@
 
 #include "ScriptPCH.h"
 #include "SpellAuraEffects.h"
+
+class spell_gen_absorb0_hitlimit1 : public SpellScriptLoader
+{
+public:
+    spell_gen_absorb0_hitlimit1() : SpellScriptLoader("spell_gen_absorb0_hitlimit1") { }
+
+    class spell_gen_absorb0_hitlimit1_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_gen_absorb0_hitlimit1_AuraScript);
+
+        uint32 limit;
+
+        bool Load()
+        {
+            // Max absorb stored in 1 dummy effect
+            limit = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), EFFECT_1);
+            return true;
+        }
+
+        void Absorb(AuraEffect * /*aurEff*/, DamageInfo & /*dmgInfo*/, uint32 & absorbAmount)
+        {
+            absorbAmount = std::min(limit, absorbAmount);
+        }
+
+        void Register()
+        {
+             OnEffectAbsorb += AuraEffectAbsorbFn(spell_gen_absorb0_hitlimit1_AuraScript::Absorb, EFFECT_0);
+        }
+    };
+
+    AuraScript *GetAuraScript() const
+    {
+        return new spell_gen_absorb0_hitlimit1_AuraScript();
+    }
+};
 
 // 41337 Aura of Anger
 class spell_gen_aura_of_anger : public SpellScriptLoader
@@ -246,17 +281,17 @@ public:
 
         void HandleEffectPeriodic(AuraEffect const * aurEff)
         {
-            Unit* pTarget = GetTarget();
-            if (Unit* pCaster = GetCaster())
-            {
-                int32 lifeLeeched = pTarget->CountPctFromMaxHealth(aurEff->GetAmount());
-                if (lifeLeeched < 250)
-                    lifeLeeched = 250;
-                // Damage
-                pCaster->CastCustomSpell(pTarget, SPELL_LEECHING_SWARM_DMG, &lifeLeeched, 0, 0, false);
-                // Heal
-                pCaster->CastCustomSpell(pCaster, SPELL_LEECHING_SWARM_HEAL, &lifeLeeched, 0, 0, false);
-            }
+            if (Unit* pTarget = GetTarget())
+                if (Unit* pCaster = GetCaster())
+                {
+                    int32 lifeLeeched = pTarget->CountPctFromCurHealth(aurEff->GetAmount());
+                    if (lifeLeeched < 250)
+                        lifeLeeched = 250;
+                    // Damage
+                    pCaster->CastCustomSpell(pTarget, SPELL_LEECHING_SWARM_DMG, &lifeLeeched, 0, 0, false);
+                    // Heal
+                    pCaster->CastCustomSpell(pCaster, SPELL_LEECHING_SWARM_HEAL, &lifeLeeched, 0, 0, false);
+                }
         }
 
         void Register()
@@ -560,8 +595,119 @@ class spell_gen_shroud_of_death : public SpellScriptLoader
         }
 };
 
+enum DivineStormSpell
+{
+    SPELL_DIVINE_STORM  = 53385,
+};
+
+// 70769 Divine Storm!
+class spell_gen_divine_storm_cd_reset : public SpellScriptLoader
+{
+public:
+    spell_gen_divine_storm_cd_reset() : SpellScriptLoader("spell_gen_divine_storm_cd_reset") {}
+
+    class spell_gen_divine_storm_cd_reset_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_gen_divine_storm_cd_reset_SpellScript)
+        bool Validate(SpellEntry const * /*spellEntry*/)
+        {
+            if (!sSpellStore.LookupEntry(SPELL_DIVINE_STORM))
+                return false;
+            return true;
+        }
+
+        void HandleScript(SpellEffIndex /*effIndex*/)
+        {
+            if (Player *caster = GetCaster()->ToPlayer())
+                if (caster->HasSpellCooldown(SPELL_DIVINE_STORM))
+                    caster->RemoveSpellCooldown(SPELL_DIVINE_STORM, true);
+        }
+
+        void Register()
+        {
+            OnEffect += SpellEffectFn(spell_gen_divine_storm_cd_reset_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_gen_divine_storm_cd_reset_SpellScript();
+    }
+};
+
+class spell_gen_gunship_portal : public SpellScriptLoader
+{
+public:
+    spell_gen_gunship_portal() : SpellScriptLoader("spell_gen_gunship_portal") { }
+
+    class spell_gen_gunship_portalSpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_gen_gunship_portalSpellScript)
+        void HandleScript(SpellEffIndex /*effIndex*/)
+        {
+            Unit* caster = GetCaster();
+            if (!caster->ToPlayer())
+                return;
+
+            if (Battleground *bg = caster->ToPlayer()->GetBattleground())
+            {
+                if (bg->GetTypeID(true) == BATTLEGROUND_IC)
+                    bg->DoAction(1,caster->GetGUID());
+            }
+        }
+
+        void Register()
+        {
+            OnEffect += SpellEffectFn(spell_gen_gunship_portalSpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+        }
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_gen_gunship_portalSpellScript();
+    }
+};
+
+enum parachuteIC
+{
+    SPELL_PARACHUTE_IC = 66657
+};
+
+class spell_gen_parachute_ic : public SpellScriptLoader
+{
+    public:
+        spell_gen_parachute_ic() : SpellScriptLoader("spell_gen_parachute_ic") { }
+
+        class spell_gen_parachute_icAuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_parachute_icAuraScript)
+
+            void HandleTriggerSpell(AuraEffect const * /*aurEff*/)
+            {
+                Unit* target = GetTarget();
+
+                if (!target->ToPlayer())
+                    return;
+
+                if (target->ToPlayer()->m_movementInfo.fallTime > 2000)
+                    target->CastSpell(target,SPELL_PARACHUTE_IC,true);               
+            }
+
+            void Register()
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_parachute_icAuraScript::HandleTriggerSpell, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+            }
+        };
+
+        AuraScript *GetAuraScript() const
+        {
+            return new spell_gen_parachute_icAuraScript();
+        }
+};
+
 void AddSC_generic_spell_scripts()
 {
+    new spell_gen_absorb0_hitlimit1();
     new spell_gen_aura_of_anger();
     new spell_gen_burn_brutallus();
     new spell_gen_leeching_swarm();
@@ -574,4 +720,7 @@ void AddSC_generic_spell_scripts()
     new spell_pvp_trinket_wotf_shared_cd();
     new spell_gen_animal_blood();
     new spell_gen_shroud_of_death();
+    new spell_gen_divine_storm_cd_reset();
+    new spell_gen_parachute_ic();
+    new spell_gen_gunship_portal();
 }

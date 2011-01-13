@@ -45,14 +45,14 @@ enum Spells
     SPELL_FROST_AURA          = 70084,
     SPELL_CLEAVE              = 19983,
     SPELL_TAIL_SMASH          = 71077,
-    SPELL_FROST_BREATH        = 73061,
+    SPELL_FROST_BREATH        = 69649,
     SPELL_PERMEATING_CHILL    = 70109,
-    SPELL_UNCHAINED_MAGIC     = 69762, // нужно узнать механику на офе
+    SPELL_UNCHAINED_MAGIC     = 69762, // io?ii ociaou iaoaieeo ia ioa
     SPELL_ICY_TRIP_PULL       = 70117,
-    SPELL_BOMB_VISUAL_1       = 64624,
-    SPELL_BOMB_VISUAL_2       = 69016,
-    SPELL_BLISTERING_COLD     = 71047,
+    SPELL_ICY_TRIP_JUMP       = 70122,
+    SPELL_BLISTERING_COLD     = 70123,
     SPELL_FROST_BOMB_TRIGGER  = 69846,
+    SPELL_FROST_BEACON_EFFECT = 69675,
     SPELL_FROST_BEACON        = 70126,
     SPELL_ICE_TOMB            = 70157,
     SPELL_FROST_BOMB          = 69845,
@@ -63,8 +63,8 @@ enum Spells
     SPELL_ICE_BLAST           = 71376,
     SPELL_BELLOWING_ROAR      = 36922,
     SPELL_CLEAVE_ADD          = 40505,
-    SPELL_TAIL_SWEEP          = 71369
-    //70521
+    SPELL_TAIL_SWEEP          = 71369,
+    SPELL_WITHOUT_ANIMATION   = 40031
 };
 
 enum ePoints
@@ -73,14 +73,24 @@ enum ePoints
     POINT_PHASE_NORMAL             = 2
 };
 
-//need add correct coords
+/*
+Neia?a eanoeo 69846. Eaoeo o?aiu a iiaa. I?e i?ecaieaiee o?aie aie?ai eaoe ac?ua
+
+Position: X: 4360.1 Y: 2510.012 Z: 203.4833 O: 3.141593
+Position: X: 4391.1 Y: 2476.4 Z: 203.4833 O: 3.141593
+Position: X: 4394.1 Y: 2498.075 Z: 203.4833 O: 3.141593
+Position: X: 4408.1 Y: 2466.511 Z: 203.4833 O: 3.141593
+
+Position: X: 4390.1 Y: 2467.817 Z: 203.4833 O: 3.141593
+Position: X: 4397.1 Y: 2483.4 Z: 203.4833 O: 3.141593
+
 const Position SpawnLoc[]=
 {
     {4523.889f, 2486.907f, 280.249f, 3.155f}, //fly pos
     {4407.439f, 2484.905f, 203.374f, 3.166f}, //center
     {4407.439f, 2484.905f, 230.374f, 3.166f}, //center Z + 30
     {4671.521f, 2481.815f, 343.365f, 3.166f} //spawn pos
-};
+};*/
 
 class boss_sindragosa : public CreatureScript
 {
@@ -111,7 +121,6 @@ class boss_sindragosa : public CreatureScript
 
                 me->SetFlying(true);
                 SetCombatMovement(true);
-                me->SetSpeed(MOVE_FLIGHT, 2.5f, true);
 
                 bMystic = false;
                 bCanSwitch = false;
@@ -149,13 +158,23 @@ class boss_sindragosa : public CreatureScript
             void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() == TYPEID_PLAYER)
+                    DoScriptText(RAND(SAY_KILL_1,SAY_KILL_2), me);
+            }
+
+            void MovementInform(uint32 type, uint32 id)
+            {
+                if(type != POINT_MOTION_TYPE)
+                    return;
+
+                if(id == POINT_PHASE_FLY)
+                    uiPhase = 2;
+                else
                 {
-                    switch(rand()%1)
-                    {
-                        case 0: DoScriptText(SAY_KILL_1, me); break;
-                        case 1: DoScriptText(SAY_KILL_2, me); break;
-                    }
+                    SetCombatMovement(true);
+                    me->SetReactState(REACT_AGGRESSIVE);
+                    uiPhase = 1;
                 }
+
             }
 
             void JustReachedHome()
@@ -174,10 +193,9 @@ class boss_sindragosa : public CreatureScript
                     if(!HealthAbovePct(85) && !bCanSwitch)
                     {
                         DoScriptText(SAY_AIR_PHASE, me);
-                        uiPhase = 2;
                         bCanSwitch = true;
                         SetCombatMovement(false);
-                        me->GetMotionMaster()->MovePoint(POINT_PHASE_FLY, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 30);
+                        me->GetMotionMaster()->MovePoint(POINT_PHASE_FLY, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 28);
                         me->SetReactState(REACT_PASSIVE);
                         me->AttackStop();
                         me->SetInCombatWithZone();
@@ -251,7 +269,7 @@ class boss_sindragosa : public CreatureScript
                         for (uint8 i = 1; i <= RAID_MODE(2,5,2,5); ++i)
                         {
                             if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 100.0f, true, -SPELL_FROST_BEACON))
-                                DoCast(target, SPELL_FROST_BEACON);
+                                DoCast(target, SPELL_FROST_BEACON_EFFECT, true);
                         }
                         uiMarkTimer = 25000;
                     } else uiMarkTimer -= uiDiff;
@@ -264,16 +282,10 @@ class boss_sindragosa : public CreatureScript
                         uiBombTimer = 7000;
                     } else uiBombTimer -= uiDiff;
 
-                    if(uiBombCount >= RAID_MODE(4,8,4,8))
+                    if(uiBombCount >= RAID_MODE(4, 8, 4, 8))
                     {
-                        me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
-                        SetCombatMovement(true);
-                        me->SetReactState(REACT_AGGRESSIVE);
-                        me->AttackStop();
-                        me->SetInCombatWithZone();
-                        me->GetMotionMaster()->MovePoint(POINT_PHASE_NORMAL, SpawnLoc[1]);
-                        uiPhase = 1;
                         uiBombCount = 0;
+                        me->GetMotionMaster()->MovePoint(POINT_PHASE_NORMAL, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() - 28);
                     }
                 }
 
@@ -311,7 +323,7 @@ class boss_sindragosa : public CreatureScript
                     DoScriptText(SAY_AIR_PHASE, me);
                     uiPhase = 2;
                     SetCombatMovement(false);
-                    me->GetMotionMaster()->MovePoint(POINT_PHASE_FLY, SpawnLoc[2]);
+                    me->GetMotionMaster()->MovePoint(POINT_PHASE_FLY, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 28);
                     me->SetReactState(REACT_PASSIVE);
                     me->AttackStop();
                     me->SetInCombatWithZone();
@@ -547,25 +559,21 @@ class spell_sindragosa_ice_tomb : public SpellScriptLoader
         {
             PrepareAuraScript(spell_sindragosa_ice_tomb_AuraScript)
 
-            void OnRemove(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnPeriodic(AuraEffect const* aurEff)
             {
-                if(Unit* beacon = aurApp->GetBase()->GetCaster())
+                GetCaster()->CastSpell(GetTarget(), SPELL_ICE_TOMB, true);
+                GetCaster()->CastSpell(GetTarget(), SPELL_ASPHYXATION, true);
+                Creature* tomb = GetCaster()->SummonCreature(CREATURE_ICE_TOMB, GetCaster()->GetPositionX(), GetCaster()->GetPositionY(), GetCaster()->GetPositionZ(), 0, TEMPSUMMON_CORPSE_DESPAWN);
+                if(tomb)
                 {
-                    if (InstanceScript* instance = aurApp->GetBase()->GetOwner()->GetInstanceScript())
-                        if (Creature* sindragosa = Unit::GetCreature(*aurApp->GetBase()->GetOwner(), instance->GetData64(DATA_SINDRAGOSA)))
-                            if(sindragosa->isAlive())
-                                sindragosa->CastSpell(beacon, SPELL_ICE_TOMB, true);
-
-                    beacon->CastSpell(beacon, SPELL_ASPHYXATION, true);
-                    Creature* tomb = beacon->SummonCreature(CREATURE_ICE_TOMB, beacon->GetPositionX(), beacon->GetPositionY(), beacon->GetPositionZ(), 0, TEMPSUMMON_CORPSE_DESPAWN);
-                    if(tomb)
-                        tomb->AI()->SetGUID(beacon->GetGUID());
+                    tomb->CastSpell(tomb, SPELL_WITHOUT_ANIMATION, true);
+                    tomb->AI()->SetGUID(GetTarget()->GetGUID());
                 }
             }
 
             void Register()
             {
-                OnEffectRemove += AuraEffectRemoveFn(spell_sindragosa_ice_tomb_AuraScript::OnRemove, EFFECT_2, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_sindragosa_ice_tomb_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             }
         };
 
@@ -585,10 +593,10 @@ class spell_sindragosa_mystic_buffet : public SpellScriptLoader
         {
             PrepareAuraScript(spell_sindragosa_mystic_buffet_AuraScript)
 
-            void OnApply(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
             {
-                if (InstanceScript* instance = aurApp->GetBase()->GetOwner()->GetInstanceScript())
-                    if(aurApp->GetBase()->GetStackAmount() >= 5)
+                if (InstanceScript* instance = GetOwner()->GetInstanceScript())
+                    if(GetStackAmount() >= 5)
                         instance->SetData(DATA_ALL_YOU_CAN_EAT, FAIL);
                     else
                         instance->SetData(DATA_ALL_YOU_CAN_EAT, DONE);
@@ -616,14 +624,10 @@ class spell_sindragosa_unchained_magic : public SpellScriptLoader
         {
             PrepareAuraScript(spell_sindragosa_unchained_magic_AuraScript)
 
-            void OnRemove(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
             {
-                Unit* caster = GetCaster();
-                if (!caster)
-                    return;
-
-                int32 damage = (aurApp->GetBase()->GetStackAmount() * 2000);
-                aurApp->GetTarget()->CastCustomSpell(71044, SPELLVALUE_BASE_POINT0, damage, aurApp->GetTarget(), true, NULL, aurEff, GetCasterGUID());
+                int32 damage = (GetStackAmount() * 2000);
+                GetTarget()->CastCustomSpell(71044, SPELLVALUE_BASE_POINT0, damage, GetTarget(), true, NULL, aurEff, GetCasterGUID());
             }
 
             void Register()
@@ -638,6 +642,68 @@ class spell_sindragosa_unchained_magic : public SpellScriptLoader
         }
 };
 
+class spell_sindragosa_ice_tomb_effect : public SpellScriptLoader
+{
+    public:
+        spell_sindragosa_ice_tomb_effect() : SpellScriptLoader("spell_sindragosa_ice_tomb_effect") { }
+
+
+        class spell_sindragosa_ice_tomb_effect_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_sindragosa_ice_tomb_effect_SpellScript);
+
+            void HandleScript(SpellEffIndex /*effIndex*/)
+            {
+                if (!(GetHitUnit() && GetHitUnit()->isAlive() && GetCaster()))
+                    return;
+
+                if (GetHitUnit()->GetTypeId() == TYPEID_PLAYER)
+                    GetCaster()->CastSpell(GetHitUnit(), SPELL_FROST_BEACON, true);
+            }
+
+            void Register()
+            {
+                OnEffect += SpellEffectFn(spell_sindragosa_ice_tomb_effect_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_sindragosa_ice_tomb_effect_SpellScript();
+        }
+};
+
+class spell_sindragosa_blistering_cold : public SpellScriptLoader
+{
+    public:
+        spell_sindragosa_blistering_cold() : SpellScriptLoader("spell_sindragosa_blistering_cold") { }
+
+
+        class spell_sindragosa_blistering_cold_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_sindragosa_blistering_cold_SpellScript);
+
+            void HandleScript(SpellEffIndex /*effIndex*/)
+            {
+                if (!(GetHitUnit() && GetHitUnit()->isAlive() && GetCaster()))
+                    return;
+
+                GetHitUnit()->CastSpell(GetCaster(), SPELL_ICY_TRIP_JUMP, true);
+            }
+
+            void Register()
+            {
+                OnEffect += SpellEffectFn(spell_sindragosa_blistering_cold_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+            }
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_sindragosa_blistering_cold_SpellScript();
+        }
+};
+
+
 void AddSC_boss_sindragosa()
 {
     new boss_sindragosa();
@@ -647,4 +713,6 @@ void AddSC_boss_sindragosa()
     new spell_sindragosa_ice_tomb();
     new spell_sindragosa_mystic_buffet(); //for achievement
     new spell_sindragosa_unchained_magic();
+    new spell_sindragosa_ice_tomb_effect();
+    new spell_sindragosa_blistering_cold();
 }

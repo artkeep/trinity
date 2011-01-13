@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,7 +24,27 @@ const Position SpawnLoc[]=
 {
     {4671.521f, 2481.815f, 343.365f, 3.166f} //spawn pos
 };
-
+static const DoorData doorData[] =
+{
+    {GO_LORD_MARROWGAR_S_ENTRANCE,           DATA_MARROWGAR_EVENT,        DOOR_TYPE_ROOM,    BOUNDARY_N   },
+    {GO_ICEWALL,                             DATA_MARROWGAR_EVENT,        DOOR_TYPE_PASSAGE, BOUNDARY_NONE},
+    {GO_DOODAD_ICECROWN_ICEWALL02,           DATA_MARROWGAR_EVENT,        DOOR_TYPE_PASSAGE, BOUNDARY_NONE},
+    {GO_ORATORY_OF_THE_DAMNED_ENTRANCE,      DATA_DEATHWHISPER_EVENT,     DOOR_TYPE_ROOM,    BOUNDARY_N   },
+    {GO_ORANGE_PLAGUE_MONSTER_ENTRANCE,      DATA_FESTERGUT_EVENT,             DOOR_TYPE_ROOM,    BOUNDARY_E   },
+    {GO_GREEN_PLAGUE_MONSTER_ENTRANCE,       DATA_ROTFACE_EVENT,               DOOR_TYPE_ROOM,    BOUNDARY_E   },
+    {GO_SCIENTIST_ENTRANCE,                  DATA_PROFESSOR_PUTRICIDE_EVENT,   DOOR_TYPE_ROOM,    BOUNDARY_E   },
+    {GO_CRIMSON_HALL_DOOR,                   DATA_BLOOD_PRINCE_COUNCIL_EVENT,  DOOR_TYPE_ROOM,    BOUNDARY_S   },
+    {GO_BLOOD_ELF_COUNCIL_DOOR,              DATA_BLOOD_PRINCE_COUNCIL_EVENT,  DOOR_TYPE_PASSAGE, BOUNDARY_W   },
+    {GO_BLOOD_ELF_COUNCIL_DOOR_RIGHT,        DATA_BLOOD_PRINCE_COUNCIL_EVENT,  DOOR_TYPE_PASSAGE, BOUNDARY_E   },
+    {GO_DOODAD_ICECROWN_BLOODPRINCE_DOOR_01, DATA_BLOOD_QUEEN_LANATHEL_EVENT, DOOR_TYPE_ROOM,    BOUNDARY_S   },
+    {GO_DOODAD_ICECROWN_GRATE_01,            DATA_BLOOD_QUEEN_LANATHEL_EVENT, DOOR_TYPE_PASSAGE, BOUNDARY_NONE},
+    {GO_GREEN_DRAGON_BOSS_ENTRANCE,          DATA_VALITHRIA_DREAMWALKER_EVENT, DOOR_TYPE_ROOM,    BOUNDARY_N   },
+    {GO_GREEN_DRAGON_BOSS_EXIT,              DATA_VALITHRIA_DREAMWALKER_EVENT, DOOR_TYPE_PASSAGE, BOUNDARY_S   },
+    {GO_SINDRAGOSA_ENTRANCE_DOOR,            DATA_SINDRAGOSA_EVENT,            DOOR_TYPE_ROOM,    BOUNDARY_S   },
+    {GO_SINDRAGOSA_SHORTCUT_ENTRANCE_DOOR,   DATA_SINDRAGOSA_EVENT,            DOOR_TYPE_ROOM,    BOUNDARY_E   },
+    {GO_SINDRAGOSA_SHORTCUT_EXIT_DOOR,       DATA_SINDRAGOSA_EVENT,            DOOR_TYPE_PASSAGE, BOUNDARY_NONE},
+    {0,                                      0,                          DOOR_TYPE_ROOM,    BOUNDARY_NONE} // END
+};
 class instance_icecrown_citadel : public InstanceMapScript
 {
     public:
@@ -34,10 +54,10 @@ class instance_icecrown_citadel : public InstanceMapScript
         {
             instance_icecrown_citadel_InstanceMapScript(InstanceMap* pMap) : InstanceScript(pMap)
             {
+                LoadDoorData(doorData);
                 uiDifficulty = pMap->GetDifficulty();
 
                 uiLordMarrowgar         = 0;
-                uiLadyDeathwhisper      = 0;
                 uiGunship               = 0;
                 uiDeathbringerSaurfang  = 0;
                 uiFestergut             = 0;
@@ -55,7 +75,6 @@ class instance_icecrown_citadel : public InstanceMapScript
 
                 uiAngle                 = 0;
                 uiSpawn                 = 0;
-                uiBoned                 = 0;
                 uiAllYouCanEat          = 0;
                 uiNecroticStack         = 0;
                 uiBloodCouncilController = 0;
@@ -105,6 +124,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                 uiSindragossaTp         = 0;
                 uiLichTp                = 0;
 
+                isBonedEligible         = 0;
+				isOozeDanceEligible     = 0;
+				isNauseaEligible        = 0;
+				isOrbWhispererEligible  = 0;
+
                 memset(&uiEncounter, 0, sizeof(uiEncounter));
             };
 
@@ -132,6 +156,9 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
                 switch(creature->GetEntry())
                 {
+                    case CREATURE_ORANGE_GAS_STALKER:
+                        creature->SetReactState(REACT_PASSIVE);
+                        break;
                     case CREATURE_KOR_KRON_GENERAL:
                         if (TeamInInstance == ALLIANCE)
                             creature->UpdateEntry(CREATURE_ALLIANCE_COMMANDER, ALLIANCE);
@@ -172,19 +199,13 @@ class instance_icecrown_citadel : public InstanceMapScript
                         if (TeamInInstance == ALLIANCE)
                             creature->UpdateEntry(CREATURE_SE_SKYBREAKER_MARINE, ALLIANCE);
                         break;
-                    case CREATURE_MARROWGAR:
-                        uiLordMarrowgar = creature->GetGUID();
-                        break;
-                    case CREATURE_DEATHWHISPER:
-                        uiLadyDeathwhisper = creature->GetGUID();
-                        break;
                     case CREATURE_GUNSHIP:
                         uiGunship = creature->GetGUID();
                         break;
                     case CREATURE_SAURFANG:
                         uiDeathbringerSaurfang = creature->GetGUID();
                         break;
-                    case CREATURE_FESTERGURT:
+                    case CREATURE_FESTERGUT:
                         uiFestergut = creature->GetGUID();
                         break;
                     case CREATURE_ROTFACE:
@@ -403,11 +424,10 @@ class instance_icecrown_citadel : public InstanceMapScript
             {
                 switch(identifier)
                 {
-                    case DATA_MARROWGAR:              return uiLordMarrowgar;
-                    case DATA_DEATHWHISPER:           return uiLadyDeathwhisper;
+                    case DATA_LORD_MARROWGAR:         return uiLordMarrowgar;
                     case DATA_GUNSHIP_BATTLE:         return uiGunship;
                     case DATA_SAURFANG:               return uiDeathbringerSaurfang;
-                    case DATA_FESTERGURT:             return uiFestergut;
+                    case DATA_FESTERGUT:             return uiFestergut;
                     case DATA_ROTFACE:                return uiRotface;
                     case DATA_PROFESSOR_PUTRICIDE:    return uiProfessorPutricide;
                     case DATA_PRINCE_VALANAR_ICC:     return uiPrinceValanar;
@@ -419,7 +439,6 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_LICH_KING:              return uiLichKing;
                     case DATA_TIRION:                 return uiTirion;
                     case DATA_ANGLE:                  return uiAngle;
-                    case DATA_BONED:                  return uiBoned;
                     case DATA_ALL_YOU_CAN_EAT:        return uiAllYouCanEat;
                     case DATA_BEEN_WAITING:           return uiBeenWaiting;
                     case DATA_NECK_DEEP:              return uiNeckDeep;
@@ -435,6 +454,8 @@ class instance_icecrown_citadel : public InstanceMapScript
                 switch(type)
                 {
                     case DATA_MARROWGAR_EVENT:
+                        if (data == FAIL)
+                            HandleGameObject(uiMarrowgarEntrance, true);
                         if(data == DONE)
                         {
                             HandleGameObject(uiIceWall1, true);
@@ -458,12 +479,16 @@ class instance_icecrown_citadel : public InstanceMapScript
 
                             if (GameObject* MarrowgarTp = instance->GetGameObject(uiMarrowgarTp))
                                 MarrowgarTp->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
-                        }
+
+						
+						}
                         if(data == IN_PROGRESS)
                             HandleGameObject(uiMarrowgarEntrance, false);
                         uiEncounter[0] = data;
                         break;
                     case DATA_DEATHWHISPER_EVENT:
+                        if (data == FAIL)
+                            HandleGameObject(uiOratoryDoor, true);
                         if(data == DONE)
                         {
                             HandleGameObject(uiOratoryDoor, true);
@@ -528,7 +553,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                         }
                         uiEncounter[3] = data;
                         break;
-                    case DATA_FESTERGURT_EVENT:
+                    case DATA_FESTERGUT_EVENT:
                         if(data == DONE)
                         {
                             HandleGameObject(uiOrangeMonsterDoor, true);
@@ -606,7 +631,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                             HandleGameObject(uiCrimsonHallDoor2, true);
                             HandleGameObject(uiCrimsonHallDoor3, true);
                         }
-                        if(data == NOT_STARTED)
+                        if(data == NOT_STARTED || data == FAIL)
                             HandleGameObject(uiCrimsonHallDoor1, true);
 
                         if(data == IN_PROGRESS)
@@ -682,6 +707,18 @@ class instance_icecrown_citadel : public InstanceMapScript
                         if(data >= 2)
                             Creature* sindragosa = instance->SummonCreature(CREATURE_SINDRAGOSA, SpawnLoc[0]);
                         break;
+                    case DATA_BONED_ACHIEVEMENT:
+                        isBonedEligible = data ? true : false;
+                        break;
+                    case DATA_OOZE_DANCE_ACHIEVEMENT:
+                        isOozeDanceEligible = data ? true : false;
+                        break;
+                    case DATA_NAUSEA_ACHIEVEMENT:
+                        isNauseaEligible = data ? true : false;
+                        break;
+                    case DATA_ORB_WHISPERER_ACHIEVEMENT:
+                        isOrbWhispererEligible = data ? true : false;
+                        break;
                 }
 
                 if (data == DONE)
@@ -700,7 +737,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                     return uiEncounter[2];
                 case DATA_SAURFANG_EVENT:
                     return uiEncounter[3];
-                case DATA_FESTERGURT_EVENT:
+                case DATA_FESTERGUT_EVENT:
                     return uiEncounter[4];
                 case DATA_ROTFACE_EVENT:
                     return uiEncounter[5];
@@ -735,7 +772,47 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* in)
+            bool CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/)
+            {
+                switch (criteria_id)
+                {
+                    case CRITERIA_BONED_10N:
+                    case CRITERIA_BONED_25N:
+                    case CRITERIA_BONED_10H:
+                    case CRITERIA_BONED_25H:
+                        return isBonedEligible;
+                    case CRITERIA_DANCES_WITH_OOZES_10N:
+                    case CRITERIA_DANCES_WITH_OOZES_25N:
+                    case CRITERIA_DANCES_WITH_OOZES_10H:
+                    case CRITERIA_DANCES_WITH_OOZES_25H:
+                        return isOozeDanceEligible;
+                    case CRITERIA_NAUSEA_10N:
+                    case CRITERIA_NAUSEA_25N:
+                    case CRITERIA_NAUSEA_10H:
+                    case CRITERIA_NAUSEA_25H:
+                        return isNauseaEligible;
+                    case CRITERIA_ORB_WHISPERER_10N:
+                    case CRITERIA_ORB_WHISPERER_25N:
+                    case CRITERIA_ORB_WHISPERER_10H:
+                    case CRITERIA_ORB_WHISPERER_25H:
+                        return isOrbWhispererEligible;
+                    // Only one criteria for both modes, need to do it like this
+                    case CRITERIA_KILL_LANA_THEL_10M:
+                    case CRITERIA_ONCE_BITTEN_TWICE_SHY_10N:
+                    case CRITERIA_ONCE_BITTEN_TWICE_SHY_10V:
+                        return CAST_INST(InstanceMap, instance)->GetMaxPlayers() == 10;
+                    case CRITERIA_KILL_LANA_THEL_25M:
+                    case CRITERIA_ONCE_BITTEN_TWICE_SHY_25N:
+                    case CRITERIA_ONCE_BITTEN_TWICE_SHY_25V:
+                        return CAST_INST(InstanceMap, instance)->GetMaxPlayers() == 25;
+                    default:
+                        break;
+                }
+
+                return false;
+            }
+
+			void Load(const char* in)
             {
                 if (!in)
                 {
@@ -781,7 +858,6 @@ class instance_icecrown_citadel : public InstanceMapScript
 
         private:
             uint64 uiLordMarrowgar;
-            uint64 uiLadyDeathwhisper;
             uint64 uiGunship;
             uint64 uiDeathbringerSaurfang;
             uint64 uiFestergut;
@@ -843,13 +919,16 @@ class instance_icecrown_citadel : public InstanceMapScript
             uint64 uiLichTp;
             uint64 uiBloodCouncilController;
             uint8 uiDifficulty;
-            uint8 uiBoned;
             uint8 uiSpawn;
             uint8 uiAllYouCanEat;
             uint8 uiBeenWaiting;
             uint8 uiNeckDeep;
             uint8 uiNecroticStack;
             uint8 uiAngle;
+            uint8 isBonedEligible;
+			uint8 isOozeDanceEligible;
+			uint8 isNauseaEligible;
+			uint8 isOrbWhispererEligible;
             uint32 uiEncounter[MAX_ENCOUNTER];
         };
 

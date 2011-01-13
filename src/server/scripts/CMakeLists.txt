@@ -1,4 +1,5 @@
-# Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+# Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+#
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
@@ -39,7 +40,12 @@ if( USE_SCRIPTPCH AND MSVC )
   )
 endif()
 
+message(STATUS "SCRIPT PREPARATIONS")
+include(Spells/CMakeLists.txt)
+
 include(Commands/CMakeLists.txt)
+
+include(Examples/CMakeLists.txt)
 
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
@@ -58,7 +64,18 @@ set(scripts_STAT_SRCS
   ../game/AI/ScriptedAI/ScriptedSimpleAI.cpp
 )
 
-message("-- Added Script Library to SCRIPTS lib")
+if(SCRIPTS)
+  include(Custom/CMakeLists.txt)
+  include(World/CMakeLists.txt)
+  include(OutdoorPvP/CMakeLists.txt)
+  include(EasternKingdoms/CMakeLists.txt)
+  include(Kalimdor/CMakeLists.txt)
+  include(Outland/CMakeLists.txt)
+  include(Northrend/CMakeLists.txt)
+endif()
+
+message(STATUS "SCRIPT PREPARATION COMPLETE")
+message("")
 
 include_directories(
   ${CMAKE_BINARY_DIR}
@@ -158,6 +175,8 @@ include_directories(
 )
 
 add_library(scripts STATIC ${scripts_STAT_SRCS})
+
+add_dependencies(scripts revision.h)
 
 # Generate precompiled header
 if( USE_SCRIPTPCH )

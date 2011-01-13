@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -247,7 +247,7 @@ void LoadDBCStores(const std::string& dataPath)
 
     std::string dbcPath = dataPath+"dbc/";
 
-    const uint32 DBCFilesCount = 91;
+    const uint32 DBCFilesCount = 90;
 
     StoreProblemList bad_dbc_files;
     uint32 availableDbcLocales = 0xFFFFFFFF;
@@ -339,8 +339,8 @@ void LoadDBCStores(const std::string& dataPath)
     LoadDBC(availableDbcLocales,bad_dbc_files,sHolidaysStore,            dbcPath,"Holidays.dbc");
     LoadDBC(availableDbcLocales,bad_dbc_files,sItemStore,                dbcPath,"Item.dbc");
     LoadDBC(availableDbcLocales,bad_dbc_files,sItemBagFamilyStore,       dbcPath,"ItemBagFamily.dbc");
-    //LoadDBC(availableDbcLocales,bar,bad_dbc_files,sItemDisplayInfoStore,     dbcPath,"ItemDisplayInfo.dbc");     -- not used currently
-    //LoadDBC(availableDbcLocales,bar,bad_dbc_files,sItemCondExtCostsStore,    dbcPath,"ItemCondExtCosts.dbc");
+    //LoadDBC(availableDbcLocales,bad_dbc_files,sItemDisplayInfoStore,     dbcPath,"ItemDisplayInfo.dbc");     -- not used currently
+    //LoadDBC(availableDbcLocales,bad_dbc_files,sItemCondExtCostsStore,    dbcPath,"ItemCondExtCosts.dbc");
     LoadDBC(availableDbcLocales,bad_dbc_files,sItemExtendedCostStore,    dbcPath,"ItemExtendedCost.dbc");
     LoadDBC(availableDbcLocales,bad_dbc_files,sItemLimitCategoryStore,   dbcPath,"ItemLimitCategory.dbc");
     LoadDBC(availableDbcLocales,bad_dbc_files,sItemRandomPropertiesStore,dbcPath,"ItemRandomProperties.dbc");

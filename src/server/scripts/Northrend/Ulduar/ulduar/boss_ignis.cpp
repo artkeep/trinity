@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -88,10 +88,10 @@ enum ConstructSpells
 #define MAX_ENCOUNTER_TIME                    4 * 60 * 1000
 
 // Water coords
-#define WATER_1_X                                646.77
-#define WATER_2_X                                526.77
-#define WATER_Y                                  277.79
-#define WATER_Z                                  359.88
+#define WATER_1_X                                646.77f
+#define WATER_2_X                                526.77f
+#define WATER_Y                                  277.79f
+#define WATER_Z                                  359.88f
 
 const Position Pos[20] =
 {
@@ -137,16 +137,16 @@ public:
 
         uint32 EncounterTime;
         uint32 ConstructTimer;
-		bool Shattered;
+        bool Shattered;
         bool bHasActivate;
 
         void Reset()
         {
             _Reset();
-			summons.DespawnAll();
+            summons.DespawnAll();
             if (vehicle)
                 vehicle->RemoveAllPassengers();
-			bHasActivate = false;
+            bHasActivate = false;
 
             events.Reset();
         }
@@ -158,18 +158,18 @@ public:
         void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
-			 Map* pMap = me->GetMap();
+             Map* pMap = me->GetMap();
             if (pMap->IsDungeon())
             {
-		        Map::PlayerList const &lPlayers = pMap->GetPlayers();
-		        for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
-		        {
-		           Unit* pPlayer = itr->getSource();
-		           if (!pPlayer) continue;
-			           if (pPlayer->isAlive())
-				           if (Creature* mount = pPlayer->GetVehicleCreatureBase())
-						        mount->DisappearAndDie() ;
-		         }
+                Map::PlayerList const &lPlayers = pMap->GetPlayers();
+                for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
+                {
+                   Unit* pPlayer = itr->getSource();
+                   if (!pPlayer) continue;
+                       if (pPlayer->isAlive())
+                           if (Creature* mount = pPlayer->GetVehicleCreatureBase())
+                                mount->DisappearAndDie() ;
+                 }
             }
             DoScriptText(SAY_AGGRO, me);
             events.ScheduleEvent(EVENT_JET, 30000);
@@ -235,38 +235,38 @@ public:
                         break;
                     case EVENT_GRAB_POT:
                         if(Player* SlagPotTarget = Unit::GetPlayer(*me, SlagPotTargetGUID))
-					    {
-						    if (SlagPotTarget && SlagPotTarget->isAlive())
-						    {
-							    SlagPotTarget->EnterVehicle(me, 0);
-							    events.CancelEvent(EVENT_GRAB_POT);
-							    events.ScheduleEvent(EVENT_CHANGE_POT, 1000);
-						    }
-					    }
+                        {
+                            if (SlagPotTarget && SlagPotTarget->isAlive())
+                            {
+                                SlagPotTarget->EnterVehicle(me, 0);
+                                events.CancelEvent(EVENT_GRAB_POT);
+                                events.ScheduleEvent(EVENT_CHANGE_POT, 1000);
+                            }
+                        }
                         break;
                     case EVENT_CHANGE_POT:
                         if(Player* SlagPotTarget = Unit::GetPlayer(*me, SlagPotTargetGUID))
-					    {
-						    if (SlagPotTarget && SlagPotTarget->isAlive())
-						    {
-							    SlagPotTarget->AddAura(RAID_MODE(SPELL_SLAG_POT_10, SPELL_SLAG_POT_25), SlagPotTarget);
-							    SlagPotTarget->EnterVehicle(me, 1);
-							    events.CancelEvent(EVENT_CHANGE_POT);
-							    events.ScheduleEvent(EVENT_END_POT, 10000);
-						    }
-					    }
+                        {
+                            if (SlagPotTarget && SlagPotTarget->isAlive())
+                            {
+                                SlagPotTarget->AddAura(RAID_MODE(SPELL_SLAG_POT_10, SPELL_SLAG_POT_25), SlagPotTarget);
+                                SlagPotTarget->EnterVehicle(me, 1);
+                                events.CancelEvent(EVENT_CHANGE_POT);
+                                events.ScheduleEvent(EVENT_END_POT, 10000);
+                            }
+                        }
                         break;
                     case EVENT_END_POT:
                         if(Player* SlagPotTarget = Unit::GetPlayer(*me, SlagPotTargetGUID))
-					    {
-						    if (SlagPotTarget && SlagPotTarget->isAlive())
-						    {
-							    SlagPotTarget->ExitVehicle();
-							    SlagPotTarget->CastSpell(SlagPotTarget, RAID_MODE(SPELL_SLAG_IMBUED_10, SPELL_SLAG_IMBUED_25), true);
-							    SlagPotTarget = 0;
-							    events.CancelEvent(EVENT_END_POT);
-						    }
-					    }
+                        {
+                            if (SlagPotTarget && SlagPotTarget->isAlive())
+                            {
+                                SlagPotTarget->ExitVehicle();
+                                SlagPotTarget->CastSpell(SlagPotTarget, RAID_MODE(SPELL_SLAG_IMBUED_10, SPELL_SLAG_IMBUED_25), true);
+                                SlagPotTarget = 0;
+                                events.CancelEvent(EVENT_END_POT);
+                            }
+                        }
                         break;
                     case EVENT_SCORCH:
                         DoScriptText(RAND(SAY_SCORCH_1, SAY_SCORCH_2), me);
@@ -293,16 +293,16 @@ public:
                             events.ScheduleEvent(EVENT_CONSTRUCT, RAID_MODE(40000, 30000));
                         }
                         /*
-					    if(Creature* construct = Creature::GetCreature(*me, instance->GetData64(DATA_RANDOM_IRON_CONSTRUCT)))
-					    {
+                        if(Creature* construct = Creature::GetCreature(*me, instance->GetData64(DATA_RANDOM_IRON_CONSTRUCT)))
+                        {
                             construct->setActive(true);
-						    construct->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-						    construct->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-						    DoCast(construct, SPELL_ACTIVATE_CONSTRUCT);
-					    }
+                            construct->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            construct->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                            DoCast(construct, SPELL_ACTIVATE_CONSTRUCT);
+                        }
                         */
                         break;
-					}
+                    }
                     case EVENT_BERSERK:
                         DoCast(me, SPELL_BERSERK, true);
                         DoScriptText(SAY_BERSERK, me);
@@ -346,7 +346,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new boss_ignis_AI (pCreature);
     }
@@ -357,6 +357,11 @@ class npc_iron_construct : public CreatureScript
 public:
     npc_iron_construct() : CreatureScript("npc_iron_construct") { }
 
+    CreatureAI *GetAI(Creature *creature) const
+    {
+        return new npc_iron_constructAI(creature);
+    }
+
     struct npc_iron_constructAI : public ScriptedAI
     {
         npc_iron_constructAI(Creature *c) : ScriptedAI(c)
@@ -366,14 +371,14 @@ public:
 
         InstanceScript* pInstance;
         bool Brittled;
-		bool active;
+        bool active;
 
         void Reset()
         {
-		    me->SetReactState(REACT_PASSIVE);
-		    me->SetUInt32Value(UNIT_NPC_EMOTESTATE,69);
+            me->SetReactState(REACT_PASSIVE);
+            me->SetUInt32Value(UNIT_NPC_EMOTESTATE,69);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE) ;
-		    me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE) ;
+            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE) ;
             Brittled = false;
         }
 
@@ -393,7 +398,7 @@ public:
             }
         }
 
-		void JustDied(Unit* pKiller)
+        void JustDied(Unit* pKiller)
         {
             if (pInstance)
                 if (Creature *pIgnis = me->GetCreature(*me, pInstance->GetData64(DATA_IGNIS)))
@@ -401,23 +406,23 @@ public:
                         pIgnis->AI()->DoAction(ACTION_REMOVE_BUFF);
         }
 
-	    /*void SpellHit(Unit* caster,const SpellEntry *spell)
-	    {
-		    if(!active && spell->Id==SPELL_ACTIVATE_CONSTRUCT)
-		    {
-			    caster->AddAura(SPELL_STRENGTH,caster);
-			    me->SetReactState(REACT_AGGRESSIVE);
-			    if (caster->getVictim())
-			    {
-				    me->SetInCombatWith(caster->getVictim());
-				    caster->getVictim()->SetInCombatWith(me);
-				    me->AddThreat(caster->getVictim(), 0.0f);
+        /*void SpellHit(Unit* caster,const SpellEntry *spell)
+        {
+            if(!active && spell->Id==SPELL_ACTIVATE_CONSTRUCT)
+            {
+                caster->AddAura(SPELL_STRENGTH,caster);
+                me->SetReactState(REACT_AGGRESSIVE);
+                if (caster->getVictim())
+                {
+                    me->SetInCombatWith(caster->getVictim());
+                    caster->getVictim()->SetInCombatWith(me);
+                    me->AddThreat(caster->getVictim(), 0.0f);
                     me->GetMotionMaster()->MovePoint(1, caster->getVictim()->GetPositionX(), caster->getVictim()->GetPositionY(), caster->getVictim()->GetPositionZ()); 
-			    }
-			    active = true ;
-			    DoZoneInCombat();
-		    }
-	    }*/
+                }
+                active = true ;
+                DoZoneInCombat();
+            }
+        }*/
 
         void UpdateAI(const uint32 /*uiDiff*/)
         {
@@ -437,23 +442,19 @@ public:
             }
             // Water pools
             if(cMap->GetId() == 603 && !Brittled && me->HasAura(SPELL_MOLTEN))
-			{
+            {
                 if (me->GetDistance(WATER_1_X, WATER_Y, WATER_Z) <= 18 || me->GetDistance(WATER_2_X, WATER_Y, WATER_Z) <= 18)
                 {
                     DoCast(SPELL_BRITTLE_10);
                     me->RemoveAura(SPELL_MOLTEN);
                     Brittled = true;
                 }
-			}
+            }
             DoMeleeAttackIfReady();
         }
     };
-
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_iron_constructAI (pCreature);
-    }
 };
+
 class npc_scorch_ground : public CreatureScript
 {
 public:
@@ -473,7 +474,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new mob_scorch_targetAI(pCreature);
     }
@@ -493,7 +494,7 @@ class spell_ignis_slag_pot : public SpellScriptLoader
 
         class spell_ignis_slag_pot_AuraScript : public AuraScript
         {
-            PrepareAuraScript(spell_ignis_slag_pot_AuraScript)
+            PrepareAuraScript(spell_ignis_slag_pot_AuraScript);
             bool Validate(SpellEntry const * /*spellEntry*/)
             {
                 if (!sSpellStore.LookupEntry(SPELL_SLAG_POT_DAMAGE))
@@ -505,9 +506,9 @@ class spell_ignis_slag_pot : public SpellScriptLoader
                 return true;
             }
 
-            void HandleEffectPeriodic(AuraEffect const * aurEff)
+            void HandleEffectPeriodic(AuraEffect const * /*aurEff*/)
             {
-                Unit* aurEffCaster = aurEff->GetCaster();
+                Unit* aurEffCaster = GetCaster();
                 if (!aurEffCaster)
                     return;
 
@@ -517,22 +518,22 @@ class spell_ignis_slag_pot : public SpellScriptLoader
                      target->CastSpell(target, SPELL_SLAG_IMBUED, true);
             }
 
-			void ApplyEffect(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void ApplyEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (Unit* pTarget = aurApp->GetTarget())
+                if (Unit* pTarget = GetTarget())
                     pTarget->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_SCHOOL_DAMAGE, true);
             }
 
-            void RemoveEffect(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void RemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (Unit* pTarget = aurApp->GetTarget())
+                if (Unit* pTarget = GetTarget())
                     pTarget->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_SCHOOL_DAMAGE, false);
             }
 
             void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_ignis_slag_pot_AuraScript::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
-				OnEffectApply += AuraEffectApplyFn(spell_ignis_slag_pot_AuraScript::ApplyEffect, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+                OnEffectApply += AuraEffectApplyFn(spell_ignis_slag_pot_AuraScript::ApplyEffect, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
                 OnEffectRemove += AuraEffectRemoveFn(spell_ignis_slag_pot_AuraScript::RemoveEffect, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
             }
         };

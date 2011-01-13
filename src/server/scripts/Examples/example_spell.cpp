@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -268,10 +268,9 @@ class spell_ex_66244 : public SpellScriptLoader
         {
             return new spell_ex_66244AuraScript();
         }
-
-
 };
 
+// example usage of OnEffectAbsorb and AfterEffectAbsorb hooks
 class spell_ex_absorb_aura : public SpellScriptLoader
 {
     public:
@@ -285,31 +284,23 @@ class spell_ex_absorb_aura : public SpellScriptLoader
                 SPELL_TRIGGERED = 18282
             };
 
-            bool Validate(SpellEntry const * /*spellEntry*/)
-            {
-                // check if spellid exists in dbc, we will trigger it later
-                if (!sSpellStore.LookupEntry(SPELL_TRIGGERED))
-                    return false;
-                return true;
-            }
-
-            void HandleOnEffectAbsorb(AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount)
+            void HandleOnEffectAbsorb(AuraEffect * /*aurEff*/, DamageInfo & dmgInfo, uint32 & absorbAmount)
             {
                 sLog->outString("Our aura is now absorbing damage done to us!");
                 // absorb whole damage done to us
                 absorbAmount = dmgInfo.GetDamage();
             }
 
-            /*void HandleAfterAbsorb(DamageInfo & dmgInfo)
+            void HandleAfterEffectAbsorb(AuraEffect * /*aurEff*/, DamageInfo & /*dmgInfo*/, uint32 & absorbAmount)
             {
-                sLog->outString("Our auras have just absorbed damage done to us!");
-            }*/
+                sLog->outString("Our aura has absorbed %u damage!", absorbAmount);
+            }
 
             // function registering
             void Register()
             {
                 OnEffectAbsorb += AuraEffectAbsorbFn(spell_ex_absorb_auraAuraScript::HandleOnEffectAbsorb, EFFECT_0);
-                //AfterAbsorb += AuraAbsorbFn(spell_ex_absorb_auraAuraScript::HandleAfterAbsorb);
+                AfterEffectAbsorb += AuraEffectAbsorbFn(spell_ex_absorb_auraAuraScript::HandleAfterEffectAbsorb, EFFECT_0);
             }
         };
 
@@ -320,6 +311,8 @@ class spell_ex_absorb_aura : public SpellScriptLoader
         }
 };
 
+// example usage of OnEffectManaShield and AfterEffectManaShield hooks
+// see spell_ex_absorb_aura, these hooks work the same as OnEffectAbsorb and AfterEffectAbsorb
 
 // this function has to be added to function set in ScriptLoader.cpp
 void AddSC_example_spell_scripts()

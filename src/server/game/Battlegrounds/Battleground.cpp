@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -450,7 +450,7 @@ void Battleground::Update(uint32 diff)
                             AuraApplication * aurApp = iter->second;
                             Aura * aura = aurApp->GetBase();
                             if (!aura->IsPermanent()
-                                && aura->GetDuration() <= 25*IN_MILLISECONDS
+                                && aura->GetDuration() <= 30*IN_MILLISECONDS
                                 && aurApp->IsPositive()
                                 && (!(aura->GetSpellProto()->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY))
                                 && (!aura->HasEffectType(SPELL_AURA_MOD_INVISIBILITY)))
@@ -619,6 +619,28 @@ void Battleground::CastSpellOnTeam(uint32 SpellID, uint32 TeamID)
     }
 }
 
+void Battleground::RemoveAuraOnTeam(uint32 SpellID, uint32 TeamID)
+{
+    for (BattlegroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        if (itr->second.OfflineRemoveTime)
+            continue;
+        Player *plr = sObjectMgr->GetPlayer(itr->first);
+
+        if (!plr)
+        {
+            sLog->outError("Battleground:RemoveAuraOnTeam: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
+            continue;
+        }
+
+        uint32 team = itr->second.Team;
+        if (!team) team = plr->GetTeam();
+
+        if (team == TeamID)
+            plr->RemoveAura(SpellID);
+    }
+}
+
 void Battleground::YellToAll(Creature* creature, const char* text, uint32 language)
 {
     for (std::map<uint64, BattlegroundPlayer>::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
@@ -743,7 +765,7 @@ void Battleground::EndBattleground(uint32 winner)
     {
         winner_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(winner));
         loser_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
-        if (winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team && !(winner == WINNER_NONE))
+        if (winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team)
         {
             if (winner != WINNER_NONE)
             {
@@ -779,7 +801,7 @@ void Battleground::EndBattleground(uint32 winner)
 			SetArenaTeamRatingChangeForTeam(ALLIANCE, -16);
 			SetArenaTeamRatingChangeForTeam(HORDE, -16);
 		}
-		else
+        else
         {
             SetArenaTeamRatingChangeForTeam(ALLIANCE, 0);
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
@@ -1422,6 +1444,9 @@ void Battleground::RemovePlayerFromResurrectQueue(uint64 player_guid)
 
 bool Battleground::AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3, uint32 /*respawnTime*/)
 {
+    // If the assert is called, means that m_BgObjects must be resized!
+    ASSERT(type < m_BgObjects.size());
+
     Map *map = GetBgMap();
     if (!map)
         return false;
@@ -1548,6 +1573,9 @@ void Battleground::SpawnBGObject(uint32 type, uint32 respawntime)
 
 Creature* Battleground::AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime)
 {
+    // If the assert is called, means that m_BgCreatures must be resized!
+    ASSERT(type < m_BgCreatures.size());
+
     Map * map = GetBgMap();
     if (!map)
         return NULL;

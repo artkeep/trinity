@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -58,6 +58,13 @@ MailSender::MailSender(Object* sender, MailStationery stationery) : m_stationery
 MailSender::MailSender(AuctionEntry* sender)
     : m_messageType(MAIL_AUCTION), m_senderId(sender->GetHouseId()), m_stationery(MAIL_STATIONERY_AUCTION)
 {
+}
+
+MailSender::MailSender(Player* sender)
+{
+    m_messageType = MAIL_NORMAL;
+    m_stationery = sender->isGameMaster() ? MAIL_STATIONERY_GM : MAIL_STATIONERY_DEFAULT;
+    m_senderId = sender->GetGUIDLow();
 }
 
 

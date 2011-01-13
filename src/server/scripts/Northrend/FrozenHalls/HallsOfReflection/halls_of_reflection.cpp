@@ -825,7 +825,7 @@ public:
                     {
                         if(pWallTarget->isAlive())
                         {
-                            pWallTarget->ForcedDespawn();
+                            pWallTarget->DespawnOrUnsummon();
                             m_uipWallTargetGUID = 0;
                         }
                     }
@@ -859,7 +859,7 @@ public:
                     {
                         if(pWallTarget->isAlive())
                         {
-                            pWallTarget->ForcedDespawn();
+                            pWallTarget->DespawnOrUnsummon();
                             m_uipWallTargetGUID = 0;
                         }
                     }
@@ -893,7 +893,7 @@ public:
                     {
                         if(pWallTarget->isAlive())
                         {
-                            pWallTarget->ForcedDespawn();
+                            pWallTarget->DespawnOrUnsummon();
                             m_uipWallTargetGUID = 0;
                         }
                     }
@@ -926,7 +926,7 @@ public:
                     {
                         if(pWallTarget->isAlive())
                         {
-                            pWallTarget->ForcedDespawn();
+                            pWallTarget->DespawnOrUnsummon();
                             m_uipWallTargetGUID = 0;
                         }
                     }

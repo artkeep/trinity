@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #ifndef __UNIT_H
@@ -675,7 +677,7 @@ enum MovementFlags2
     MOVEMENTFLAG2_NONE                     = 0x00000000,
     MOVEMENTFLAG2_NO_STRAFE                = 0x00000001,
     MOVEMENTFLAG2_NO_JUMPING               = 0x00000002,
-    MOVEMENTFLAG2_UNK3                     = 0x00000004,
+    MOVEMENTFLAG2_UNK3                     = 0x00000004,        // Overrides various clientside checks
     MOVEMENTFLAG2_FULL_SPEED_TURNING       = 0x00000008,
     MOVEMENTFLAG2_FULL_SPEED_PITCHING      = 0x00000010,
     MOVEMENTFLAG2_ALWAYS_ALLOW_PITCHING    = 0x00000020,
@@ -1255,6 +1257,7 @@ class Unit : public WorldObject
         inline bool HealthAbovePct(int32 pct) const { return GetHealth() * (uint64)100 > GetMaxHealth() * (uint64)pct; }
         inline float GetHealthPct() const { return GetMaxHealth() ? 100.f * GetHealth() / GetMaxHealth() : 0.0f; }
         inline uint32 CountPctFromMaxHealth(int32 pct) const { return CalculatePctN(GetMaxHealth(), pct); }
+        inline uint32 CountPctFromCurHealth(int32 pct) const { return CalculatePctN(GetHealth(), pct); }
 
         void SetHealth(uint32 val);
         void SetMaxHealth(uint32 val);
@@ -1563,7 +1566,7 @@ class Unit : public WorldObject
         void RemoveAllMinionsByEntry(uint32 entry);
         void SetCharm(Unit* target, bool apply);
         Unit* GetNextRandomRaidMemberOrPet(float radius);
-        bool SetCharmedBy(Unit* charmer, CharmType type);
+        bool SetCharmedBy(Unit* charmer, CharmType type, AuraApplication const * aurApp = NULL);
         void RemoveCharmedBy(Unit* charmer);
         void RestoreFaction();
 
@@ -1610,7 +1613,7 @@ class Unit : public WorldObject
         void _RemoveNoStackAuraApplicationsDueToAura(Aura * aura);
         void _RemoveNoStackAurasDueToAura(Aura * aura);
         bool _IsNoStackAuraDueToAura(Aura * appliedAura, Aura * existingAura) const;
-        void _HandleAuraEffect(AuraEffect * aurEff, bool apply);
+        void _RegisterAuraEffect(AuraEffect * aurEff, bool apply);
 
         // m_ownedAuras container management
         AuraMap      & GetOwnedAuras()       { return m_ownedAuras; }
@@ -1688,7 +1691,7 @@ class Unit : public WorldObject
 
         int32 GetTotalAuraModifier(AuraType auratype) const;
         float GetTotalAuraMultiplier(AuraType auratype) const;
-        int32 GetMaxPositiveAuraModifier(AuraType auratype) const;
+        int32 GetMaxPositiveAuraModifier(AuraType auratype);
         int32 GetMaxNegativeAuraModifier(AuraType auratype) const;
 
         int32 GetTotalAuraModifierByMiscMask(AuraType auratype, uint32 misc_mask) const;
@@ -1857,6 +1860,7 @@ class Unit : public WorldObject
         uint32 GetDisplayId() { return GetUInt32Value(UNIT_FIELD_DISPLAYID); }
         void SetDisplayId(uint32 modelId);
         uint32 GetNativeDisplayId() { return GetUInt32Value(UNIT_FIELD_NATIVEDISPLAYID); }
+        void RestoreDisplayId();
         void SetNativeDisplayId(uint32 modelId) { SetUInt32Value(UNIT_FIELD_NATIVEDISPLAYID, modelId); }
         void setTransForm(uint32 spellid) { m_transform = spellid;}
         uint32 getTransForm() const { return m_transform;}
@@ -1884,8 +1888,8 @@ class Unit : public WorldObject
         int32 SpellBaseHealingBonus(SpellSchoolMask schoolMask);
         int32 SpellBaseDamageBonusForVictim(SpellSchoolMask schoolMask, Unit *pVictim);
         int32 SpellBaseHealingBonusForVictim(SpellSchoolMask schoolMask, Unit *pVictim);
-        uint32 SpellDamageBonus(Unit * pVictim, SpellEntry const * spellProto, uint32 damage, DamageEffectType damagetype, uint32 stack = 1);
-        uint32 SpellHealingBonus(Unit * pVictim, SpellEffIndex effIndex, SpellEntry const * spellProto, uint32 healamount, DamageEffectType damagetype, uint32 stack = 1);
+        uint32 SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint32 damage, DamageEffectType damagetype, uint32 stack = 1);
+        uint32 SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint32 healamount, DamageEffectType damagetype, uint32 stack = 1);
         bool   isSpellBlocked(Unit *pVictim, SpellEntry const *spellProto, WeaponAttackType attackType = BASE_ATTACK);
         bool   isBlockCritical();
         bool   isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType = BASE_ATTACK) const;
@@ -1948,6 +1952,12 @@ class Unit : public WorldObject
         uint32 HasUnitMovementFlag(uint32 f) const { return m_movementInfo.flags & f; }
         uint32 GetUnitMovementFlags() const { return m_movementInfo.flags; }
         void SetUnitMovementFlags(uint32 f) { m_movementInfo.flags = f; }
+
+        void AddExtraUnitMovementFlag(uint16 f) { m_movementInfo.flags2 |= f; }
+        void RemoveExtraUnitMovementFlag(uint16 f) { m_movementInfo.flags2 &= ~f; }
+        uint16 HasExtraUnitMovementFlag(uint16 f) const { return m_movementInfo.flags2 & f; }
+        uint16 GetExtraUnitMovementFlags() const { return m_movementInfo.flags2; }
+        void SetExtraUnitMovementFlags(uint16 f) { m_movementInfo.flags2 = f; }
 
         void SetControlled(bool apply, UnitState state);
 
@@ -2021,8 +2031,8 @@ class Unit : public WorldObject
         bool m_ControlledByPlayer;
 
         bool CheckPlayerCondition(Player* pPlayer);
-        void EnterVehicle(Unit *base, int8 seatId = -1, bool byAura = false) { EnterVehicle(base->GetVehicleKit(), seatId, byAura); }
-        void EnterVehicle(Vehicle *vehicle, int8 seatId = -1, bool byAura = false);
+        void EnterVehicle(Unit *base, int8 seatId = -1, AuraApplication const * aurApp = NULL) { EnterVehicle(base->GetVehicleKit(), seatId, aurApp); }
+        void EnterVehicle(Vehicle *vehicle, int8 seatId = -1, AuraApplication const * aurApp = NULL);
         void ExitVehicle();
         void ChangeSeat(int8 seatId, bool next = true, bool byAura = false);
 
@@ -2228,5 +2238,4 @@ inline void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 star
 
     SendMessageToSet(&data, true);
 }
-
 #endif

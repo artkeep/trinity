@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1059,8 +1059,7 @@ void ObjectMgr::LoadEquipmentTemplates()
                     dbcitem->InventoryType != INVTYPE_WEAPONOFFHAND &&
                     dbcitem->InventoryType != INVTYPE_HOLDABLE &&
                     dbcitem->InventoryType != INVTYPE_THROWN &&
-                    dbcitem->InventoryType != INVTYPE_RANGEDRIGHT &&
-                    dbcitem->InventoryType != INVTYPE_RELIC)
+                    dbcitem->InventoryType != INVTYPE_RANGEDRIGHT)
             {
                 sLog->outErrorDb("Item (entry=%u) in creature_equip_template.equipentry%u for entry = %u is not equipable in a hand, forced to 0.", eqInfo->equipentry[j], j+1, i);
                 const_cast<EquipmentInfo*>(eqInfo)->equipentry[j] = 0;
@@ -1202,7 +1201,7 @@ void ObjectMgr::LoadLinkedRespawn()
         uint32 linkedGuidLow = fields[1].GetUInt32();
         uint8  linkType = fields[2].GetUInt8();
 
-        uint64 guid, linkedGuid;
+        uint64 guid = 0, linkedGuid = 0;
         bool error = false;
         switch (linkType)
         {

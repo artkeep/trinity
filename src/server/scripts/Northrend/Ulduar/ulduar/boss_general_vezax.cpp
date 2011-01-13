@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,10 +30,10 @@ enum Yells
     SAY_HARDMODE_ON                             = -1603296
 };
 
-#define EMOTE_VAPORS      "A cloud of saronite vapors coalesces nearby!"
-#define EMOTE_ANIMUS      "The saronite vapors mass and swirl violently, merging into a monstrous form!"
-#define EMOTE_BARRIER     "A saronite barrier appears around General Vezax!"
-#define EMOTE_DARKNESS    "General Vezax roars and surges with dark might!"
+#define EMOTE_VAPORS      "Облако саронитовых паров уже близко!"
+#define EMOTE_ANIMUS      "Саронитовые пары с неудержимой силой сливаются в одно целое!"
+#define EMOTE_BARRIER     "Саронитовый барьер появляется вокруг Генерала Везакса!"
+#define EMOTE_DARKNESS    "Генерал Везакс образует волны тёмной силы!"
 
 enum VezaxSpells
 {
@@ -275,7 +275,7 @@ public:
                 return;
  
             for(std::list<Creature*>::iterator iter = m_pCreatures.begin(); iter != m_pCreatures.end(); ++iter)
-                (*iter)->ForcedDespawn();
+                (*iter)->DespawnOrUnsummon();
         }
     };
 };

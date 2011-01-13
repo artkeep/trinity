@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -104,7 +104,6 @@ enum DarkRuneSpells
 
     SPELL_STORMSTRIKE             = 64757,
 
-    // Dark Rune Sentinel
     SPELL_BATTLE_SHOUT_10         = 46763,
     SPELL_BATTLE_SHOUT_25         = 64062,
     SPELL_HEROIC_STRIKE           = 45026,
@@ -147,6 +146,11 @@ class boss_razorscale : public CreatureScript
 public:
     boss_razorscale() : CreatureScript("boss_razorscale") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new boss_razorscaleAI (pCreature);
+    }
+
     struct boss_razorscaleAI : public BossAI
     {
         boss_razorscaleAI(Creature *pCreature) : BossAI(pCreature, TYPE_RAZORSCALE)
@@ -164,7 +168,7 @@ public:
         uint32 FlyCount;
 
         uint8 hitCount;
-	    uint8 currentHarpoon;
+        uint8 currentHarpoon;
 
         //uint64 Harpoon[4];
         bool PermaGround;
@@ -173,16 +177,16 @@ public:
         void Reset()
         {
             _Reset();
-			/*for(uint8 i = 0 ; i < RAID_MODE(2, 4) ; i++)
+            /*for(uint8 i = 0 ; i < RAID_MODE(2, 4) ; i++)
                 if (Creature* Harp = Unit::GetCreature(*me, Harpoon[i]))
                 {
-			        Harp->DisappearAndDie();
+                    Harp->DisappearAndDie();
                     Harpoon[i] = 0;
                 }*/
-		    currentHarpoon = 0;
+            currentHarpoon = 0;
             PermaGround = false;
             Enraged = false;
-		    hitCount = 0;
+            hitCount = 0;
             me->SetFlying(true);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             me->SetReactState(REACT_PASSIVE);
@@ -200,19 +204,19 @@ public:
             EnrageTimer = 15*60*1000; // Enrage in 15 min
             Enraged = false;
             events.ScheduleEvent(EVENT_FLIGHT, 0, 0, PHASE_GROUND);
-			DoZoneInCombat();
+            DoZoneInCombat();
             Map* pMap = me->GetMap();
             if (pMap->IsDungeon())
             {
-		        Map::PlayerList const &lPlayers = pMap->GetPlayers();
-		        for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
-		        {
-		           Unit* pPlayer = itr->getSource();
-		           if (!pPlayer) continue;
-			           if (pPlayer->isAlive())
-				           if (Creature* mount = pPlayer->GetVehicleCreatureBase())
-						        mount->DisappearAndDie() ;
-		         }
+                Map::PlayerList const &lPlayers = pMap->GetPlayers();
+                for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
+                {
+                   Unit* pPlayer = itr->getSource();
+                   if (!pPlayer) continue;
+                       if (pPlayer->isAlive())
+                           if (Creature* mount = pPlayer->GetVehicleCreatureBase())
+                                mount->DisappearAndDie() ;
+                 }
             }
         }
 
@@ -220,7 +224,7 @@ public:
         {
             _JustDied();
 
-			// Achievements
+            // Achievements
             if (instance)
             {
                 // A Quick Shave
@@ -285,14 +289,14 @@ public:
                             events.CancelEvent(EVENT_BREATH);
                             return;
                         case EVENT_BUFFET:
-						    if (instance)
+                            if (instance)
                                 instance->SetData(TYPE_HARPOON, DONE);
                             /*for(uint8 i = 0 ; i < RAID_MODE(2, 4) ; i++)
                                 if (Creature* Harp = Unit::GetCreature(*me, Harpoon[i]))
-						        {
+                                {
                                     Harp->CastSpell(Harp, SPELL_FLAMED, true);
-							        Harp->DisappearAndDie();
-						        }*/
+                                    Harp->DisappearAndDie();
+                                }*/
                             currentHarpoon = 0;
                             DoCastAOE(SPELL_WINGBUFFET);
                             events.CancelEvent(EVENT_BUFFET);
@@ -349,14 +353,14 @@ public:
                             {
                                 if (instance)
                                     instance->SetData(TYPE_HARPOON, IN_PROGRESS);
-						        /*if (Creature* Harp = me->SummonCreature(NPC_HARPOON, harpoonPosition[currentHarpoon][0], harpoonPosition[currentHarpoon][1], harpoonPosition[currentHarpoon][2], 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 0))
+                                /*if (Creature* Harp = me->SummonCreature(NPC_HARPOON, harpoonPosition[currentHarpoon][0], harpoonPosition[currentHarpoon][1], harpoonPosition[currentHarpoon][2], 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 0))
                                 {
                                     Harpoon[currentHarpoon] = Harp->GetGUID();
-							        Harp->MonsterTextEmote(EMOTE_HARPOON, 0, true);
+                                    Harp->MonsterTextEmote(EMOTE_HARPOON, 0, true);
                                 }*/
                                 me->MonsterTextEmote(EMOTE_HARPOON, 0, true);
-					            currentHarpoon++;
-						        events.ScheduleEvent(EVENT_GROUND, 30000, 0, PHASE_FLIGHT);
+                                currentHarpoon++;
+                                events.ScheduleEvent(EVENT_GROUND, 30000, 0, PHASE_FLIGHT);
                             }
                             return;
                         case EVENT_FIREBALL:
@@ -378,28 +382,28 @@ public:
             }
         }
 
-		void SpellHit(Unit *caster, const SpellEntry *spell)
+        void SpellHit(Unit *caster, const SpellEntry *spell)
         {
-		    if(spell->Id == SPELL_HARPOON_1
+            if(spell->Id == SPELL_HARPOON_1
                 || spell->Id == SPELL_HARPOON_2
                 || spell->Id == SPELL_HARPOON_3
                 || spell->Id == SPELL_HARPOON_4)
             {
                 DoCast(SPELL_HARPOON_BUFF);
-			    hitCount++ ;
-			    if (hitCount == RAID_MODE(2, 4))
-			    {
+                hitCount++ ;
+                if (hitCount == RAID_MODE(2, 4))
+                {
                     WorldPacket heart;
                     me->BuildHeartBeatMsg(&heart);
                     me->SendMessageToSet(&heart, false);
                     me->GetMotionMaster()->MovePoint(100, RazorGround);
-				    phase = PHASE_GROUND;
+                    phase = PHASE_GROUND;
                     events.SetPhase(PHASE_GROUND);
                     events.ScheduleEvent(EVENT_LAND, 10000, 0, PHASE_GROUND);
-				    hitCount = 0;
-			    }
-		    }
-	    }
+                    hitCount = 0;
+                }
+            }
+        }
 
         void MovementInform(uint32 uiType, uint32 uiId)
         {
@@ -458,10 +462,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new boss_razorscaleAI (pCreature);
-    }
 };
 
 /*====================================================================================
@@ -483,7 +483,7 @@ public:
         InstanceScript* pInstance;
         SummonList summons;
 
-		uint32 uiTimer;
+        uint32 uiTimer;
         bool greet;
         uint64 m_uiCommanderGUID;
         uint8  uiPhase;
@@ -515,10 +515,10 @@ public:
                 DoScriptText(SAY_GREET, me);
                 greet = true;
             }
-			ScriptedAI::MoveInLineOfSight(who);
+            ScriptedAI::MoveInLineOfSight(who);
         }
 
-		void MovementInform(uint32 uiType, uint32 uiId)
+        void MovementInform(uint32 uiType, uint32 uiId)
         {
             if (uiType != POINT_MOTION_TYPE)
                 return;
@@ -546,11 +546,11 @@ public:
             {
                 switch(uiPhase)
                 {
-				    case 0:
+                    case 0:
                         break;
                     case 1:
                         if (pInstance)
-						    pInstance->SetData(TYPE_RAZORSCALE, IN_PROGRESS);
+                            pInstance->SetData(TYPE_RAZORSCALE, IN_PROGRESS);
                         summons.DespawnAll();
                         uiTimer = 1000;
                         uiPhase = 2;
@@ -626,7 +626,7 @@ public:
                         uiTimer = 16000;
                         uiPhase = 6;
                         break;
-					case 6:
+                    case 6:
                         if (Creature *pRazorscale = me->GetCreature(*me, pInstance->GetData64(DATA_RAZORSCALE)))
                             if (pRazorscale->AI())
                                 pRazorscale->AI()->DoAction(ACTION_EVENT_START);
@@ -635,7 +635,7 @@ public:
                         uiPhase =7;
                         break;
                 }
-				if (!UpdateVictim())
+                if (!UpdateVictim())
                     return;
                     
                 DoMeleeAttackIfReady();
@@ -653,7 +653,7 @@ public:
     {
         InstanceScript *pInstance = pCreature->GetInstanceScript();
         
-	    if (pInstance && pPlayer && pInstance->GetData(TYPE_RAZORSCALE) != IN_PROGRESS && pInstance->GetData(TYPE_RAZORSCALE) != DONE)
+        if (pInstance && pPlayer && pInstance->GetData(TYPE_RAZORSCALE) != IN_PROGRESS && pInstance->GetData(TYPE_RAZORSCALE) != DONE)
         {
             pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT,GOSSIP_ITEM_1,GOSSIP_SENDER_MAIN,GOSSIP_ACTION_INFO_DEF);
             pPlayer->SEND_GOSSIP_MENU(13853, pCreature->GetGUID());
@@ -674,7 +674,9 @@ public:
         }
         return true;
     }
+
 };
+
 
 class npc_devouring_flame : public CreatureScript
 {
@@ -696,7 +698,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new npc_devouring_flameAI(pCreature);
     }
@@ -707,6 +709,11 @@ class npc_darkrune_watcher : public CreatureScript
 {
 public:
     npc_darkrune_watcher() : CreatureScript("npc_darkrune_watcher") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_darkrune_watcherAI (pCreature);
+    }
 
     struct npc_darkrune_watcherAI : public ScriptedAI
     {
@@ -747,10 +754,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_darkrune_watcherAI(pCreature);
-    }
 };
 
 
@@ -758,6 +761,11 @@ class npc_darkrune_guardian : public CreatureScript
 {
 public:
     npc_darkrune_guardian() : CreatureScript("npc_darkrune_guardian") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_darkrune_guardianAI (pCreature);
+    }
 
     struct npc_darkrune_guardianAI : public ScriptedAI
     {
@@ -791,16 +799,18 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_darkrune_guardianAI(pCreature);
-    }
 };
+
 
 class npc_darkrune_sentinel : public CreatureScript
 {
 public:
     npc_darkrune_sentinel() : CreatureScript("npc_darkrune_sentinel") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_darkrune_sentinelAI (pCreature);
+    }
 
     struct npc_darkrune_sentinelAI : public ScriptedAI
     {
@@ -851,10 +861,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_darkrune_sentinelAI(pCreature);
-    }
 };
 
 class mole_machine_trigger : public CreatureScript
@@ -927,23 +933,23 @@ public:
 
     bool OnGossipHello(Player* pPlayer, Creature* pCreature)
     {
-	    std::list<Creature*> RazorList;
-	    pCreature->GetCreatureListWithEntryInGrid(RazorList,NPC_RAZORSCALE,1000.0f);
-	    if (!RazorList.empty())
-	    {
-		    for (std::list<Creature*>::const_iterator itr = RazorList.begin(); itr != RazorList.end(); ++itr)
-		    {
-			    if (Creature* pRazor = *itr)
-			    {
-				    pRazor->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-				    pCreature->CastSpell(pRazor, SPELL_HARPOON_1, true);
-				    pRazor->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-				    pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        std::list<Creature*> RazorList;
+        pCreature->GetCreatureListWithEntryInGrid(RazorList,NPC_RAZORSCALE,1000.0f);
+        if (!RazorList.empty())
+        {
+            for (std::list<Creature*>::const_iterator itr = RazorList.begin(); itr != RazorList.end(); ++itr)
+            {
+                if (Creature* pRazor = *itr)
+                {
+                    pRazor->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    pCreature->CastSpell(pRazor, SPELL_HARPOON_1, true);
+                    pRazor->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    pCreature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-			    }
-		    }
-	    }
-	    return true;
+                }
+            }
+        }
+        return true;
     }
 };
 
@@ -954,22 +960,22 @@ public:
 
     bool OnGossipHello(Player* pPlayer, GameObject* pGo)
     {
-	    std::list<Creature*> RazorList;
-	    pGo->GetCreatureListWithEntryInGrid(RazorList,NPC_RAZORSCALE,1000.0f);
-	    if (!RazorList.empty())
-	    {
-		    for (std::list<Creature*>::const_iterator itr = RazorList.begin(); itr != RazorList.end(); ++itr)
-		    {
-			    if (Creature* pRazor = *itr)
-			    {
-				    pRazor->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-				    pPlayer->CastSpell(pRazor, SPELL_HARPOON_1, true);
-				    pRazor->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        std::list<Creature*> RazorList;
+        pGo->GetCreatureListWithEntryInGrid(RazorList,NPC_RAZORSCALE,1000.0f);
+        if (!RazorList.empty())
+        {
+            for (std::list<Creature*>::const_iterator itr = RazorList.begin(); itr != RazorList.end(); ++itr)
+            {
+                if (Creature* pRazor = *itr)
+                {
+                    pRazor->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    pPlayer->CastSpell(pRazor, SPELL_HARPOON_1, true);
+                    pRazor->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     pGo->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
-			    }
-		    }
-	    }
-	    return true;
+                }
+            }
+        }
+        return true;
     }
 };
 

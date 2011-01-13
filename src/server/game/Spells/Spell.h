@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -765,8 +765,6 @@ namespace Trinity
                         if (target->isTotem())
                             continue;
                         if (!target->isAttackableByAOE(i_requireDeadTarget))
-                            continue;
-                        if (!i_source->canSeeOrDetect(target, false))
                             continue;
                         if (i_source->IsControlledByPlayer())
                         {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1166,7 +1166,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 // You _have_ to loot that item, just owning it when logging in does _not_ count!
                 if (!miscvalue1)
                     continue;
-                if (miscvalue1 != achievementCriteria->loot_item.itemID)
+                if (miscvalue1 != achievementCriteria->own_item.itemID)
                     continue;
                 SetCriteriaProgress(achievementCriteria, miscvalue2, PROGRESS_ACCUMULATE);
                 break;
@@ -1616,6 +1616,8 @@ bool AchievementMgr::IsCompletedCriteria(AchievementCriteriaEntry const* achieve
             return progress->counter >= achievementCriteria->cast_spell.castCount;
         case ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
             return progress->counter >= achievementCriteria->bg_objective.completeCount;
+        case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
+            return progress->counter >= achievementCriteria->honorable_kill_at_area.killCount;
         case ACHIEVEMENT_CRITERIA_TYPE_LEARN_SPELL:
             return progress->counter >= 1;
         case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL:
@@ -1678,8 +1680,6 @@ bool AchievementMgr::IsCompletedCriteria(AchievementCriteriaEntry const* achieve
             return progress->counter >= 9000;
         case ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
             return progress->counter >= achievementCriteria->use_lfg.dungeonsComplete;
-        case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
-            return progress->counter >= achievementCriteria->honorable_kill_at_area.killCount;
         // handle all statistic-only criteria here
         case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
         case ACHIEVEMENT_CRITERIA_TYPE_DEATH_AT_MAP:
@@ -2273,8 +2273,8 @@ void AchievementGlobalMgr::LoadAchievementCriteriaData()
                 break;                                      // any cases
             case ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL:
                 break;                                      // any cases
-            case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL:
-                break;                                      // any cases
+            case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL:  // any cases
+                break;
             default:                                        // type not use DB data, ignore
                 continue;
         }

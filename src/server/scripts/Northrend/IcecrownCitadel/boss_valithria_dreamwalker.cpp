@@ -158,7 +158,7 @@ class boss_valithria : public CreatureScript
                             m_uiEndTimer = 1000;
                             break;
                         case 3:
-                            me->ForcedDespawn();
+                            me->DespawnOrUnsummon();
                             pInstance->SetData(DATA_VALITHRIA_DREAMWALKER_EVENT, DONE);
                             m_uiEndTimer = 1000;
                             bEnd = false;

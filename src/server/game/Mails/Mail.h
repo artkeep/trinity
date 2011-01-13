@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -95,6 +95,7 @@ class MailSender
         }
         MailSender(Object* sender, MailStationery stationery = MAIL_STATIONERY_DEFAULT);
         MailSender(AuctionEntry* sender);
+        MailSender(Player* sender);
     public:                                                 // Accessors
         MailMessageType GetMailMessageType() const { return m_messageType; }
         uint32 GetSenderId() const { return m_senderId; }

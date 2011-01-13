@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,9 +47,15 @@ public:
         PrepareAuraScript(spell_sha_astral_shift_AuraScript);
 
         uint32 absorbPct;
-        void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & canBeRecalculated)
+
+        bool Load()
         {
-            absorbPct = amount;
+            absorbPct = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), EFFECT_0, GetCaster());
+            return true;
+        }
+
+        void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+        {
             // Set absorbtion amount to unlimited
             amount = -1;
         }

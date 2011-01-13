@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -31,188 +31,6 @@
 #include "WaypointMovementGenerator.h"
 #include "InstanceSaveMgr.h"
 #include "ObjectMgr.h"
-#include "World.h"
-
-//#define __ANTI_DEBUG__
-
-#ifdef __ANTI_DEBUG__
-#include "Chat.h"
-std::string FlagsToStr(const uint32 Flags)
-{
-    std::string Ret="";
-    if(Flags==0)
-    {
-        Ret="None";
-        return Ret;
-    }
-    
-    if(Flags & MOVEMENTFLAG_FORWARD)
-    {   Ret+="FW "; }
-    if(Flags & MOVEMENTFLAG_BACKWARD)
-    {   Ret+="BW "; }
-    if(Flags & MOVEMENTFLAG_STRAFE_LEFT)
-    {   Ret+="STL ";    }
-    if(Flags & MOVEMENTFLAG_STRAFE_RIGHT)
-    {   Ret+="STR ";    }
-    if(Flags & MOVEMENTFLAG_LEFT)
-    {   Ret+="LF "; }
-    if(Flags & MOVEMENTFLAG_RIGHT)
-    {   Ret+="RI "; }
-    if(Flags & MOVEMENTFLAG_PITCH_UP)
-    {   Ret+="PTUP ";   }
-    if(Flags & MOVEMENTFLAG_PITCH_DOWN)
-    {   Ret+="PTDW ";   }
-    if(Flags & MOVEMENTFLAG_WALK_MODE)
-    {   Ret+="WALK ";   }
-    if(Flags & MOVEMENTFLAG_ONTRANSPORT)
-    {   Ret+="TRANS ";  }
-    if(Flags & MOVEMENTFLAG_LEVITATING)
-    {   Ret+="LEVI ";   }
-    if(Flags & MOVEMENTFLAG_FLY_UNK1)
-    {   Ret+="FLYUNK1 ";    }
-    if(Flags & MOVEMENTFLAG_JUMPING)
-    {   Ret+="JUMP ";   }
-    if(Flags & MOVEMENTFLAG_UNK4)
-    {   Ret+="UNK4 ";   }
-    if(Flags & MOVEMENTFLAG_FALLING)
-    {   Ret+="FALL ";   }
-    if(Flags & MOVEMENTFLAG_SWIMMING)
-    {   Ret+="SWIM ";   }
-    if(Flags & MOVEMENTFLAG_FLY_UP)
-    {   Ret+="FLYUP ";  }
-    if(Flags & MOVEMENTFLAG_CAN_FLY)
-    {   Ret+="CFLY ";   }
-    if(Flags & MOVEMENTFLAG_FLYING)
-    {   Ret+="FLY ";    }
-    if(Flags & MOVEMENTFLAG_FLYING2)
-    {   Ret+="FLY2 ";   }
-    if(Flags & MOVEMENTFLAG_WATERWALKING)
-    {   Ret+="WTWALK "; }
-    if(Flags & MOVEMENTFLAG_SAFE_FALL)
-    {   Ret+="SAFE ";   }
-    if(Flags & MOVEMENTFLAG_UNK3)
-    {   Ret+="UNK3 ";   }
-    if(Flags & MOVEMENTFLAG_SPLINE)
-    {   Ret+="SPLINE ";     }
-    if(Flags & MOVEMENTFLAG_SPLINE2)
-    {   Ret+="SPLINE2 ";    }
-    
-    return Ret;
-}
-#endif // __ANTI_DEBUG__
-
-bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* Op,float Val1,uint32 Val2,MovementInfo* MvInfo)
-{
-    if(!Reason)
-    {
-        sLog->outError("Anti__ReportCheat: Missing Reason parameter!");
-        return false;
-    }
-    const char* Player=GetPlayer()->GetName();
-    uint32 Acc=GetPlayer()->GetSession()->GetAccountId();
-    uint32 Map=GetPlayer()->GetMapId();
-    if(!Player)
-    {
-        sLog->outError("Anti__ReportCheat: Player with no name?!?");
-        return false;
-    }
-
-    QueryResult Res=CharacterDatabase.PQuery("SELECT speed,Val1 FROM cheaters WHERE player='%s' AND reason LIKE '%s' AND Map='%u' AND last_date >= NOW()-300",Player,Reason,Map);
-    if(Res)
-    {
-        Field* Fields = Res->Fetch();
-        
-        std::stringstream Query;
-        Query << "UPDATE cheaters SET count=count+1,last_date=NOW()";
-        Query.precision(5);
-        if(Speed>0.0f && Speed > Fields[0].GetFloat())
-        {
-            Query << ",speed='";
-            Query << std::fixed << Speed;
-            Query << "'";
-        }
-
-        if(Val1>0.0f && Val1 > Fields[1].GetFloat())
-        {
-            Query << ",Val1='";
-            Query << std::fixed << Val1;
-            Query << "'";
-        }
-        
-        Query << " WHERE player='" << Player << "' AND reason='" << Reason << "' AND Map='" << Map << "' AND last_date >= NOW()-300 ORDER BY entry DESC LIMIT 1";
-        
-        CharacterDatabase.Execute(Query.str().c_str());
-        sWorld->SendGMText(12000,GetPlayer()->GetName(),GetPlayer()->GetGUIDLow(),Reason);
-    }
-    else
-    {
-        if(!Op)
-        {   Op="";  }
-        std::stringstream Pos;
-        Pos << "OldPos: " << GetPlayer()->GetPositionX() << " " << GetPlayer()->GetPositionY() << " "
-            << GetPlayer()->GetPositionZ();
-        if(MvInfo)
-        {
-            Pos << "\nNew: " << MvInfo->pos.GetPositionX() << " " << MvInfo->pos.GetPositionY() << " " << MvInfo->pos.GetPositionZ() << "\n"
-                << "Flags: " << MvInfo->flags << "\n"
-                << "t_guid: " << MvInfo->t_guid << " falltime: " << MvInfo->fallTime;
-        }
-        CharacterDatabase.PExecute("INSERT INTO cheaters (player,acctid,reason,speed,count,first_date,last_date,`Op`,Val1,Val2,Map,Pos,Level) "
-                                   "VALUES ('%s','%u','%s','%f','1',NOW(),NOW(),'%s','%f','%u','%u','%s','%u')",
-                                   Player,Acc,Reason,Speed,Op,Val1,Val2,Map,
-                                   Pos.str().c_str(),GetPlayer()->getLevel());
-        sWorld->SendGMText(12000,GetPlayer()->GetName(),GetPlayer()->GetGUIDLow(),Reason);
-    }
-
-    if(sWorld->GetMvAnticheatKill() && GetPlayer()->isAlive())
-    {
-        GetPlayer()->DealDamage(GetPlayer(), GetPlayer()->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
-    }
-    if(sWorld->GetMvAnticheatKick())
-    {
-        GetPlayer()->GetSession()->KickPlayer();
-    }
-    if(sWorld->GetMvAnticheatBan() & 1)
-    {
-        sWorld->BanAccount(BAN_CHARACTER,Player,sWorld->GetMvAnticheatBanTime(),"Cheat","Anticheat");
-    }
-    if(sWorld->GetMvAnticheatBan() & 2)
-    {
-        QueryResult result = LoginDatabase.PQuery("SELECT last_ip FROM account WHERE id=%u", Acc);
-        if(result)
-        {
-
-            Field *fields = result->Fetch();
-            std::string LastIP = fields[0].GetCString();
-            if(!LastIP.empty())
-            {
-                sWorld->BanAccount(BAN_IP,LastIP,sWorld->GetMvAnticheatBanTime(),"Cheat","Anticheat");
-            }
-        }
-    }
-    return true;
-}
-
-bool WorldSession::Anti__CheatOccurred(uint32 CurTime,const char* Reason,float Speed,const char* Op,
-                                float Val1,uint32 Val2,MovementInfo* MvInfo)
-{
-    if(!Reason)
-    {
-        sLog->outError("Anti__CheatOccurred: Missing Reason parameter!");
-        return false;
-    }
-    
-    GetPlayer()->m_anti_lastalarmtime = CurTime;
-    GetPlayer()->m_anti_alarmcount = GetPlayer()->m_anti_alarmcount + 1;
-
-    if (GetPlayer()->m_anti_alarmcount > sWorld->GetMvAnticheatAlarmCount())
-    {
-        Anti__ReportCheat(Reason,Speed,Op,Val1,Val2,MvInfo);
-        return true;
-    }
-    return false;
-}
-
 
 void WorldSession::HandleMoveWorldportAckOpcode(WorldPacket & /*recv_data*/)
 {
@@ -269,7 +87,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
 
     GetPlayer()->ResetMap();
     GetPlayer()->SetMap(newMap);
-	
+
     GetPlayer()->SendInitialPacketsBeforeAddToMap();
     if (!GetPlayer()->GetMap()->Add(GetPlayer()))
     {
@@ -483,11 +301,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
         // if we boarded a transport, add us to it
         if (plMover && !plMover->GetTransport())
         {
-            float trans_rad = movementInfo.t_pos.GetPositionX()*movementInfo.t_pos.GetPositionX() + movementInfo.t_pos.GetPositionY()*movementInfo.t_pos.GetPositionY() + movementInfo.t_pos.GetPositionZ()*movementInfo.t_pos.GetPositionZ();
-            if (trans_rad > 3600.0f) // transport radius = 60 yards //cheater with on_transport_flag
-            {
-	            return;
-            }
             // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
             for (MapManager::TransportSet::const_iterator iter = sMapMgr->m_Transports.begin(); iter != sMapMgr->m_Transports.end(); ++iter)
             {
@@ -524,11 +337,9 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
     {
         // now client not include swimming flag in case jumping under water
         plMover->SetInWater(!plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ()));
-        if(plMover->GetBaseMap()->IsUnderWater(movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ()-7.0f))
-        {
-            plMover->m_anti_BeginFallZ=INVALID_HEIGHT;
-        }
     }
+
+    /*----------------------*/
 
     /* process position-change */
     WorldPacket data(opcode, recv_data.size());
@@ -737,6 +548,14 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
     if (!vehicle_base)
         return;
 
+    VehicleSeatEntry const* seat = GetPlayer()->GetVehicle()->GetSeatForPassenger(GetPlayer());
+    if (!seat->CanSwitchFromSeat())
+    {
+        sLog->outError("HandleChangeSeatsOnControlledVehicle, Opcode: %u, Player %u tried to switch seats but current seatflags %u don't permit that.",
+            recv_data.GetOpcode(), GetPlayer()->GetGUIDLow(), seat->m_flags);
+        return;
+    }
+
     switch (recv_data.GetOpcode())
     {
         case CMSG_REQUEST_VEHICLE_PREV_SEAT:
@@ -812,25 +631,84 @@ void WorldSession::HandleEnterPlayerVehicle(WorldPacket &data)
 
 void WorldSession::HandleEjectPassenger(WorldPacket &data)
 {
-    if (_player->GetVehicleKit())
+    Vehicle* vehicle = _player->GetVehicleKit();
+    if (!vehicle)
     {
-        uint64 guid;
-        data >> guid;
-        if (Player *plr = ObjectAccessor::FindPlayer(guid))
-            plr->ExitVehicle();
-        else if (Unit *unit = ObjectAccessor::GetUnit(*_player, guid)) // creatures can be ejected too from player mounts
-        {
-            unit->ExitVehicle();
-            unit->ToCreature()->ForcedDespawn(1000);
-        }
+        sLog->outError("HandleEjectPassenger: Player %u is not in a vehicle!", GetPlayer()->GetGUIDLow());
+        return;
     }
+
+    uint64 guid;
+    data >> guid;
+
+    if (IS_PLAYER_GUID(guid))
+    {
+        Player *plr = ObjectAccessor::FindPlayer(guid);
+        if (!plr)
+        {
+            sLog->outError("Player %u tried to eject player %u from vehicle, but the latter was not found in world!", GetPlayer()->GetGUIDLow(), GUID_LOPART(guid));
+            return;
+        }
+
+        if (!plr->IsOnVehicle(vehicle->GetBase()))
+        {
+            sLog->outError("Player %u tried to eject player %u, but they are not in the same vehicle", GetPlayer()->GetGUIDLow(), GUID_LOPART(guid));
+            return;
+        }
+
+        VehicleSeatEntry const* seat = vehicle->GetSeatForPassenger(plr);
+        ASSERT(seat);
+        if (seat->IsEjectable())
+            plr->ExitVehicle();
+        else
+            sLog->outError("Player %u attempted to eject player %u from non-ejectable seat.", GetPlayer()->GetGUIDLow(), GUID_LOPART(guid));
+    }
+
+    else if (IS_CREATURE_GUID(guid))
+    {
+        Unit *unit = ObjectAccessor::GetUnit(*_player, guid);
+        if (!unit) // creatures can be ejected too from player mounts
+        {
+            sLog->outError("Player %u tried to eject creature guid %u from vehicle, but the latter was not found in world!", GetPlayer()->GetGUIDLow(), GUID_LOPART(guid));
+            return;
+        }
+
+        if (!unit->IsOnVehicle(vehicle->GetBase()))
+        {
+            sLog->outError("Player %u tried to eject unit %u, but they are not in the same vehicle", GetPlayer()->GetGUIDLow(), GUID_LOPART(guid));
+            return;
+        }
+
+        VehicleSeatEntry const* seat = vehicle->GetSeatForPassenger(unit);
+        ASSERT(seat);
+        if (seat->IsEjectable())
+        {
+            ASSERT(GetPlayer() == vehicle->GetBase());
+            unit->ExitVehicle();
+            unit->ToCreature()->DespawnOrUnsummon(1000);
+            ASSERT(!unit->IsOnVehicle(vehicle->GetBase()));
+        }
+        else
+            sLog->outError("Player %u attempted to eject creature GUID %u from non-ejectable seat.", GetPlayer()->GetGUIDLow(), GUID_LOPART(guid));
+    }
+    else
+        sLog->outError("HandleEjectPassenger: Player %u tried to eject invalid GUID "UI64FMTD, GetPlayer()->GetGUIDLow(), guid);
 }
 
 void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
 {
     sLog->outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_EXIT");
     recv_data.hexlike();
-    GetPlayer()->ExitVehicle();
+
+    if (Vehicle* vehicle = GetPlayer()->GetVehicle())
+    {
+        if (VehicleSeatEntry const* seat = vehicle->GetSeatForPassenger(GetPlayer()))
+            if (seat->CanEnterOrExit())
+                GetPlayer()->ExitVehicle();
+            else
+                sLog->outError("Player %u tried to exit vehicle, but seatflags %u (ID: %u) don't permit that.", 
+                    GetPlayer()->GetGUIDLow(), seat->m_ID, seat->m_flags);
+    }
 }
 
 void WorldSession::HandleMountSpecialAnimOpcode(WorldPacket& /*recv_data*/)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -40,9 +40,6 @@
 #include "Util.h"
 #include "ScriptMgr.h"
 #include "Battleground.h"
-
-#include "OutdoorPvPWG.h"
-#include "OutdoorPvPMgr.h"
 
 class LoginQueryHolder : public SQLQueryHolder
 {
@@ -803,23 +800,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
 
     sObjectAccessor->AddObject(pCurrChar);
     //sLog->outDebug("Player %s added to Map.",pCurrChar->GetName());
-
-	if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
-	{
-	if (OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197))
-	{
-            if (pvpWG->isWarTime())
-            {
-                // "Battle in progress"
-                pCurrChar->SendUpdateWorldState(ClockWorldState[1], (time(NULL)));
-            } else
-                // Time to next battle
-            {
-                pvpWG->SendInitWorldStatesTo(pCurrChar);
-                pCurrChar->SendUpdateWorldState(ClockWorldState[1], (time(NULL) + pvpWG->GetTimer()));
-            }
-	}
-	}
 
     pCurrChar->SendInitialPacketsAfterAddToMap();
 

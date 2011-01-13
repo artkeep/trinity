@@ -1,5 +1,6 @@
+
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,6 +32,10 @@ enum Yells
     SAY_DEATH                                   = -1595047
 };
 
+enum Achievements
+{
+    ACHIEV_CULLING_OF_TIME                      = 1817
+};
 
 class boss_infinite_corruptor : public CreatureScript
 {
@@ -50,43 +55,71 @@ public:
         }
 
         InstanceScript* pInstance;
+        
+        uint32 uiBlightTimer;
+        uint32 uiEscapeTimer;
+        uint32 uiVoidStrikeTimer;
 
-        uint32 uiCorruptingBlight;
-        uint32 uiVoidStrike;
+        bool bEscaped;
+        bool bEscaping;
 
         void Reset()
         {
-            if (pInstance)
-                pInstance->SetData(DATA_INFINITE_EVENT, NOT_STARTED);
+            uiEscapeTimer = 2000;
+            uiBlightTimer = urand(7000, 9000);
+            uiVoidStrikeTimer = urand(6000, 10000);
 
-            uiCorruptingBlight = 7000;
-            uiVoidStrike = 5000;
-        }
+            me->SetReactState(REACT_AGGRESSIVE);
 
-        void EnterCombat(Unit* /*who*/)
-        {
+            bEscaped = false;
+            bEscaping = false;
+
             if (pInstance)
-                pInstance->SetData(DATA_INFINITE_EVENT, IN_PROGRESS);
+                pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_CORRUPTING_BLIGHT);
         }
 
         void UpdateAI(const uint32 diff)
         {
+            if (uiEscapeTimer <= diff)
+            {
+                if (!bEscaping && !pInstance->GetData(DATA_COUNTDOWN))
+                {
+                    me->SetReactState(REACT_PASSIVE);
+                    me->GetMotionMaster()->MovePoint(0, 2335.93f, 1278.89f, 132.89f);
+                    bEscaping = true;
+                }
+                uiEscapeTimer = 2000;
+            } else uiEscapeTimer -= diff;
+
+            if (bEscaping)
+                if (me->GetDistance(2335.93f, 1278.89f, 132.89f) < 1.0f)
+                {
+                    if (pInstance)
+                    {
+                        pInstance->SetData(DATA_INFINITE_EVENT, DONE);
+                        pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_CORRUPTING_BLIGHT);
+                    }
+                    
+                    bEscaped = true;
+                    me->DisappearAndDie();
+                }
+
             //Return since we have no target
             if (!UpdateVictim())
                 return;
 
-            if (uiCorruptingBlight <= diff)
+            if (uiBlightTimer <= diff)
             {
-                if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
-                    DoCast(pTarget, SPELL_CORRUPTING_BLIGHT);
-                uiCorruptingBlight = 17000;
-            } else uiCorruptingBlight -= diff;
+                if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                    DoCast(pTarget, SPELL_CORRUPTING_BLIGHT, false);
+                uiBlightTimer = urand(7000, 9000);
+            } else uiBlightTimer -= diff;
 
-            if (uiVoidStrike <= diff)
+            if (uiVoidStrikeTimer <= diff)
             {
-                DoCast(me->getVictim(), SPELL_VOID_STRIKE);
-                uiVoidStrike = 5000;
-            } else uiVoidStrike -= diff;
+                DoCastVictim(SPELL_VOID_STRIKE, false);
+                uiVoidStrikeTimer = urand(6000, 10000);
+            } else uiVoidStrikeTimer -= diff;
 
             DoMeleeAttackIfReady();
         }
@@ -94,7 +127,13 @@ public:
         void JustDied(Unit* /*killer*/)
         {
             if (pInstance)
+            {
                 pInstance->SetData(DATA_INFINITE_EVENT, DONE);
+                pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_CORRUPTING_BLIGHT);
+
+                if (!bEscaped)
+                    pInstance->DoCompleteAchievement(ACHIEV_CULLING_OF_TIME);
+            }
         }
     };
 

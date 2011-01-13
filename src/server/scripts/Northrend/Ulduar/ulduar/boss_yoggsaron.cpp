@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,15 +15,15 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ScriptPCH.h"
+#include "ulduar.h"
+
 /* ScriptData
 SDName: Yogg-Saron
 SDAuthor: PrinceCreed
 SD%Complete: 90
 SDComments: Hodir's Protective Gaze and Mimiron's Destabilization Matrix don't work.
 EndScriptData */
-
-#include "ScriptPCH.h"
-#include "ulduar.h"
 
 enum Sara_Yells
 {
@@ -53,12 +53,12 @@ enum YoggSaron_Yells
     WHISP_INSANITY_1                            = -1603339,
     WHISP_INSANITY_2                            = -1603340,
     SAY_DEATH                                   = -1603341,
-	EMOTE_PORTALS                               = -1603342,
+    EMOTE_PORTALS                               = -1603342,
     EMOTE_OPEN_CHAMBER                          = -1603343,
     EMOTE_EMPOWERING                            = -1603344
 };
 
-#define GOSSIP_KEEPER_HELP                      "I need your help."
+#define GOSSIP_KEEPER_HELP                      "Lend us your aid, keeper. Together we shall defeat Yogg-Saron."
 
 enum Keepers_Yells
 {
@@ -627,7 +627,7 @@ public:
                                 {
                                     Creature* pTarget = *itr;
                                     if (pTarget)
-                                        pTarget->ForcedDespawn();
+                                        pTarget->DespawnOrUnsummon();
                                 }
                             }
                             JumpToNextStep(5000);
@@ -1237,7 +1237,7 @@ public:
         void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
-                me->ForcedDespawn();
+                me->DespawnOrUnsummon();
 
             if (uiDarkVolleyTimer <= 0)
             {
@@ -1376,7 +1376,7 @@ public:
             if (param == EVENT_SPELLCLICK)
             {
                 me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
-                me->ForcedDespawn();
+                me->DespawnOrUnsummon();
             }
         }
     };
@@ -2006,22 +2006,22 @@ class spell_yoggsaron_sanity : public SpellScriptLoader
         {
             PrepareAuraScript(spell_yoggsaron_sanity_AuraScript);
 
-            void OnApply(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (aurApp->GetTarget()->GetTypeId() != TYPEID_PLAYER)
+                if (GetTarget()->GetTypeId() != TYPEID_PLAYER)
                     return;
 
-                oldAI = aurApp->GetTarget()->GetAI();
-                aurApp->GetTarget()->SetAI(new player_yoggsaron_sanityAI(aurApp->GetTarget()->ToPlayer()));
-                oldAIState = aurApp->GetTarget()->IsAIEnabled;
-                aurApp->GetTarget()->IsAIEnabled = true;
+                oldAI = GetTarget()->GetAI();
+                GetTarget()->SetAI(new player_yoggsaron_sanityAI(GetTarget()->ToPlayer()));
+                oldAIState = GetTarget()->IsAIEnabled;
+                GetTarget()->IsAIEnabled = true;
             }
 
-            void OnRemove(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                delete aurApp->GetTarget()->GetAI();
-                aurApp->GetTarget()->SetAI(oldAI);
-                aurApp->GetTarget()->IsAIEnabled = oldAIState;
+                delete GetTarget()->GetAI();
+                GetTarget()->SetAI(oldAI);
+                GetTarget()->IsAIEnabled = oldAIState;
             }
 
             void Register()

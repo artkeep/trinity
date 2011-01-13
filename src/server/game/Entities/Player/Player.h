@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -995,18 +995,6 @@ class Player : public Unit, public GridObject<Player>
         explicit Player (WorldSession *session);
         ~Player ();
 
-        //movement anticheat
-        uint32 m_anti_lastmovetime;     //last movement time
-        float  m_anti_MovedLen;         //Length of traveled way
-        uint32 m_anti_NextLenCheck;
-        float  m_anti_BeginFallZ;    //alternative falling begin
-        uint32 m_anti_lastalarmtime;    //last time when alarm generated
-        uint32 m_anti_alarmcount;       //alarm counter
-        bool m_CanFly;
-        //bool CanFly() const { return HasUnitMovementFlag(MOVEMENTFLAG_CAN_FLY); }
-        bool CanFly() const { return m_CanFly;  }
-        void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
-
         void CleanupsBeforeDelete(bool finalCleanup = true);
 
         static UpdateMask updateVisualBits;
@@ -1787,7 +1775,6 @@ class Player : public Unit, public GridObject<Player>
 
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
-        void ApplySpellPenetrationBonus(int32 amount, bool apply);
         void UpdateResistances(uint32 school);
         void UpdateArmor();
         void UpdateMaxHealth();
@@ -1811,10 +1798,10 @@ class Player : public Unit, public GridObject<Player>
         float GetSpellCritFromIntellect();
         float OCTRegenHPPerSpirit();
         float OCTRegenMPPerSpirit();
-        float GetRatingMultiplier(CombatRating cr) const;
+        float GetRatingCoefficient(CombatRating cr) const;
         float GetRatingBonusValue(CombatRating cr) const;
-        uint32 GetBaseSpellPowerBonus() const { return m_baseSpellPower; }
-        uint32 GetBaseSpellPenetrationBonus() const { return m_baseSpellPenetration; }
+        uint32 GetBaseSpellPowerBonus() { return m_baseSpellPower; }
+        int32 GetSpellPenetrationItemMod() const { return m_spellPenetrationItemMod; }
 
         float GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const;
         void UpdateBlockPercentage();
@@ -1950,6 +1937,7 @@ class Player : public Unit, public GridObject<Player>
         bool isHonorOrXPTarget(Unit* pVictim);
 
         bool GetsRecruitAFriendBonus(bool forXP);
+        uint8 GetGrantableLevels() { return GetByteValue(PLAYER_FIELD_BYTES, 1); }
 
         ReputationMgr&       GetReputationMgr()       { return m_reputationMgr; }
         ReputationMgr const& GetReputationMgr() const { return m_reputationMgr; }
@@ -2026,6 +2014,7 @@ class Player : public Unit, public GridObject<Player>
         void _ApplyAllItemMods();
         void _ApplyAllLevelScaleItemMods(bool apply);
         void _ApplyItemBonuses(ItemPrototype const *proto,uint8 slot,bool apply, bool only_level_scale = false);
+        void _ApplyWeaponDamage(uint8 slot, ItemPrototype const *proto, ScalingStatValuesEntry const *ssv, bool apply);
         void _ApplyAmmoBonuses();
         bool EnchantmentFitsRequirements(uint32 enchantmentcondition, int8 slot);
         void ToggleMetaGemsActive(uint8 exceptslot, bool apply);
@@ -2373,9 +2362,8 @@ class Player : public Unit, public GridObject<Player>
         void RestoreBaseRune(uint8 index);
         void ConvertRune(uint8 index, RuneType newType);
         void ResyncRunes(uint8 count);
-        void AddRunePower(uint8 mask);
+        void AddRunePower(uint8 index);
         void InitRunes();
-        void UpdateRuneRegen(uint8 index);
 
         AchievementMgr& GetAchievementMgr() { return m_achievementMgr; }
         AchievementMgr const& GetAchievementMgr() const { return m_achievementMgr; }
@@ -2552,7 +2540,7 @@ class Player : public Unit, public GridObject<Player>
         uint32 m_baseFeralAP;
         uint32 m_baseManaRegen;
         uint32 m_baseHealthRegen;
-        uint32 m_baseSpellPenetration;
+        int32 m_spellPenetrationItemMod;
 
         SpellModList m_spellMods[MAX_SPELLMOD];
         //uint32 m_pad;

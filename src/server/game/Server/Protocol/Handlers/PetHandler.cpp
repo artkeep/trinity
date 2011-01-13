@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -36,13 +36,13 @@ void WorldSession::HandleDismissCritter(WorldPacket &recv_data)
     uint64 guid;
     recv_data >> guid;
 
-    sLog->outDebug("WORLD: Received CMSG_DISMISS_CRITTER for GUID " UI64FMTD "", guid);
+    sLog->outDebug("WORLD: Received CMSG_DISMISS_CRITTER for GUID " UI64FMTD, guid);
 
     Unit* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
 
     if (!pet)
     {
-        sLog->outError("Vanitypet (GUID: %u) does not exist - player '%s' (GUID: %u / ACCOUNT: %u) attempted to dismiss it",
+        sLog->outDebug("Vanitypet (guid: %u) does not exist - player '%s' (guid: %u / account: %u) attempted to dismiss it (possibly lagged out)",
                 uint32(GUID_LOPART(guid)), GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), GetAccountId());
         return;
     }
@@ -479,7 +479,7 @@ void WorldSession::HandlePetSetAction(WorldPacket & recv_data)
 
     if (!pet || pet != _player->GetFirstControlled())
     {
-        sLog->outError("HandlePetSetAction: Unknown pet or pet owner.");
+        sLog->outError("HandlePetSetAction: Unknown pet (GUID: %u) or pet owner (GUID: %u)", GUID_LOPART(petguid), _player->GetGUIDLow());
         return;
     }
 
@@ -750,15 +750,6 @@ void WorldSession::HandlePetCastSpellOpcode(WorldPacket& recvPacket)
     {
         sLog->outError("WORLD: unknown PET spell id %i", spellId);
         return;
-    } 
-    
-    switch(spellId)
-    {
-	    case 64077:
-	    {
-		    _player->CastSpell(caster, spellId, true);
-		    return;
-	    }
     }
 
     if (spellInfo->StartRecoveryCategory > 0) // Check if spell is affected by GCD

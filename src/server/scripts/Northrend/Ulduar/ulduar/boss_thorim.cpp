@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,11 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
- /* ScriptData
+/* ScriptData
 SDName: Thorim
 SDAuthor: PrinceCreed
-SD%Complete: 85
-SDComments: Lightning Charge not works, TODO: Achievements and Hard Mode
+SD%Complete: 90
+SDComments: Lightning Charge not works
 EndScriptData */
 
 #include "ScriptPCH.h"
@@ -42,12 +42,12 @@ enum Spells
     SPELL_LIGHTNING_RELEASE                     = 62466,
     SPELL_UNBALANCING_STRIKE                    = 62130,
     SPELL_BERSERK                               = 62560,
-	// Sif
-	SPELL_FROSTBOLT_VOLLEY			= 62580,
-	SPELL_FROSTBOLT_VOLLEY_H		= 62604,
-	SPELL_FROST_NOVA				= 62597,
-	SPELL_FROST_NOVA_H				= 62605,
-	SPELL_BLIZZARD					= 62577
+    // Sif
+    SPELL_FROSTBOLT_VOLLEY            = 62580,
+    SPELL_FROSTBOLT_VOLLEY_H        = 62604,
+    SPELL_FROST_NOVA                = 62597,
+    SPELL_FROST_NOVA_H                = 62605,
+    SPELL_BLIZZARD                    = 62577
 };
 
 enum ThorimChests
@@ -129,6 +129,7 @@ const uint32 SPELL_PRE_SECONDARY_H[]  = {62417, 62444, 16496, 62442};
 // Achievements
 #define ACHIEVEMENT_SIFFED              RAID_MODE(2977, 2978)
 #define ACHIEVEMENT_LOSE_ILLUSION       RAID_MODE(3176, 3183)
+#define ACHIEVEMENT_WHO_NEEDS_BLOODLUST RAID_MODE(2975, 2976)
 
 // Thorim Arena Phase Adds
 enum ArenaAdds
@@ -170,7 +171,7 @@ enum AncientSpells
     SPELL_STOMP_25                              = 62413
 };
 
-#define NPC_SIF								33196
+#define NPC_SIF                                33196
 
 const Position Pos[7] =
 {
@@ -199,15 +200,20 @@ class boss_thorim : public CreatureScript
 public:
     boss_thorim() : CreatureScript("boss_thorim") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new boss_thorimAI(pCreature);
+    }
+
     struct boss_thorimAI : public BossAI
     {
         boss_thorimAI(Creature* pCreature) : BossAI(pCreature, TYPE_THORIM)
-		    , phase(PHASE_NULL), lSummons(me)
+            , phase(PHASE_NULL), lSummons(me)
         {
-		    FirstTime = true;
+            FirstTime = true;
         }
 
-		SummonList lSummons;
+        SummonList lSummons;
         Phases phase;
         int32 PreAddsCount;
         uint8 spawnedAdds;
@@ -215,12 +221,12 @@ public:
         bool FirstTime;
         bool bIsHardmode;
         Creature *EnergySource;
-	    uint64 orbGUID[7] ;
+        uint64 orbGUID[7] ;
 
         void Reset()
         {
             _Reset();
-			lSummons.DespawnAll();
+            lSummons.DespawnAll();
             if (!FirstTime)
                 DoScriptText(SAY_WIPE, me);
 
@@ -245,19 +251,36 @@ public:
 
         void JustDied(Unit * victim)
         {
-		    _JustDied();
-		    lSummons.DespawnAll();
+            _JustDied();
+            lSummons.DespawnAll();
             DoScriptText(SAY_DEATH, me);
             if (instance)
             {
                 if (bIsHardmode)
                 {
                     instance->DoCompleteAchievement(ACHIEVEMENT_LOSE_ILLUSION);
-	                me->SummonGameObject(RAID_MODE(CACHE_OF_STORMS_HARDMODE_10, CACHE_OF_STORMS_HARDMODE_25), 2134.58f, -286.908f, 419.495f, 1.55988f, 0, 0, 0.7f, 0.7f, 604800);
+                    me->SummonGameObject(RAID_MODE(CACHE_OF_STORMS_HARDMODE_10, CACHE_OF_STORMS_HARDMODE_25), 2134.58f, -286.908f, 419.495f, 1.55988f, 0, 0, 0.7f, 0.7f, 604800);
                 }
                 else
                 {
                     me->SummonGameObject(RAID_MODE(CACHE_OF_STORMS_10, CACHE_OF_STORMS_25), 2134.58f, -286.908f, 419.495f, 1.55988f, 0, 0, 0.7f, 0.7f, 604800);
+                }
+
+                Map* pMap = me->GetMap();
+                if (pMap && pMap->IsDungeon())
+                {
+                    AchievementEntry const *AchievWhoNeedsBlood = GetAchievementStore()->LookupEntry(ACHIEVEMENT_WHO_NEEDS_BLOODLUST);
+                    if (AchievWhoNeedsBlood)
+                    {
+                        Map::PlayerList const &players = pMap->GetPlayers();
+                        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                        {
+                            if (itr->getSource() && itr->getSource()->isAlive() && itr->getSource()->HasAura(SPELL_AURA_OF_CELERITY) && !itr->getSource()->isGameMaster())
+                            {
+                                itr->getSource()->CompletedAchievement(AchievWhoNeedsBlood);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -265,26 +288,26 @@ public:
         void JustSummoned(Creature *summon)
         {
             lSummons.Summon(summon);
-		    switch(summon->GetEntry())
-		    {
-		    case 32876:
-		    case 32904:
-		    case 32878:
-		    case 32877:
-		    case 32874:
-		    case 32875:
-			    if (Unit* target = SelectTarget(SELECT_TARGET_NEAREST))
-			    {
-				    summon->SetInCombatWith(target);
-				    target->SetInCombatWith(summon);
-				    summon->AddThreat(target, 0.0f);
-			    }
-			    summon->AI()->DoZoneInCombat();
-			    break ;
+            switch(summon->GetEntry())
+            {
+            case 32876:
+            case 32904:
+            case 32878:
+            case 32877:
+            case 32874:
+            case 32875:
+                if (Unit* target = SelectTarget(SELECT_TARGET_NEAREST))
+                {
+                    summon->SetInCombatWith(target);
+                    target->SetInCombatWith(summon);
+                    summon->AddThreat(target, 0.0f);
+                }
+                summon->AI()->DoZoneInCombat();
+                break ;
             case 33138:
                 CAST_AI(npc_escortAI, (summon->AI()))->Start(true, false);
                 break;
-		    }
+            }
         }
 
         void EnterCombat(Unit* pWho)
@@ -292,7 +315,7 @@ public:
             DoScriptText(RAND(SAY_AGGRO_1,SAY_AGGRO_2), me);
             _EnterCombat();
 
-			EncounterTime = 0;
+            EncounterTime = 0;
             phase = PHASE_1;
             events.SetPhase(PHASE_1);
             DoCast(me, SPELL_SHEAT_OF_LIGHTNING);
@@ -308,6 +331,7 @@ public:
         {
             if (!UpdateVictim())
                 return;
+
             events.Update(diff);
             
             EncounterTime += diff;
@@ -344,7 +368,7 @@ public:
                                     }
                                     pTarget = NULL;
                                 }
-								if (bCanSummon)
+                                if (bCanSummon)
                                 {
                                     DoCast(SPELL_SUMMON_LIGHTNING_ORB);
                                     events.CancelEvent(EVENT_CHECK);
@@ -361,8 +385,8 @@ public:
                             events.ScheduleEvent(EVENT_STORMHAMMER, urand(15000, 20000), 0, PHASE_1);
                             break;
                         case EVENT_CHARGE_ORB:
-						    DoCastAOE(SPELL_CHARGE_ORB);
-							events.ScheduleEvent(EVENT_CHARGE_ORB, urand(15000, 20000), 0, PHASE_1);
+                            DoCastAOE(SPELL_CHARGE_ORB);
+                            events.ScheduleEvent(EVENT_CHARGE_ORB, urand(15000, 20000), 0, PHASE_1);
                             break;
                         case EVENT_SUMMON_ADDS:
                             spawnAdd();
@@ -374,7 +398,7 @@ public:
                             events.CancelEvent(EVENT_BERSERK);
                             break;
                         case EVENT_SUMMON_ORB:
-						    DoCast(SPELL_SUMMON_LIGHTNING_ORB);
+                            DoCast(SPELL_SUMMON_LIGHTNING_ORB);
                             events.CancelEvent(EVENT_SUMMON_ORB);
                             break;
                     }
@@ -437,16 +461,16 @@ public:
                             me->AddAura(SPELL_TOUCH_OF_DOMINION, me);
                             bIsHardmode = false;
                         }
-				        else
+                        else
                         {
                             instance->DoCompleteAchievement(ACHIEVEMENT_SIFFED);
-					        me->SummonCreature(NPC_SIF, 2149.27f, -260.55f, 419.69f, 2.527f) ;
+                            me->SummonCreature(NPC_SIF, 2149.27f, -260.55f, 419.69f, 2.527f) ;
                             bIsHardmode = true;
                         }
                         me->SetReactState(REACT_AGGRESSIVE);
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NON_ATTACKABLE);
                         me->GetMotionMaster()->MoveJump(2134.79f, -263.03f, 419.84f, 10.0f, 20.0f);
-				        me->SetInCombatWithZone();
+                        me->SetInCombatWithZone();
                         events.ScheduleEvent(EVENT_UNBALANCING_STRIKE, 8000, 0, PHASE_2);
                         events.ScheduleEvent(EVENT_CHAIN_LIGHTNING, 15000, 0, PHASE_2);
                         //events.ScheduleEvent(EVENT_TRANSFER_ENERGY, 20000, 0, PHASE_2);
@@ -460,8 +484,8 @@ public:
             {
                 // Event starts
                 DoZoneInCombat();
-			    if(instance)
-				    instance->SetData(TYPE_PORTCULLIS, GO_STATE_ACTIVE);
+                if(instance)
+                    instance->SetData(TYPE_PORTCULLIS, GO_STATE_ACTIVE);
             }
         }
 
@@ -494,10 +518,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new boss_thorimAI(pCreature);
-    }
 };
 
 // Pre-Phase Adds
@@ -820,7 +840,7 @@ class AreaTrigger_at_thorim_phase_trigger : public AreaTriggerScript
             std::list<Creature*> ThorimList;
             pPlayer->GetCreatureListWithEntryInGrid(ThorimList, NPC_THORIM, 100.0f);
             if (!ThorimList.empty())
-	            for (std::list<Creature*>::const_iterator itr = ThorimList.begin(); itr != ThorimList.end(); ++itr)
+                for (std::list<Creature*>::const_iterator itr = ThorimList.begin(); itr != ThorimList.end(); ++itr)
                     if (Creature* pThorim = *itr)
                         if (pThorim->AI())
                             pThorim->AI()->DoAction(ACTION_CHANGE_PHASE);
@@ -863,7 +883,7 @@ public:
             switch(i)
             {
                 case 9:
-                    me->ForcedDespawn();
+                    me->DespawnOrUnsummon();
                     break;
             }
         }
@@ -883,18 +903,18 @@ public:
     struct npc_sifAI : public ScriptedAI
     {
         npc_sifAI(Creature *c) : ScriptedAI(c) 
-	    {
-	    }
+        {
+        }
 
-	    uint32 frostboltVolleyTimer ;
-	    uint32 frostNovaTimer ;
-	    uint32 blizzardTimer ;
+        uint32 frostboltVolleyTimer ;
+        uint32 frostNovaTimer ;
+        uint32 blizzardTimer ;
 
         void Reset()
         {
-		    frostboltVolleyTimer = urand(3000, 6000) ;
-		    frostNovaTimer = urand(15000, 18000) ;
-		    blizzardTimer = urand(10000, 13000) ;
+            frostboltVolleyTimer = urand(3000, 6000) ;
+            frostNovaTimer = urand(15000, 18000) ;
+            blizzardTimer = urand(10000, 13000) ;
         }
 
         void EnterCombat(Unit* who)
@@ -915,23 +935,23 @@ public:
             if (!UpdateVictim())
                 return;
 
-		    if (frostboltVolleyTimer <= diff)
-		    {
-			    DoCast(RAID_MODE(SPELL_FROSTBOLT_VOLLEY, SPELL_FROSTBOLT_VOLLEY_H));
-			    frostboltVolleyTimer = urand(20000, 25000) ;
-		    } else frostboltVolleyTimer -= diff ;
+            if (frostboltVolleyTimer <= diff)
+            {
+                DoCast(RAID_MODE(SPELL_FROSTBOLT_VOLLEY, SPELL_FROSTBOLT_VOLLEY_H));
+                frostboltVolleyTimer = urand(20000, 25000) ;
+            } else frostboltVolleyTimer -= diff ;
 
-		    if (frostNovaTimer <= diff)
-		    {
-			    DoCast(RAID_MODE(SPELL_FROST_NOVA, SPELL_FROST_NOVA_H));
-			    frostNovaTimer = urand(15000, 18000) ;
-		    } else frostNovaTimer -= diff ;
+            if (frostNovaTimer <= diff)
+            {
+                DoCast(RAID_MODE(SPELL_FROST_NOVA, SPELL_FROST_NOVA_H));
+                frostNovaTimer = urand(15000, 18000) ;
+            } else frostNovaTimer -= diff ;
 
-		    if (blizzardTimer <= diff)
-		    {
-			    DoCast(SPELL_BLIZZARD);
-			    blizzardTimer = urand(60000, 70000) ;
-		    } else blizzardTimer -= diff ;
+            if (blizzardTimer <= diff)
+            {
+                DoCast(SPELL_BLIZZARD);
+                blizzardTimer = urand(60000, 70000) ;
+            } else blizzardTimer -= diff ;
 
             DoMeleeAttackIfReady();
         }

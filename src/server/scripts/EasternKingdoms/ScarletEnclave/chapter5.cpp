@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +18,7 @@
 #include "ScriptPCH.h"
 #include "ScriptedEscortAI.h"
 
-//#define LESS_MOB // if you do not have a good server and do not want it to be laggy as hell
+#define LESS_MOB // if you do not have a good server and do not want it to be laggy as hell
 //Light of Dawn
 enum mograine
 {
@@ -324,7 +324,6 @@ public:
         npc_highlord_darion_mograineAI(Creature *pCreature) : npc_escortAI(pCreature)
         {
             Reset();
-            SetMaxPlayerDistance(90.0f);
         }
 
         bool bIsBattle;
@@ -392,11 +391,6 @@ public:
                 me->Mount(25279);
                 me->SetVisible(true);
 
-                me->SetSpeed(MOVE_RUN, 1);
- 
-                me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-
                 UpdateWorldState(me->GetMap(), WORLD_STATE_REMAINS, 0);
                 //UpdateWorldState(me->GetMap(), WORLD_STATE_COUNTDOWN, 0);
                 UpdateWorldState(me->GetMap(), WORLD_STATE_EVENT_BEGIN, 0);
@@ -432,13 +426,13 @@ public:
                 }
 
                 if (Creature* pTemp = Unit::GetCreature(*me, uiKoltiraGUID))
-                    pTemp->setDeathState(JUST_DIED);
+                    pTemp->Respawn();
                 if (Creature* pTemp = Unit::GetCreature(*me, uiOrbazGUID))
-                    pTemp->setDeathState(JUST_DIED);
+                    pTemp->Respawn();
                 if (Creature* pTemp = Unit::GetCreature(*me, uiThassarianGUID))
-                    pTemp->setDeathState(JUST_DIED);
+                    pTemp->Respawn();
                 if (Creature* pTemp = Unit::GetCreature(*me, uiLichKingGUID))
-                    pTemp->setDeathState(JUST_DIED);
+                    pTemp->Respawn();
 
                 uiKoltiraGUID = NULL;
                 uiOrbazGUID = NULL;
@@ -1337,7 +1331,15 @@ public:
                             break;
 
                         case 73:
-                            me->ForcedDespawn();
+                            if (Creature* pTemp = Unit::GetCreature(*me, uiKoltiraGUID))
+                                pTemp->DespawnOrUnsummon();
+                            if (Creature* pTemp = Unit::GetCreature(*me, uiOrbazGUID))
+                                pTemp->DespawnOrUnsummon();
+                            if (Creature* pTemp = Unit::GetCreature(*me, uiThassarianGUID))
+                                pTemp->DespawnOrUnsummon();
+                            if (Creature* pTemp = Unit::GetCreature(*me, uiLichKingGUID))
+                                pTemp->DespawnOrUnsummon();
+                            me->DespawnOrUnsummon();
                             break;
                     }
 

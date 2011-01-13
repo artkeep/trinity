@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -27,8 +27,7 @@
 #include "BattlegroundMgr.h"
 #include "CreatureAI.h"
 #include "MapManager.h"
-#include "OutdoorPvPMgr.h"
-#include "OutdoorPvPWG.h"
+#include "BattlegroundIC.h"
 
 bool IsAreaEffectTarget[TOTAL_SPELL_TARGETS];
 SpellEffectTargetTypes EffectTargetType[TOTAL_SPELL_EFFECTS];
@@ -415,7 +414,7 @@ uint32 CalculatePowerCost(SpellEntry const * spellInfo, Unit const * caster, Spe
     if (spellInfo->AttributesEx4 & SPELL_ATTR4_SPELL_VS_EXTEND_COST)
         powerCost += caster->GetAttackTime(OFF_ATTACK)/100;
     // Apply cost mod by spell
-    if (Player * modOwner = caster->GetSpellModOwner())
+    if (Player* modOwner = caster->GetSpellModOwner())
         modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_COST, powerCost);
 
     if (spellInfo->Attributes & SPELL_ATTR0_LEVEL_DAMAGE_CALCULATION)
@@ -800,10 +799,6 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
         default:
             break;
     }
-
-    // Amplify Magic / Dampen Magic
-    if (spellproto->SpellFamilyName == SPELLFAMILY_MAGE && spellproto->SpellFamilyFlags[0] & 0x2000 && spellproto->SpellFamilyFlags[2] & 0x8)
-        return true;
 
     // Special case: effects which determine positivity of whole spell
     for (uint8 i = 0; i<MAX_SPELL_EFFECTS; ++i)
@@ -2740,7 +2735,7 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
 
             return mapEntry->IsBattleArena() && player && player->InBattleground() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         }
-       // case 32727:                                         // Arena Preparation
+        case 32727:                                         // Arena Preparation
         {
             if (!player)
                 return SPELL_FAILED_REQUIRES_AREA;
@@ -2853,8 +2848,8 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
             // Howl of Terror
             else if (spellproto->SpellFamilyFlags[1] & 0x8)
                 return DIMINISHING_FEAR_BLIND;
-            // Seduction (Lesser Invisibility have same SpellFamilyFlags)
-            else if (spellproto->SpellFamilyFlags[0] & 0x40000000 && spellproto->SpellIconID != 331)
+            // Seduction
+            else if (spellproto->SpellFamilyFlags[1] & 0x10000000)
                 return DIMINISHING_FEAR_BLIND;
             break;
         }
@@ -3045,15 +3040,23 @@ DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group)
             return DRTYPE_PLAYER;
         default:
             break;
+    }
 
-  }
     return DRTYPE_NONE;
+}
+
+bool IsPartOfSkillLine(uint32 skillId, uint32 spellId)
+{
+    SkillLineAbilityMapBounds skillBounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
+    for (SkillLineAbilityMap::const_iterator itr = skillBounds.first; itr != skillBounds.second; ++itr)
+        if (itr->second->skillId == skillId)
+            return true;
+
+    return false;
 }
 
 bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const
 {
-    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
-
     if (gender != GENDER_NONE)                   // not in expected gender
         if (!player || gender != player->getGender())
             return false;
@@ -3082,17 +3085,32 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     switch(spellId)
     {
         case 58600: // No fly Zone - Dalaran
-    {
-            if (!player)
-                return false;
+            {
+                if (!player)
+                    return false;
 
-            AreaTableEntry const* pArea = GetAreaEntryByAreaID(player->GetAreaId());
-            if (!(pArea && pArea->flags & AREA_FLAG_NO_FLY_ZONE))
+                AreaTableEntry const* pArea = GetAreaEntryByAreaID(player->GetAreaId());
+                if (!(pArea && pArea->flags & AREA_FLAG_NO_FLY_ZONE))
+                    return false;
+                if (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY))
+                    return false;
+                break;
+            }
+        case SPELL_OIL_REFINERY: // Oil Refinery - Isle of Conquest.
+        case SPELL_QUARRY: // Quarry - Isle of Conquest.
+            {
+                if (player->GetBattlegroundTypeId() != BATTLEGROUND_IC || !player->GetBattleground())
+                    return false;
+
+                uint8 nodeType = spellId == SPELL_OIL_REFINERY ? NODE_TYPE_REFINERY : NODE_TYPE_QUARRY;
+                uint8 nodeState = player->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H;
+
+                BattlegroundIC* pIC = static_cast<BattlegroundIC*>(player->GetBattleground());
+                if (pIC->GetNodeState(nodeType) == nodeState)
+                    return true;
+
                 return false;
-            if (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY))
-                return false;
-			}
-            break;
+            }
     }
 
     return true;
@@ -3166,7 +3184,7 @@ bool SpellMgr::CanAurasStack(Aura const *aura1, Aura const *aura2, bool sameCast
         if (spellId_1 == 44413)
             return true;
         if (aura1->GetCastItemGUID() && aura2->GetCastItemGUID())
-            if (aura1->GetCastItemGUID() != aura2->GetCastItemGUID() && (sSpellMgr->GetSpellCustomAttr(spellId_1) & SPELL_ATTR0_CU_ENCHANT_PROC))
+            if (aura1->GetCastItemGUID() != aura2->GetCastItemGUID() && (GetSpellCustomAttr(spellId_1) & SPELL_ATTR0_CU_ENCHANT_PROC))
                 return true;
         // same spell with same caster should not stack
         return false;
@@ -3434,17 +3452,14 @@ void SpellMgr::LoadSpellCustomAttr()
 {
     uint32 oldMSTime = getMSTime();
 
-    mSpellCustomAttr.resize(GetSpellStore()->GetNumRows());
-
+    mSpellCustomAttr.resize(GetSpellStore()->GetNumRows(), 0);  // initialize with 0 values
 
     uint32 count = 0;
 
-    SpellEntry *spellInfo;
-    for (uint32 i = 0; i < GetSpellStore()->GetNumRows(); ++i)
+    SpellEntry* spellInfo = NULL;
+    for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
     {
-
-        mSpellCustomAttr[i] = 0;
-        spellInfo = (SpellEntry*)GetSpellStore()->LookupEntry(i);
+        spellInfo = (SpellEntry*)sSpellStore.LookupEntry(i);
         if (!spellInfo)
             continue;
 
@@ -3480,6 +3495,36 @@ void SpellMgr::LoadSpellCustomAttr()
                         spellInfo->Effect[j] = SPELL_EFFECT_TRIGGER_MISSILE;
                     count++;
                     break;
+                case SPELL_EFFECT_ENCHANT_ITEM:
+                case SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY:
+                case SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC:
+                case SPELL_EFFECT_ENCHANT_HELD_ITEM:
+                {
+                    // only enchanting profession enchantments procs can stack
+                    if (IsPartOfSkillLine(SKILL_ENCHANTING, i))
+                    {
+                        uint32 enchantId = spellInfo->EffectMiscValue[j];
+                        SpellItemEnchantmentEntry const *enchant = sSpellItemEnchantmentStore.LookupEntry(enchantId);
+                        for (uint8 s = 0; s < MAX_ITEM_ENCHANTMENT_EFFECTS; ++s)
+                        {
+                            if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
+                                continue;
+
+                            SpellEntry const *procInfo = sSpellStore.LookupEntry(enchant->spellid[s]);
+                            if (!procInfo)
+                                continue;
+
+                            // if proced directly from enchantment, not via proc aura
+                            // NOTE: Enchant Weapon - Blade Ward also has proc aura spell and is proced directly
+                            // however its not expected to stack so this check is good
+                            if (IsSpellHaveAura(procInfo, SPELL_AURA_PROC_TRIGGER_SPELL))
+                                continue;
+
+                            mSpellCustomAttr[enchant->spellid[s]] |= SPELL_ATTR0_CU_ENCHANT_PROC;
+                        }
+                    }
+                    break;
+                }
             }
 
             switch (SpellTargetType[spellInfo->EffectImplicitTargetA[j]])
@@ -3510,7 +3555,7 @@ void SpellMgr::LoadSpellCustomAttr()
             }
         }
 
-		if (!_isPositiveEffect(i, 0, false))
+        if (!_isPositiveEffect(i, 0, false))
         {
             mSpellCustomAttr[i] |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
             count++;
@@ -3538,7 +3583,7 @@ void SpellMgr::LoadSpellCustomAttr()
             count++;
         }
 
-        switch(i)
+        switch (i)
         {
         // Bind
         case 3286:
@@ -3613,7 +3658,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 69782: case 69796:                 // Ooze Flood
         case 69798: case 69801:                 // Ooze Flood
         case 69538: case 69553: case 69610:     // Ooze Combine
-        case 71614:                             // Ice Lock
+        case 71447: case 71481:                 // Bloodbolt Splash
         case 71482: case 71483:                 // Bloodbolt Splash
             mSpellCustomAttr[i] |= SPELL_ATTR0_CU_EXCLUDE_SELF;
             count++;
@@ -3708,11 +3753,16 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->procCharges = 1;
             count++;
             break;
+        case 53390: // Tidal Wave
+            spellInfo->procCharges = 2;
+            count++;
+            break;
         case 44544:    // Fingers of Frost
             spellInfo->EffectSpellClassMask[0] = flag96(685904631, 1151048, 0);
             count++;
             break;
         case 74396:    // Fingers of Frost visual buff
+            spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
             count++;
             break;
@@ -3727,6 +3777,10 @@ void SpellMgr::LoadSpellCustomAttr()
         case 47205:
             // add corruption to affected spells
             spellInfo->EffectSpellClassMask[1][0] |= 2;
+            count++;
+            break;
+        case 49305:
+            spellInfo->EffectImplicitTargetB[0] = 1;
             count++;
             break;
         case 51852:    // The Eye of Acherus (no spawn in phase 2 in db)
@@ -3873,20 +3927,17 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
             count++;
             break;
-        case 19970: // Entangling Roots (Rank 6)
-        case 19971: // Entangling Roots (Rank 5)
-        case 19972: // Entangling Roots (Rank 4)
-        case 19973: // Entangling Roots (Rank 3)
-        case 19974: // Entangling Roots (Rank 2)
-        case 19975: // Entangling Roots (Rank 1)
-        case 27010: // Entangling Roots (Rank 7)
-        case 53313: // Entangling Roots (Rank 8)
-            spellInfo->CastingTimeIndex = 1;
+        case 53241: // Marked for Death (Rank 1)
+        case 53243: // Marked for Death (Rank 2)
+        case 53244: // Marked for Death (Rank 3)
+        case 53245: // Marked for Death (Rank 4)
+        case 53246: // Marked for Death (Rank 5)
+            spellInfo->EffectSpellClassMask[0] = flag96(423937, 276955137, 2049);
             count++;
             break;
-        case 5171: // Slice and Dice (Rank 1)
-        case 6774: // Slice and Dice (Rank 2)
-            spellInfo->EffectImplicitTargetA[0] = 1;
+        // this is here until targetAuraSpell and alike support SpellDifficulty.dbc
+        case 70459: // Ooze Eruption Search Effect
+            spellInfo->targetAuraSpell = 0;
             count++;
             break;
         case 70728: // Exploit Weakness
@@ -3900,7 +3951,17 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_MASTER;
             count++;
             break;
+        case 71413: // Green Ooze Summon
+        case 71414: // Orange Ooze Summon
             spellInfo->EffectImplicitTargetA[0] = TARGET_DEST_DEST;
+            count++;
+            break;
+        // THIS IS HERE BECAUSE COOLDOWN ON CREATURE PROCS IS NOT IMPLEMENTED
+        case 71604: // Mutated Strength
+        case 72673: // Mutated Strength
+        case 72674: // Mutated Strength
+        case 72675: // Mutated Strength
+            spellInfo->Effect[1] = 0;
             count++;
             break;
         case 70447: // Volatile Ooze Adhesive
@@ -3916,12 +3977,11 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetB[2] = TARGET_UNIT_TARGET_ENEMY;
             count++;
             break;
+        case 70911: // Unbound Plague
+        case 72854: // Unbound Plague
+        case 72855: // Unbound Plague
         case 72856: // Unbound Plague
             spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
-            count++;
-            break;
-        case 26272: // PX-238 Winter Wondervolt
-            spellInfo->DurationIndex = 1800;
             count++;
             break;
         case 71518: // Unholy Infusion Quest Credit
@@ -3977,25 +4037,6 @@ void SpellMgr::LoadSpellCustomAttr()
                     break;
                 count++;
                 break;
-        }
-    }
-
-    for (uint32 i = 0; i < sSpellItemEnchantmentStore.GetNumRows(); ++i)
-    {
-        SpellItemEnchantmentEntry const *enchant = sSpellItemEnchantmentStore.LookupEntry(i);
-        if (!enchant)
-            continue;
-
-        for (uint8 s = 0; s < MAX_ITEM_ENCHANTMENT_EFFECTS; ++s)
-        {
-            if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
-                continue;
-
-            SpellEntry const *spellInfo = sSpellStore.LookupEntry(enchant->spellid[s]);
-            if (!spellInfo)
-                continue;
-
-            mSpellCustomAttr[enchant->spellid[s]] |= SPELL_ATTR0_CU_ENCHANT_PROC;
         }
     }
 

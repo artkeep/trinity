@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -447,7 +447,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "unpossess",      SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleUnPossessCommand>,           "", NULL },
         { "bindsight",      SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleBindSightCommand>,           "", NULL },
         { "unbindsight",    SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleUnbindSightCommand>,         "", NULL },
-        { "playall",        SEC_GAMEMASTER,     false, OldHandler<&ChatHandler::HandlePlayAllCommand>,             "", NULL },
+        { "playall",        SEC_GAMEMASTER,  false, OldHandler<&ChatHandler::HandlePlayAllCommand>,             "", NULL },
 	{ "findflyhacker",  SEC_PLAYER,         false, OldHandler<&ChatHandler::HandleFlyHackerCommand>,            "", NULL },
         { "wg",             SEC_ADMINISTRATOR,  false, NULL,                                           "", wintergraspCommandTable },
         { NULL,             0,                  false, NULL,                                           "", NULL }

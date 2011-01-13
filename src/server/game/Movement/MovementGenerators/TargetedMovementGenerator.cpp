@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -303,8 +303,7 @@ void TargetedMovementGenerator<T>::MovementInform(T & /*unit*/)
 template <> void TargetedMovementGenerator<Creature>::MovementInform(Creature &unit)
 {
     // Pass back the GUIDLow of the target. If it is pet's owner then PetAI will handle
-    if(unit.AI())
-        unit.AI()->MovementInform(TARGETED_MOTION_TYPE, i_target.getTarget()->GetGUIDLow());
+    unit.AI()->MovementInform(TARGETED_MOTION_TYPE, i_target.getTarget()->GetGUIDLow());
 }
 
 template void TargetedMovementGenerator<Player>::MovementInform(Player&); // Not implemented for players

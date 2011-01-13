@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -164,7 +164,7 @@ enum WorldBoolConfigs
 	CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED,
     CONFIG_OUTDOORPVP_WINTERGRASP_CUSTOM_HONOR,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE,
-	CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
+    CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
     CONFIG_PRESERVE_CUSTOM_CHANNELS,
     BOOL_CONFIG_VALUE_COUNT
 };
@@ -310,7 +310,9 @@ enum WorldIntConfigs
     CONFIG_AUTOBROADCAST_INTERVAL,
     CONFIG_MAX_RESULTS_LOOKUP_COMMANDS,
     CONFIG_DB_PING_INTERVAL,
-    CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
+	CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
+    CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
+
     CONFIG_OUTDOORPVP_WINTERGRASP_START_TIME,
     CONFIG_OUTDOORPVP_WINTERGRASP_BATTLE_TIME,
     CONFIG_OUTDOORPVP_WINTERGRASP_INTERVAL,
@@ -323,6 +325,7 @@ enum WorldIntConfigs
     CONFIG_OUTDOORPVP_WINTERGRASP_SAVESTATE_PERIOD,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF,
+
     CONFIG_ANNOUNCE_BAN_ACCOUNT_ENABLED,
     CONFIG_ANNOUNCE_BAN_CHARACTER_ENABLED,
     CONFIG_ANNOUNCE_BAN_IP_ENABLED,
@@ -404,7 +407,7 @@ enum Rates
     RATE_MOVESPEED,
     MAX_RATES
 };
-    
+
 /// Can be used in SMSG_AUTH_RESPONSE packet
 enum BillingPlanFlags
 {
@@ -785,6 +788,9 @@ class World
         bool GetEventKill() const { return isEventKillStart; }
 
         bool isEventKillStart;
+
+        uint32 GetCleaningFlags() { return m_CleaningFlags; }
+        void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -801,6 +807,8 @@ class World
         static uint8 m_ExitCode;
         uint32 m_ShutdownTimer;
         uint32 m_ShutdownMask;
+
+        uint32 m_CleaningFlags;
 
         bool m_isClosed;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -229,12 +229,6 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
                 pUser->GetName(), pUser->GetGUIDLow(), pItem->GetGUIDLow(), proto->ItemId);
         return;
     }
-	if (proto->Flags & ITEM_PROTO_FLAG_OPENABLE); //ga}|{E HE gyMau'
-	       else
-	       {
-	               KickPlayer(); //gep}|{u Cyka! 
-	               return;
-	       }
 
     // locked item
     uint32 lockId = proto->LockID;
@@ -302,6 +296,7 @@ void WorldSession::HandleGameObjectUseOpcode(WorldPacket & recv_data)
 
     obj->Use(_player);
 }
+
 void WorldSession::HandleGameobjectReportUse(WorldPacket& recvPacket)
 {
     uint64 guid;
@@ -427,9 +422,7 @@ void WorldSession::HandleCancelAuraOpcode(WorldPacket& recvPacket)
     if (!spellInfo)
         return;
 
-    if (IsPassiveSpell(spellId))
-        return;
-  // not allow remove non positive spells and spells with attr SPELL_ATTR0_CANT_CANCEL
+    // not allow remove non positive spells and spells with attr SPELL_ATTR0_CANT_CANCEL
     if (!IsPositiveSpell(spellId) || (spellInfo->Attributes & SPELL_ATTR0_CANT_CANCEL))
         return;
 

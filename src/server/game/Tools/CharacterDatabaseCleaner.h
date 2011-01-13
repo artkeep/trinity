@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -26,7 +26,8 @@ namespace CharacterDatabaseCleaner
         CLEANING_FLAG_ACHIEVEMENT_PROGRESS  = 0x1,
         CLEANING_FLAG_SKILLS                = 0x2,
         CLEANING_FLAG_SPELLS                = 0x4,
-        CLEANING_FLAG_TALENTS               = 0x8
+        CLEANING_FLAG_TALENTS               = 0x8,
+        CLEANING_FLAG_QUESTSTATUS           = 0x10
     };
 
     void CleanDatabase();
@@ -42,6 +43,7 @@ namespace CharacterDatabaseCleaner
     void CleanCharacterSkills();
     void CleanCharacterSpell();
     void CleanCharacterTalent();
+    void CleanCharacterQuestStatus();
 }
 
 #endif

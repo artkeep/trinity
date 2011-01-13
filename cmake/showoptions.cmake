@@ -84,4 +84,13 @@ else()
   message("* Install SQL-files      : No  (default)")
 endif()
 
+if( UNIX )
+  if( WITH_AUTOBACKTRACE )
+    message("* With autobacktrace     : Yes")
+  add_definitions(-DWITH_AUTOBACKTRACE)
+  else()
+    message("* With autobacktrace     : No  (default)")
+  endif()
+endif( UNIX )
+
 message("")

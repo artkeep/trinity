@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -123,7 +123,7 @@ class ChatHandler
         void SetSentErrorMessage(bool val){ sentErrorMessage = val;};
         static bool LoadCommandTable() { return load_command_table;}
         static void SetLoadCommandTable(bool val){ load_command_table = val;};
- 
+
         // Фун. авто анонс (бан, молчанка, кик)
         bool HandleBanCharMessege(const char* charname, const char* duration, const char* playerName, const char* reason);
         bool HandleBanIPMessege(const char* ip, const char* duration, const char* playerName, const char* reason);

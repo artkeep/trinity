@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,7 +35,7 @@ enum Spells
     //------------------VOID ZONE--------------------
     SPELL_VOID_ZONE_10                          = 64203,
     SPELL_VOID_ZONE_25                          = 64235,
-	SPELL_VOID_ZONE                             = 46264,
+    SPELL_VOID_ZONE                             = 46264,
 
     // Life Spark
     SPELL_STATIC_CHARGED_10                     = 64227,
@@ -53,7 +53,7 @@ enum Spells
     //------------------BOOMBOT-----------------------
     SPELL_BOOM                                  = 62834,
 
-	//------------------SCRAPBOT-----------------------
+    //------------------SCRAPBOT-----------------------
     SPELL_REPAIR                                = 62832,
 };
 
@@ -94,7 +94,7 @@ enum Creatures
 enum Actions
 {
     ACTION_ENTER_HARD_MODE                      = 0,
-	ACTION_DISABLE_NERF_ACHI                    = 1,
+    ACTION_DISABLE_NERF_ACHI                    = 1,
     ACTION_NERF_SCRAPBOTS                       = 2
 };
 
@@ -155,11 +155,16 @@ class boss_xt002 : public CreatureScript
 public:
     boss_xt002() : CreatureScript("boss_xt002") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new boss_xt002_AI(pCreature);
+    }
+
     struct boss_xt002_AI : public BossAI
     {
         boss_xt002_AI(Creature *pCreature) : BossAI(pCreature, TYPE_XT002), vehicle(me->GetVehicleKit()), lSummons(me)
         {
-		    assert(vehicle);
+            assert(vehicle);
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
             me->ApplySpellImmune(0, IMMUNITY_ID, 49560, true); // Death Grip jump effect
         }
@@ -176,7 +181,7 @@ public:
         uint32 uiHeartPhaseTimer;
         uint32 uiSpawnAddTimer;
         uint32 uiEnrageTimer;
-		uint32 uiNerfedScrapbots;
+        uint32 uiNerfedScrapbots;
         uint32 uiNerfScrapbotsTimer;
 
         bool bSearingLightActive;
@@ -198,10 +203,10 @@ public:
 
         void Reset()
         {
-		    _Reset();
-		    lSummons.DespawnAll();
+            _Reset();
+            lSummons.DespawnAll();
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NOT_SELECTABLE);
-			me->SetReactState(REACT_AGGRESSIVE);
+            me->SetReactState(REACT_AGGRESSIVE);
             me->ResetLootMode();
 
             //Makes XT-002 to cast a light bomb 10 seconds after aggro.
@@ -212,7 +217,7 @@ public:
             uiHeartPhaseTimer = TIMER_HEART_PHASE;
             uiSpawnAddTimer = TIMER_SPAWN_ADD;
             uiEnrageTimer = TIMER_ENRAGE;
-			uiTympanicTantrumTimer = TIMER_TYMPANIC_TANTRUM / 2;
+            uiTympanicTantrumTimer = TIMER_TYMPANIC_TANTRUM / 2;
             uiNerfScrapbotsTimer = 0;
             uiNerfedScrapbots = 0;
             uiEncounterTime = 0;
@@ -225,33 +230,32 @@ public:
             bAchievementNerf = true;
             bAchievementNerfScrapbots = false;
 
-            uiPhase = 1;
-            uiHeartExposed = 0;
             if (instance)
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
         }
 
         void JustReachedHome()
         {
-		}
+        }
 
         void EnterCombat(Unit* who)
         {
-            _EnterCombat();
-            DoScriptText(SAY_AGGRO, me);
             Map* pMap = me->GetMap();
             if (pMap->IsDungeon())
             {
-		        Map::PlayerList const &lPlayers = pMap->GetPlayers();
-		        for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
-		        {
-		           Unit* pPlayer = itr->getSource();
-		           if (!pPlayer) continue;
-			           if (pPlayer->isAlive())
-				           if (Creature* mount = pPlayer->GetVehicleCreatureBase())
-						        mount->DisappearAndDie() ;
-		         }
+                Map::PlayerList const &lPlayers = pMap->GetPlayers();
+                for(Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
+                {
+                   Unit* pPlayer = itr->getSource();
+                   if (!pPlayer) continue;
+                       if (pPlayer->isAlive())
+                           if (Creature* mount = pPlayer->GetVehicleCreatureBase())
+                                mount->DisappearAndDie() ;
+                 }
             }
+            DoScriptText(SAY_AGGRO, me);
+            _EnterCombat();
+
             if (instance)
                 instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
         }
@@ -275,14 +279,14 @@ public:
                         me->CastSpell(me, RAID_MODE(SPELL_HEARTBREAK_10, SPELL_HEARTBREAK_25), true);
                     }
                     break;
-				case ACTION_DISABLE_NERF_ACHI:
+                case ACTION_DISABLE_NERF_ACHI:
                     bAchievementNerf = false;
                     break;
                 case ACTION_NERF_SCRAPBOTS:
                     if (!bAchievementNerfScrapbots)
                     {
                         bAchievementNerfScrapbots = true;
-                        uiNerfScrapbotsTimer = 12000;
+                       uiNerfScrapbotsTimer = 12000;
                     }
                     uiNerfedScrapbots ++;
                     if (uiNerfedScrapbots >= 20)
@@ -309,7 +313,7 @@ public:
 
         void JustDied(Unit *victim)
         {
-		    _JustDied();
+            _JustDied();
             DoScriptText(SAY_DEATH, me);
 
             // Achievements
@@ -380,7 +384,7 @@ public:
                 if (uiTympanicTantrumTimer <= diff)
                 {
                     DoScriptText(SAY_TYMPANIC_TANTRUM, me);
-					me->MonsterTextEmote(EMOTE_TYMPANIC, 0, true);
+                    me->MonsterTextEmote(EMOTE_TYMPANIC, 0, true);
                     DoCast(SPELL_TYMPANIC_TANTRUM);
                     uiTympanicTantrumTimer = TIMER_TYMPANIC_TANTRUM;
                 } else uiTympanicTantrumTimer -= diff;
@@ -458,7 +462,7 @@ public:
                     if (uiHeartPhaseTimer <= diff)
                     {
                         DoScriptText(SAY_HEART_CLOSED, me);
-						me->HandleEmoteCommand(EMOTE_ONESHOT_EMERGE);
+                        me->HandleEmoteCommand(EMOTE_ONESHOT_EMERGE);
                         SetPhaseOne();
                     }
                     else
@@ -479,7 +483,7 @@ public:
                     } else uiSpawnLifeSparkTimer -= diff;
                 }
 
-				// Adding void zones when gravity bomb debuff runs out if hard mode
+                // Adding void zones when gravity bomb debuff runs out if hard mode
                 if (bGravityBombActive)
                 {
                     if (uiSpawnGravityBombTimer <= diff)
@@ -533,7 +537,7 @@ public:
             uiSpawnPhase = 0;
 
             DoScriptText(SAY_HEART_OPENED, me);
-			me->MonsterTextEmote(EMOTE_HEART, 0, true);
+            me->MonsterTextEmote(EMOTE_HEART, 0, true);
             me->HandleEmoteCommand(EMOTE_ONESHOT_SUBMERGE);
         }
 
@@ -546,7 +550,7 @@ public:
 
             if (!bIsHardMode)
                 me->ModifyHealth(-((int32)transferHealth));
-			else
+            else
                 // Add HardMode Loot
                 me->AddLootMode(LOOT_MODE_HARD_MODE_1);
 
@@ -560,30 +564,25 @@ public:
         void JustSummoned(Creature *summon)
         {
             lSummons.Summon(summon);
-		    switch (summon->GetEntry())
-		    {
-		    case NPC_XE321_BOOMBOT:
-		    case NPC_XM024_PUMMELLER:
-			    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM))
-			    {
-				    summon->SetInCombatWith(target);
-				    target->SetInCombatWith(summon);
-				    summon->AddThreat(target, 0.0f);
-			    }
-			    summon->AI()->DoZoneInCombat();
-			    break ;
-		    case NPC_XS013_SCRAPBOT:
-			    summon->GetMotionMaster()->MoveChase(me);
-			    break ;
-		    }
-		    summon->setActive(true);
+            switch (summon->GetEntry())
+            {
+            case NPC_XE321_BOOMBOT:
+            case NPC_XM024_PUMMELLER:
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM))
+                {
+                    summon->SetInCombatWith(target);
+                    target->SetInCombatWith(summon);
+                    summon->AddThreat(target, 0.0f);
+                }
+                summon->AI()->DoZoneInCombat();
+                break ;
+            case NPC_XS013_SCRAPBOT:
+                summon->GetMotionMaster()->MoveChase(me);
+                break ;
+            }
+            summon->setActive(true);
         }
     };
-
-    CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new boss_xt002_AI(pCreature);
-    }
 };
 
 /*-------------------------------------------------------
@@ -596,18 +595,23 @@ class mob_xt002_heart : public CreatureScript
 public:
     mob_xt002_heart() : CreatureScript("mob_xt002_heart") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_xt002_heartAI(pCreature);
+    }
+
     struct mob_xt002_heartAI : public ScriptedAI
     {
         mob_xt002_heartAI(Creature* pCreature) : ScriptedAI(pCreature)
         {
             m_pInstance = pCreature->GetInstanceScript();
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_STUNNED);
-			me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
         }
 
         InstanceScript* m_pInstance;
-		uint32 uiExposeTimer;
+        uint32 uiExposeTimer;
         bool Exposed;
 
         void JustDied(Unit *victim)
@@ -617,7 +621,7 @@ public:
                     if (pXT002->AI())
                         pXT002->AI()->DoAction(ACTION_ENTER_HARD_MODE);
 
-            me->ForcedDespawn();
+            me->DespawnOrUnsummon();
         }
         
         void UpdateAI(const uint32 diff)
@@ -654,10 +658,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new mob_xt002_heartAI(pCreature);
-    }
 };
 
 /*-------------------------------------------------------
@@ -670,14 +670,19 @@ class mob_scrapbot : public CreatureScript
 public:
     mob_scrapbot() : CreatureScript("mob_scrapbot") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_scrapbotAI(pCreature);
+    }
+
     struct mob_scrapbotAI : public ScriptedAI
     {
         mob_scrapbotAI(Creature* pCreature) : ScriptedAI(pCreature)
         {
             m_pInstance = me->GetInstanceScript();
-			me->setActive(true);
-		    me->SetReactState(REACT_AGGRESSIVE);
-		    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_DISTRACT, true);
+            me->setActive(true);
+            me->SetReactState(REACT_AGGRESSIVE);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_DISTRACT, true);
         }
 
         InstanceScript* m_pInstance;
@@ -685,14 +690,14 @@ public:
         void Reset()
         {
             if(m_pInstance)
-		    {
-			    if(Creature* xt002 = Creature::GetCreature(*me, m_pInstance->GetData64(DATA_XT002)))
-			    {
-				    me->AddThreat(xt002, 10000000.0f);
-				    me->Attack(xt002, true);
-				    AttackStart(xt002);
-			    }
-		    }
+            {
+                if(Creature* xt002 = Creature::GetCreature(*me, m_pInstance->GetData64(DATA_XT002)))
+                {
+                    me->AddThreat(xt002, 10000000.0f);
+                    me->Attack(xt002, true);
+                    AttackStart(xt002);
+                }
+            }
         }
 
         void JustDied(Unit* pKiller)
@@ -704,19 +709,19 @@ public:
 
         }
 
-	    void MoveInLineOfSight(Unit* who)
+        void MoveInLineOfSight(Unit* who)
         {
             if(who->GetEntry() == NPC_XT002 && who->GetDistance2d(me->GetPositionX(), me->GetPositionY()) < 30.0f)
             {
                 me->GetMotionMaster()->MovePoint(1, who->GetPositionX(), who->GetPositionY(), who->GetPositionZ());
-			    if(me->GetDistance2d(who->GetPositionX(), who->GetPositionY()) < 1.0f )
-			    {
-				    me->MonsterTextEmote(EMOTE_REPAIR, 0, true);
+                if(me->GetDistance2d(who->GetPositionX(), who->GetPositionY()) < 1.0f )
+                {
+                    me->MonsterTextEmote(EMOTE_REPAIR, 0, true);
                     who->SetHealth(who->GetHealth() + who->CountPctFromMaxHealth(1));
-				    //who->ModifyHealth(int32(who->CountPctFromMaxHealth(1)));
-				    who->ToCreature()->AI()->DoAction(ACTION_DISABLE_NERF_ACHI);
-				    me->DisappearAndDie();
-			    }
+                    //who->ModifyHealth(int32(who->CountPctFromMaxHealth(1)));
+                    who->ToCreature()->AI()->DoAction(ACTION_DISABLE_NERF_ACHI);
+                    me->DisappearAndDie();
+                }
             }
         }
 
@@ -725,11 +730,8 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new mob_scrapbotAI(pCreature);
-    }
 };
+
 
 /*-------------------------------------------------------
  *
@@ -741,12 +743,17 @@ class mob_pummeller : public CreatureScript
 public:
     mob_pummeller() : CreatureScript("mob_pummeller") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_pummellerAI(pCreature);
+    }
+
     struct mob_pummellerAI : public ScriptedAI
     {
         mob_pummellerAI(Creature* pCreature) : ScriptedAI(pCreature)
         {
             m_pInstance = pCreature->GetInstanceScript();
-			me->setActive(true);
+            me->setActive(true);
         }
 
         InstanceScript* m_pInstance;
@@ -791,11 +798,8 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new mob_pummellerAI(pCreature);
-    }
 };
+
 
 /*-------------------------------------------------------
  *
@@ -807,12 +811,17 @@ class mob_boombot : public CreatureScript
 public:
     mob_boombot() : CreatureScript("mob_boombot") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_boombotAI(pCreature);
+    }
+
     struct mob_boombotAI : public ScriptedAI
     {
         mob_boombotAI(Creature* pCreature) : ScriptedAI(pCreature)
         {
             m_pInstance = pCreature->GetInstanceScript();
-			me->setActive(true);
+            me->setActive(true);
         }
 
         InstanceScript* m_pInstance;
@@ -834,11 +843,8 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new mob_boombotAI(pCreature);
-    }
 };
+
 
 /*-------------------------------------------------------
  *
@@ -849,6 +855,11 @@ class mob_void_zone : public CreatureScript
 {
 public:
     mob_void_zone() : CreatureScript("mob_void_zone") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_void_zoneAI(pCreature);
+    }
 
     struct mob_void_zoneAI : public ScriptedAI
     {
@@ -876,11 +887,8 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new mob_void_zoneAI(pCreature);
-    }
 };
+
 
 /*-------------------------------------------------------
  *
@@ -891,6 +899,11 @@ class mob_life_spark : public CreatureScript
 {
 public:
     mob_life_spark() : CreatureScript("mob_life_spark") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_life_sparkAI(pCreature);
+    }
 
     struct mob_life_sparkAI : public ScriptedAI
     {
@@ -910,8 +923,8 @@ public:
 
         void UpdateAI(const uint32 diff)
         {
-		    if (m_pInstance->GetData(TYPE_XT002) != IN_PROGRESS)
-                me->ForcedDespawn();
+            if (m_pInstance->GetData(TYPE_XT002) != IN_PROGRESS)
+                me->DespawnOrUnsummon();
 
             if (!UpdateVictim())
                 return;
@@ -928,10 +941,6 @@ public:
         }
     };
 
-	 CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new mob_life_sparkAI(pCreature);
-    }
 };
 
 void AddSC_boss_xt002()

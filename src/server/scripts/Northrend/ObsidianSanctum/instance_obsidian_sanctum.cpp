@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -62,26 +62,35 @@ public:
             m_bVesperonKilled = false;
         }
 
-        void OnCreatureCreate(Creature* pCreature, bool /*add*/)
+        bool IsEncounterInProgress() const
         {
-            switch(pCreature->GetEntry())
+            for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
+                if (m_auiEncounter[i] == IN_PROGRESS)
+                    return true;
+
+            return false;
+        }
+
+        void OnCreatureCreate(Creature* creature)
+        {
+            switch(creature->GetEntry())
             {
                 case NPC_SARTHARION:
-                    m_uiSartharionGUID = pCreature->GetGUID();
+                    m_uiSartharionGUID = creature->GetGUID();
                     break;
                 //three dragons below set to active state once created.
                 //we must expect bigger raid to encounter main boss, and then three dragons must be active due to grid differences
                 case NPC_TENEBRON:
-                    m_uiTenebronGUID = pCreature->GetGUID();
-                    pCreature->setActive(true);
+                    m_uiTenebronGUID = creature->GetGUID();
+                    creature->setActive(true);
                     break;
                 case NPC_SHADRON:
-                    m_uiShadronGUID = pCreature->GetGUID();
-                    pCreature->setActive(true);
+                    m_uiShadronGUID = creature->GetGUID();
+                    creature->setActive(true);
                     break;
                 case NPC_VESPERON:
-                    m_uiVesperonGUID = pCreature->GetGUID();
-                    pCreature->setActive(true);
+                    m_uiVesperonGUID = creature->GetGUID();
+                    creature->setActive(true);
                     break;
             }
         }

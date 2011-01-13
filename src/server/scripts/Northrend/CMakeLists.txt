@@ -1,5 +1,6 @@
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
+  Northrend/isle_of_conquest.cpp
   Northrend/storm_peaks.cpp
   Northrend/Ulduar/HallsOfLightning/instance_halls_of_lightning.cpp
   Northrend/Ulduar/HallsOfLightning/boss_bjarngrim.cpp
@@ -72,17 +73,17 @@ set(scripts_STAT_SRCS
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_faction_champions.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_lord_jaraxxus.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/trial_of_the_crusader.h
-  Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_northrend_beasts.cpp
+  Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_beasts_of_northrend.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/trial_of_the_crusader.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_twin_valkyr.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/instance_trial_of_the_crusader.cpp
-
   Northrend/CrusadersColiseum/TrialOfTheChampion/trial_of_the_champion.h
   Northrend/CrusadersColiseum/TrialOfTheChampion/trial_of_the_champion.cpp
   Northrend/CrusadersColiseum/TrialOfTheChampion/boss_grand_champions.cpp
   Northrend/CrusadersColiseum/TrialOfTheChampion/boss_black_knight.cpp
   Northrend/CrusadersColiseum/TrialOfTheChampion/instance_trial_of_the_champion.cpp
   Northrend/CrusadersColiseum/TrialOfTheChampion/boss_argent_challenge.cpp
+
   Northrend/Naxxramas/boss_loatheb.cpp
   Northrend/Naxxramas/boss_anubrekhan.cpp
   Northrend/Naxxramas/boss_maexxna.cpp
@@ -144,6 +145,7 @@ set(scripts_STAT_SRCS
   Northrend/VioletHold/boss_xevozz.cpp
   Northrend/VioletHold/boss_erekem.cpp
   Northrend/VioletHold/violet_hold.cpp
+
   Northrend/IcecrownCitadel/boss_blood_queen_lana_thel.cpp
   Northrend/IcecrownCitadel/boss_deathbringer_saurfang.cpp
   Northrend/IcecrownCitadel/boss_festergut.cpp
@@ -157,8 +159,9 @@ set(scripts_STAT_SRCS
   Northrend/IcecrownCitadel/boss_the_lich_king.cpp
   Northrend/IcecrownCitadel/boss_valithria_dreamwalker.cpp
   Northrend/IcecrownCitadel/icecrown_citadel.cpp
-  Northrend/IcecrownCitadel/instance_icecrown_citadel.cpp
   Northrend/IcecrownCitadel/icecrown_citadel.h
+  Northrend/IcecrownCitadel/instance_icecrown_citadel.cpp
+
   Northrend/zuldrak.cpp
   Northrend/icecrown.cpp
   Northrend/Gundrak/boss_slad_ran.cpp

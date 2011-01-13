@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1698,8 +1698,7 @@ void GameObject::TakenDamage(uint32 damage, Unit *who)
                 if (Battleground* bg = pwho->GetBattleground())
                     bg->DestroyGate(pwho, this, m_goInfo->building.destroyedEvent);
             hitType = BG_OBJECT_DMG_HIT_TYPE_JUST_DESTROYED;
-            if(pwho)
-                sScriptMgr->OnGameObjectDestroyed(pwho, this, m_goInfo->building.destroyedEvent);
+            sScriptMgr->OnGameObjectDestroyed(pwho, this, m_goInfo->building.destroyedEvent);
         }
         if (pwho)
             if (Battleground* bg = pwho->GetBattleground())

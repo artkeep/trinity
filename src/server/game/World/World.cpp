@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -110,6 +110,8 @@ World::World()
     m_updateTimeCount = 0;
 
     m_isClosed = false;
+
+    m_CleaningFlags = 0;
 }
 
 /// World destructor
@@ -452,11 +454,11 @@ void World::LoadConfigSettings(bool reload)
     rate_values[RATE_DROP_ITEM_REFERENCED] = sConfig->GetFloatDefault("Rate.Drop.Item.Referenced", 1.0f);
     rate_values[RATE_DROP_ITEM_REFERENCED_AMOUNT] = sConfig->GetFloatDefault("Rate.Drop.Item.ReferencedAmount", 1.0f);
     rate_values[RATE_DROP_MONEY]  = sConfig->GetFloatDefault("Rate.Drop.Money", 1.0f);
-    rate_values[RATE_XP_KILL]            = sConfig->GetFloatDefault("Rate.XP.Kill", 1.0f);
+    rate_values[RATE_XP_KILL]     = sConfig->GetFloatDefault("Rate.XP.Kill", 1.0f);
     rate_values[RATE_XP_KILL_PREMIUM]    = sConfig->GetFloatDefault("Rate.XP.Kill.Premium", 1.0f);
-    rate_values[RATE_XP_QUEST]           = sConfig->GetFloatDefault("Rate.XP.Quest", 1.0f);
+    rate_values[RATE_XP_QUEST]    = sConfig->GetFloatDefault("Rate.XP.Quest", 1.0f);
     rate_values[RATE_XP_QUEST_PREMIUM]   = sConfig->GetFloatDefault("Rate.XP.Quest.Premium", 1.0f);
-    rate_values[RATE_XP_EXPLORE]         = sConfig->GetFloatDefault("Rate.XP.Explore", 1.0f);
+    rate_values[RATE_XP_EXPLORE]  = sConfig->GetFloatDefault("Rate.XP.Explore", 1.0f);
     rate_values[RATE_XP_EXPLORE_PREMIUM] = sConfig->GetFloatDefault("Rate.XP.Explore.Premium", 1.0f);
     rate_values[RATE_REPAIRCOST]  = sConfig->GetFloatDefault("Rate.RepairCost", 1.0f);
     if (rate_values[RATE_REPAIRCOST] < 0.0f)
@@ -572,6 +574,7 @@ void World::LoadConfigSettings(bool reload)
     }
     m_bool_configs[CONFIG_ADDON_CHANNEL] = sConfig->GetBoolDefault("AddonChannel", true);
     m_bool_configs[CONFIG_CLEAN_CHARACTER_DB] = sConfig->GetBoolDefault("CleanCharacterDB", false);
+    m_int_configs[CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS] = sConfig->GetIntDefault("PersistentCharacterCleanFlags", 0);
     m_int_configs[CONFIG_CHAT_CHANNEL_LEVEL_REQ] = sConfig->GetIntDefault("ChatLevelReq.Channel", 1);
     m_int_configs[CONFIG_CHAT_WHISPER_LEVEL_REQ] = sConfig->GetIntDefault("ChatLevelReq.Whisper", 1);
     m_int_configs[CONFIG_CHAT_SAY_LEVEL_REQ] = sConfig->GetIntDefault("ChatLevelReq.Say", 1);
@@ -1046,10 +1049,10 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_INSTANT_LOGOUT] = sConfig->GetIntDefault("InstantLogout", SEC_MODERATOR);
 
     m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] = sConfig->GetIntDefault("Guild.EventLogRecordsCount", GUILD_EVENTLOG_MAX_RECORDS);
-    if (m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] < GUILD_EVENTLOG_MAX_RECORDS)
+    if (m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] > GUILD_EVENTLOG_MAX_RECORDS)
         m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] = GUILD_EVENTLOG_MAX_RECORDS;
     m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] = sConfig->GetIntDefault("Guild.BankEventLogRecordsCount", GUILD_BANKLOG_MAX_RECORDS);
-    if (m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] < GUILD_BANKLOG_MAX_RECORDS)
+    if (m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] > GUILD_BANKLOG_MAX_RECORDS)
         m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] = GUILD_BANKLOG_MAX_RECORDS;
 
     //visibility on continents
@@ -1163,7 +1166,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE]  = sConfig->GetBoolDefault("OutdoorPvP.Wintergrasp.Antifarm.Enable", false);
     m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK]  = sConfig->GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Atk", 5);
     m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF]  = sConfig->GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Def", 5);
- 
+
 																		       // movement anticheat
     m_MvAnticheatEnable                     = sConfig->GetBoolDefault("Anticheat.Movement.Enable",false);
     m_MvAnticheatKick                       = sConfig->GetBoolDefault("Anticheat.Movement.Kick",false);
@@ -1204,7 +1207,7 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_AUTOBROADCAST_INTERVAL] = sConfig->GetIntDefault("AutoBroadcast.Timer", 60000);
 
     // MySQL ping time interval
-    m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 1800);
+    m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
 
     // Настройки авто анонса
     m_bool_configs[CONFIG_ANNOUNCE_BAN_ACCOUNT_ENABLED]            = sConfig->GetBoolDefault("Announce.Ban.Account.Enabled", true);
@@ -1215,6 +1218,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ANNOUNCE_DELETE_ACCOUNT_ENABLED]         = sConfig->GetBoolDefault("Announce.Delete.Account.Enabled", true);
     m_bool_configs[CONFIG_ANNOUNCE_DELETE_CHARACTER_ENABLED]       = sConfig->GetBoolDefault("Announce.Delete.Character.Enabled", true);
 
+    sScriptMgr->OnConfigLoad(reload);
 }
 
 /// Initialize the World
@@ -1674,7 +1678,7 @@ void World::SetInitialWorldSettings()
     m_timers[WUPDATE_AUTOBROADCAST].SetInterval(getIntConfig(CONFIG_AUTOBROADCAST_INTERVAL));
     m_timers[WUPDATE_DELETECHARS].SetInterval(DAY*IN_MILLISECONDS); // check for chars to delete every day
 
-    m_timers[WUPDATE_PINGDB].SetInterval(getIntConfig(CONFIG_DB_PING_INTERVAL)*IN_MILLISECONDS);    // Mysql ping time in seconds
+    m_timers[WUPDATE_PINGDB].SetInterval(getIntConfig(CONFIG_DB_PING_INTERVAL)*MINUTE*IN_MILLISECONDS);    // Mysql ping time in minutes
 
     //to set mailtimer to return mails every day between 4 and 5 am
     //mailtimer is increased when updating auctions

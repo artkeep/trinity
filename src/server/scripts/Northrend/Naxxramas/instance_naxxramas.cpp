@@ -206,8 +206,7 @@ public:
         }
 
         void OnCreatureCreate(Creature* pCreature, bool add)
-
-		{
+        {
             switch(pCreature->GetEntry())
             {
                 case 15989: SapphironGUID = add ? pCreature->GetGUID() : 0; return;

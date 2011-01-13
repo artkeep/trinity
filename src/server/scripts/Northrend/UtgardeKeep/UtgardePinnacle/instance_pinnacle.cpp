@@ -250,7 +250,12 @@ public:
 
             OUT_LOAD_INST_DATA_COMPLETE;
         }
-    };
+		//Just avoid server error messages - all achievements are handled inside
+        bool CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/)
+        {
+            return false;
+        }
+	};
 
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,7 +39,7 @@ enum Spells
     SPELL_START_THE_ENGINE                      = 62472,
     SPELL_SEARING_FLAME                         = 62402,
     SPELL_BLAZE                                 = 62292,
-	SPELL_TAR_PASSIVE                           = 62288,
+    SPELL_TAR_PASSIVE                           = 62288,
     SPELL_SMOKE_TRAIL                           = 63575,
     SPELL_ELECTROSHOCK                          = 62522,
     SPELL_NAPALM                                = 63666,
@@ -83,6 +83,7 @@ enum Creatures
     NPC_LOREKEEPER                              = 33686, //Hard mode starter
     NPC_BRANZ_BRONZBEARD                        = 33579,
     NPC_DELORAH                                 = 33701,
+    NPC_ULDUAR_GAUNTLET_GENERATOR               = 33571, // Trigger tied to towers
 };
 
 enum Events
@@ -119,6 +120,8 @@ enum Vehicles
 #define EMOTE_PURSUE          "Flame Leviathan pursues $N."
 #define EMOTE_OVERLOAD        "Flame Leviathan's circuits overloaded."
 #define EMOTE_REPAIR          "Automatic repair sequence initiated."
+
+#define ACTION_SHUTDOWN         30
 
 enum Yells
 {
@@ -192,8 +195,6 @@ const Position PosDemolisher[5] =
     {-798.01f,-227.24f,429.84f,1.446f},
 };
 
-#define ACTION_SHUTDOWN         30
-
 class boss_flame_leviathan : public CreatureScript
 {
 public:
@@ -217,12 +218,12 @@ public:
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_INTERRUPT_CAST, false);
         }
 
-		SummonList lSummons;
+        SummonList lSummons;
 
         Vehicle* vehicle;
         uint8 uiActiveTowers;
         uint8 uiShutdown;
-		uint8 uiDestroyedTurrets;
+        uint8 uiDestroyedTurrets;
         bool ActiveTowers;
         bool towerOfStorms;
         bool towerOfLife;
@@ -231,19 +232,19 @@ public:
 
         void Reset()
         {
-		    lSummons.DespawnAll();
+            lSummons.DespawnAll();
             _Reset();
-			assert(vehicle);
+            assert(vehicle);
             me->SetReactState(REACT_DEFENSIVE);
             InstallAdds(true);
-			uiActiveTowers = 0;
+            uiActiveTowers = 0;
             uiDestroyedTurrets = 0;
         }
 
         void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
-			if (instance)
+            if (instance)
             {
                 DoAction(0);
                 uint32 uiHardModeValue = instance->GetData(TYPE_LEVIATHAN_HARD_MODE);
@@ -263,18 +264,18 @@ public:
             events.ScheduleEvent(EVENT_SPEED, 15*IN_MILLISECONDS);
             events.ScheduleEvent(EVENT_SUMMON, 1*IN_MILLISECONDS);
             InstallAdds(false);
-			ActiveTower(false); //void ActiveTower
+            ActiveTower(false); //void ActiveTower
         }
 
         void ActiveTower(bool bReset = false)
         {
-		    // if (me->GetVehicle())
+            // if (me->GetVehicle())
              //   me->GetVehicle()->InstallAllAccessories(me->GetEntry());
             if (!bReset)
             {
                 if (ActiveTowers)
                 {
-				    uint32 uiHardTimer = 35*IN_MILLISECONDS;
+                    uint32 uiHardTimer = 35*IN_MILLISECONDS;
                     if (towerOfStorms)
                     {
                         me->AddAura(SPELL_BUFF_TOWER_OF_STORMS, me);
@@ -315,7 +316,7 @@ public:
 
         void InstallAdds(bool bReset = false)
         {
-		    if (Vehicle* pVehicle = me->GetVehicle())
+            if (Vehicle* pVehicle = me->GetVehicle())
             {
                 if (instance)
                     if (instance->instance->GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
@@ -328,14 +329,14 @@ public:
             }
             if (!bReset)
             {
-			    uint8 number = 0;
+                uint8 number = 0;
                 std::list<Creature*> lSeats;
                 me->GetCreatureListWithEntryInGrid(lSeats, 33114,17.0f);
                 if (lSeats.empty())
                     return;
                 for(std::list<Creature*>::const_iterator itr = lSeats.begin(); itr != lSeats.end(); itr++)
                 {
-				    number++;
+                    number++;
                     Vehicle* pSeat = (*itr)->GetVehicleKit();
                     if (Creature* pTurret = (me->SummonCreature(33142, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), 0, TEMPSUMMON_MANUAL_DESPAWN)))
                         pTurret->EnterVehicle(pSeat, SEAT_TURRET);
@@ -343,7 +344,7 @@ public:
                     if (Creature* pDevice = (me->SummonCreature(33143, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), 0, TEMPSUMMON_MANUAL_DESPAWN)))
                         pDevice->EnterVehicle(pSeat, SEAT_DEVICE);
                 }
-				if (number >= RAID_MODE(2, 4))
+                if (number >= RAID_MODE(2, 4))
                     return;
             }
             else
@@ -378,7 +379,6 @@ public:
 
         void JustDied(Unit* pKiller)
         {
-		    lSummons.DespawnAll();
             _JustDied();
             DoScriptText(SAY_DEATH, me);
 
@@ -487,7 +487,7 @@ public:
             case EVENT_SHUTDOWN:
                 DoScriptText(RAND(SAY_OVERLOAD_1, SAY_OVERLOAD_2, SAY_OVERLOAD_3), me);
                 InstallAdds(true);
-				uiDestroyedTurrets = 0;
+                uiDestroyedTurrets = 0;
                 me->MonsterTextEmote(EMOTE_OVERLOAD, 0, true);
                 me->AddAura(SPELL_SYSTEMS_SHUTDOWN, me);
                 me->RemoveAurasDueToSpell(SPELL_GATHERING_SPEED);
@@ -521,7 +521,7 @@ public:
                 StartFreyaEvent();
                 events.CancelEvent(EVENT_FREYA_S_WARD);
                 break;
-			case EVENT_SUMMON:
+            case EVENT_SUMMON:
                 if (summons.size() < 20) // 4seat+1turret+10lift
                     if (Creature* pLift = DoSummonFlyer(MOB_MECHANOLIFT, me, 30.0f, 50.0f, 0))
                         pLift->GetMotionMaster()->MoveRandom(100);
@@ -578,7 +578,7 @@ public:
                     --uiActiveTowers;
                 }
 
-				if (uiAction == ACTION_SHUTDOWN)
+                if (uiAction == ACTION_SHUTDOWN)
                 {
                     uiDestroyedTurrets++;
                     if (uiDestroyedTurrets >= RAID_MODE(2, 4))
@@ -612,7 +612,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new boss_flame_leviathanAI (pCreature);
     }
@@ -747,7 +747,7 @@ public:
                 damage = 0;
         }
 
-		void JustDied(Unit* pKiller)
+        void JustDied(Unit* pKiller)
         {
             if (Unit* pFlameLeviathan = me->GetVehicleBase())
                 if (pFlameLeviathan->GetTypeId() == TYPEID_UNIT)
@@ -762,7 +762,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new boss_flame_leviathan_defense_turretAI (pCreature);
     }
@@ -804,7 +804,7 @@ public:
         }
     };
 
-	CreatureAI* GetAI_boss_flame_leviathan_overload_device(Creature* pCreature)
+    CreatureAI* GetAI_boss_flame_leviathan_overload_device(Creature* pCreature)
     {
         return new boss_flame_leviathan_overload_deviceAI (pCreature);
     }
@@ -814,6 +814,11 @@ class boss_flame_leviathan_safety_container : public CreatureScript
 {
 public:
     boss_flame_leviathan_safety_container() : CreatureScript("boss_flame_leviathan_safety_container") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new boss_flame_leviathan_safety_containerAI(pCreature);
+    }
 
     struct boss_flame_leviathan_safety_containerAI : public PassiveAI
     {
@@ -834,11 +839,6 @@ public:
         {
         }
     };
-
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new boss_flame_leviathan_safety_containerAI(pCreature);
-    }
 };
 
 class npc_mechanolift : public CreatureScript
@@ -851,14 +851,14 @@ public:
         npc_mechanoliftAI(Creature* pCreature) : npc_escortAI(pCreature), vehicle(pCreature->GetVehicleKit())
         {
             assert(vehicle);
-			me->SetReactState(REACT_PASSIVE);
+            me->SetReactState(REACT_PASSIVE);
         }
 
         Vehicle* vehicle;
 
         uint32 MoveTimer;
 
-		void WaypointReached(uint32 uiPointId)
+        void WaypointReached(uint32 uiPointId)
         {
         }
 
@@ -916,24 +916,30 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new npc_mechanoliftAI(pCreature);
     }
 };
+
 
 class spell_pool_of_tar : public CreatureScript
 {
 public:
     spell_pool_of_tar() : CreatureScript("spell_pool_of_tar") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new spell_pool_of_tarAI (pCreature);
+    }
+
     struct spell_pool_of_tarAI : public PassiveAI
     {
         spell_pool_of_tarAI(Creature* pCreature) : PassiveAI(pCreature)
         {
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-			me->AddAura(SPELL_TAR_PASSIVE, me);
-			me->SetReactState(REACT_PASSIVE);
+            me->AddAura(SPELL_TAR_PASSIVE, me);
+            me->SetReactState(REACT_PASSIVE);
         }
 
         void DamageTaken(Unit * /*who*/, uint32 &damage)
@@ -948,16 +954,17 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new spell_pool_of_tarAI (pCreature);
-    }
 };
 
 class npc_colossus : public CreatureScript
 {
 public:
     npc_colossus() : CreatureScript("npc_colossus") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new  npc_colossusAI(pCreature);
+    }
 
     struct npc_colossusAI : public ScriptedAI
     {
@@ -982,10 +989,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_colossusAI(pCreature);
-    }
 };
 
 class npc_thorims_hammer : public CreatureScript
@@ -993,12 +996,17 @@ class npc_thorims_hammer : public CreatureScript
 public:
     npc_thorims_hammer() : CreatureScript("npc_thorims_hammer") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new  npc_thorims_hammerAI(pCreature);
+    }
+
     struct npc_thorims_hammerAI : public ScriptedAI
     {
         npc_thorims_hammerAI(Creature* pCreature) : ScriptedAI (pCreature)
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-			me->SetReactState(REACT_AGGRESSIVE);
+            me->SetReactState(REACT_AGGRESSIVE);
         }
 
         uint32 uiThorimHammerTimer;
@@ -1006,7 +1014,7 @@ public:
 
         void Reset ()
         {
-		    DoCast(AURA_DUMMY_BLUE);
+            DoCast(AURA_DUMMY_BLUE);
             uiThorimHammerTimer = urand(4000, 8000);
             uiTargetChangeTimer = 2000;
             DoZoneInCombat();
@@ -1025,7 +1033,7 @@ public:
             if (!UpdateVictim())
                 return;
 
-			if (uiTargetChangeTimer <= diff)
+            if (uiTargetChangeTimer <= diff)
             {
                 if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM))
                     me->GetMotionMaster()->MoveChase(pTarget);
@@ -1034,10 +1042,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new  npc_thorims_hammerAI(pCreature);
-    }
 };
 
 class npc_mimirons_inferno : public CreatureScript
@@ -1045,13 +1049,18 @@ class npc_mimirons_inferno : public CreatureScript
 public:
     npc_mimirons_inferno() : CreatureScript("npc_mimirons_inferno") { }
 
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new  npc_mimirons_infernoAI(pCreature);
+    }
+
     struct npc_mimirons_infernoAI : public npc_escortAI
     {
         npc_mimirons_infernoAI(Creature* pCreature) : npc_escortAI(pCreature)
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             me->SetReactState(REACT_PASSIVE);
-			Start(false,true,0,NULL,false,true);
+            Start(false,true,0,NULL,false,true);
         }
 
         void WaypointReached(uint32 /*i*/)
@@ -1060,7 +1069,7 @@ public:
 
         void Reset()
         {
-		    DoCast(AURA_DUMMY_RED);
+            DoCast(AURA_DUMMY_RED);
             infernoTimer = 2000;
         }
 
@@ -1081,16 +1090,18 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_mimirons_infernoAI(pCreature);
-    }
 };
+
 
 class npc_hodirs_fury : public CreatureScript
 {
 public:
     npc_hodirs_fury() : CreatureScript("npc_hodirs_fury") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new  npc_hodirs_furyAI(pCreature);
+    }
 
     struct npc_hodirs_furyAI : public ScriptedAI
     {
@@ -1128,7 +1139,7 @@ public:
             if (!UpdateVictim())
                 return;
 
-			if (uiTargetChangeTimer <= diff)
+            if (uiTargetChangeTimer <= diff)
             {
                 if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM))
                     me->GetMotionMaster()->MoveChase(pTarget);
@@ -1137,16 +1148,17 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const
-    {
-        return new npc_hodirs_furyAI(pCreature);
-    }
 };
 
 class npc_freyas_ward : public CreatureScript
 {
 public:
     npc_freyas_ward() : CreatureScript("npc_freyas_ward") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new  npc_freyas_wardAI(pCreature);
+    }
 
     struct npc_freyas_wardAI : public ScriptedAI
     {
@@ -1180,16 +1192,17 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_freyas_wardAI(pCreature);
-    }
 };
 
 class npc_freya_ward_summon : public CreatureScript
 {
 public:
     npc_freya_ward_summon() : CreatureScript("npc_freya_ward_summon") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_freya_ward_summonAI (pCreature);
+    }
 
     struct npc_freya_ward_summonAI : public ScriptedAI
     {
@@ -1202,7 +1215,7 @@ public:
 
         void Reset()
         {
-		    DoZoneInCombat();
+            DoZoneInCombat();
             lashTimer = 5000 ;
         }
 
@@ -1223,10 +1236,6 @@ public:
         }
     };
 
-	CreatureAI* GetAI(Creature* pCreature) const    
-    {
-        return new npc_freya_ward_summonAI (pCreature);
-    }
 };
 
 //npc lore keeper
@@ -1267,13 +1276,13 @@ public:
         npc_lorekeeperAI(Creature* pCreature) : ScriptedAI(pCreature), summons(me)
         {
             instance = pCreature->GetInstanceScript();
-			uiStep = 0;
+            uiStep = 0;
         }
 
         InstanceScript* instance;
 
-		SummonList summons;
-	    bool bStepping;
+        SummonList summons;
+        bool bStepping;
         uint32 uiStep;
         uint32 uiPhaseTimer;
         uint32 uiGossipStep;
@@ -1296,7 +1305,7 @@ public:
             }
         }
 
-		void Reset() 
+        void Reset() 
         {   
             uiPhaseTimer = 1000;  
             uiGossipStep = 0;
@@ -1323,36 +1332,36 @@ public:
         {
         }
 
-	    void SetData(uint32 id, uint32 data)
-	    {
-		    switch(id)
-		    {
-		    case TYPE_ULDUAR_EVENT:
-			    switch(data)
-			    {
-			    case 3:
-				    uiStep = 16;
+        void SetData(uint32 id, uint32 data)
+        {
+            switch(id)
+            {
+            case TYPE_ULDUAR_EVENT:
+                switch(data)
+                {
+                case 3:
+                    uiStep = 16;
                     if (Creature * pDellorah = me->FindNearestCreature(NPC_DELLORAH, 20.0f))
                         uiDellorahGUID = pDellorah->GetGUID();
-				    bStepping = true;
-				    break;
-			    case 1:
-				    uiStep = 0;
+                    bStepping = true;
+                    break;
+                case 1:
+                    uiStep = 0;
                     if (Creature * pDellorah = me->FindNearestCreature(NPC_DELLORAH, 20.0f))
                         uiDellorahGUID = pDellorah->GetGUID();
-				    bStepping = true;
-				    break;
-			    }
-			    break;
-		    default:
-			    break;
-		    }
-	    }
+                    bStepping = true;
+                    break;
+                }
+                break;
+            default:
+                break;
+            }
+        }
 
-	    uint32 GetData(uint32 id)
-	    {
-		    return uiStep ;
-	    }
+        uint32 GetData(uint32 id)
+        {
+            return uiStep ;
+        }
 
         void UpdateAI(const uint32 diff)
         {
@@ -1423,7 +1432,7 @@ public:
                                 pDellorah->MonsterSay(SAY_DELLORAH_7, LANG_UNIVERSAL, 0);
                                 bStepping = false;
                             }
-						    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                            me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                             break;
                         case 13:
                         case 14:
@@ -1442,39 +1451,39 @@ public:
                             JumpToNextStep(4000);
                         case 18:
                             if (Creature* pDellorah = Unit::GetCreature(*me, uiDellorahGUID))
-                                pDellorah->ForcedDespawn();
+                                pDellorah->DespawnOrUnsummon();
                             if (Creature* pSphere = me->FindNearestCreature(33721, 20.0f))
                             {
-                                me->ForcedDespawn();
-                                pSphere->ForcedDespawn();
+                                me->DespawnOrUnsummon();
+                                pSphere->DespawnOrUnsummon();
                             }
-						    if (Creature* pBran = me->FindNearestCreature(NPC_BRANN, 200.0f))
-						    {
-							    pBran->AI()->SetData(TYPE_ULDUAR_EVENT, 4);
-							    pBran->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-						    }
+                            if (Creature* pBran = me->FindNearestCreature(NPC_BRANN, 200.0f))
+                            {
+                                pBran->AI()->SetData(TYPE_ULDUAR_EVENT, 4);
+                                pBran->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                            }
                             bStepping = false;
                             break;
                     }
                 } else uiPhaseTimer -= diff;
             }
 
-		    if (!UpdateVictim())
+            if (!UpdateVictim())
                 return;
 
             DoMeleeAttackIfReady();
         }
     };
 
-	bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
     {
         InstanceScript* instance = pCreature->GetInstanceScript();
 
         if (pCreature->AI()->GetData(TYPE_ULDUAR_EVENT) == 0 && instance->GetData(TYPE_LEVIATHAN) != DONE)
-	    {
-		    pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-		    pCreature->AI()->SetData(TYPE_ULDUAR_EVENT, 1);
-	    }
+        {
+            pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+            pCreature->AI()->SetData(TYPE_ULDUAR_EVENT, 1);
+        }
 
         if (instance && instance->GetData(TYPE_LEVIATHAN) != DONE && pPlayer && pCreature->AI()->GetData(TYPE_ULDUAR_EVENT) == 12)
         {
@@ -1547,10 +1556,8 @@ public:
     void OnDestroyed(Player* /*pPlayer*/, GameObject* pGO, uint32 /*value*/)
     {
         InstanceScript* instance = pGO->GetInstanceScript();
-        if (pGO->GetGOValue()->building.health == 0)
+        switch(pGO->GetEntry())
         {
-            switch(pGO->GetEntry())
-            {
             case GO_TOWER_OF_STORMS:
                 instance->ProcessEvent(pGO, EVENT_TOWER_OF_STORMS_DESTROYED);
                 break;
@@ -1563,8 +1570,11 @@ public:
             case GO_TOWER_OF_LIFE:
                 instance->ProcessEvent(pGO, EVENT_TOWER_OF_LIFE_DESTROYED);
                 break;
-            }
         }
+
+        Creature* trigger = pGO->FindNearestCreature(NPC_ULDUAR_GAUNTLET_GENERATOR, 15.0f, true);
+        if (trigger)
+            trigger->DisappearAndDie();
     }
 };
 
@@ -1635,24 +1645,24 @@ public:
         {
         }
 
-	    void SetData(uint32 id, uint32 data)
-	    {
-		    switch(id)
-		    {
-		        case TYPE_ULDUAR_EVENT:
-			        switch(data)
-			        {
-			            case 4:
-				        uiPhaseTimerBrann = 0;
-				        bSteppingBrann = true;
-				        uiStepBrann    = 0;
-				        break;
-			        }
-			        break;
-		        default:
+        void SetData(uint32 id, uint32 data)
+        {
+            switch(id)
+            {
+                case TYPE_ULDUAR_EVENT:
+                    switch(data)
+                    {
+                        case 4:
+                        uiPhaseTimerBrann = 0;
+                        bSteppingBrann = true;
+                        uiStepBrann    = 0;
+                        break;
+                    }
                     break;
-		    }
-	    }
+                default:
+                    break;
+            }
+        }
 
         void UpdateAI(const uint32 diff)
         {
@@ -1680,21 +1690,21 @@ public:
                             break;
                         case 3:
                             if (Unit* pIngenieur = me->FindNearestCreature(33626, 50.0f))
-							    pIngenieur->GetMotionMaster()->MovePoint(0, -777.336f,-45.084f,429.843f);
+                                pIngenieur->GetMotionMaster()->MovePoint(0, -777.336f,-45.084f,429.843f);
                             if (Unit* pBataille = me->FindNearestCreature(33662, 50.0f))
                             {
-							    pBataille->GetMotionMaster()->MovePoint(0, -686.287f,-67.053f,427.960f);
-							    pBataille->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY1H);
+                                pBataille->GetMotionMaster()->MovePoint(0, -686.287f,-67.053f,427.960f);
+                                pBataille->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY1H);
                             }
                             if (Unit* pMage = me->FindNearestCreature(33672, 50.0f))
                             {
-							    pMage->GetMotionMaster()->MovePoint(0, -701.350f,-51.397f,429.483f);
-							    pMage->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY1H);
+                                pMage->GetMotionMaster()->MovePoint(0, -701.350f,-51.397f,429.483f);
+                                pMage->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY1H);
                             }
                             if (Unit* pPentarus = me->FindNearestCreature(NPC_PENTARUS, 20.0f))
                             {
-							    pPentarus->GetMotionMaster()->MovePoint(0, -686.287f,-34.389f,427.960f);
-							    pPentarus->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY1H);
+                                pPentarus->GetMotionMaster()->MovePoint(0, -686.287f,-34.389f,427.960f);
+                                pPentarus->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY1H);
                             }
                             me->GetMotionMaster()->MovePoint(0, -673.477f,-52.912f,426.130f);
                             JumpToNextStepBrann(1500);
@@ -1729,14 +1739,14 @@ public:
                 DoMeleeAttackIfReady();
             }
         }
-	};
+    };
 
     bool OnGossipHello(Player* pPlayer, Creature* pCreature)
     {
         pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT,GOSSIP_ITEM_BRANN_3,GOSSIP_SENDER_MAIN,GOSSIP_ACTION_INFO_DEF);
         pPlayer->SEND_GOSSIP_MENU(100003, pCreature->GetGUID());
         
-	    return true;
+        return true;
     }
 
     bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
@@ -1744,15 +1754,15 @@ public:
         switch(uiAction)
         {
             case GOSSIP_ACTION_INFO_DEF:
-			    pCreature->AI()->SetData(TYPE_ULDUAR_EVENT, 4);
-			    pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                pCreature->AI()->SetData(TYPE_ULDUAR_EVENT, 4);
+                pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 pPlayer->CLOSE_GOSSIP_MENU();
                 break;
         }
         return true;
     }
 
-	CreatureAI* GetAI(Creature* pCreature) const    
+    CreatureAI* GetAI(Creature* pCreature) const    
     {
         return new npc_brann_ulduarAI(pCreature);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,6 +41,7 @@ void AddSC_quest_spell_scripts();
 void AddSC_item_spell_scripts();
 void AddSC_example_spell_scripts();
 
+void AddSC_SmartSCripts();
 
 //Commands
 void AddSC_account_commandscript();
@@ -362,17 +363,17 @@ void AddSC_boss_taldaram();
 void AddSC_boss_jedoga_shadowseeker();
 void AddSC_boss_elder_nadox();
 void AddSC_boss_volazj();
+
 void AddSC_boss_argent_challenge();      //Trial of the Champion
 void AddSC_boss_black_knight();
 void AddSC_boss_grand_champions();
 void AddSC_instance_trial_of_the_champion();
 void AddSC_trial_of_the_champion();
-
-void AddSC_boss_anubarak_trial();        //Trial of the Crusader
+void AddSC_boss_beasts_of_northrend();   //Trial of the Crusader
+void AddSC_boss_lord_jaraxxus();
 void AddSC_boss_faction_champions();
-void AddSC_boss_jaraxxus();
-void AddSC_boss_northrend_beasts();
-void AddSC_boss_twin_valkyr();
+void AddSC_boss_twins_valkyr();
+void AddSC_boss_anubarak_trial();
 void AddSC_trial_of_the_crusader();
 void AddSC_instance_trial_of_the_crusader();
 
@@ -431,6 +432,7 @@ void AddSC_boss_razorscale();
 void AddSC_boss_thorim();
 void AddSC_boss_xt002();
 void AddSC_instance_ulduar();
+void AddSC_boss_assembly_of_iron();
 void AddSC_boss_general_vezax();
 void AddSC_ulduar_teleporter();
 void AddSC_boss_yogg_saron();
@@ -478,26 +480,26 @@ void AddSC_boss_falric();
 void AddSC_boss_marwyn();
 void AddSC_boss_lich_king_hr();
 
-void AddSC_instance_icecrown_citadel(); //Icecrown Citadel
-void AddSC_boss_saurfang();
-void AddSC_boss_festergut();
-void AddSC_boss_lady_deathwhisper();
-void AddSC_boss_lord_marrowgar();
-void AddSC_boss_professor_putricide();
-void AddSC_boss_sindragosa();
+void AddSC_instance_icecrown_citadel();    // Icecrown Citadel
+void AddSC_icecrown_citadel();
+void AddSC_boss_valithria();
 void AddSC_boss_lichking();
+void AddSC_boss_sindragosa();
 void AddSC_boss_rotface();
 void AddSC_boss_rat_des_blutes();
-void AddSC_icecrown_citadel();
+void AddSC_boss_professor_putricide();
+void AddSC_boss_lord_marrowgar();
+void AddSC_boss_lady_deathwhisper();
+void AddSC_boss_festergut();
+void AddSC_boss_saurfang();
 void AddSC_boss_blood_queen_lana_thel();
-void AddSC_boss_valithria();
-//void AddSC_event_gunship_battle();
 
-void AddSC_instance_ruby_sanctum();     // Ruby Sanctum	
-void AddSC_boss_baltharus();
-void AddSC_boss_zarithrian();	
-void AddSC_boss_halion();	
+void AddSC_boss_baltharus();	//RubySanctum
+void AddSC_boss_halion();
 void AddSC_boss_ragefire();
+void AddSC_boss_zarithrian();
+void AddSC_instance_ruby_sanctum();
+
 
 void AddSC_dalaran();
 void AddSC_borean_tundra();
@@ -509,6 +511,7 @@ void AddSC_sholazar_basin();
 void AddSC_storm_peaks();
 void AddSC_zuldrak();
 void AddSC_crystalsong_forest();
+void AddSC_isle_of_conquest();
 
 //outland
 void AddSC_boss_exarch_maladaar();           //Auchindoun Auchenai Crypts
@@ -613,6 +616,7 @@ void AddScripts()
 {
     AddExampleScripts();
     AddSpellScripts();
+    AddSC_SmartSCripts();
     AddCommandScripts();
 #ifdef SCRIPTS
     AddWorldScripts();
@@ -1077,14 +1081,6 @@ void AddNorthrendScripts()
     AddSC_instance_trial_of_the_champion();
     AddSC_trial_of_the_champion();
 
-    AddSC_boss_northrend_beasts();   //Trial of the Crusader
-    AddSC_boss_jaraxxus();
-    AddSC_boss_faction_champions();
-    AddSC_boss_twin_valkyr();
-    AddSC_boss_anubarak_trial();
-    AddSC_trial_of_the_crusader();
-    AddSC_instance_trial_of_the_crusader();
-
     AddSC_boss_krik_thir();             //Azjol-Nerub Azjol-Nerub
     AddSC_boss_hadronox();
     AddSC_boss_anub_arak();
@@ -1144,6 +1140,8 @@ void AddNorthrendScripts()
     AddSC_boss_thorim();
     AddSC_boss_xt002();
     AddSC_instance_ulduar();
+    AddSC_boss_assembly_of_iron();
+    AddSC_boss_kologarn();
     AddSC_ulduar_teleporter();
     AddSC_boss_yogg_saron();
     AddSC_boss_keleseth();              //Utgarde Keep
@@ -1190,27 +1188,24 @@ void AddNorthrendScripts()
     AddSC_boss_marwyn();
     AddSC_boss_lich_king_hr();
 
-    AddSC_instance_icecrown_citadel(); //Icecrown Citadel
-    AddSC_boss_saurfang();
-    AddSC_boss_festergut();
-    AddSC_boss_lady_deathwhisper();
-    AddSC_boss_lord_marrowgar();
-    AddSC_boss_professor_putricide();
-    AddSC_boss_sindragosa();
+	AddSC_instance_icecrown_citadel();    // Icecrown Citadel
+    AddSC_icecrown_citadel();
+    AddSC_boss_valithria();
     AddSC_boss_lichking();
+    AddSC_boss_sindragosa();
     AddSC_boss_rotface();
     AddSC_boss_rat_des_blutes();
-    AddSC_icecrown_citadel();
+    AddSC_boss_professor_putricide();
+    AddSC_boss_lord_marrowgar();
+    AddSC_boss_lady_deathwhisper();
+    AddSC_boss_festergut();
+    AddSC_boss_saurfang();
     AddSC_boss_blood_queen_lana_thel();
-    AddSC_boss_valithria();
-//	AddSC_event_gunship_battle();
-
-    AddSC_instance_ruby_sanctum();      // Ruby Sanctum
-    AddSC_boss_baltharus();	
-    AddSC_boss_zarithrian();	
-    AddSC_boss_halion();	
+	AddSC_boss_baltharus();	//RubySanctum
+    AddSC_boss_halion();
     AddSC_boss_ragefire();
-
+    AddSC_boss_zarithrian();
+    AddSC_instance_ruby_sanctum();
     AddSC_dalaran();
     AddSC_borean_tundra();
     AddSC_dragonblight();
@@ -1221,7 +1216,8 @@ void AddNorthrendScripts()
     AddSC_storm_peaks();
     AddSC_zuldrak();
     AddSC_crystalsong_forest();
-    AddSC_wintergrasp();
+    AddSC_isle_of_conquest();
+	AddSC_wintergrasp();
 #endif
 }
 

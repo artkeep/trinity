@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+ *
+ * Copyright (C) 2010 Lol Project <http://hg.assembla.com/lol_trinity/>
  *
  * Copyright (C) 2010 Myth Project <https://mythcore.googlecode.com/hg/mythcore/>
  *
@@ -15,8 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * Comment:  Find correct mushrooms spell to make them visible - buffs of the mushrooms not ever applied to the users...
  */
 
 #include "ScriptPCH.h"

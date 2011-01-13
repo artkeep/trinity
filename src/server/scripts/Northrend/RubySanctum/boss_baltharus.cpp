@@ -1,18 +1,18 @@
 /* Copyright (C) 2010 Easy for TrinityCore <http://trinity-core.ru/>
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #include "ScriptPCH.h"
 #include "ruby_sanctum.h"
@@ -52,7 +52,7 @@ enum eEvents
     EVENT_CAST_ENERVATING_BRAND = 3,
     EVENT_CAST_BLADE_TEMPEST    = 4,
     EVENT_CAST_SUMMON_CLONE     = 5,
-    
+
     ACTION_START_EVENT          = 6,
     EVENT_XERESTRASZA_3         = 7,
     EVENT_XERESTRASZA_4         = 8,
@@ -333,7 +333,7 @@ class npc_xerestrasza : public CreatureScript
             EventMap events;
             InstanceScript* pInstance;
         };
-        
+
         CreatureAI* GetAI(Creature *pCreature) const
         {
             return new npc_xerestraszaAI(pCreature);
@@ -343,7 +343,7 @@ class npc_xerestrasza : public CreatureScript
 
 void AddSC_boss_baltharus()
 {
-    new boss_baltharus;
-    new boss_baltharus_summon;
-    new npc_xerestrasza;
+    new boss_baltharus();
+    new boss_baltharus_summon();
+    new npc_xerestrasza();
 }

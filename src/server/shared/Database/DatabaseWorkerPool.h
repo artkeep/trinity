@@ -58,14 +58,12 @@ class DatabaseWorkerPool
             memset(m_connectionCount, 0, sizeof(m_connectionCount));
             m_connections.resize(IDX_SIZE);
 
-            mysql_library_init(-1, NULL, NULL);
             WPFatal (mysql_thread_safe(), "Used MySQL library isn't thread-safe.");
         }
 
         ~DatabaseWorkerPool()
         {
             sLog->outSQLDriver("~DatabaseWorkerPool for '%s'.", m_connectionInfo.database.c_str());
-            mysql_library_end();
         }
 
         bool Open(const std::string& infoString, uint8 async_threads, uint8 synch_threads)
@@ -102,10 +100,8 @@ class DatabaseWorkerPool
         {
             sLog->outSQLDriver("Closing down databasepool '%s'.", m_connectionInfo.database.c_str());
 
-            /// Shuts down delaythreads for this connection pool.
-            m_queue->queue()->deactivate();
-            while (SQLOperation* op = (SQLOperation*)(m_queue->dequeue()))
-                delete op;
+            /// Shuts down delaythreads for this connection pool by underlying deactivate()
+            m_queue->queue()->close();
 
             for (uint8 i = 0; i < m_connectionCount[IDX_ASYNC]; ++i)
             {

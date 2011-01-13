@@ -1,6 +1,5 @@
 # output generic information about the core and buildtype chosen
 
-message("")
 message("* TrinityCore revision   : ${rev_id_str} (${rev_hash_str})")
 if( UNIX )
   message("* Build binaries in      : ${CMAKE_BUILD_TYPE} mode")
@@ -83,14 +82,5 @@ if( WITH_SQL )
 else()
   message("* Install SQL-files      : No  (default)")
 endif()
-
-if( UNIX )
-  if( WITH_AUTOBACKTRACE )
-    message("* With autobacktrace     : Yes")
-  add_definitions(-DWITH_AUTOBACKTRACE)
-  else()
-    message("* With autobacktrace     : No  (default)")
-  endif()
-endif( UNIX )
 
 message("")

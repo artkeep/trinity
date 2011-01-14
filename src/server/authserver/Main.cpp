@@ -137,7 +137,7 @@ extern int main(int argc, char **argv)
 
     // Get the list of realms for the server
     sRealmList->Initialize(sConfig->GetIntDefault("RealmsStateUpdateDelay", 20));
-    if (sRealmList->size() == 0)
+    if (sRealmList->size() == -1)
     {
         sLog->outError("No valid realms specified.");
         return 1;

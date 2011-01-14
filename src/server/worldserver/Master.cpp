@@ -187,9 +187,6 @@ int Master::Run()
     ACE_Based::Thread world_thread(new WorldRunnable);
     world_thread.setPriority(ACE_Based::Highest);
 
-    // set server online
-    LoginDatabase.PExecute("UPDATE realmlist SET color = 0, population = 0 WHERE id = '%d'",realmID);
-
     ACE_Based::Thread* cliThread = NULL;
 
 #ifdef _WIN32
@@ -303,7 +300,10 @@ int Master::Run()
     ///- Clean database before leaving
     clearOnlineAccounts();
 
-    _StopDB();    
+    ///- Wait for delay threads to end
+    CharacterDatabase.Close();
+    WorldDatabase.Close();
+    LoginDatabase.Close();
 
     sLog->outString("Halting process...");
 
@@ -368,8 +368,6 @@ int Master::Run()
 /// Initialize connection to the databases
 bool Master::_StartDB()
 {
-    MySQL::Library_Init();
-
     sLog->SetLogDB(false);
     std::string dbstring;
     uint8 async_threads, synch_threads;
@@ -471,15 +469,6 @@ bool Master::_StartDB()
     sLog->outString("Using World DB: %s", sWorld->GetDBVersion());
     sLog->outString("Using creature EventAI: %s", sWorld->GetCreatureEventAIVersion());
     return true;
-}
-
-void Master::_StopDB()
-{
-    CharacterDatabase.Close();
-    WorldDatabase.Close();
-    LoginDatabase.Close();
-
-    MySQL::Library_End();
 }
 
 /// Clear 'online' status for all accounts with characters in this realm

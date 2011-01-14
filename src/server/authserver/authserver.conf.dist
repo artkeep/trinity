@@ -201,7 +201,6 @@ WrongPass.BanTime = 600
 #        Default:     0 - (Ban IP)
 #                     1 - (Ban Account)
 
-LogColors = "13 11 9 5"
 WrongPass.BanType = 0
 
 #
@@ -226,6 +225,7 @@ LoginDatabaseInfo = "127.0.0.1;3306;trinity;trinity;auth"
 #    LoginDatabase.WorkerThreads
 #        Description: The amount of worker threads spawned to handle asynchronous (delayed) MySQL
 #                     statements. Each worker thread is mirrored with its own connection to the
+#                     MySQL server and their own thread on the MySQL server.
 #        Default:     1
 
 LoginDatabase.WorkerThreads = 1

@@ -156,7 +156,10 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
                 switch(creature->GetEntry())
                 {
+                    case CREATURE_OOZE_COVERED_TENTACLE_STALKER:
+                    case CREATURE_SLIMY_TENTACLE_STALKER:
                     case CREATURE_ORANGE_GAS_STALKER:
+                    case CREATURE_TEAR_GAS_STALKER:
                         creature->SetReactState(REACT_PASSIVE);
                         break;
                     case CREATURE_KOR_KRON_GENERAL:
@@ -307,36 +310,44 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case PROF_COLLISION_DOOR:
                         uiProfCollisionDoor = go->GetGUID();
-                        if (uiEncounter[4] == NOT_STARTED)
-                            HandleGameObject(NULL, false, go);
-                        break;
-                    case GREEN_PIPE:
-                        uiGreenPipe = go->GetGUID();
-                        if (uiEncounter[5] == NOT_STARTED)
-                            HandleGameObject(NULL, false, go);
-                        break;
-                    case OOZE_VALVE:
-                        uiOozeValve = go->GetGUID();
-                        if (uiEncounter[5] == NOT_STARTED)
-                            HandleGameObject(NULL, false, go);
-                        break;
-                    case PROF_DOOR_GREEN:
-                        uiProfDoorGreen = go->GetGUID();
-                        if (uiEncounter[5] == DONE)
-                            HandleGameObject(NULL, true, go);
-                        break;
-                    case ORANGE_PIPE:
-                        uiOrangePipe = go->GetGUID();
-                        if (uiEncounter[4] == NOT_STARTED)
-                            HandleGameObject(NULL, false, go);
-                        break;
-                    case GAS_VALVE:
-                        uiGasValve = go->GetGUID();
-                        if (uiEncounter[4] == NOT_STARTED)
-                            HandleGameObject(NULL, false, go);
+                        if (uiEncounter[4] == DONE && uiEncounter[5] == DONE)
+                            HandleGameObject(uiProfCollisionDoor, true, go);
                         break;
                     case PROF_DOOR_ORANGE:
                         uiProfDoorOrange = go->GetGUID();
+                        if (uiEncounter[4] == DONE && uiEncounter[5] == DONE)
+                            go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
+                        else if (uiEncounter[4] == DONE)
+                            HandleGameObject(uiProfDoorOrange, false, go);
+                        else
+                            HandleGameObject(uiProfDoorOrange, true, go);
+                        break;
+                    case PROF_DOOR_GREEN:
+                        uiProfDoorGreen = go->GetGUID();
+                        if (uiEncounter[4] == DONE && uiEncounter[5] == DONE)
+                            go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
+                        else if (uiEncounter[5] == DONE)
+                            HandleGameObject(uiProfDoorGreen, true, go);
+                        else
+                            HandleGameObject(uiProfDoorGreen, false, go);
+                        break;
+                    case ORANGE_PIPE:
+                        uiOrangePipe = go->GetGUID();
+                        if (uiEncounter[4] == DONE)
+                            HandleGameObject(uiOrangePipe, true, go);
+                        break;
+                    case GREEN_PIPE:
+                        uiGreenPipe = go->GetGUID();
+                        if (uiEncounter[5] == DONE)
+                            HandleGameObject(uiGreenPipe, true, go);
+                        break;
+                    case OOZE_VALVE:
+                        uiOozeValve = go->GetGUID();
+                        if (uiEncounter[5] == DONE)
+                            HandleGameObject(NULL, true, go);
+                        break;
+                    case GAS_VALVE:
+                        uiGasValve = go->GetGUID();
                         if (uiEncounter[4] == DONE)
                             HandleGameObject(NULL, true, go);
                         break;
@@ -413,10 +424,14 @@ class instance_icecrown_citadel : public InstanceMapScript
                             HandleGameObject(NULL, true, go);
                         break;
                     case LICH_TELEPORT:
+                    {
                         uiLichTp = go->GetGUID();
-                        if(uiEncounter[10] == NOT_STARTED)
-                            HandleGameObject(NULL, false, go);
+                        bool bAllOthersAreDone = true;
+                        for (uint8 i = 0; i < 10 && bAllOthersAreDone; ++i)
+                            bAllOthersAreDone &= (uiEncounter[i] == DONE);
+                        HandleGameObject(NULL, bAllOthersAreDone, go);
                         break;
+                    }
                 }
             }
 
@@ -556,17 +571,22 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_FESTERGUT_EVENT:
                         if(data == DONE)
                         {
-                            HandleGameObject(uiOrangeMonsterDoor, true);
-                            HandleGameObject(uiOrangePipe, true);
-                            HandleGameObject(uiGasValve, true);
                             if (uiEncounter[5] == DONE)
                             {
                                 HandleGameObject(uiProfCollisionDoor, true);
-                                if (GameObject* Oprofessordoor = instance->GetGameObject(uiProfDoorOrange))
-                                {
-                                    Oprofessordoor->SetGoState(GOState(2));
-                                }
+                                if (GameObject* go = instance->GetGameObject(uiProfDoorOrange))
+                                    go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
+                                if (GameObject* go = instance->GetGameObject(uiProfDoorGreen))
+                                    go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
                             }
+                            else
+                            {
+                                HandleGameObject(uiOrangeMonsterDoor, true);
+                                if (GameObject* go = instance->GetGameObject(uiProfDoorOrange))
+                                    HandleGameObject(uiProfDoorOrange, true, go);
+                            }
+                            HandleGameObject(uiOrangePipe, true);
+                            HandleGameObject(uiGasValve, true);
                         }
                         if(data == NOT_STARTED)
                         {
@@ -587,17 +607,22 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_ROTFACE_EVENT:
                         if(data == DONE)
                         {
-                            HandleGameObject(uiGreenMonsterDoor, true);
-                            HandleGameObject(uiGreenPipe, true);
-                            HandleGameObject(uiOozeValve, true);
                             if (uiEncounter[4] == DONE)
                             {
                                 HandleGameObject(uiProfCollisionDoor, true);
-                                if (GameObject* Gprofessordoor = instance->GetGameObject(uiProfDoorGreen))
-                                {
-                                    Gprofessordoor->SetGoState(GOState(2));
-                                }
+                                if (GameObject* go = instance->GetGameObject(uiProfDoorOrange))
+                                    go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
+                                if (GameObject* go = instance->GetGameObject(uiProfDoorGreen))
+                                    go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
                             }
+                            else
+                            {
+                                HandleGameObject(uiGreenMonsterDoor, true);
+                                if (GameObject* go = instance->GetGameObject(uiProfDoorGreen))
+                                    HandleGameObject(uiProfDoorGreen, false, go);
+                            }
+                            HandleGameObject(uiGreenPipe, true);
+                            HandleGameObject(uiOozeValve, true);
                         }
                         if(data == NOT_STARTED)
                         {

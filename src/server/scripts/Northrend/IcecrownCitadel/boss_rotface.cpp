@@ -50,10 +50,11 @@ enum eSpells
     // Rotface
     SPELL_SLIME_SPRAY                       = 69508,    // every 20 seconds
     SPELL_SLIME_SPRAY_1                     = 70881,
-    SPELL_MUTATED_INFECTION                 = 69674,    // hastens every 1:30
+    //SPELL_MUTATED_INFECTION                 = 69674,    // hastens every 1:30
 
-    //SPELL_OOZE_FLOOD                        = 69783,
+    SPELL_OOZE_FLOOD                        = 69783,
     SPELL_OOZE_FLOOD_1                      = 69785,
+    SPELL_UNSTABLE_OOZE_EXPLOSION           = 69839,
     SPELL_UNSTABLE_OOZE_EXPLOSION_TRIGGER   = 69832,
     // Oozes
     SPELL_LITTLE_OOZE_COMBINE               = 69537,    // combine 2 Small Oozes
@@ -71,10 +72,10 @@ enum eSpells
     SPELL_AWAKEN_PLAGUED_ZOMBIES            = 71159,
     SPELL_INFECTED_WOUND                    = 69789
 };
-#define SPELL_OOZE_FLOOD  RAID_MODE<int32>(69789, 71215, 71587, 71588)
-#define MUTATED_INFECTION RAID_MODE<int32>(69674,71224,73022,73023)
+#define SPELL_OOZE_FLOOD_EFFECT  RAID_MODE<int32>(69789, 71215, 71587, 71588)
+static const uint32 oozeFloodSpells[4] = {69782, 69796, 69798, 69801};
+#define SPELL_MUTATED_INFECTION RAID_MODE<int32>(69674,71224,73022,73023)
 #define SPELL_RADIATING_OOZE RAID_MODE<int32>(69760, 73026, 71212, 73027)   // passive damage aura - large
-#define SPELL_UNSTABLE_OOZE_EXPLOSION RAID_MODE<int32>(69839, 73029, 73029, 73030)
 
 enum eEvents
 {
@@ -96,7 +97,7 @@ enum eEvents
     EVENT_FLOOD_EFFECT      = 9,
     EVENT_FLOOD_START       = 10
 };
-const Position SpawnLoc[]=
+const Position SpawnLocOozeStream[]=
 {
     {4468.825f, 3094.986f, 372.385f, 0.0f},
     {4487.825f, 3114.452f, 372.385f, 0.0f},
@@ -108,7 +109,7 @@ const Position SpawnLoc[]=
     {4424.825f, 3095.986f, 372.385f, 0.0f}
 };
 
-const Position StalkerSpawnLoc[]=
+const Position SpawnLocPuddle[]=
 {
     {4468.825f, 3094.986f, 360.385f, 0.0f},
     {4487.825f, 3114.452f, 360.385f, 0.0f},
@@ -126,8 +127,13 @@ class boss_rotface : public CreatureScript
 
         struct boss_rotfaceAI : public BossAI
         {
+            //For debug reasons only - remove it after you find out good parameters
+            uint8 bSprayVariant;
+            uint32 sprayCooldown;
             boss_rotfaceAI(Creature* creature) : BossAI(creature, DATA_ROTFACE)
             {
+                bSprayVariant = true;
+                sprayCooldown = 20000;
             }
 
             void InitializeAI()
@@ -152,10 +158,10 @@ class boss_rotface : public CreatureScript
                 uiStage = 0;
                 uiFloodStage = 1;
                 infectionStage = 0;
-                pGreenGasStalker1 = 0;
-                pGreenGasStalker2 = 0;
-                pPuddleStalker1 = 0;
-                pPuddleStalker2 = 0;
+                uiOoozeStream1 = 0;
+                uiOoozeStream2 = 0;
+                uiPuddleStalker1 = 0;
+                uiPuddleStalker2 = 0;
                 infectionCooldown = 14000;
                 //initialize random flood sequence
                 for (uint8 i = 0; i < 4; ++i)
@@ -194,10 +200,8 @@ class boss_rotface : public CreatureScript
                 instance->SetBossState(DATA_ROTFACE, DONE);
                 instance->SetData(DATA_ROTFACE_EVENT, DONE);
                 if (Creature* professor = Unit::GetCreature(*me, instance->GetData64(DATA_PROFESSOR_PUTRICIDE)))
-                {
                     professor->AI()->DoAction(ACTION_ROTFACE_DEATH);
-                    professor->AI()->EnterEvadeMode();
-                }
+                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MUTATED_INFECTION);
                 DespawnOozes();
             }
             void DespawnOozes()
@@ -286,20 +290,43 @@ class boss_rotface : public CreatureScript
                                 {
                                     case 1:
                                     {
-                                        pGreenGasStalker1->CastSpell(pGreenGasStalker1, SPELL_OOZE_FLOOD, true);
-                                        pGreenGasStalker2->CastSpell(pGreenGasStalker2, SPELL_OOZE_FLOOD, true); 
+                                        Creature *pOoozeStream1 = me->GetCreature(*me, uiOoozeStream1);
+                                        Creature *pOoozeStream2 = me->GetCreature(*me, uiOoozeStream2);
+                                        if (pOoozeStream1 && pOoozeStream2)
+                                        {
+                                            pOoozeStream1->CastSpell(pOoozeStream1, SPELL_OOZE_FLOOD, true);
+                                            pOoozeStream2->CastSpell(pOoozeStream2, SPELL_OOZE_FLOOD, true); 
+                                        }
                                         ++uiFloodStage;
                                         events.ScheduleEvent(EVENT_FLOOD_EFFECT, 4000);
                                     }
                                     break;
                                     case 2:
                                     {
-                                        pGreenGasStalker1->CastSpell(pGreenGasStalker1, SPELL_OOZE_FLOOD_1, true);
-                                        pGreenGasStalker2->CastSpell(pGreenGasStalker2, SPELL_OOZE_FLOOD_1, true);
-                                        --uiFloodStage;
-                                        bFlood = false;
+                                        Creature *pPuddleStalker1 = me->GetCreature(*me, uiPuddleStalker1);
+                                        Creature *pPuddleStalker2 = me->GetCreature(*me, uiPuddleStalker2);
+                                        if (pPuddleStalker1 && pPuddleStalker2)
+                                        {
+                                            pPuddleStalker1->CastSpell(pPuddleStalker1, SPELL_OOZE_FLOOD_1, true);
+                                            pPuddleStalker2->CastSpell(pPuddleStalker2, SPELL_OOZE_FLOOD_1, true);
+                                            pPuddleStalker1->CastSpell(pPuddleStalker1, SPELL_OOZE_FLOOD_EFFECT, true);
+                                            pPuddleStalker2->CastSpell(pPuddleStalker2, SPELL_OOZE_FLOOD_EFFECT, true);
+                                            events.ScheduleEvent(EVENT_FLOOD_EFFECT, 1000);
+                                        }
+                                        ++uiFloodStage;
                                     }
-                                    break;
+                                    case 3:
+                                    {
+                                        Creature *pPuddleStalker1 = me->GetCreature(*me, uiPuddleStalker1);
+                                        Creature *pPuddleStalker2 = me->GetCreature(*me, uiPuddleStalker2);
+                                        if (pPuddleStalker1 && pPuddleStalker2)
+                                        {
+                                            pPuddleStalker1->CastSpell(pPuddleStalker1, SPELL_OOZE_FLOOD_EFFECT, true);
+                                            pPuddleStalker2->CastSpell(pPuddleStalker2, SPELL_OOZE_FLOOD_EFFECT, true);
+                                            events.ScheduleEvent(EVENT_FLOOD_EFFECT, 1000);
+                                        }
+                                        break;
+                                    }
                                 }
                             }
                             break;
@@ -320,15 +347,18 @@ class boss_rotface : public CreatureScript
 					            if (Creature *pPutricide = me->GetCreature(*me, uiPutricide))
 						            DoScriptText(SAY_PUTRI_SLIME_2, pPutricide);
                             }
-    
-                            pPuddleStalker1 = me->SummonCreature(CREATURE_PUDDLE_STALKER, SpawnLoc[floodOrder[uiStage]*2], TEMPSUMMON_TIMED_DESPAWN, 4000);
-                            pPuddleStalker2 = me->SummonCreature(CREATURE_PUDDLE_STALKER, SpawnLoc[floodOrder[uiStage]*2 + 1], TEMPSUMMON_TIMED_DESPAWN, 4000);
-                            pGreenGasStalker1 = me->SummonCreature(CREATURE_GREEN_GAS_STALKER, StalkerSpawnLoc[floodOrder[uiStage]*2], TEMPSUMMON_TIMED_DESPAWN, 24000);
-                            pGreenGasStalker2 = me->SummonCreature(CREATURE_GREEN_GAS_STALKER, StalkerSpawnLoc[floodOrder[uiStage]*2 + 1], TEMPSUMMON_TIMED_DESPAWN, 24000);
+                            
+                            uiOoozeStream1 = me->SummonCreature(CREATURE_GREEN_GAS_STALKER, SpawnLocOozeStream[floodOrder[uiStage]*2], TEMPSUMMON_TIMED_DESPAWN, 4000)->GetGUID();
+                            uiOoozeStream2 = me->SummonCreature(CREATURE_GREEN_GAS_STALKER, SpawnLocOozeStream[floodOrder[uiStage]*2 + 1], TEMPSUMMON_TIMED_DESPAWN, 4000)->GetGUID();
+                            
+                            uiPuddleStalker1 = me->SummonCreature(CREATURE_PUDDLE_STALKER, SpawnLocPuddle[floodOrder[uiStage]*2], TEMPSUMMON_TIMED_DESPAWN, 24000)->GetGUID();
+                            uiPuddleStalker2 = me->SummonCreature(CREATURE_PUDDLE_STALKER, SpawnLocPuddle[floodOrder[uiStage]*2 + 1], TEMPSUMMON_TIMED_DESPAWN, 24000)->GetGUID();
                             ++uiStage;
+                            uiFloodStage = 1;
                             bFlood = true;
                             events.ScheduleEvent(EVENT_FLOOD_START, 25000);
                             events.ScheduleEvent(EVENT_FLOOD_EFFECT, 1000);
+
                             break;
                         }
                         case EVENT_SLIME_SPRAY:
@@ -339,9 +369,8 @@ class boss_rotface : public CreatureScript
                                 Creature *pSprayStalker = DoSummon(CREATURE_OOZE_SPRAY_STALKER, pos, 8000, TEMPSUMMON_TIMED_DESPAWN);
                                 Talk(EMOTE_SLIME_SPRAY);
                                 me->SetFacingToObject(pSprayStalker);
-                                DoCastAOE(SPELL_SLIME_SPRAY);
-
                                 me->CastSpell(pSprayStalker, SPELL_SLIME_SPRAY_1, true);
+                                me->CastSpell(pSprayStalker, SPELL_SLIME_SPRAY, true); 
                             }
                             events.ScheduleEvent(EVENT_SLIME_SPRAY, 20000);
                             break;
@@ -355,11 +384,11 @@ class boss_rotface : public CreatureScript
                             break;
                         case EVENT_MUTATED_INFECTION:
                         {
-                            Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -MUTATED_INFECTION);
+                            Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_MUTATED_INFECTION);
                             if (!target)
-                                target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true, -MUTATED_INFECTION);
+                                target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true, -SPELL_MUTATED_INFECTION);
                             if (target)
-                                me->CastCustomSpell(SPELL_MUTATED_INFECTION, SPELLVALUE_MAX_TARGETS, 1, target, false);
+                                me->AddAura(SPELL_MUTATED_INFECTION, target); 
                             events.ScheduleEvent(EVENT_MUTATED_INFECTION, infectionCooldown);
                             break;
                         }
@@ -377,10 +406,10 @@ class boss_rotface : public CreatureScript
             uint8 uiStage;
             uint8 uiFloodStage;
             bool bFlood;
-            Creature *pPuddleStalker1;
-            Creature *pPuddleStalker2;
-            Creature *pGreenGasStalker1;
-            Creature *pGreenGasStalker2;
+            uint64 uiPuddleStalker1;
+            uint64 uiPuddleStalker2;
+            uint64 uiOoozeStream1;
+            uint64 uiOoozeStream2;
             uint8 floodOrder[4];
         };
 
@@ -413,9 +442,14 @@ class npc_little_ooze : public CreatureScript
                         rotface->AI()->JustSummoned(me);
                 //Slow Little Oozes a bit
                 me->SetSpeed(MOVE_WALK, me->GetSpeedRate(MOVE_RUN) * 0.9f);
-                me->SetSpeed(MOVE_RUN, me->GetSpeedRate(MOVE_RUN) * 0.9f); 
+                me->SetSpeed(MOVE_RUN, me->GetSpeedRate(MOVE_RUN) * 0.9f);
             }
-
+            //Little ooze will always switch to target that dealed damage last time
+            void DamageTaken(Unit *who, uint32 &)
+            {
+                me->getThreatManager().clearReferences();
+                me->AddThreat(who, 1.0f);
+            }
             void JustDied(Unit* /*killer*/)
             {
                 me->DespawnOrUnsummon();
@@ -812,11 +846,9 @@ class spell_rotface_large_ooze_buff_combine : public SpellScriptLoader
                                     rotface->AI()->Talk(SAY_UNSTABLE_EXPLOSION);
                                 }
 
-                        if (Creature* cre = GetCaster()->ToCreature())
-                            cre->AI()->DoAction(EVENT_STICKY_OOZE);
                         if (InstanceScript* instance = GetCaster()->GetInstanceScript())
                             if (BossAI* rotface = (BossAI*)Unit::GetCreature(*GetCaster(), instance->GetData64(DATA_ROTFACE)))
-                                GetCaster()->CastSpell(GetCaster(), rotface->SPELL_UNSTABLE_OOZE_EXPLOSION, false, NULL, NULL, GetCaster()->GetGUID());
+                                GetCaster()->CastSpell(GetCaster(), SPELL_UNSTABLE_OOZE_EXPLOSION, true);
                         if (InstanceScript* instance = GetCaster()->GetInstanceScript())
                             instance->SetData(DATA_OOZE_DANCE_ACHIEVEMENT, uint32(false));
                     }

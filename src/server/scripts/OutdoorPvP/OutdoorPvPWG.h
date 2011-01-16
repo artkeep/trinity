@@ -138,7 +138,8 @@ enum OutdoorPvPWGQuest
     A_VICTORY_IN_WG                              = 13181,
     H_VICTORY_IN_WG                              = 13183,
     CRE_PVP_KILL                                 = 31086, //Quest Objective - Fixme: this should be handled by DB
-    CRE_PVP_KILL_V                               = 31093, //Quest Objective - Fixme: this should be handled by DB
+    CRE_PVP_KILL_V                               = 31093, //Quest Objective - Fixme: this should be handled by DB.
+    TOWER_PVP_DESTROYED                          = 35074, //Quest Objective - Toppling the Towers & Southern Sabotage
 };
 
 enum OutdoorPvPWGCreEntry
@@ -175,7 +176,7 @@ struct BuildingState
          : worldState(_worldState), health(0)
          , defaultTeam(asDefault ? _team : OTHER_TEAM(_team)), team(_team), damageState(DAMAGE_INTACT)
          , building(NULL), type(BUILDING_WALL), graveTeam(NULL)
-    {}
+    { }
     uint32 worldState;
     uint32 health;
     TeamId defaultTeam;
@@ -223,6 +224,7 @@ class OutdoorPvPWG : public OutdoorPvP
         OutdoorPvPWG();
         bool SetupOutdoorPvP();
         int TeamIDsound;
+        bool MaingateDestroyed;
         uint32 GetCreatureEntry(uint32 guidlow, const CreatureData *data);
         void OnCreatureCreate(Creature *creature);
         void OnGameObjectCreate(GameObject *go);
@@ -236,7 +238,7 @@ class OutdoorPvPWG : public OutdoorPvP
         bool Update(uint32 diff);
         void BroadcastStateChange(BuildingState *state) const;
         uint32 GetData(uint32 id);
-        void SetData(uint32 id, uint32 value) {};
+        void SetData(uint32 id, uint32 value) { };
         void ModifyWorkshopCount(TeamId team, bool add);
         uint32 GetTimer() const { return m_timer / 1000; };
         bool isWarTime() const { return m_wartime; };
@@ -277,6 +279,7 @@ class OutdoorPvPWG : public OutdoorPvP
         CreatureSet m_creatures;
         CreatureSet m_vehicles[2];
         GameObjectSet m_gobjects;
+        GameObjectSet m_gobjectsDestroyable;
         QuestGiverMap m_questgivers;
 
         TeamPairMap m_creEntryPair, m_goDisplayPair;
@@ -293,18 +296,19 @@ class OutdoorPvPWG : public OutdoorPvP
         OPvPCapturePointWG *GetWorkshop(uint32 lowguid) const;
         OPvPCapturePointWG *GetWorkshopByEngGuid(uint32 lowguid) const;
         OPvPCapturePointWG *GetWorkshopByGOGuid(uint64 lowguid) const;
-        OutdoorPvPWGCreType GetCreatureType(uint32 entry) const;
+
         void StartBattle();
         void EndBattle();
         void UpdateClock();
         void UpdateClockDigit(uint32 &timer, uint32 digit, uint32 mod);
         void PromotePlayer(Player *player) const;
         void UpdateTenacityStack();
-		void UpdateCreatureObject();
         void UpdateAllWorldObject();
         bool UpdateCreatureInfo(Creature *creature);
         bool UpdateGameObjectInfo(GameObject *go) const;
         bool CanBuildVehicle(OPvPCapturePointWG *workshop) const;
+        OutdoorPvPWGCreType GetCreatureType(uint32 entry) const;
+
         void RebuildAllBuildings();
         void RemoveOfflinePlayerWGAuras();
         void RewardMarkOfHonor(Player *player, uint32 count);
@@ -318,7 +322,7 @@ class OPvPCapturePointWG : public OPvPCapturePoint
     public:
         explicit OPvPCapturePointWG(OutdoorPvPWG *opvp, BuildingState *state);
         void SetTeamByBuildingState();
-        void ChangeState() {}
+        void ChangeState() { }
         void ChangeTeam(TeamId oldteam);
         uint32 *m_spiEntry;
         uint32 m_spiGuid;

@@ -19,10 +19,10 @@
 #include "ScriptPCH.h"
 #include "OutdoorPvPWG.h"
 
-#define GOSSIP_HELLO_DEMO1  "Построить катапульту."
-#define GOSSIP_HELLO_DEMO2  "Построить разрушитель."
-#define GOSSIP_HELLO_DEMO3  "Построить осадную машину."
-#define GOSSIP_HELLO_DEMO4  "Постройка невозможна!"
+#define GOSSIP_HELLO_DEMO1  "Build catapult."
+#define GOSSIP_HELLO_DEMO2  "Build demolisher."
+#define GOSSIP_HELLO_DEMO3  "Build siege engine."
+#define GOSSIP_HELLO_DEMO4  "I cannot build more!"
 
 class npc_demolisher_engineerer : public CreatureScript
 {
@@ -35,7 +35,7 @@ bool OnGossipHello(Player* pPlayer, Creature* pCreature)
     if (pCreature->isQuestGiver())
         pPlayer->PrepareQuestMenu(pCreature->GetGUID());
 
-	if(pPlayer->isGameMaster() || pCreature->GetZoneScript() && pCreature->GetZoneScript()->GetData(pCreature->GetDBTableGUIDLow()))
+    if(pPlayer->isGameMaster() || pCreature->GetZoneScript() && pCreature->GetZoneScript()->GetData(pCreature->GetDBTableGUIDLow()))
     {
         if (pPlayer->HasAura(SPELL_CORPORAL))
             pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HELLO_DEMO1, GOSSIP_SENDER_MAIN,   GOSSIP_ACTION_INFO_DEF);
@@ -76,7 +76,7 @@ bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint3
 
     struct npc_demolisher_engineererAI : public ScriptedAI
     {
-        npc_demolisher_engineererAI(Creature* creature) : ScriptedAI(creature)
+        npc_demolisher_engineererAI(Creature* pCreature) : ScriptedAI(pCreature)
         {
             me->SetReactState(REACT_PASSIVE);
         }

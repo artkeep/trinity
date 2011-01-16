@@ -23,13 +23,14 @@
 
 class MySQLConnection;
 
-class DatabaseWorker : protected ACE_Task_Base
+class DatabaseWorker : public ACE_Task_Base
 {
     public:
         DatabaseWorker(ACE_Activation_Queue* new_queue, MySQLConnection* con);
 
         ///- Inherited from ACE_Task_Base
         int svc();
+        int activate();
         int wait() { return ACE_Task_Base::wait(); }
 
     private:

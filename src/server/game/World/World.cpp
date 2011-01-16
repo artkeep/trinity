@@ -1163,7 +1163,6 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE]  = sConfig->GetBoolDefault("OutdoorPvP.Wintergrasp.Antifarm.Enable", false);
     m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK]  = sConfig->GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Atk", 5);
     m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF]  = sConfig->GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Def", 5);
-
 																		       // movement anticheat
     m_MvAnticheatEnable                     = sConfig->GetBoolDefault("Anticheat.Movement.Enable",false);
     m_MvAnticheatKick                       = sConfig->GetBoolDefault("Anticheat.Movement.Kick",false);
@@ -2861,12 +2860,12 @@ void World::SendWintergraspState()
             if (pvpWG->isWarTime())
             {
                 // "Battle in progress"
-                itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], (time(NULL)));
+                itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL)));
             } else
                 // Time to next battle
             {
                 pvpWG->SendInitWorldStatesTo(itr->second->GetPlayer());
-                itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], (time(NULL) + pvpWG->GetTimer()));
+                itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL) + pvpWG->GetTimer()));
                 // Hide unneeded info which in center of screen
                 itr->second->GetPlayer()->SendInitWorldStates(itr->second->GetPlayer()->GetZoneId(), itr->second->GetPlayer()->GetAreaId());
             }

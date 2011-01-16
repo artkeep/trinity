@@ -55,6 +55,7 @@
 #include "BattlegroundMgr.h"
 #include "OutdoorPvP.h"
 #include "OutdoorPvPMgr.h"
+#include "OutdoorPvPWG.h"
 #include "ArenaTeam.h"
 #include "Chat.h"
 #include "Spell.h"
@@ -8806,6 +8807,13 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         data << uint32(0xEC5) << sWorld->GetWintergrapsTimer();
     // ---
     data << uint32(0xF3D) << uint32(sWorld->getIntConfig(CONFIG_ARENA_SEASON_ID));
+
+    // May be send timer to start Wintergrasp
+    if(sWorld->GetWintergrapsState()==4354)
+        data << uint32(0x1102) << sWorld->GetWintergrapsTimer();
+    else
+        data << uint32(0xEC5) << sWorld->GetWintergrapsTimer();
+    // ---
 
     if (mapid == 530)                                       // Outland
     {

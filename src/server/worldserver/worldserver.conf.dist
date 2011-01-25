@@ -1403,6 +1403,12 @@ Anticheat.Movement.MistimingDelta = 15000
 
 Anticheat.Movement.MistimingAlarms = 200
 
+#   AccountInstancesPerHour
+#        Description: Controls the max amount of different instances player can enter within hour
+#        Default:     5
+
+AccountInstancesPerHour = 5
+
 #
 ###################################################################################################
 

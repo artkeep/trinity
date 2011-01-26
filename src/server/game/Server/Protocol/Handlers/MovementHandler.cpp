@@ -1092,7 +1092,7 @@ void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
             if (seat->CanEnterOrExit())
                 GetPlayer()->ExitVehicle();
             else
-                sLog->outError("Player %u tried to exit vehicle, but seatflags %u (ID: %u) don't permit that.", 
+                sLog->outError("Player %u tried to exit vehicle, but seatflags %u (ID: %u) don't permit that.",
                     GetPlayer()->GetGUIDLow(), seat->m_ID, seat->m_flags);
         }
     }

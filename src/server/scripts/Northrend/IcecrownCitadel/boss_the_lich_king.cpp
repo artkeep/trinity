@@ -973,11 +973,13 @@ class npc_valkyr_icc : public CreatureScript
                 switch(id)
                 {
                     case POINT_PLATFORM_END:
+                    {
                         vehicle->RemoveAllPassengers();
-                        float x,y,z;
+                        float x,y,z = me->GetPositionZ();
                         me->GetNearPoint2D(x, y, 50, me->GetAngle(me));
                         me->GetMotionMaster()->MovePoint(POINT_VALKYR_END,x,y,z+15);
                         break;
+                    }
                     case POINT_VALKYR_END:
                         me->DespawnOrUnsummon();
                         break;

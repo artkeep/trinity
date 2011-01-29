@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ScriptPCH.h"
@@ -85,6 +85,7 @@ public:
             me->SetReactState(REACT_AGGRESSIVE);
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             _Reset();
+            SetImmuneToDeathGrip();
         }
 
         void EnterCombat(Unit * /*who*/)
@@ -225,8 +226,140 @@ public:
 
 };
 
+enum eSpellsTrash
+{
+    // 16984
+    SPELL_CLEAVE                = 15496,
+    // 16983
+    SPELL_MORTAL_STRIKE         = 32736,
+    SPELL_SHADOW_SHOCK          = 30138,
+    SPELL_SHADOW_SHOCK_H        = 54889,
+    // 16981
+    SPELL_ARCANE_EXPLOSION      = 54890,
+    SPELL_ARCANE_EXPLOSION_H    = 54891,
+    SPELL_BLINK_1               = 29208,
+    SPELL_BLINK_2               = 29209,
+    SPELL_BLINK_3               = 29210,
+    SPELL_BLINK_4               = 29211,
+};
+
+class mob_naxxramas_noth_trash : public CreatureScript
+{
+public:
+    mob_naxxramas_noth_trash() : CreatureScript("mob_naxxramas_noth_trash") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        switch(pCreature->GetEntry())
+        {
+            case 16984: return new mob_plagued_warriorAI (pCreature);
+            case 16983: return new mob_plagued_championAI (pCreature);
+            case 16981: return new mob_plagued_guardianAI (pCreature);
+            default: return NULL;
+        }
+    }
+
+    struct mob_plagued_warriorAI : ScriptedAI 
+    {
+        mob_plagued_warriorAI(Creature *c) : ScriptedAI(c){}
+
+        uint32 uiCleave_Timer;
+
+        void Reset()
+        {
+            uiCleave_Timer = urand(5000,10000);
+        }
+
+        void EnterCombat(Unit* /*who*/) {}
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim() )
+                return;
+
+            if(uiCleave_Timer <= diff)
+            {
+                DoCast(me->getVictim(),SPELL_CLEAVE);
+                uiCleave_Timer = urand(5000,10000);
+            }else uiCleave_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    struct mob_plagued_championAI : ScriptedAI 
+    {
+        mob_plagued_championAI(Creature *c) : ScriptedAI(c){}
+
+        uint32 uiMortalStrike_Timer;
+        uint32 uiShadowShock_Timer;
+
+        void Reset()
+        {
+            uiMortalStrike_Timer = urand(5000,10000);
+            uiShadowShock_Timer = urand(10000,15000);
+        }
+
+        void EnterCombat(Unit* /*who*/) {}
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim() )
+                return;
+
+            if(uiMortalStrike_Timer <= diff)
+            {
+                DoCast(me->getVictim(),SPELL_CLEAVE);
+                uiMortalStrike_Timer = urand(5000,10000);
+            }else uiMortalStrike_Timer -= diff;
+
+            if(uiShadowShock_Timer <= diff)
+            {
+                DoCastAOE(RAID_MODE(SPELL_SHADOW_SHOCK,SPELL_SHADOW_SHOCK_H));
+                uiShadowShock_Timer = urand(10000,15000);
+            }else uiShadowShock_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    struct mob_plagued_guardianAI : ScriptedAI 
+    {
+        mob_plagued_guardianAI(Creature *c) : ScriptedAI(c){}
+
+        uint32 uiExplosion_Timer;
+        uint32 uiBlink_Timer;
+
+        void Reset()
+        {
+            uiExplosion_Timer = urand(7000,12000);
+            uiBlink_Timer = urand(10000,15000);
+        }
+
+        void EnterCombat(Unit* /*who*/) {}
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim() )
+                return;
+
+            if(uiBlink_Timer <= diff)
+            {
+                if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM,1,40,true))
+                    DoCast(target,RAND(SPELL_BLINK_1,SPELL_BLINK_2,SPELL_BLINK_3,SPELL_BLINK_4));
+                uiBlink_Timer = urand(10000,20000);
+            }else uiBlink_Timer -= diff;
+
+            if(uiExplosion_Timer <= diff)
+            {
+                DoCastAOE(RAID_MODE(SPELL_ARCANE_EXPLOSION,SPELL_ARCANE_EXPLOSION_H));
+                uiExplosion_Timer = urand(7000,12000);
+            }else uiExplosion_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
 
 void AddSC_boss_noth()
 {
     new boss_noth();
+    new mob_naxxramas_noth_trash();
 }

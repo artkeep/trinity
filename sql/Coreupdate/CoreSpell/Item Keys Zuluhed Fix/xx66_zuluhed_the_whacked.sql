@@ -1,0 +1,1 @@
+UPDATE item_template SET ScriptName = 'item_zuluheds_key' WHERE entry = 31664;

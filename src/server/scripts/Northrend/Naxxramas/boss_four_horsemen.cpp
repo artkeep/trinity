@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "ScriptPCH.h"
 #include "naxxramas.h"
 
@@ -52,6 +52,18 @@ const Position WaypointPositions[12] =
     {2534.5f, -2921.7f, 241.53f, 1.363f},
     {2523.5f, -2902.8f, 241.28f, 2.095f},
     {2517.8f, -2896.6f, 241.28f, 2.315f},
+};
+
+const Position HomePositions[4] =
+{
+    // Thane
+    {2520.5f, -2955.38f, 245.635f, 5.58f},
+    // Lady
+    {2517.62f, -2959.38f, 245.636f, 5.72f},
+    // Baron
+    {2524.32f, -2951.28f, 245.633f, 5.43f},
+    // Sir
+    {2528.79f, -2948.58f, 245.633f, 5.27f}
 };
 
 const uint32 MOB_HORSEMEN[]     =   {16064, 16065, 30549, 16063};
@@ -129,7 +141,14 @@ public:
             encounterActionReset = false;
             doDelayPunish = false;
             _Reset();
-             
+            SetImmuneToDeathGrip();
+        }
+
+        void EnterEvadeMode()
+        {
+            _EnterEvadeMode();
+            me->GetMotionMaster()->MovePoint(15, HomePositions[id]);
+            Reset();
         }
 
         bool DoEncounterAction(Unit *who, bool attack, bool reset, bool checkAllDead)
@@ -217,7 +236,7 @@ public:
 
         void MovementInform(uint32 type, uint32 id)
         {
-            if (type != POINT_MOTION_TYPE)
+            if (type != POINT_MOTION_TYPE || id == 15)
                 return;
 
             if (id == 2 || id == 5 || id == 8 || id == 11)
@@ -254,7 +273,7 @@ public:
             if (me->getVictim() && me->GetDistanceOrder(who, me->getVictim()) && me->canAttack(who))
             {
                 me->getThreatManager().modifyThreatPercent(me->getVictim(), -100);
-                me->AddThreat(who, 1000000.0f);
+                me->AddThreat(who, 99999999.9f);
             }
         }
 
@@ -367,7 +386,7 @@ public:
                                 DoScriptText(SAY_SPECIAL[id], me);
                             DoCastAOE(SPELL_MARK[id]);
                             events.ScheduleEvent(EVENT_MARK, caster ? 15000 : 12000);
-                        }
+                        }else events.ScheduleEvent(EVENT_MARK, 100);
                         break;
                     case EVENT_CAST:
                         if(!me->IsNonMeleeSpellCasted(false))
@@ -397,7 +416,25 @@ public:
             {
                 if (doDelayPunish)
                 {
-                    DoCastAOE(SPELL_PUNISH[id], true);
+                    // try to find a new target
+                    Unit *pTemp = NULL;
+
+                    std::list<Unit *> playerList;
+                    SelectTargetList(playerList, 10, SELECT_TARGET_NEAREST, 45);
+                    for (std::list<Unit*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
+                    {
+                        pTemp = (*itr);
+                        if (me->IsWithinLOSInMap(pTemp) && !pTemp->IsImmunedToDamage(SPELL_SCHOOL_MASK_ALL))
+                        {
+                            SelectNearestTarget(pTemp);
+                            break;
+                        }
+                        pTemp = NULL;
+                    }
+
+                    if (!pTemp)
+                        DoCastAOE(SPELL_PUNISH[id], true);
+    
                     doDelayPunish = false;
                 }
                 punishTimer = 2000;

@@ -1,3 +1,6 @@
+#platform specific options
+option(WITH_AUTOBACKTRACE "Automatic backtrace generation" 0)
+
 # Package overloads - Linux
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   set(JEMALLOC_LIBRARY "jemalloc")

@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include "Common.h"
@@ -42,8 +44,8 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
         return;
 
     //sLog->outDebug("WORLD: received CMSG_DUEL_ACCEPTED");
-    sLog->outStaticDebug("Player 1 is: %u (%s)", pl->GetGUIDLow(),pl->GetName());
-    sLog->outStaticDebug("Player 2 is: %u (%s)", plTarget->GetGUIDLow(),plTarget->GetName());
+    sLog->outStaticDebug("Игрок 1: %u (%s)", pl->GetGUIDLow(),pl->GetName());
+    sLog->outStaticDebug("Игрок 2: %u (%s)", plTarget->GetGUIDLow(),plTarget->GetName());
 
     time_t now = time(NULL);
     pl->duel->startTimer = now;
@@ -51,6 +53,31 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
 
     pl->SendDuelCountdown(3000);
     plTarget->SendDuelCountdown(3000);
+	
+	if (sWorld->getIntConfig(CONFIG_DUEL_RESET_COOLDOWN) == 1)
+	{
+		pl->SetHealth(pl->GetMaxHealth());
+		plTarget->SetHealth(plTarget->GetMaxHealth());
+		
+		if (pl->getPowerType() == POWER_MANA) 
+			pl->SetPower(POWER_MANA, pl->GetMaxPower(POWER_MANA));
+		if (plTarget->getPowerType() == POWER_MANA)
+			plTarget->SetPower(POWER_MANA, plTarget->GetMaxPower(POWER_MANA));
+		if (pl->getPowerType() == POWER_RAGE) 
+			pl->SetPower(POWER_RAGE, 0);
+		if (plTarget->getPowerType() == POWER_RAGE)
+			plTarget->SetPower(POWER_RAGE, 0);
+		if (pl->getPowerType() == POWER_RUNIC_POWER) 
+			pl->SetPower(POWER_RUNIC_POWER, 0);
+		if (plTarget->getPowerType() == POWER_RUNIC_POWER)
+			plTarget->SetPower(POWER_RUNIC_POWER, 0);
+		
+		if (!pl->GetMap()->IsDungeon())
+		{
+			pl->RemoveArenaSpellCooldowns();
+			plTarget->RemoveArenaSpellCooldowns();
+		}
+	}
 }
 
 void WorldSession::HandleDuelCancelledOpcode(WorldPacket& recvPacket)

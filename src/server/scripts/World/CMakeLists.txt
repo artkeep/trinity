@@ -15,7 +15,6 @@ set(scripts_STAT_SRCS
   World/npc_professions.cpp
   World/npc_taxi.cpp
   World/npcs_special.cpp
-  World/boss_lottery.cpp
 )
 
 message("  -> Prepared: World")

@@ -510,6 +510,22 @@ public:
     }
 };
 
+/*#####
+# item_zuluheds_key (31664)
+#####*/
+
+class item_zuluheds_key : public ItemScript
+{
+public:
+    item_zuluheds_key() : ItemScript("item_zuluheds_key") { }
+
+    bool OnUse(Player *pPlayer, Item *pItem, SpellCastTargets const& targets)
+    {
+        pPlayer->KilledMonsterCredit(22112,0);
+        return false;
+    }
+};
+
 void AddSC_item_scripts()
 {
     new item_only_for_flight;

@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef DEF_NAXXRAMAS_H
@@ -40,14 +40,20 @@ enum Encounter
 
 enum Data
 {
-    DATA_HEIGAN_ERUPT,
-    DATA_GOTHIK_GATE,
-    DATA_SAPPHIRON_BIRTH,
+    DATA_HEIGAN_ERUPT = 0,
+    DATA_GOTHIK_GATE = 1,
+    DATA_SAPPHIRON_BIRTH = 2,
 
-    DATA_HORSEMEN0,
-    DATA_HORSEMEN1,
-    DATA_HORSEMEN2,
-    DATA_HORSEMEN3,
+    DATA_HORSEMEN0 = 3,
+    DATA_HORSEMEN1 = 4,
+    DATA_HORSEMEN2 = 5,
+    DATA_HORSEMEN3 = 6,
+
+    DATA_GO_ROOM_HEIGAN = 14,
+    DATA_GO_PASSAGE_HEIGAN = 15,
+
+    DATA_PLAYER_DEATHS = 16,
+    DATA_HEIGAN_PLAYER_DEATHS = 17,
 };
 
 enum Data64
@@ -71,4 +77,3 @@ enum Data64
 #define GO_BIRTH                181356
 
 #endif
-

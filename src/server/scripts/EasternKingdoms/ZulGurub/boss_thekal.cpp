@@ -121,7 +121,13 @@ class boss_thekal : public CreatureScript
                     m_pInstance->SetData(TYPE_THEKAL, NOT_STARTED);
             }
 
-            void UpdateAI(const uint32 diff)
+        void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
+        {
+            if (!PhaseTwo && WasDead)
+                uiDamage = 0;
+        }
+
+        void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;

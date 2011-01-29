@@ -97,7 +97,14 @@ extern int main(int argc, char **argv)
         return 1;
     }
     sLog->Initialize();
-
+	sLog->outString("AspirineRealm");
+	sLog->outString("Welcome to Aspirine Realm");
+	sLog->outString("The given repository http://bitbucket.org/jorda321/aspirinecore");
+	sLog->outString("Open source");
+	sLog->outString("Work's: ICC, Ruby Sanctum, IOC, TOC, TOCH, Ulduar, spell's, talents, quest and many other things");
+	sLog->outString("All kind, thanks that have chosen us"); 
+	sLog->outString("The project is based on TrinityCore http://trinitycore.org");
+	sLog->outString("Start Loading...");  
     sLog->outString("%s (realm-daemon)", _FULLVERSION);
     sLog->outString("<Ctrl-C> to stop.\n");
     sLog->outString("Using configuration file %s.", cfg_file);

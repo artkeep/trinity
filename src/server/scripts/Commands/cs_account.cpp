@@ -184,15 +184,6 @@ public:
             return false;
         }
 
-            // Авто анонс об удаления аккаунта
-            switch(result)
-            {
-                case AOR_OK:
-                    if (!sWorld->getIntConfig(CONFIG_ANNOUNCE_DELETE_ACCOUNT_ENABLED))
-                        sWorld->SendWorldText(LANG_ACCOUNT_DELETED_MESSAGE,account_name.c_str());
-                    break;
-            }
-
         return true;
     }
 

@@ -1,32 +1,3 @@
-/*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- *
- * Copyright (C) 2010 Myth Project <http://code.google.com/p/mythcore/>
- *
- * Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
- /* ScriptData
- SDName: Halls of Reflection
- SD%Complete: 0%
- SDComment: new script for tc implementation.
- SDCategory: Halls of Reflection
- EndScriptData */
-
 #include "ScriptPCH.h"
 #include "ScriptedEscortAI.h"
 #include "halls_of_reflection.h"
@@ -1390,6 +1361,468 @@ public:
     }
 };
 
+enum TrashSpells
+{
+    // Ghostly Priest
+    SPELL_SHADOW_WORD_PAIN                        = 72318,
+    SPELL_CIRCLE_OF_DESTRUCTION                   = 72320,
+    SPELL_COWER_IN_FEAR                           = 72321,
+    SPELL_DARK_MENDING                            = 72322,
+
+    // Phantom Mage
+    SPELL_FIREBALL                                = 72163,
+    SPELL_FLAMESTRIKE                             = 72169,
+    SPELL_FROSTBOLT                               = 72166,
+    SPELL_CHAINS_OF_ICE                           = 72121,
+    SPELL_HALLUCINATION                           = 72342,
+
+    // Phantom Hallucination (same as phantom mage + HALLUCINATION_2 when dies)
+    SPELL_HALLUCINATION_2                         = 72344,
+
+    // Shadowy Mercenary
+    SPELL_SHADOW_STEP                             = 72326,
+    SPELL_DEADLY_POISON                           = 72329,
+    SPELL_ENVENOMED_DAGGER_THROW                  = 72333,
+    SPELL_KIDNEY_SHOT                             = 72335,
+
+    // Spectral Footman
+    SPELL_SPECTRAL_STRIKE                         = 72198,
+    SPELL_SHIELD_BASH                             = 72194,
+    SPELL_TORTURED_ENRAGE                         = 72203,
+
+    // Tortured Rifleman
+    SPELL_SHOOT                                   = 72208,
+    SPELL_CURSED_ARROW                            = 72222,
+    SPELL_FROST_TRAP                              = 72215,
+    SPELL_ICE_SHOT                                = 72268,
+};
+
+enum TrashEvents
+{
+    EVENT_TRASH_NONE,
+
+    // Ghostly Priest
+    EVENT_SHADOW_WORD_PAIN,
+    EVENT_CIRCLE_OF_DESTRUCTION,
+    EVENT_COWER_IN_FEAR,
+    EVENT_DARK_MENDING,
+
+    // Phantom Mage
+    EVENT_FIREBALL,
+    EVENT_FLAMESTRIKE,
+    EVENT_FROSTBOLT,
+    EVENT_CHAINS_OF_ICE,
+    EVENT_HALLUCINATION,
+
+    // Shadowy Mercenary
+    EVENT_SHADOW_STEP,
+    EVENT_DEADLY_POISON,
+    EVENT_ENVENOMED_DAGGER_THROW,
+    EVENT_KIDNEY_SHOT,
+
+    // Spectral Footman
+    EVENT_SPECTRAL_STRIKE,
+    EVENT_SHIELD_BASH,
+    EVENT_TORTURED_ENRAGE,
+
+    // Tortured Rifleman
+    EVENT_SHOOT,
+    EVENT_CURSED_ARROW,
+    EVENT_FROST_TRAP,
+    EVENT_ICE_SHOT,
+};
+
+class npc_ghostly_priest : public CreatureScript
+{
+public:
+    npc_ghostly_priest() : CreatureScript("npc_ghostly_priest") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_ghostly_priestAI(pCreature);
+    }
+
+    struct npc_ghostly_priestAI: public ScriptedAI
+    {
+        npc_ghostly_priestAI(Creature *c) : ScriptedAI(c)
+        {
+        }
+
+        EventMap events;
+
+        void Reset()
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*who*/)
+        {
+            events.ScheduleEvent(EVENT_SHADOW_WORD_PAIN, 8000); // TODO: adjust timers
+            events.ScheduleEvent(EVENT_CIRCLE_OF_DESTRUCTION, 12000);
+            events.ScheduleEvent(EVENT_COWER_IN_FEAR, 10000);
+            events.ScheduleEvent(EVENT_DARK_MENDING, 20000);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STAT_CASTING))
+                return;
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch(eventId)
+                {
+                    case EVENT_SHADOW_WORD_PAIN:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_SHADOW_WORD_PAIN);
+                        events.ScheduleEvent(EVENT_SHADOW_WORD_PAIN, 8000);
+                        return;
+                    case EVENT_CIRCLE_OF_DESTRUCTION:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_CIRCLE_OF_DESTRUCTION);
+                        events.ScheduleEvent(EVENT_CIRCLE_OF_DESTRUCTION, 12000);
+                        return;
+                    case EVENT_COWER_IN_FEAR:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_COWER_IN_FEAR);
+                        events.ScheduleEvent(EVENT_COWER_IN_FEAR, 10000);
+                        return;
+                    case EVENT_DARK_MENDING:
+                        // find an ally with missing HP
+                        if (Unit *pTarget = DoSelectLowestHpFriendly(40, DUNGEON_MODE(30000,50000)))
+                        {
+                            DoCast(pTarget, SPELL_DARK_MENDING);
+                            events.ScheduleEvent(EVENT_DARK_MENDING, 20000);
+                        }
+                        else
+                        {
+                            // no friendly unit with missing hp. re-check in just 5 sec.
+                            events.ScheduleEvent(EVENT_DARK_MENDING, 5000);
+                        }
+                        return;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+};
+
+class npc_phantom_mage : public CreatureScript
+{
+public:
+    npc_phantom_mage() : CreatureScript("npc_phantom_mage") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_phantom_mageAI(pCreature);
+    }
+
+    struct npc_phantom_mageAI: public ScriptedAI
+    {
+        npc_phantom_mageAI(Creature *c) : ScriptedAI(c)
+        {
+        }
+
+        EventMap events;
+
+        void Reset()
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*who*/)
+        {
+            events.ScheduleEvent(EVENT_FIREBALL, 3000); // TODO: adjust timers
+            events.ScheduleEvent(EVENT_FLAMESTRIKE, 6000);
+            events.ScheduleEvent(EVENT_FROSTBOLT, 9000);
+            events.ScheduleEvent(EVENT_CHAINS_OF_ICE, 12000);
+            events.ScheduleEvent(EVENT_HALLUCINATION, 40000);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STAT_CASTING))
+                return;
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch(eventId)
+                {
+                    case EVENT_FIREBALL:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_FIREBALL);
+                        events.ScheduleEvent(EVENT_FIREBALL, 15000);
+                        return;
+                    case EVENT_FLAMESTRIKE:
+                        DoCast(SPELL_FLAMESTRIKE);
+                        events.ScheduleEvent(EVENT_FLAMESTRIKE, 15000);
+                        return;
+                    case EVENT_FROSTBOLT:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_FROSTBOLT);
+                        events.ScheduleEvent(EVENT_FROSTBOLT, 15000);
+                        return;
+                    case EVENT_CHAINS_OF_ICE:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_CHAINS_OF_ICE);
+                        events.ScheduleEvent(EVENT_CHAINS_OF_ICE, 15000);
+                        return;
+                    case EVENT_HALLUCINATION:
+                        DoCast(SPELL_HALLUCINATION);
+                        return;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+};
+
+class npc_phantom_hallucination : public CreatureScript
+{
+public:
+    npc_phantom_hallucination() : CreatureScript("npc_phantom_hallucination") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_phantom_hallucinationAI(pCreature);
+    }
+
+    struct npc_phantom_hallucinationAI : public npc_phantom_mage::npc_phantom_mageAI
+    {
+        npc_phantom_hallucinationAI(Creature *c) : npc_phantom_mage::npc_phantom_mageAI(c)
+        {
+        }
+
+        void JustDied(Unit * /*pWho*/)
+        {
+            DoCast(SPELL_HALLUCINATION_2);
+        }
+    };
+
+};
+
+class npc_shadowy_mercenary : public CreatureScript
+{
+public:
+    npc_shadowy_mercenary() : CreatureScript("npc_shadowy_mercenary") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_shadowy_mercenaryAI(pCreature);
+    }
+
+    struct npc_shadowy_mercenaryAI: public ScriptedAI
+    {
+        npc_shadowy_mercenaryAI(Creature *c) : ScriptedAI(c)
+        {
+        }
+
+        EventMap events;
+
+        void Reset()
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*who*/)
+        {
+            events.ScheduleEvent(EVENT_SHADOW_STEP, 8000); // TODO: adjust timers
+            events.ScheduleEvent(EVENT_DEADLY_POISON, 5000);
+            events.ScheduleEvent(EVENT_ENVENOMED_DAGGER_THROW, 10000);
+            events.ScheduleEvent(EVENT_KIDNEY_SHOT, 12000);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STAT_CASTING))
+                return;
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch(eventId)
+                {
+                    case EVENT_SHADOW_STEP:
+                        DoCast(SPELL_SHADOW_STEP);
+                        events.ScheduleEvent(EVENT_SHADOW_STEP, 8000);
+                        return;
+                    case EVENT_DEADLY_POISON:
+                        DoCast(me->getVictim(), SPELL_DEADLY_POISON);
+                        events.ScheduleEvent(EVENT_DEADLY_POISON, 10000);
+                        return;
+                    case EVENT_ENVENOMED_DAGGER_THROW:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_ENVENOMED_DAGGER_THROW);
+                        events.ScheduleEvent(EVENT_ENVENOMED_DAGGER_THROW, 10000);
+                        return;
+                    case EVENT_KIDNEY_SHOT:
+                        DoCast(me->getVictim(), SPELL_KIDNEY_SHOT);
+                        events.ScheduleEvent(EVENT_KIDNEY_SHOT, 10000);
+                        return;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+};
+
+class npc_spectral_footman : public CreatureScript
+{
+public:
+    npc_spectral_footman() : CreatureScript("npc_spectral_footman") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_spectral_footmanAI(pCreature);
+    }
+
+    struct npc_spectral_footmanAI: public ScriptedAI
+    {
+        npc_spectral_footmanAI(Creature *c) : ScriptedAI(c)
+        {
+        }
+
+        EventMap events;
+
+        void Reset()
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*who*/)
+        {
+            events.ScheduleEvent(EVENT_SPECTRAL_STRIKE, 5000); // TODO: adjust timers
+            events.ScheduleEvent(EVENT_SHIELD_BASH, 10000);
+            events.ScheduleEvent(EVENT_TORTURED_ENRAGE, 15000);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STAT_CASTING))
+                return;
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch(eventId)
+                {
+                    case EVENT_SPECTRAL_STRIKE:
+                        DoCast(me->getVictim(), SPELL_SPECTRAL_STRIKE);
+                        events.ScheduleEvent(EVENT_SPECTRAL_STRIKE, 5000);
+                        return;
+                    case EVENT_SHIELD_BASH:
+                        DoCast(me->getVictim(), SPELL_SHIELD_BASH);
+                        events.ScheduleEvent(EVENT_SHIELD_BASH, 5000);
+                        return;
+                    case EVENT_TORTURED_ENRAGE:
+                        DoCast(SPELL_TORTURED_ENRAGE);
+                        events.ScheduleEvent(EVENT_TORTURED_ENRAGE, 15000);
+                        return;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+};
+
+class npc_tortured_rifleman : public CreatureScript
+{
+public:
+    npc_tortured_rifleman() : CreatureScript("npc_tortured_rifleman") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_tortured_riflemanAI(pCreature);
+    }
+
+    struct npc_tortured_riflemanAI  : public ScriptedAI
+    {
+        npc_tortured_riflemanAI(Creature *c) : ScriptedAI(c)
+        {
+        }
+
+        EventMap events;
+
+        void Reset()
+        {
+            events.Reset();
+        }
+
+        void EnterCombat(Unit* /*who*/)
+        {
+            events.ScheduleEvent(EVENT_SHOOT, 2000); // TODO: adjust timers
+            events.ScheduleEvent(EVENT_CURSED_ARROW, 10000);
+            events.ScheduleEvent(EVENT_FROST_TRAP, 1000);
+            events.ScheduleEvent(EVENT_ICE_SHOT, 15000);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STAT_CASTING))
+                return;
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch(eventId)
+                {
+                    case EVENT_SHOOT:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_SHOOT);
+                        events.ScheduleEvent(EVENT_SHOOT, 2000);
+                        return;
+                    case EVENT_CURSED_ARROW:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_CURSED_ARROW);
+                        events.ScheduleEvent(EVENT_CURSED_ARROW, 10000);
+                        return;
+                    case EVENT_FROST_TRAP:
+                        DoCast(SPELL_FROST_TRAP);
+                        events.ScheduleEvent(EVENT_FROST_TRAP, 30000);
+                        return;
+                    case EVENT_ICE_SHOT:
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM))
+                            DoCast(pTarget, SPELL_ICE_SHOT);
+                        events.ScheduleEvent(EVENT_ICE_SHOT, 15000);
+                        return;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+};
 
 void AddSC_halls_of_reflection()
 {
@@ -1397,4 +1830,10 @@ void AddSC_halls_of_reflection()
     new npc_jaina_and_sylvana_HRextro();
     new npc_lich_king_hr();
     new npc_frostworn_general();
+    new npc_ghostly_priest();
+    new npc_phantom_mage();
+    new npc_phantom_hallucination();
+    new npc_shadowy_mercenary();
+    new npc_spectral_footman();
+    new npc_tortured_rifleman();
 }

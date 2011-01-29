@@ -59,6 +59,7 @@ public:
             lifeTimer = 120000;
             me->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
             me->SetStandState(UNIT_STAND_STATE_DEAD);   // lay down
+            me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
             spellHit = false;
         }
 
@@ -72,13 +73,10 @@ public:
 
         void UpdateAI(const uint32 diff)
         {
-            if (me->IsStandState())
+            if (me->getStandState() == UNIT_STAND_STATE_STAND)
             {
                 if (lifeTimer <= diff)
-                {
-                    EnterEvadeMode();
-                    return;
-                }
+                    Reset();
                 else
                     lifeTimer -= diff;
             }
@@ -91,6 +89,7 @@ public:
                 DoCast(me, 32343);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
                 me->SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
+                me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
                 //me->RemoveAllAuras();
                 DoScriptText(SAY_HEAL, me);
                 spellHit = true;

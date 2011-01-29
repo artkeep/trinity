@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "Common.h"
@@ -731,7 +733,7 @@ void Spell::SelectSpellTargets()
                 case SPELL_EFFECT_STUCK:
                 case SPELL_EFFECT_FEED_PET:
                 case SPELL_EFFECT_DESTROY_ALL_TOTEMS:
-                case SPELL_EFFECT_KILL_CREDIT2: // only one spell: 42793
+                case SPELL_EFFECT_KILL_CREDIT_GROUP: // only one spell: 42793
                     AddUnitTarget(m_caster, i);
                     break;
                 case SPELL_EFFECT_LEARN_PET_SPELL:
@@ -866,8 +868,20 @@ void Spell::prepareDataForTriggerSystem(AuraEffect const * /*triggeredByAura*/)
             }
             else // Ranged spell attack
             {
-                m_procAttacker = PROC_FLAG_DONE_SPELL_RANGED_DMG_CLASS;
-                m_procVictim   = PROC_FLAG_TAKEN_SPELL_RANGED_DMG_CLASS;
+                if (IsRangedWeaponSpell(GetSpellInfo()))
+                {
+                    m_procAttacker = PROC_FLAG_DONE_SPELL_RANGED_DMG_CLASS;
+                    m_procVictim   = PROC_FLAG_TAKEN_SPELL_RANGED_DMG_CLASS;
+                }
+                else
+                {
+                    m_procAttacker = PROC_FLAG_DONE_SPELL_MELEE_DMG_CLASS;
+                    if (m_attackType == OFF_ATTACK)
+                        m_procAttacker |= PROC_FLAG_DONE_OFFHAND_ATTACK;
+                    else
+                        m_procAttacker |= PROC_FLAG_DONE_MAINHAND_ATTACK;
+                    m_procVictim   = PROC_FLAG_TAKEN_MELEE_AUTO_ATTACK;
+                }
             }
             break;
         default:
@@ -935,9 +949,25 @@ void Spell::AddUnitTarget(Unit* pVictim, uint32 effIndex)
 
     if (!CheckTarget(pVictim, effIndex))
         return;
+        
+    // Skip if has aura "Recently Reapaired"
+     if (pVictim->HasAura(62705))
+         return;    
+
+    // Skip if has aura "Recently Reapaired"
+    if (pVictim->HasAura(62705))
+        return;
+
+    // Skip if has aura "Recently Reapaired"
+    if (pVictim->HasAura(62705))
+        return;
 
     // Check for effect immune skip if immuned
     bool immuned = pVictim->IsImmunedToSpellEffect(m_spellInfo, effIndex);
+
+   // Saronite Vapors Hack
+   if (m_spellInfo->Id == 63337)
+        immuned = false;
 
     uint64 targetGUID = pVictim->GetGUID();
 
@@ -1219,13 +1249,19 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             positive = false;
         else if (!m_healing)
         {
-            for (uint8 i = 0; i< MAX_SPELL_EFFECTS; ++i)
-                // If at least one effect negative spell is negative hit
-                if (mask & (1<<i) && !IsPositiveEffect(m_spellInfo->Id, i))
-                {
-                    positive = false;
-                    break;
-                }
+            if (mask)
+            {
+                for (uint8 effIndex = 0; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
+                    // If at least one effect negative spell is negative hit
+                    if (mask & (1 << effIndex) && !IsPositiveEffect(m_spellInfo->Id, effIndex))
+                    {
+                        positive = false;
+                        break;
+                    }
+            }
+            else
+                // If there is no effect mask determine from spell proto
+                positive = IsPositiveSpell(m_spellInfo->Id);
         }
         switch(m_spellInfo->DmgClass)
         {
@@ -1261,9 +1297,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // Do healing and triggers
     if (m_healing > 0)
     {
-        bool crit = caster->isSpellCrit(unitTarget, m_spellInfo, m_spellSchoolMask);
         uint32 addhealth = m_healing;
-        if (crit)
+        if (target->crit)
         {
             procEx |= PROC_EX_CRITICAL_HIT;
             addhealth = caster->SpellCriticalHealingBonus(m_spellInfo, addhealth, NULL);
@@ -1275,7 +1310,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (canEffectTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unitTarget, procAttacker, procVictim, procEx, addhealth, m_attackType, m_spellInfo, m_triggeredByAuraSpell);
 
-        int32 gain = caster->HealBySpell(unitTarget, m_spellInfo, addhealth, crit);
+        int32 gain = caster->HealBySpell(unitTarget, m_spellInfo, addhealth, target->crit);
         unitTarget->getHostileRefManager().threatAssist(caster, float(gain) * 0.5f, m_spellInfo);
     }
     // Do damage and triggers
@@ -1792,19 +1827,15 @@ void Spell::SearchChainTarget(std::list<Unit*> &TagUnitMap, float max_range, uin
             tempUnitMap.sort(Trinity::ObjectDistanceOrderPred(cur));
             next = tempUnitMap.begin();
 
-            if (cur->GetDistance(*next) > CHAIN_SPELL_JUMP_RADIUS)      // Don't search beyond the max jump radius
+            if (cur->GetDistance(*next) > CHAIN_SPELL_JUMP_RADIUS)
                 break;
-
-            // Check if (*next) is a valid chain target. If not, don't add to TagUnitMap, and repeat loop.
-            // If you want to add any conditions to exclude a target from TagUnitMap, add condition in this while() loop.
-            while ((m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE   
+            while ((m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE
                 && !m_caster->isInFrontInMap(*next, max_range))
                 || !m_caster->canSeeOrDetect(*next)
-                || !cur->IsWithinLOSInMap(*next)
-                || ((GetSpellInfo()->AttributesEx6 & SPELL_ATTR6_IGNORE_CROWD_CONTROL_TARGETS) && !(*next)->CanFreeMove()))
+                || !cur->IsWithinLOSInMap(*next))
             {
                 ++next;
-                if (next == tempUnitMap.end() || cur->GetDistance(*next) > CHAIN_SPELL_JUMP_RADIUS) // Don't search beyond the max jump radius
+                if (next == tempUnitMap.end() || cur->GetDistance(*next) > CHAIN_SPELL_JUMP_RADIUS)
                     return;
             }
         }
@@ -2401,7 +2432,6 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
             //otherwise, this multiplier is used for something else
             m_damageMultipliers[i] = 1.0f;
             m_applyMultiplierMask |= 1 << i;
-
             float range;
             std::list<Unit*> unitList;
 
@@ -2445,7 +2475,16 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
             case TARGET_UNIT_CONE_ENEMY:
             case TARGET_UNIT_CONE_ENEMY_UNKNOWN:
             case TARGET_UNIT_AREA_PATH:
-                radius = GetSpellRadius(m_spellInfo, i, false);
+                //Spell Decimate with id 71123 has wrong radius value inside Spell.dbc file.
+                //You cannot create spell_dbc table record that will overwrite this value
+                //So, there is a hack here: set radius the same as for Gluth's Decimate - 200 yards
+                if (m_spellInfo->Id == 71123 && i == 0 && cur == TARGET_UNIT_AREA_ENEMY_SRC)
+                    radius = 200.0f;
+                //Stinky's aura has 0 radius, but should apply to everyone in his line of sight
+                else if ((m_spellInfo->Id == 71805 || m_spellInfo->Id == 71161 || m_spellInfo->Id == 71160) && cur == TARGET_UNIT_AREA_ENEMY_DST)
+                    radius = 200.0f;
+                else
+                    radius = GetSpellRadius(m_spellInfo, i, false);
                 targetType = SPELL_TARGETS_ENEMY;
                 break;
             case TARGET_UNIT_AREA_ALLY_SRC:
@@ -2522,7 +2561,14 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                                 }
                             }
                             break;
-                        }
+
+                            case 62834: // Boom (Boombot)
+                            case 64320: // Rune of Power (Assembly of Iron)
+                            case 28374: // Decimate (Gluth)
+                            case 54426: // Decimate		
+                                SearchAreaTarget(unitList, radius, pushType, SPELL_TARGETS_ANY);
+ 		                break;
+                       }
                         // Corpse Explosion
                         case 49158:
                         case 51325:
@@ -2757,6 +2803,18 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                         unitList.sort(Trinity::HealthPctOrderPred());
                         unitList.resize(maxSize);
                     }
+                    // Replenishment: refresh existing auras
+                    if (m_spellInfo->Id == 57669)
+                        for (std::list<Unit *>::iterator itr = unitList.begin(); itr != unitList.end();)
+                            if (AuraEffect * aurEff = (*itr)->GetAuraEffect(SPELL_AURA_PERIODIC_ENERGIZE, SPELLFAMILY_GENERIC, 3184, EFFECT_0))
+                            {
+                                aurEff->SetAmount((*itr)->GetMaxPower(POWER_MANA) * 25 / 10000);
+                                aurEff->GetBase()->RefreshDuration();
+
+                                itr = unitList.erase(itr);
+                            }
+                            else
+                                ++itr;
                 }
                 else
                 {
@@ -2772,6 +2830,18 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                         unitList.sort(Trinity::PowerPctOrderPred((Powers)power));
                         unitList.resize(maxSize);
                     }
+                    // Replenishment: refresh existing auras
+                    if (m_spellInfo->Id == 57669)
+                        for (std::list<Unit *>::iterator itr = unitList.begin(); itr != unitList.end();)
+                            if (AuraEffect * aurEff = (*itr)->GetAuraEffect(SPELL_AURA_PERIODIC_ENERGIZE, SPELLFAMILY_GENERIC, 3184, EFFECT_0))
+                            {
+                                aurEff->SetAmount((*itr)->GetMaxPower(POWER_MANA) * 25 / 10000);
+                                aurEff->GetBase()->RefreshDuration();
+
+                                itr = unitList.erase(itr);
+                            }
+                            else
+                                ++itr;
                 }
             }
 
@@ -2794,36 +2864,16 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                     case 27285: // Seed of Corruption proc spell
                     case 49821: // Mind Sear proc spell Rank 1
                     case 53022: // Mind Sear proc spell Rank 2
+                    case 63025: // Gravity Bomb 10
+                    case 64233: // Gravity Bomb 25
                         unitList.remove(m_targets.getUnitTarget());
                         break;
                     case 55789: // Improved Icy Talons
                     case 59725: // Improved Spell Reflection - aoe aura
+                    case 28374: // Decimate		
+                    case 54426: // Decimate
                         unitList.remove(m_caster);
                         break;
-                    case 72378: // Blood Nova (Deathbringer Saurfang)
-                    case 73058:
-                    {
-                        // select one random target, with preference of ranged targets
-                        uint32 targetsAtRange = 0;
-                        uint32 const minTargets = m_caster->GetMap()->GetSpawnMode() & 1 ? 10 : 4;
-                        unitList.sort(Trinity::ObjectDistanceOrderPred(m_caster, false));
-
-                        // get target count at range
-                        for (std::list<Unit*>::iterator itr = unitList.begin(); itr != unitList.end(); ++itr, ++targetsAtRange)
-                            if ((*itr)->GetDistance(m_caster) < 12.0f)
-                                break;
-
-                        // set the upper cap
-                        if (targetsAtRange < minTargets)
-                            targetsAtRange = std::min<uint32>(unitList.size()-1, minTargets);
-
-                        std::list<Unit*>::iterator itr = unitList.begin();
-                        std::advance(itr, urand(0, targetsAtRange));
-                        Unit* target = *itr;
-                        unitList.clear();
-                        unitList.push_back(target);
-                        break;
-                    }
                     case 72255: // Mark of the Fallen Champion (Deathbringer Saurfang)
                     case 72444:
                     case 72445:
@@ -2863,7 +2913,7 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                         if (Unit* owner = ObjectAccessor::GetUnit(*m_caster, m_caster->GetCreatorGUID()))
                             unitList.remove(owner);
                         break;
-                    case 71390:                             // Pact of the Darkfallen
+                                            case 71390:                             // Pact of the Darkfallen
                     {
                         for (std::list<Unit*>::iterator itr = unitList.begin(); itr != unitList.end();)
                         {
@@ -2974,7 +3024,7 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const * triggere
         {
             if (!sConditionMgr->IsPlayerMeetToConditions(plrCaster, conditions))
             {
-                //SendCastResult(SPELL_FAILED_DONT_REPORT);
+              //SendCastResult(SPELL_FAILED_DONT_REPORT);
                 SendCastResult(plrCaster, m_spellInfo, m_cast_count, SPELL_FAILED_DONT_REPORT);
                 finish(false);
                 return;
@@ -3201,7 +3251,7 @@ void Spell::cast(bool skipCheck)
     {
         // three check: prepare, cast (m_casttime > 0), hit (delayed)
         if (m_casttime && target->isAlive()
-            && !target->IsFriendlyTo(m_caster) && !m_caster->canSeeOrDetect(target))
+        && !target->IsFriendlyTo(m_caster) && !m_caster->canSeeOrDetect(target))
         {
             SendCastResult(SPELL_FAILED_BAD_TARGETS);
             SendInterrupted(0);
@@ -4789,7 +4839,7 @@ void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTar
 
 SpellCastResult Spell::CheckCast(bool strict)
 {
-	OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
 
     // check death state
     if (!m_IsTriggeredSpell && !m_caster->isAlive() && !(m_spellInfo->Attributes & SPELL_ATTR0_PASSIVE) && !(m_spellInfo->Attributes & SPELL_ATTR0_CASTABLE_WHILE_DEAD))
@@ -5096,6 +5146,9 @@ SpellCastResult Spell::CheckCast(bool strict)
 
         SpellCastResult locRes= sSpellMgr->GetSpellAllowedInLocationError(m_spellInfo,m_caster->GetMapId(),zone,area,
             m_caster->GetTypeId() == TYPEID_PLAYER ? m_caster->ToPlayer() : NULL);
+        //Fix Blood Queen Lana'thel's Swarming Shadows spell - there is incorrect area restriction in DBC
+        if (m_spellInfo->Id == 71266 && zone == 4812 && area == 4891 && m_caster->GetMapId() == 631)
+            locRes = SPELL_CAST_OK;
         if (locRes != SPELL_CAST_OK)
             return locRes;
     }
@@ -5112,7 +5165,78 @@ SpellCastResult Spell::CheckCast(bool strict)
 
     SpellCastResult castResult = SPELL_CAST_OK;
 
-    // always (except passive spells) check items (focus object can be required for any type casts)
+     // Dispel check - only if the first effect is dispel	
+    if (!m_IsTriggeredSpell && (m_spellInfo->Effect[EFFECT_0] == SPELL_EFFECT_DISPEL))
+         if (Unit const * target = m_targets.getUnitTarget())
+ 		 if (!GetSpellRadius(m_spellInfo, EFFECT_0, target->IsFriendlyTo(m_caster)))
+                    {
+  
+ 		 bool check = true;
+                uint32 dispelMask = GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[EFFECT_0]));
+                
+ 			
+                for (uint8 effIndex = EFFECT_1; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
+ 		
+                {
+ 		
+                    if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_DISPEL)
+                        dispelMask |= GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[effIndex]));
+                    // If there is any other effect don't check
+                    else if (m_spellInfo->Effect[effIndex])
+ 		
+                    {
+ 		
+                        check = false;
+                        break;
+ 		
+                    }
+ 		
+                }
+ 				
+                if (check)
+                {
+ 		
+                    bool failed = true;
+ 			
+                    Unit::AuraMap const & auras = target->GetOwnedAuras();		
+                    for (Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+ 		
+                    {
+ 		
+                        Aura * aura = itr->second;	
+                        AuraApplication * aurApp = aura->GetApplicationOfTarget(target->GetGUID());	
+                        if (!aurApp)	
+                            continue;
+ 		
+                        if ((1 << aura->GetSpellProto()->Dispel) & dispelMask)
+ 		
+                        {
+ 		
+                            bool positive = aurApp->IsPositive() ? !(aura->GetSpellProto()->AttributesEx & SPELL_ATTR1_NEGATIVE) : false;
+ 		
+		
+                            // Can only dispel positive auras on enemies and negative on allies		
+                            if (positive != target->IsFriendlyTo(m_caster))
+ 		
+                            {		
+                               failed = false; 		
+                                break;
+ 		
+                            }
+ 		
+                        }
+ 		
+                    }
+ 		
+                    if (failed)	
+                        return SPELL_FAILED_NOTHING_TO_DISPEL;
+ 		
+                }
+ 		
+            }
+ 		
+
+// always (except passive spells) check items (focus object can be required for any type casts)
     if (!IsPassiveSpell(m_spellInfo->Id))
     {
         castResult = CheckItems();
@@ -5137,6 +5261,55 @@ SpellCastResult Spell::CheckCast(bool strict)
             return castResult;
     }
 
+    // Dispel check - only if the first effect is dispel
+    if (!m_IsTriggeredSpell && (m_spellInfo->Effect[EFFECT_0] == SPELL_EFFECT_DISPEL))
+        if (Unit const * target = m_targets.getUnitTarget())
+            if (!GetSpellRadius(m_spellInfo, EFFECT_0, target->IsFriendlyTo(m_caster)))
+            {
+                bool check = true;
+                uint32 dispelMask = GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[EFFECT_0]));
+
+                for (uint8 effIndex = EFFECT_1; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
+                {
+                    if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_DISPEL)
+                        dispelMask |= GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[effIndex]));
+                    // If there is any other effect don't check
+                    else if (m_spellInfo->Effect[effIndex])
+                    {
+                        check = false;
+                        break;
+                    }
+                }
+
+                if (check)
+                {
+                    bool failed = true;
+                    Unit::AuraMap const & auras = target->GetOwnedAuras();
+                    for (Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                    {
+                        Aura * aura = itr->second;
+                        AuraApplication * aurApp = aura->GetApplicationOfTarget(target->GetGUID());
+                        if (!aurApp)
+                            continue;
+
+                        if ((1 << aura->GetSpellProto()->Dispel) & dispelMask)
+                        {
+                            bool positive = aurApp->IsPositive() ? !(aura->GetSpellProto()->AttributesEx & SPELL_ATTR1_NEGATIVE) : false;
+
+                            // Can only dispel positive auras on enemies and negative on allies
+                            if (positive != target->IsFriendlyTo(m_caster))
+                            {
+                                failed = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (failed)
+                        return SPELL_FAILED_NOTHING_TO_DISPEL;
+                }
+            }
+
     for (int i = 0; i < MAX_SPELL_EFFECTS; i++)
     {
         // for effects of spells that have only one target
@@ -5148,6 +5321,12 @@ SpellCastResult Spell::CheckCast(bool strict)
                 {
                     if (m_caster->IsInWater())
                         return SPELL_FAILED_ONLY_ABOVEWATER;
+                }
+                else if (m_spellInfo->Id == 72202) //Blood Link
+                {
+                    Creature* saurfang = m_caster->FindNearestCreature(37813, 500.0f, true);
+                    if(saurfang && saurfang->isAlive())
+                        saurfang->CastSpell(saurfang, 72195, true);
                 }
                 else if (m_spellInfo->SpellIconID == 156)    // Holy Shock
                 {
@@ -5292,7 +5471,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_caster->GetTypeId() != TYPEID_PLAYER || !m_targets.getUnitTarget() || m_targets.getUnitTarget()->GetTypeId() != TYPEID_UNIT)
                     return SPELL_FAILED_BAD_TARGETS;
 
-                if (!(m_targets.getUnitTarget()->GetUInt32Value(UNIT_FIELD_FLAGS) & UNIT_FLAG_SKINNABLE))
+                if (!(m_targets.getUnitTarget()->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE)))
                     return SPELL_FAILED_TARGET_UNSKINNABLE;
 
                 Creature* creature = m_targets.getUnitTarget()->ToCreature();
@@ -5653,7 +5832,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     {
                         if (pArea->flags & AREA_FLAG_NO_FLY_ZONE)
                             return m_IsTriggeredSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_NOT_HERE;
-                        // Wintergrasp Antifly check
+                         // Wintergrasp Antifly check
                         if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
                         {
                           if (m_originalCaster->GetZoneId() == 4197 && pvpWG && pvpWG != 0  && pvpWG->isWarTime()==true)
@@ -5788,11 +5967,6 @@ SpellCastResult Spell::CheckCasterAuras() const
         if (m_spellInfo->Id == 42292 || m_spellInfo->Id == 59752)
             mechanic_immune = IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK;
     }
-
-    // Glyph of Pain Suppression
-    if (m_spellInfo->SpellFamilyName == SPELLFAMILY_PRIEST && m_spellInfo->SpellIconID == 2178)
-        if (m_caster->HasAuraEffect(63248, 0))      // no SpellFamilyFlags or SpellIconID to identify this
-            mechanic_immune = 1 << MECHANIC_STUN;   // "immune" to stun only for this cast
 
     // Check whether the cast should be prevented by any state you might have.
     SpellCastResult prevented_reason = SPELL_CAST_OK;
@@ -7053,13 +7227,11 @@ int32 Spell::CalculateDamageDone(Unit *unit, const uint32 effectMask, float * mu
                     }
                 }
             }
-
             if (m_applyMultiplierMask & (1 << i))
             {
                 m_damage = int32(m_damage * m_damageMultipliers[i]);
                 m_damageMultipliers[i] *= multiplier[i];
             }
-
             damageDone += m_damage;
         }
     }

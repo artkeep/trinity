@@ -8,24 +8,6 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-file(GLOB_RECURSE scripts_easternkingdoms EasternKingdoms/*.cpp EasternKingdoms/*.h)
-file(GLOB_RECURSE scripts_kalimdor Kalimdor/*.cpp Kalimdor/*.h)
-file(GLOB_RECURSE scripts_northrend Northrend/*.cpp Northrend/*.h)
-file(GLOB_RECURSE scripts_outland Outland/*.cpp Outland/*.h)
-file(GLOB_RECURSE scripts_world World/*.cpp World/*.h)
-file(GLOB_RECURSE scripts_spells Spells/*.cpp Spells/*.h)
-file(GLOB_RECURSE scripts_examples Examples/*.cpp Examples/*.h)
-file(GLOB_RECURSE scripts_outdoorpvp OutdoorPvP/*.cpp OutdoorPvP/*.h)
-
-source_group(EasternKingdoms FILES ${scripts_easternkingdoms})
-source_group(Kalimdor FILES ${scripts_kalimdor})
-source_group(Northrend FILES ${scripts_northrend})
-source_group(Outland FILES ${scripts_outland})
-source_group(World FILES ${scripts_world})
-source_group(Spells FILES ${scripts_spells})
-source_group(Examples FILES ${scripts_examples})
-source_group(OutdoorPvP FILES ${scripts_outdoorpvp})
-
 # Enable precompiled headers when using the GCC compiler.
 if( USE_SCRIPTPCH )
   include_directories(
@@ -49,14 +31,6 @@ include(Examples/CMakeLists.txt)
 
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
-  ${scripts_easternkingdoms}
-  ${scripts_kalimdor}
-  ${scripts_northrend}
-  ${scripts_outland}
-  ${scripts_world}
-  ${scripts_spells}
-  ${scripts_examples}
-  ${scripts_outdoorpvp}
   ../game/AI/ScriptedAI/ScriptedEscortAI.cpp
   ../game/AI/ScriptedAI/ScriptedCreature.cpp
   ../game/AI/ScriptedAI/ScriptedFollowerAI.cpp
@@ -111,8 +85,6 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/game/AuctionHouse
   ${CMAKE_SOURCE_DIR}/src/server/game/Battlegrounds
   ${CMAKE_SOURCE_DIR}/src/server/game/Battlegrounds/Zones
-  ${CMAKE_SOURCE_DIR}/src/server/game/Battlefield
-  ${CMAKE_SOURCE_DIR}/src/server/game/Battlefield/Zones
   ${CMAKE_SOURCE_DIR}/src/server/game/Calendar
   ${CMAKE_SOURCE_DIR}/src/server/game/Chat
   ${CMAKE_SOURCE_DIR}/src/server/game/Chat/Channels

@@ -26,7 +26,6 @@ EndScriptData */
 /* ContentData
 npc_arete
 EndContentData */
-
 /*
 #######ARGENT TOURNAMENT##############
 TODO.
@@ -45,11 +44,8 @@ TODO.
 -- Quest The Valiant's Challenge 13699-13713-13723-13724-13725-13726-13727-13728-13729-13731.
 */
 
-/* ContentData
-npc_arete
-EndContentData */
-
 #include "ScriptPCH.h"
+#include "Group.h"
 
 enum TimersGral
 {
@@ -562,7 +558,7 @@ public:
         bool questCheck = false;
         bool raceCheck = false;
         uint32 textId = 0;
-        
+	
         for(int i = 0; (i < 10) && !npcCheck; i++)
         {
             if(pCreature->GetEntry() == ArgentTournamentVendor[i][0])
@@ -571,9 +567,9 @@ public:
                 questCheck = pPlayer->GetQuestStatus(ArgentTournamentVendor[i][1]) == QUEST_STATUS_COMPLETE;
                 raceCheck = pPlayer->getRace() == ArgentTournamentVendor[i][2];
                 textId = ArgentTournamentVendor[i][3];
-                    }
-            }
-        
+		    }
+	    }
+	
         if(questCheck || raceCheck)
             pPlayer->SEND_VENDORLIST(pCreature->GetGUID()); 
         else
@@ -750,7 +746,7 @@ public:
                         me->CastSpell(caster,62709,true);
                     }   
                 }
-            }                   
+            }			
             if(m_Entry==33243)
                 if(spell->Id==SPELL_ARGENT_BREAK_SHIELD)
                     if(!me->GetAura(SPELL_DEFEND_AURA))
@@ -1264,8 +1260,8 @@ UPDATE creature_template SET KillCredit2=31555 WHERE entry IN (31554, 30949 , 30
 
 enum eKeritose
 {
-        QUEST_SEEDS_OF_CHAOS                      = 13172,
-        SPELL_TAXI_KERITOSE                               = 58698, 
+	QUEST_SEEDS_OF_CHAOS	            	  = 13172,
+	SPELL_TAXI_KERITOSE	       		          = 58698, 
 };
 class npc_keritose : public CreatureScript
 {
@@ -2291,7 +2287,7 @@ public:
     CreatureAI *GetAI(Creature *creature) const
     {
         return new npc_Scarlet_OnslaughtAI(creature);
-    }   
+    }	
 
     struct npc_Scarlet_OnslaughtAI : public ScriptedAI
     {
@@ -2305,7 +2301,363 @@ public:
                     me->DespawnOrUnsummon();
             }           
         }
-        };
+	};
+};
+
+/*######
+## Quest 13042
+## "Deep in the Bowels of The Underhalls"
+######*/
+enum eOsterkilgr
+{
+    SAY_QUEST1                                   = -1603500,
+    SAY_QUEST2                                   = -1603501,    
+    SPELL_FIREBALL                               = 14034,
+    SPELL_FIRE_WAVE                              = 60290,
+    QUEST_DEEP_IN_THE_BOWELS_OF_THE_UNDERHALLS   = 13042,
+    CREATURE_CREDIT_BUNNY                        = 30412,
+};
+
+class npc_apprentice_osterkilgr : public CreatureScript
+{
+public:
+    npc_apprentice_osterkilgr() : CreatureScript("npc_apprentice_osterkilgr") { }
+
+    CreatureAI *GetAI(Creature *pCreature) const
+    {
+        return new npc_apprentice_osterkilgrAI(pCreature);
+    }
+
+    struct npc_apprentice_osterkilgrAI : public ScriptedAI
+    {
+        npc_apprentice_osterkilgrAI(Creature *pCreature) : ScriptedAI(pCreature) { }
+
+        uint64 uiPlayerGUID;
+        uint32 uiBlastWaveTimer;
+        uint32 uiFireballTimer;
+        uint32 uiYellTimer;
+        bool bYelled;
+
+        void Reset()
+        {
+            uiPlayerGUID = NULL;
+            uiBlastWaveTimer = urand(8000,10000);
+            uiFireballTimer = urand(2000,3000);
+            bYelled = false;
+        }
+
+        void EnterCombat(Unit * pWho)
+        {
+            if (pWho->GetTypeId() == TYPEID_PLAYER)
+                uiPlayerGUID = pWho->GetGUID();                
+        }
+
+        void UpdateAI(const uint32 uiDiff)
+        {
+            if (!UpdateVictim())
+                return;
+            
+            if (Player *pPlayer = Unit::GetPlayer(*me, uiPlayerGUID))
+            {                
+                if (HealthBelowPct(40))
+                {
+                    if (!bYelled)
+                    {
+                        DoScriptText(SAY_QUEST1, me);
+                        DoScriptText(SAY_QUEST2, me);
+                        bYelled = true;
+                    }
+
+                    if (Group *pGroup = pPlayer->GetGroup())
+                    {
+                        for (GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
+                        {
+                            Player *PlayerGroup = itr->getSource();
+                            if (PlayerGroup->isAlive() && PlayerGroup->IsAtGroupRewardDistance(me))
+                                PlayerGroup->KilledMonsterCredit(CREATURE_CREDIT_BUNNY, 0);
+                        }
+                    }
+                    else
+                        pPlayer->KilledMonsterCredit(CREATURE_CREDIT_BUNNY, 0);
+                }
+            }
+
+            if (uiBlastWaveTimer <= uiDiff)
+            {
+                DoCast(me->getVictim(), SPELL_FIRE_WAVE);
+                uiBlastWaveTimer = urand(8000,10000);
+            }
+            else
+                uiBlastWaveTimer -= uiDiff;
+
+            if (uiFireballTimer <= uiDiff)
+            {
+                DoCast(me->getVictim(), SPELL_FIREBALL);
+                uiFireballTimer = urand(3000,4000);
+            }
+            else
+                uiFireballTimer -= uiDiff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
+
+/*######
+## Quest 13231 - 13228 (A/H) - 13232
+## "The Broken Front"
+## "Finish Me!"
+######*/
+enum eSoldier
+{
+    SAY_KILL_QUEST1                              = -1603511,
+    SAY_KILL_QUEST2                              = -1603512,
+    SAY_KILL_QUEST3                              = -1603513,
+    SAY_KILL_QUEST4                              = -1603514,
+    SAY_KILL_QUEST5                              = -1603515,
+    SAY_QUEST_SOLDIER1                           = -1603516,
+    SAY_QUEST_SOLDIER2                           = -1603517,
+    SAY_QUEST_SOLDIER3                           = -1603518,
+    SAY_QUEST_SOLDIER4                           = -1603519,
+    SAY_QUEST_SOLDIER5                           = -1603520,
+    SAY_QUEST_SOLDIER6                           = -1603521,
+    SAY_QUEST_SOLDIER7                           = -1603522,
+    SAY_QUEST_BERSERKER1                         = -1603523,
+    SAY_QUEST_BERSERKER2                         = -1603524,
+    SAY_QUEST_BERSERKER3                         = -1603525,
+    SAY_QUEST_BERSERKER4                         = -1603526,
+    SAY_QUEST_BERSERKER5                         = -1603527,
+    SAY_QUEST_BERSERKER6                         = -1603528,
+    SAY_QUEST_BERSERKER7                         = -1603529,
+    SAY_QUEST_BERSERKER8                         = -1603530,
+    CREATURE_DYING_SOLDIER_KC                    = 31312,
+    CREATURE_DYING_BERSERKER_KC                  = 31272,
+    QUEST_FINISH_ME                              = 13232,
+    QUEST_THE_BROKEN_FRONT_A                     = 13231,
+    QUEST_THE_BROKEN_FRONT_H                     = 13228,
+};
+
+#define GOSSIP_ITEM_DYING_SOLDIER   "Travel well, hero of the Alliance!"
+#define GOSSIP_ITEM_DYING_SOLDIER1  "Stay with me, friend. I must know what happened here."
+#define GOSSIP_ITEM_DYING_BERSERKER "Stay with me, friend. I must know what happened here."
+
+class npc_dying_soldier : public CreatureScript
+{
+public:
+    npc_dying_soldier() : CreatureScript("npc_dying_soldier") { }
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+        if (pPlayer->GetQuestStatus(QUEST_FINISH_ME) == QUEST_STATUS_INCOMPLETE)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_DYING_SOLDIER, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INFO);
+
+        if (pPlayer->GetQuestStatus(QUEST_THE_BROKEN_FRONT_A) == QUEST_STATUS_INCOMPLETE)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_DYING_SOLDIER1, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INFO+1);
+            
+        pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+
+        return true;
+    }
+
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
+    {
+        pPlayer->PlayerTalkClass->ClearMenus();
+        
+        if (uiAction == GOSSIP_SENDER_INFO)
+        {
+            pPlayer->CLOSE_GOSSIP_MENU();
+            if (pPlayer->GetQuestStatus(QUEST_FINISH_ME) == QUEST_STATUS_INCOMPLETE)
+                pPlayer->KilledMonsterCredit(CREATURE_DYING_SOLDIER_KC, 0);
+            pCreature->Kill(pCreature);
+            DoScriptText(RAND(SAY_KILL_QUEST1, SAY_KILL_QUEST2, SAY_KILL_QUEST3, SAY_KILL_QUEST4, SAY_KILL_QUEST5), pCreature);
+        }
+
+        if (uiAction == GOSSIP_SENDER_INFO+1)
+        {
+            pPlayer->CLOSE_GOSSIP_MENU();
+            DoScriptText(SAY_QUEST_SOLDIER1, pCreature);
+            CAST_AI(npc_dying_soldier::npc_dying_soldierAI, pCreature->AI())->uiPlayerGUID = pPlayer->GetGUID();
+            CAST_AI(npc_dying_soldier::npc_dying_soldierAI, pCreature->AI())->uiTalkTimer = 3000;
+            CAST_AI(npc_dying_soldier::npc_dying_soldierAI, pCreature->AI())->bTalkTime = true;
+        }
+
+        return true;
+    }
+    
+    CreatureAI *GetAI(Creature *pCreature) const
+    {
+        return new npc_dying_soldierAI(pCreature);
+    }
+
+    struct npc_dying_soldierAI : public ScriptedAI
+    {
+        npc_dying_soldierAI(Creature *pCreature) : ScriptedAI(pCreature) { }
+
+        uint64 uiPlayerGUID;
+        uint32 uiTalkTimer;
+        uint32 uiStep;
+        bool bTalkTime;
+
+        void Reset()
+        {
+            uiPlayerGUID = 0;
+            bTalkTime = false;
+            uiStep = 0;
+        }
+
+        void UpdateAI(const uint32 uiDiff)
+        {
+            if (bTalkTime && uiTalkTimer <= uiDiff)
+            {
+                if (Player *pPlayer = Unit::GetPlayer(*me, uiPlayerGUID))
+                {
+                    switch(uiStep)
+                    {
+                        case 0:
+                            DoScriptText(SAY_QUEST_SOLDIER2, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 1:
+                            DoScriptText(SAY_QUEST_SOLDIER3, pPlayer);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 2:
+                            DoScriptText(SAY_QUEST_SOLDIER4, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 3:
+                            DoScriptText(SAY_QUEST_SOLDIER5, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 4:
+                            DoScriptText(SAY_QUEST_SOLDIER6, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 5:
+                            DoScriptText(SAY_QUEST_SOLDIER7, me);
+                            if (pPlayer->GetQuestStatus(QUEST_THE_BROKEN_FRONT_A) == QUEST_STATUS_INCOMPLETE)
+                                pPlayer->KilledMonsterCredit(CREATURE_DYING_SOLDIER_KC, 0);
+                            bTalkTime = false;
+                            uiStep = 0;
+                            break;
+                    }
+                }
+            }
+            else
+                uiTalkTimer -= uiDiff;
+        }
+    };
+};
+
+class npc_dying_berserker : public CreatureScript
+{
+public:
+    npc_dying_berserker() : CreatureScript("npc_dying_berserker") { }
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+        if (pPlayer->GetQuestStatus(QUEST_THE_BROKEN_FRONT_H) == QUEST_STATUS_INCOMPLETE)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_DYING_BERSERKER, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INFO);
+            
+        pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+
+        return true;
+    }
+
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
+    {
+        pPlayer->PlayerTalkClass->ClearMenus();
+        
+        if (uiAction == GOSSIP_SENDER_INFO)
+        {
+            pPlayer->CLOSE_GOSSIP_MENU();
+            DoScriptText(SAY_QUEST_BERSERKER1, pCreature);
+            CAST_AI(npc_dying_berserker::npc_dying_berserkerAI, pCreature->AI())->uiPlayerGUID = pPlayer->GetGUID();
+            CAST_AI(npc_dying_berserker::npc_dying_berserkerAI, pCreature->AI())->uiTalkTimer = 3000;
+            CAST_AI(npc_dying_berserker::npc_dying_berserkerAI, pCreature->AI())->bTalkTime = true;
+        }
+
+        return true;
+    }
+
+    CreatureAI *GetAI(Creature *pCreature) const
+    {
+        return new npc_dying_berserkerAI(pCreature);
+    }
+
+    struct npc_dying_berserkerAI : public ScriptedAI
+    {
+        npc_dying_berserkerAI(Creature *pCreature) : ScriptedAI(pCreature) { }
+
+        uint64 uiPlayerGUID;
+        uint32 uiTalkTimer;
+        uint32 uiStep;
+        bool bTalkTime;
+
+        void Reset()
+        {
+            uiPlayerGUID = 0;
+            bTalkTime = false;
+            uiStep = 0;
+        }
+
+        void UpdateAI(const uint32 uiDiff)
+        {
+            if (bTalkTime && uiTalkTimer <= uiDiff)
+            {
+                if (Player *pPlayer = Unit::GetPlayer(*me, uiPlayerGUID))
+                {
+                    switch(uiStep)
+                    {
+                        case 0:
+                            DoScriptText(SAY_QUEST_BERSERKER2, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 1:
+                            DoScriptText(SAY_QUEST_BERSERKER3, pPlayer);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 2:
+                            DoScriptText(SAY_QUEST_BERSERKER4, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 3:
+                            DoScriptText(SAY_QUEST_BERSERKER5, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 4:
+                            DoScriptText(SAY_QUEST_BERSERKER6, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 5:
+                            DoScriptText(SAY_QUEST_BERSERKER7, me);
+                            uiTalkTimer = 3000;
+                            ++uiStep;
+                            break;
+                        case 6:
+                            DoScriptText(SAY_QUEST_BERSERKER8, me);
+                            if (pPlayer->GetQuestStatus(QUEST_THE_BROKEN_FRONT_H) == QUEST_STATUS_INCOMPLETE)
+                                pPlayer->KilledMonsterCredit(CREATURE_DYING_BERSERKER_KC, 0);
+                            bTalkTime = false;
+                            uiStep = 0;
+                            break;
+                    }
+                }
+            }
+            else
+                uiTalkTimer -= uiDiff;
+        }
+    };
 };
 
 void AddSC_icecrown()
@@ -2338,4 +2690,7 @@ void AddSC_icecrown()
     new npc_argent_champion;
     new npc_maloric;
     new npc_Scarlet_Onslaught;
+    new npc_apprentice_osterkilgr();
+    new npc_dying_soldier();
+    new npc_dying_berserker();
 }

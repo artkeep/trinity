@@ -89,7 +89,7 @@ void LFGScripts::OnRemoveMember(Group* group, uint64 guid, RemoveMethod& method,
             // Add deserter flag
         else if (group->isLfgKickActive())
             // Update internal kick cooldown of kicked
-        */
+        */	
 
         LfgUpdateData updateData = LfgUpdateData(LFG_UPDATETYPE_LEADER);
         plr->GetSession()->SendLfgUpdateParty(updateData);
@@ -102,12 +102,11 @@ void LFGScripts::OnRemoveMember(Group* group, uint64 guid, RemoveMethod& method,
 }
 
 void LFGScripts::OnDisband(Group* group)
-{
+ {
     uint64 gguid = group->GetGUID();
     sLog->outDebug("LFGScripts::OnDisband [" UI64FMTD "]", gguid);
-
     sLFGMgr->RemoveGroupData(gguid);
-}
+ }
 
 void LFGScripts::OnChangeLeader(Group* group, uint64 newLeaderGuid, uint64 oldLeaderGuid)
 {

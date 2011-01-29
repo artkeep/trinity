@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 
@@ -184,11 +186,6 @@ bool Condition::Meets(Player * player, Unit* invoker)
                         condMeets = player->getLevel() <= mConditionValue1;
                         break;
                 }
-                break;
-            }
-        case CONDITION_DRUNKENSTATE:
-            {
-                condMeets = (uint32)Player::GetDrunkenstateByValue(player->GetDrunkValue()) >= mConditionValue1;
                 break;
             }
         case CONDITION_NEAR_CREATURE:
@@ -1359,15 +1356,6 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
                 if (cond->mConditionValue2 >= LVL_COND_MAX)
                 {
                     sLog->outErrorDb("Level condition has invalid option (%u), skipped", cond->mConditionValue2);
-                    return false;
-                }
-                break;
-            }
-        case CONDITION_DRUNKENSTATE:
-            {
-                if (cond->mConditionValue1 > DRUNKEN_SMASHED)
-                {
-                    sLog->outErrorDb("DrunkState condition has invalid state (%u), skipped", cond->mConditionValue1);
                     return false;
                 }
                 break;

@@ -36,8 +36,8 @@ static const DoorData doorData[] =
     {GO_CRIMSON_HALL_DOOR,                   DATA_BLOOD_PRINCE_COUNCIL_EVENT,  DOOR_TYPE_ROOM,    BOUNDARY_S   },
     {GO_BLOOD_ELF_COUNCIL_DOOR,              DATA_BLOOD_PRINCE_COUNCIL_EVENT,  DOOR_TYPE_PASSAGE, BOUNDARY_W   },
     {GO_BLOOD_ELF_COUNCIL_DOOR_RIGHT,        DATA_BLOOD_PRINCE_COUNCIL_EVENT,  DOOR_TYPE_PASSAGE, BOUNDARY_E   },
-    {GO_DOODAD_ICECROWN_BLOODPRINCE_DOOR_01, DATA_BLOOD_QUEEN_LANATHEL_EVENT, DOOR_TYPE_ROOM,    BOUNDARY_S   },
-    {GO_DOODAD_ICECROWN_GRATE_01,            DATA_BLOOD_QUEEN_LANATHEL_EVENT, DOOR_TYPE_PASSAGE, BOUNDARY_NONE},
+    {GO_DOODAD_ICECROWN_BLOODPRINCE_DOOR_01, DATA_BLOOD_QUEEN_LANA_THEL_EVENT, DOOR_TYPE_ROOM,    BOUNDARY_S   },
+    {GO_DOODAD_ICECROWN_GRATE_01,            DATA_BLOOD_QUEEN_LANA_THEL_EVENT, DOOR_TYPE_PASSAGE, BOUNDARY_NONE},
     {GO_GREEN_DRAGON_BOSS_ENTRANCE,          DATA_VALITHRIA_DREAMWALKER_EVENT, DOOR_TYPE_ROOM,    BOUNDARY_N   },
     {GO_GREEN_DRAGON_BOSS_EXIT,              DATA_VALITHRIA_DREAMWALKER_EVENT, DOOR_TYPE_PASSAGE, BOUNDARY_S   },
     {GO_SINDRAGOSA_ENTRANCE_DOOR,            DATA_SINDRAGOSA_EVENT,            DOOR_TYPE_ROOM,    BOUNDARY_S   },
@@ -68,6 +68,8 @@ class instance_icecrown_citadel : public InstanceMapScript
                 uiPrinceTaldaram        = 0;
                 uiBloodQueenLanathel    = 0;
                 uiValithriaDreamwalker  = 0;
+                uiValithriaAlternative  = 0;
+                uiValithriaCombatTrigger= 0;
                 uiSindragosa            = 0;
                 uiLichKing              = 0;
                 uiTirion                = 0;
@@ -128,6 +130,7 @@ class instance_icecrown_citadel : public InstanceMapScript
 				isOozeDanceEligible     = 0;
 				isNauseaEligible        = 0;
 				isOrbWhispererEligible  = 0;
+                isPortalJockeyEligible  = 0;
 
                 memset(&uiEncounter, 0, sizeof(uiEncounter));
             };
@@ -219,22 +222,39 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case CREATURE_PRINCE_VALANAR_ICC:
                         uiPrinceValanar = creature->GetGUID();
+                        creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                         break;
                     case CREATURE_PRINCE_KELESETH_ICC:
                         uiPrinceKeleseth = creature->GetGUID();
+                        creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                         break;
                     case CREATURE_PRINCE_TALDARAM_ICC:
                         uiPrinceTaldaram = creature->GetGUID();
+                        creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                         break;
                     case CREATURE_BLOOD_ORB_CONTROLLER:
                         uiBloodCouncilController = creature->GetGUID();
                         break;
-                    case CREATURE_BLOOD_QUEEN_LANATHEL:
+                    case CREATURE_BLOOD_QUEEN_LANA_THEL:
                         uiBloodQueenLanathel = creature->GetGUID();
+                        creature->SetReactState(REACT_DEFENSIVE);
                         break;
                     case CREATURE_VALITHRIA_DREAMWALKER:
                         uiValithriaDreamwalker = creature->GetGUID();
                         break;
+                    case CREATURE_VALITHRIA_ALTERNATIVE:
+                        uiValithriaAlternative = creature->GetGUID();
+                        break;
+                    case CREATURE_COMBAT_TRIGGER:
+                    {
+                        uiValithriaCombatTrigger = creature->GetGUID();
+                        creature->SetReactState(REACT_AGGRESSIVE);
+                        creature->SetSpeed(MOVE_RUN, 0.0f, true);
+                        creature->SetSpeed(MOVE_WALK, 0.0f, true);
+                        creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NOT_SELECTABLE);
+                        creature->SetVisible(false);
+                        break;
+                    }
                     case CREATURE_SINDRAGOSA:
                         uiSindragosa = creature->GetGUID();
                         break;
@@ -274,12 +294,15 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case CRIMSONHALL_DOOR:
                         uiCrimsonHallDoor1 = go->GetGUID();
+                        HandleGameObject(uiCrimsonHallDoor1, uiEncounter[7] != IN_PROGRESS);
                         break;
                     case CRIMSONHALL_DOOR_1:
                         uiCrimsonHallDoor2 = go->GetGUID();
+                        HandleGameObject(uiCrimsonHallDoor2, uiEncounter[7] == DONE);
                         break;
                     case CRIMSONHALL_DOOR_2:
                         uiCrimsonHallDoor3 = go->GetGUID();
+                        HandleGameObject(uiCrimsonHallDoor3, uiEncounter[7] == DONE);
                         break;
                     case DRAGON_DOOR_1:
                         uiDragonDoor1 = go->GetGUID();
@@ -432,6 +455,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                         HandleGameObject(NULL, bAllOthersAreDone, go);
                         break;
                     }
+                   case GO_DOODAD_ICECROWN_BLOODPRINCE_DOOR_01:
+                    {
+                        uiBloodPrinceDoor01 = go->GetGUID();
+                        break;
+                    }
                 }
             }
 
@@ -442,14 +470,16 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_LORD_MARROWGAR:         return uiLordMarrowgar;
                     case DATA_GUNSHIP_BATTLE:         return uiGunship;
                     case DATA_SAURFANG:               return uiDeathbringerSaurfang;
-                    case DATA_FESTERGUT:             return uiFestergut;
+                    case DATA_FESTERGUT:              return uiFestergut;
                     case DATA_ROTFACE:                return uiRotface;
                     case DATA_PROFESSOR_PUTRICIDE:    return uiProfessorPutricide;
                     case DATA_PRINCE_VALANAR_ICC:     return uiPrinceValanar;
                     case DATA_PRINCE_KELESETH_ICC:    return uiPrinceKeleseth;
                     case DATA_PRINCE_TALDARAM_ICC:    return uiPrinceTaldaram;
-                    case DATA_BLOOD_QUEEN_LANATHEL:   return uiBloodQueenLanathel;
+                    case DATA_BLOOD_QUEEN_LANA_THEL:  return uiBloodQueenLanathel;
                     case DATA_VALITHRIA_DREAMWALKER:  return uiValithriaDreamwalker;
+                    case DATA_VALITHRIA_ALTERNATIVE:  return uiValithriaAlternative;
+                    case DATA_VALITHRIA_COMBAT_TRIGGER: return uiValithriaCombatTrigger;
                     case DATA_SINDRAGOSA:             return uiSindragosa;
                     case DATA_LICH_KING:              return uiLichKing;
                     case DATA_TIRION:                 return uiTirion;
@@ -663,7 +693,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                             HandleGameObject(uiCrimsonHallDoor1, false);
                         uiEncounter[7] = data;
                         break;
-                    case DATA_BLOOD_QUEEN_LANATHEL_EVENT:
+                    case DATA_BLOOD_QUEEN_LANA_THEL_EVENT:
                         if(data == DONE)
                         {
                             if (GameObject* go = instance->GetGameObject(uiBloodQueenTransporter))
@@ -672,6 +702,10 @@ class instance_icecrown_citadel : public InstanceMapScript
                                 go->SetGoState(GO_STATE_READY);
                             }
                         }
+                        if (data == FAIL || data == DONE)
+                            HandleGameObject(uiBloodPrinceDoor01, true);
+                        if (data == IN_PROGRESS)
+                            HandleGameObject(uiBloodPrinceDoor01, false);
                         uiEncounter[8] = data;
                         break;
                     case DATA_VALITHRIA_DREAMWALKER_EVENT:
@@ -698,11 +732,17 @@ class instance_icecrown_citadel : public InstanceMapScript
                             HandleGameObject(uiDragonDoor1, true);
                             HandleGameObject(uiDragonDoor2, true);
                             HandleGameObject(uiDragonDoor3, true);
+
                         }
-                        if(data == NOT_STARTED)
+                        if(data == NOT_STARTED || data == FAIL)
                         {
                             if (GameObject* SindragossaTp = instance->GetGameObject(uiSindragossaTp))
                                 SindragossaTp->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
+                            HandleGameObject(uiDragonDoor1, true);
+                            HandleGameObject(uiRoostDoor3, false);
+                            HandleGameObject(uiRoostDoor2, false);         
+                            HandleGameObject(uiRoostDoor1, false);
+                            HandleGameObject(uiRoostDoor4, false);
                         }
                         if(data == IN_PROGRESS)
                         {
@@ -744,6 +784,9 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_ORB_WHISPERER_ACHIEVEMENT:
                         isOrbWhispererEligible = data ? true : false;
                         break;
+                    case DATA_PORTAL_JOCKEY_ACHIEVEMENT:
+                        isPortalJockeyEligible = data ? true : false;
+                        break;
                 }
 
                 if (data == DONE)
@@ -770,7 +813,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                     return uiEncounter[6];
                 case DATA_BLOOD_PRINCE_COUNCIL_EVENT:
                     return uiEncounter[7];
-                case DATA_BLOOD_QUEEN_LANATHEL_EVENT:
+                case DATA_BLOOD_QUEEN_LANA_THEL_EVENT:
                     return uiEncounter[8];
                 case DATA_VALITHRIA_DREAMWALKER_EVENT:
                     return uiEncounter[9];
@@ -830,6 +873,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case CRITERIA_ONCE_BITTEN_TWICE_SHY_25N:
                     case CRITERIA_ONCE_BITTEN_TWICE_SHY_25V:
                         return CAST_INST(InstanceMap, instance)->GetMaxPlayers() == 25;
+                    //case CRITERIA_PORTAL_JOCKEY_10N:
+                    //case CRITERIA_PORTAL_JOCKEY_10H:
+                    //case CRITERIA_PORTAL_JOCKEY_25N:
+                    //case CRITERIA_PORTAL_JOCKEY_25H:
+                    //    return isPortalJockeyEligible;
                     default:
                         break;
                 }
@@ -893,6 +941,8 @@ class instance_icecrown_citadel : public InstanceMapScript
             uint64 uiPrinceTaldaram;
             uint64 uiBloodQueenLanathel;
             uint64 uiValithriaDreamwalker;
+            uint64 uiValithriaAlternative;
+            uint64 uiValithriaCombatTrigger;
             uint64 uiSindragosa;
             uint64 uiLichKing;
             uint64 uiTirion;
@@ -922,6 +972,7 @@ class instance_icecrown_citadel : public InstanceMapScript
             uint64 uiCrimsonHallDoor2;
             uint64 uiCrimsonHallDoor3;
             uint64 uiBloodQueenTransporter;
+            uint64 uiBloodPrinceDoor01;
             uint64 uiFrostwingDoor;
             uint64 uiDragonDoor1;
             uint64 uiDragonDoor2;
@@ -954,6 +1005,7 @@ class instance_icecrown_citadel : public InstanceMapScript
 			uint8 isOozeDanceEligible;
 			uint8 isNauseaEligible;
 			uint8 isOrbWhispererEligible;
+            uint8 isPortalJockeyEligible;
             uint32 uiEncounter[MAX_ENCOUNTER];
         };
 
@@ -962,7 +1014,26 @@ class instance_icecrown_citadel : public InstanceMapScript
             return new instance_icecrown_citadel_InstanceMapScript(pMap);
         }
 };
+void DespawnAllCreaturesAround(Creature *ref, uint32 entry)
+{
+    while (Unit *unit = ref->FindNearestCreature(entry, 80.0f, true))
+        if (Creature *creature = unit->ToCreature())
+            creature->DespawnOrUnsummon();
+}
+void UnsummonSpecificCreaturesNearby(Creature *ref, uint32 entry, float radius)
+{
+    std::list<Creature*> allCreaturesWithEntry;
+    GetCreatureListWithEntryInGrid(allCreaturesWithEntry, ref, entry, radius);
+    for(std::list<Creature*>::iterator itr = allCreaturesWithEntry.begin(); itr != allCreaturesWithEntry.end(); ++itr)
+    {
+        Creature *candidate = *itr;
 
+        if (!candidate)
+            continue;
+        if (TempSummon* summon = candidate->ToTempSummon())
+            summon->DespawnOrUnsummon();
+    }
+}
 void AddSC_instance_icecrown_citadel()
 {
     new instance_icecrown_citadel();

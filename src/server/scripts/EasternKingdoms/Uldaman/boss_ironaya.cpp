@@ -42,17 +42,17 @@ class boss_ironaya : public CreatureScript
 
         struct boss_ironayaAI : public ScriptedAI
         {
-            boss_ironayaAI(Creature* pCreature) : ScriptedAI(pCreature) {}
+            boss_ironayaAI(Creature *c) : ScriptedAI(c) {}
 
-            uint32 uiArcingTimer;
-            bool bHasCastedWstomp;
-            bool bHasCastedKnockaway;
+            uint32 Arcing_Timer;
+            bool hasCastedWstomp;
+            bool hasCastedKnockaway;
 
             void Reset()
             {
-                uiArcingTimer = 3000;
-                bHasCastedKnockaway = false;
-                bHasCastedWstomp = false;
+                Arcing_Timer = 3000;
+                hasCastedKnockaway = false;
+                hasCastedWstomp = false;
             }
 
             void EnterCombat(Unit * /*who*/)
@@ -60,41 +60,41 @@ class boss_ironaya : public CreatureScript
                 DoScriptText(SAY_AGGRO, me);
             }
 
-            void UpdateAI(const uint32 uiDiff)
+            void UpdateAI(const uint32 diff)
             {
                 //Return since we have no target
                 if (!UpdateVictim())
                     return;
 
                 //If we are <50% hp do knockaway ONCE
-                if (!bHasCastedKnockaway && HealthBelowPct(50))
+                if (!hasCastedKnockaway && HealthBelowPct(50))
                 {
                     DoCast(me->getVictim(), SPELL_KNOCKAWAY, true);
 
                     // current aggro target is knocked away pick new target
-                    Unit* pTarget = SelectUnit(SELECT_TARGET_TOPAGGRO, 0);
+                    Unit* Target = SelectUnit(SELECT_TARGET_TOPAGGRO, 0);
 
-                    if (!pTarget || pTarget == me->getVictim())
-                        pTarget = SelectUnit(SELECT_TARGET_TOPAGGRO, 1);
+                    if (!Target || Target == me->getVictim())
+                        Target = SelectUnit(SELECT_TARGET_TOPAGGRO, 1);
 
-                    if (pTarget)
-                        me->TauntApply(pTarget);
+                    if (Target)
+                        me->TauntApply(Target);
 
                     //Shouldn't cast this agian
-                    bHasCastedKnockaway = true;
+                    hasCastedKnockaway = true;
                 }
 
-                //uiArcingTimer
-                if (uiArcingTimer <= uiDiff)
+                //Arcing_Timer
+                if (Arcing_Timer <= diff)
                 {
                     DoCast(me, SPELL_ARCINGSMASH);
-                    uiArcingTimer = 13000;
-                } else uiArcingTimer -= uiDiff;
+                    Arcing_Timer = 13000;
+                } else Arcing_Timer -= diff;
 
-                if (!bHasCastedWstomp && HealthBelowPct(25))
+                if (!hasCastedWstomp && HealthBelowPct(25))
                 {
                     DoCast(me, SPELL_WSTOMP);
-                    bHasCastedWstomp = true;
+                    hasCastedWstomp = true;
                 }
 
                 DoMeleeAttackIfReady();

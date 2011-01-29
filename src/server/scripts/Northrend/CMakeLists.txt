@@ -39,6 +39,7 @@ set(scripts_STAT_SRCS
   Northrend/FrozenHalls/HallsOfReflection/instance_halls_of_reflection.cpp
   Northrend/FrozenHalls/HallsOfReflection/halls_of_reflection.cpp
   Northrend/FrozenHalls/HallsOfReflection/boss_marwyn.cpp
+  Northrend/FrozenHalls/HallsOfReflection/boss_the_lich_king_hor.cpp
   Northrend/FrozenHalls/PitOfSaron/boss_forgemaster_garfrost.cpp
   Northrend/FrozenHalls/PitOfSaron/boss_krickandick.cpp
   Northrend/FrozenHalls/PitOfSaron/pit_of_saron.cpp
@@ -68,7 +69,6 @@ set(scripts_STAT_SRCS
   Northrend/Nexus/Nexus/boss_keristrasza.cpp
   Northrend/Nexus/Nexus/boss_anomalus.cpp
   Northrend/Nexus/Nexus/nexus.h
-
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_anubarak_trial.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_faction_champions.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_lord_jaraxxus.cpp
@@ -83,7 +83,6 @@ set(scripts_STAT_SRCS
   Northrend/CrusadersColiseum/TrialOfTheChampion/boss_black_knight.cpp
   Northrend/CrusadersColiseum/TrialOfTheChampion/instance_trial_of_the_champion.cpp
   Northrend/CrusadersColiseum/TrialOfTheChampion/boss_argent_challenge.cpp
-
   Northrend/Naxxramas/boss_loatheb.cpp
   Northrend/Naxxramas/boss_anubrekhan.cpp
   Northrend/Naxxramas/boss_maexxna.cpp
@@ -101,6 +100,7 @@ set(scripts_STAT_SRCS
   Northrend/Naxxramas/instance_naxxramas.cpp
   Northrend/Naxxramas/boss_grobbulus.cpp
   Northrend/Naxxramas/boss_noth.cpp
+  Northrend/Naxxramas/mob_naxxramas.cpp
   Northrend/crystalsong_forest.cpp
   Northrend/VaultOfArchavon/boss_archavon.cpp
   Northrend/VaultOfArchavon/boss_koralon.cpp
@@ -145,7 +145,6 @@ set(scripts_STAT_SRCS
   Northrend/VioletHold/boss_xevozz.cpp
   Northrend/VioletHold/boss_erekem.cpp
   Northrend/VioletHold/violet_hold.cpp
-
   Northrend/IcecrownCitadel/boss_blood_queen_lana_thel.cpp
   Northrend/IcecrownCitadel/boss_deathbringer_saurfang.cpp
   Northrend/IcecrownCitadel/boss_festergut.cpp
@@ -161,10 +160,8 @@ set(scripts_STAT_SRCS
   Northrend/IcecrownCitadel/icecrown_citadel.cpp
   Northrend/IcecrownCitadel/icecrown_citadel.h
   Northrend/IcecrownCitadel/instance_icecrown_citadel.cpp
-
   Northrend/zuldrak.cpp
   Northrend/icecrown.cpp
-  Northrend/wintergrasp.cpp
   Northrend/Gundrak/boss_slad_ran.cpp
   Northrend/Gundrak/instance_gundrak.cpp
   Northrend/Gundrak/boss_drakkari_colossus.cpp
@@ -181,6 +178,15 @@ set(scripts_STAT_SRCS
   Northrend/DraktharonKeep/drak_tharon_keep.h
   Northrend/DraktharonKeep/boss_tharon_ja.cpp
   Northrend/DraktharonKeep/boss_dred.cpp
+  Northrend/RubySanctum/instance_ruby_sanctum.cpp
+  Northrend/RubySanctum/boss_halion.cpp
+  Northrend/RubySanctum/boss_ragefire.cpp
+  Northrend/RubySanctum/boss_zarithrian.cpp
+  Northrend/RubySanctum/boss_baltharus.cpp
+  Northrend/RubySanctum/ruby_sanctum.h
+  Northrend/wintergrasp.cpp
+  Northrend/isle_of_conquest.cpp
+  
 )
 
 message("  -> Prepared: Northrend")

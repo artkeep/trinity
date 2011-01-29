@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ScriptPCH.h"
@@ -80,6 +80,8 @@ enum ThaddiusYells
 enum ThaddiusSpells
 {
     SPELL_POLARITY_SHIFT        = 28089,
+    SPELL_POSITIVE_CHARGE       = 28059,
+    SPELL_NEGATIVE_CHARGE       = 28084,
     SPELL_BALL_LIGHTNING        = 28299,
     SPELL_CHAIN_LIGHTNING       = 28167,
     H_SPELL_CHAIN_LIGHTNING     = 54531,
@@ -131,11 +133,15 @@ public:
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_STUNNED);
                 me->SetReactState(REACT_PASSIVE);
             }
+
+            pInstance = c->GetInstanceScript();
         }
 
         bool checkStalaggAlive;
         bool checkFeugenAlive;
         uint32 uiAddsTimer;
+
+        InstanceScript* pInstance;
 
         void Reset()
         {
@@ -163,7 +169,7 @@ public:
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_STUNNED);
                 me->SetReactState(REACT_PASSIVE);
             }
-
+            SetImmuneToDeathGrip();
         }
 
         void KilledUnit(Unit* /*victim*/)
@@ -176,6 +182,12 @@ public:
         {
             _JustDied();
             DoScriptText(SAY_DEATH, me);
+
+            if (pInstance)
+            {
+                pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_POSITIVE_CHARGE);
+                pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_NEGATIVE_CHARGE);
+            }
         }
 
         void DoAction(const int32 action)
@@ -263,6 +275,7 @@ public:
                     case EVENT_SHIFT:
                         DoCastAOE(SPELL_POLARITY_SHIFT);
                         events.ScheduleEvent(EVENT_SHIFT, 30000);
+                        events.RescheduleEvent(EVENT_CHAIN, 6000);
                         return;
                     case EVENT_CHAIN:
                         DoCast(me->getVictim(), RAID_MODE(SPELL_CHAIN_LIGHTNING, H_SPELL_CHAIN_LIGHTNING));
@@ -275,7 +288,8 @@ public:
                 }
             }
 
-            if (events.GetTimer() > 15000 && !me->IsWithinMeleeRange(me->getVictim()))
+            Unit* pMelee = SelectTarget(SELECT_TARGET_RANDOM, 0, me->GetMeleeReach(), true);
+            if (events.GetTimer() > 15000 && !pMelee)  // && !me->IsWithinMeleeRange(me->getVictim())
                 DoCast(me->getVictim(), SPELL_BALL_LIGHTNING);
             else
                 DoMeleeAttackIfReady();
@@ -347,13 +361,16 @@ public:
                         // magnetic pull is not working. So just jump.
 
                         // reset aggro to be sure that feugen will not follow the jump
+                        pFeugen->getThreatManager().addThreat(pStalaggVictim, pFeugen->getThreatManager().getThreat(pFeugenVictim));
+                        me->getThreatManager().addThreat(pFeugenVictim, me->getThreatManager().getThreat(pStalaggVictim));                      
                         pFeugen->getThreatManager().modifyThreatPercent(pFeugenVictim, -100);
-                        pFeugen->getThreatManager().modifyThreatPercent(pStalaggVictim, 100);
-                        pFeugenVictim->JumpTo(me, 0.3f);
-
                         me->getThreatManager().modifyThreatPercent(pStalaggVictim, -100);
-                        me->getThreatManager().modifyThreatPercent(pFeugenVictim, 100);
+
+                        pFeugenVictim->JumpTo(me, 0.3f);
                         pStalaggVictim->JumpTo(pFeugen, 0.3f);
+
+                        me->GetMotionMaster()->MoveDistract(2500);
+                        pFeugen->GetMotionMaster()->MoveDistract(2500);
                     }
                 }
 

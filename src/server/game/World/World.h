@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /// \addtogroup world The World
@@ -64,6 +66,7 @@ enum ShutdownExitCode
     SHUTDOWN_EXIT_CODE = 0,
     ERROR_EXIT_CODE    = 1,
     RESTART_EXIT_CODE  = 2,
+    CRASH_EXIT_CODE    = 3,
 };
 
 /// Timers for different object refresh rates
@@ -161,11 +164,11 @@ enum WorldBoolConfigs
     CONFIG_DUNGEON_FINDER_ENABLE,
     CONFIG_AUTOBROADCAST,
     CONFIG_ALLOW_TICKETS,
-    CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
-    CONFIG_PRESERVE_CUSTOM_CHANNELS,
     CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED,
     CONFIG_OUTDOORPVP_WINTERGRASP_CUSTOM_HONOR,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE,
+    CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
+    CONFIG_PRESERVE_CUSTOM_CHANNELS,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -311,6 +314,7 @@ enum WorldIntConfigs
     CONFIG_MAX_RESULTS_LOOKUP_COMMANDS,
     CONFIG_DB_PING_INTERVAL,
     CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
+    CONFIG_BALANCE_MINIMUM,
     CONFIG_OUTDOORPVP_WINTERGRASP_START_TIME,
     CONFIG_OUTDOORPVP_WINTERGRASP_BATTLE_TIME,
     CONFIG_OUTDOORPVP_WINTERGRASP_INTERVAL,
@@ -323,15 +327,7 @@ enum WorldIntConfigs
     CONFIG_OUTDOORPVP_WINTERGRASP_SAVESTATE_PERIOD,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF,
-    CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
-
-	CONFIG_ANNOUNCE_BAN_ACCOUNT_ENABLED,
-    CONFIG_ANNOUNCE_BAN_CHARACTER_ENABLED,
-    CONFIG_ANNOUNCE_BAN_IP_ENABLED,
-    CONFIG_ANNOUNCE_MUTE_CHARACTER_ENABLED,
-    CONFIG_ANNOUNCE_KICK_CHARACTER_ENABLED,
-    CONFIG_ANNOUNCE_DELETE_ACCOUNT_ENABLED,
-    CONFIG_ANNOUNCE_DELETE_CHARACTER_ENABLED,
+    CONFIG_DUEL_RESET_COOLDOWN,
     INT_CONFIG_VALUE_COUNT
 };
 
@@ -358,8 +354,11 @@ enum Rates
     RATE_DROP_ITEM_REFERENCED_AMOUNT,
     RATE_DROP_MONEY,
     RATE_XP_KILL,
+    RATE_XP_KILL_PREMIUM,
     RATE_XP_QUEST,
+    RATE_XP_QUEST_PREMIUM,
     RATE_XP_EXPLORE,
+    RATE_XP_EXPLORE_PREMIUM,
     RATE_REPAIRCOST,
     RATE_REPUTATION_GAIN,
     RATE_REPUTATION_LOWLEVEL_KILL,
@@ -735,6 +734,18 @@ class World
         static int32 GetVisibilityNotifyPeriodOnContinents(){ return m_visibility_notify_periodOnContinents; }
         static int32 GetVisibilityNotifyPeriodInInstances() { return m_visibility_notify_periodInInstances;  }
         static int32 GetVisibilityNotifyPeriodInBGArenas()  { return m_visibility_notify_periodInBGArenas;   }
+		
+        //movement anticheat enable flag
+        inline bool GetMvAnticheatEnable()             {return m_MvAnticheatEnable;}
+        inline bool GetMvAnticheatKick()               {return m_MvAnticheatKick;}
+        inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
+        inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
+        inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
+        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
+        inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
+        inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
+        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
+        
 
         void SetWintergrapsTimer(uint32 timer, uint32 state)
         {
@@ -748,17 +759,8 @@ class World
         uint32 m_WintergrapsTimer;
         uint32 m_WintergrapsState;
 
-        //movement anticheat enable flag
-        inline bool GetMvAnticheatEnable()             {return m_MvAnticheatEnable;}
-        inline bool GetMvAnticheatKick()               {return m_MvAnticheatKick;}
-        inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
-        inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
-        inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
-        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
-        inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
-        inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
-        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
-     
+        
+
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
 
@@ -784,9 +786,6 @@ class World
         bool GetEventKill() const { return isEventKillStart; }
 
         bool isEventKillStart;
-
-        uint32 GetCleaningFlags() { return m_CleaningFlags; }
-        void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -803,8 +802,6 @@ class World
         static uint8 m_ExitCode;
         uint32 m_ShutdownTimer;
         uint32 m_ShutdownMask;
-
-        uint32 m_CleaningFlags;
 
         bool m_isClosed;
 
@@ -854,8 +851,8 @@ class World
         static int32 m_visibility_notify_periodOnContinents;
         static int32 m_visibility_notify_periodInInstances;
         static int32 m_visibility_notify_periodInBGArenas;
-
-        //movement anticheat enable flag
+		
+       //movement anticheat enable flag
         bool m_MvAnticheatEnable;
         bool m_MvAnticheatKick;
         uint32 m_MvAnticheatAlarmCount;
@@ -865,7 +862,9 @@ class World
         unsigned char m_MvAnticheatGmLevel;
         bool m_MvAnticheatKill;
         float m_MvAnticheatMaxXYT;
-        uint16 m_MvAnticheatIgnoreAfterTeleport;
+        
+
+
 
 
         // CLI command holder to be thread safe

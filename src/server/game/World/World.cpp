@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /** \file
@@ -70,6 +72,7 @@
 #include "ScriptMgr.h"
 #include "WeatherMgr.h"
 #include "CreatureTextMgr.h"
+#include "AuctionHouseBot.h"
 #include "SmartAI.h"
 #include "Channel.h"
 
@@ -110,8 +113,6 @@ World::World()
     m_updateTimeCount = 0;
 
     m_isClosed = false;
-
-    m_CleaningFlags = 0;
 }
 
 /// World destructor
@@ -457,6 +458,9 @@ void World::LoadConfigSettings(bool reload)
     rate_values[RATE_XP_KILL]     = sConfig->GetFloatDefault("Rate.XP.Kill", 1.0f);
     rate_values[RATE_XP_QUEST]    = sConfig->GetFloatDefault("Rate.XP.Quest", 1.0f);
     rate_values[RATE_XP_EXPLORE]  = sConfig->GetFloatDefault("Rate.XP.Explore", 1.0f);
+    rate_values[RATE_XP_KILL_PREMIUM]    = sConfig->GetFloatDefault("Rate.XP.Kill.Premium", 1.0f);
+    rate_values[RATE_XP_QUEST_PREMIUM]   = sConfig->GetFloatDefault("Rate.XP.Quest.Premium", 1.0f);
+    rate_values[RATE_XP_EXPLORE_PREMIUM] = sConfig->GetFloatDefault("Rate.XP.Explore.Premium", 1.0f);
     rate_values[RATE_REPAIRCOST]  = sConfig->GetFloatDefault("Rate.RepairCost", 1.0f);
     if (rate_values[RATE_REPAIRCOST] < 0.0f)
     {
@@ -562,6 +566,18 @@ void World::LoadConfigSettings(bool reload)
     ///- Read other configuration items from the config file
 
     m_bool_configs[CONFIG_DURABILITY_LOSS_IN_PVP] = sConfig->GetBoolDefault("DurabilityLoss.InPvP", false);
+	
+	// movement anticheat
+    m_MvAnticheatEnable                     = sConfig->GetBoolDefault("Anticheat.Movement.Enable",false);
+    m_MvAnticheatKick                       = sConfig->GetBoolDefault("Anticheat.Movement.Kick",false);
+    m_MvAnticheatAlarmCount                 = (uint32)sConfig->GetIntDefault("Anticheat.Movement.AlarmCount", 5);
+    m_MvAnticheatAlarmPeriod                = (uint32)sConfig->GetIntDefault("Anticheat.Movement.AlarmTime", 5000);
+    m_MvAntiCheatBan                        = (unsigned char)sConfig->GetIntDefault("Anticheat.Movement.BanType",0);
+    m_MvAnticheatBanTime                    = sConfig->GetStringDefault("Anticheat.Movement.BanTime","1m");
+    m_MvAnticheatGmLevel                    = (unsigned char)sConfig->GetIntDefault("Anticheat.Movement.GmLevel",0);
+    m_MvAnticheatKill                       = sConfig->GetBoolDefault("Anticheat.Movement.Kill",false);
+    m_MvAnticheatMaxXYT                     = sConfig->GetFloatDefault("Anticheat.Movement.MaxXYT",0.04f);
+  
 
     m_int_configs[CONFIG_COMPRESSION] = sConfig->GetIntDefault("Compression", 1);
     if (m_int_configs[CONFIG_COMPRESSION] < 1 || m_int_configs[CONFIG_COMPRESSION] > 9)
@@ -571,7 +587,6 @@ void World::LoadConfigSettings(bool reload)
     }
     m_bool_configs[CONFIG_ADDON_CHANNEL] = sConfig->GetBoolDefault("AddonChannel", true);
     m_bool_configs[CONFIG_CLEAN_CHARACTER_DB] = sConfig->GetBoolDefault("CleanCharacterDB", false);
-    m_int_configs[CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS] = sConfig->GetIntDefault("PersistentCharacterCleanFlags", 0);
     m_int_configs[CONFIG_CHAT_CHANNEL_LEVEL_REQ] = sConfig->GetIntDefault("ChatLevelReq.Channel", 1);
     m_int_configs[CONFIG_CHAT_WHISPER_LEVEL_REQ] = sConfig->GetIntDefault("ChatLevelReq.Whisper", 1);
     m_int_configs[CONFIG_CHAT_SAY_LEVEL_REQ] = sConfig->GetIntDefault("ChatLevelReq.Say", 1);
@@ -586,6 +601,7 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_INTERVAL_SAVE] = sConfig->GetIntDefault("PlayerSaveInterval", 15 * MINUTE * IN_MILLISECONDS);
     m_int_configs[CONFIG_INTERVAL_DISCONNECT_TOLERANCE] = sConfig->GetIntDefault("DisconnectToleranceInterval", 0);
     m_bool_configs[CONFIG_STATS_SAVE_ONLY_ON_LOGOUT] = sConfig->GetBoolDefault("PlayerSave.Stats.SaveOnlyOnLogout", true);
+    m_int_configs[CONFIG_DUEL_RESET_COOLDOWN] = sConfig->GetIntDefault("DuelResetCooldown", 0);
 
     m_int_configs[CONFIG_MIN_LEVEL_STAT_SAVE] = sConfig->GetIntDefault("PlayerSave.Stats.MinLevel", 0);
     if (m_int_configs[CONFIG_MIN_LEVEL_STAT_SAVE] > MAX_LEVEL)
@@ -1046,10 +1062,10 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_INSTANT_LOGOUT] = sConfig->GetIntDefault("InstantLogout", SEC_MODERATOR);
 
     m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] = sConfig->GetIntDefault("Guild.EventLogRecordsCount", GUILD_EVENTLOG_MAX_RECORDS);
-    if (m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] > GUILD_EVENTLOG_MAX_RECORDS)
+    if (m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] < GUILD_EVENTLOG_MAX_RECORDS)
         m_int_configs[CONFIG_GUILD_EVENT_LOG_COUNT] = GUILD_EVENTLOG_MAX_RECORDS;
     m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] = sConfig->GetIntDefault("Guild.BankEventLogRecordsCount", GUILD_BANKLOG_MAX_RECORDS);
-    if (m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] > GUILD_BANKLOG_MAX_RECORDS)
+    if (m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] < GUILD_BANKLOG_MAX_RECORDS)
         m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] = GUILD_BANKLOG_MAX_RECORDS;
 
     //visibility on continents
@@ -1116,7 +1132,7 @@ void World::LoadConfigSettings(bool reload)
         sLog->outString("Using DataDir %s",m_dataPath.c_str());
     }
 
-    m_bool_configs[CONFIG_VMAP_INDOOR_CHECK] = sConfig->GetBoolDefault("vmap.enableIndoorCheck", 0);
+     m_bool_configs[CONFIG_VMAP_INDOOR_CHECK] = sConfig->GetBoolDefault("vmap.enableIndoorCheck", 0);
     bool enableIndoor = sConfig->GetBoolDefault("vmap.enableIndoorCheck", true);
     bool enableLOS = sConfig->GetBoolDefault("vmap.enableLOS", true);
     bool enableHeight = sConfig->GetBoolDefault("vmap.enableHeight", true);
@@ -1129,8 +1145,9 @@ void World::LoadConfigSettings(bool reload)
     VMAP::VMapFactory::createOrGetVMapManager()->setEnableLineOfSightCalc(enableLOS);
     VMAP::VMapFactory::createOrGetVMapManager()->setEnableHeightCalc(enableHeight);
     VMAP::VMapFactory::preventSpellsFromBeingTestedForLoS(ignoreSpellIds.c_str());
-    sLog->outString("WORLD: VMap support included. LineOfSight:%i, getHeight:%i, indoorCheck:%i PetLOS:%i", enableLOS, enableHeight, enableIndoor, enablePetLOS);
+    sLog->outString("WORLD: VMap support included. LineOfSight:%i, getHeight:%i",enableLOS, enableHeight);
     sLog->outString("WORLD: VMap data directory is: %svmaps",m_dataPath.c_str());
+    sLog->outString("WORLD: VMap config keys are: vmap.enableLOS, vmap.enableHeight, vmap.ignoreMapIds, vmap.ignoreSpellIds");
 
     m_int_configs[CONFIG_MAX_WHO] = sConfig->GetIntDefault("MaxWhoListReturns", 49);
     m_bool_configs[CONFIG_PET_LOS] = sConfig->GetBoolDefault("vmap.petLOS", true);
@@ -1163,16 +1180,8 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE]  = sConfig->GetBoolDefault("OutdoorPvP.Wintergrasp.Antifarm.Enable", false);
     m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK]  = sConfig->GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Atk", 5);
     m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF]  = sConfig->GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Def", 5);
-																		       // movement anticheat
-    m_MvAnticheatEnable                     = sConfig->GetBoolDefault("Anticheat.Movement.Enable",false);
-    m_MvAnticheatKick                       = sConfig->GetBoolDefault("Anticheat.Movement.Kick",false);
-    m_MvAnticheatAlarmCount                 = (uint32)sConfig->GetIntDefault("Anticheat.Movement.AlarmCount", 5);
-    m_MvAnticheatAlarmPeriod                = (uint32)sConfig->GetIntDefault("Anticheat.Movement.AlarmTime", 5000);
-    m_MvAntiCheatBan                        = (unsigned char)sConfig->GetIntDefault("Anticheat.Movement.BanType",0);
-    m_MvAnticheatBanTime                    = sConfig->GetStringDefault("Anticheat.Movement.BanTime","1m");
-    m_MvAnticheatGmLevel                    = (unsigned char)sConfig->GetIntDefault("Anticheat.Movement.GmLevel",0);
-    m_MvAnticheatKill                       = sConfig->GetBoolDefault("Anticheat.Movement.Kill",false);
-    m_MvAnticheatMaxXYT                     = sConfig->GetFloatDefault("Anticheat.Movement.MaxXYT",0.04f);
+
+
     m_bool_configs[CONFIG_NO_RESET_TALENT_COST] = sConfig->GetBoolDefault("NoResetTalentsCost", false);
     m_bool_configs[CONFIG_SHOW_KICK_IN_WORLD] = sConfig->GetBoolDefault("ShowKickInWorld", false);
     m_int_configs[CONFIG_INTERVAL_LOG_UPDATE] = sConfig->GetIntDefault("RecordUpdateTimeDiffInterval", 60000);
@@ -1204,15 +1213,9 @@ void World::LoadConfigSettings(bool reload)
 
     // MySQL ping time interval
     m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
-
-    // Настройки авто анонса
-    m_bool_configs[CONFIG_ANNOUNCE_BAN_ACCOUNT_ENABLED]            = sConfig->GetBoolDefault("Announce.Ban.Account.Enabled", true);
-    m_bool_configs[CONFIG_ANNOUNCE_BAN_CHARACTER_ENABLED]          = sConfig->GetBoolDefault("Announce.Ban.Character.Enabled", true);
-    m_bool_configs[CONFIG_ANNOUNCE_BAN_IP_ENABLED]                 = sConfig->GetBoolDefault("Announce.Ban.IP.Enabled", true);
-    m_bool_configs[CONFIG_ANNOUNCE_MUTE_CHARACTER_ENABLED]         = sConfig->GetBoolDefault("Announce.Mute.Character.Enabled", true);
-    m_bool_configs[CONFIG_ANNOUNCE_KICK_CHARACTER_ENABLED]         = sConfig->GetBoolDefault("Announce.Kick.Character.Enabled", true);
-    m_bool_configs[CONFIG_ANNOUNCE_DELETE_ACCOUNT_ENABLED]         = sConfig->GetBoolDefault("Announce.Delete.Account.Enabled", true);
-    m_bool_configs[CONFIG_ANNOUNCE_DELETE_CHARACTER_ENABLED]       = sConfig->GetBoolDefault("Announce.Delete.Character.Enabled", true);
+	
+    // Balance Battleground
+    m_int_configs[CONFIG_BALANCE_MINIMUM] = sConfig->GetIntDefault("Battleground.Balance", 1800);
 
     sScriptMgr->OnConfigLoad(reload);
 }
@@ -1286,9 +1289,10 @@ void World::SetInitialWorldSettings()
     sSpellMgr->LoadSkillLineAbilityMap();
 
     ///- Clean up and pack instances
-    sLog->outString("Cleaning up and packing instances...");
+    sLog->outString("Cleaning up instances...");
     sInstanceSaveMgr->CleanupAndPackInstances();                // must be called before `creature_respawn`/`gameobject_respawn` tables
 
+    sLog->outString("Packing instances...");
     sLog->outString("Loading Localization strings...");
     uint32 oldMSTime = getMSTime();
     sObjectMgr->LoadCreatureLocales();
@@ -1532,7 +1536,7 @@ void World::SetInitialWorldSettings()
     sAuctionMgr->LoadAuctionItems();
     sLog->outString("Loading Auctions...");
     sAuctionMgr->LoadAuctions();
-
+    sLog->outString("Loading Guilds...");
     sObjectMgr->LoadGuilds();
 
     sLog->outString("Loading ArenaTeams...");
@@ -1572,12 +1576,9 @@ void World::SetInitialWorldSettings()
 
     sLog->outString("Loading Waypoints...");
     sWaypointMgr->Load();
-
-    sLog->outString("Loading SmartAI Waypoints...");
-    sSmartWaypointMgr->LoadFromDB();
-
+	
     sLog->outString("Loading Creature Formations...");
-    sFormationMgr->LoadCreatureFormations();
+    sSmartWaypointMgr->LoadFromDB();
 
     sLog->outString("Loading Conditions...");
     sConditionMgr->LoadConditions();
@@ -1700,15 +1701,13 @@ void World::SetInitialWorldSettings()
     // Delete all characters which have been deleted X days before
     Player::DeleteOldCharacters();
 
-    // Delete all custom channels which haven't been used for PreserveCustomChannelDuration days.
-    Channel::CleanOldChannelsInDB();
-
     sLog->outString("Starting Arena Season...");
+	Channel::CleanOldChannelsInDB();
+	
     sGameEventMgr->StartArenaSeason();
 
-    sTicketMgr->Initialize();
-
     sLog->outString("Loading World States...");              // must be loaded before battleground and outdoor PvP
+	
     LoadWorldStates();
 
     ///- Initialize Battlegrounds
@@ -1720,11 +1719,12 @@ void World::SetInitialWorldSettings()
     sLog->outString("Starting Outdoor PvP System");
     sOutdoorPvPMgr->InitOutdoorPvP();
 
-    sLog->outString("Loading Transports...");
-    sMapMgr->LoadTransports();
-
+    sLog->outString("Starting Battlefield System");
     sLog->outString("Loading Transport NPCs...");
     sMapMgr->LoadTransportNPCs();
+
+    sLog->outString("Loading Transports...");
+    sMapMgr->LoadTransports();
 
     sLog->outString("Deleting expired bans...");
     LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate <= UNIX_TIMESTAMP() AND unbandate<>bandate");
@@ -1741,6 +1741,9 @@ void World::SetInitialWorldSettings()
     sLog->outString("Calculate random battleground reset time..." );
     InitRandomBGResetTime();
 
+    sLog->outString("Initialize AuctionHouseBot...");
+    auctionbot.Initialize();
+	
     // possibly enable db logging; avoid massive startup spam by doing it here.
     if (sLog->GetLogDBLater())
     {
@@ -1753,7 +1756,7 @@ void World::SetInitialWorldSettings()
 
     uint32 startupDuration = GetMSTimeDiffToNow(startupBegin);
     sLog->outString();
-    sLog->outString("WORLD: World initialized in %u minutes %u seconds", (startupDuration / 60000), ((startupDuration % 60000) / 1000) );
+    sLog->outString("WORLD: World initialized in %u minuntes %u seconds", (startupDuration / 60000), ((startupDuration % 60000) / 1000) );
     sLog->outString();
 }
 
@@ -1800,6 +1803,7 @@ void World::DetectDBCLang()
     sLog->outString("Using %s DBC Locale as default. All available DBC locales: %s",localeNames[m_defaultDbcLocale],availableLocalsStr.empty() ? "<none>" : availableLocalsStr.c_str());
     sLog->outString();
 }
+
 
 void World::RecordTimeDiff(const char *text, ...)
 {
@@ -1907,6 +1911,7 @@ void World::Update(uint32 diff)
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
+	    auctionbot.Update();
         m_timers[WUPDATE_AUCTIONS].Reset();
 
         ///- Update mails (return old mails with item, or delete them)

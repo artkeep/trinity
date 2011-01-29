@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "ScriptPCH.h"
 #include "naxxramas.h"
 
@@ -161,6 +161,8 @@ public:
             //SetBossNumber(MAX_BOSS_NUMBER);
             //LoadDoorData(doorData);
             //LoadMinionData(minionData);
+            m_PlayerDeathCount = 0;
+            m_HeiganPlayerDeathCount = 0;
 
             Initialize();
         }
@@ -172,7 +174,8 @@ public:
         std::set<uint64> Horsemen;
 
         uint32 m_auiEncounter[MAX_BOSS_NUMBER];
-
+        uint32 m_PlayerDeathCount;
+        uint32 m_HeiganPlayerDeathCount;
         uint32 SlimeCheckTimer;
 
         uint64 GothikGateGUID;
@@ -201,15 +204,32 @@ public:
         void Initialize()
         {
             memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
-            gothikDoorState = GO_STATE_READY;
+            gothikDoorState = GO_STATE_ACTIVE;
             SlimeCheckTimer = 1000;
         }
 
-        void OnCreatureCreate(Creature* pCreature, bool add)
+        bool IsEncounterInProgress() const
+        {
+            for (int i = 0; i < MAX_BOSS_NUMBER; ++i)
+                if (m_auiEncounter[i] == IN_PROGRESS)
+                    return true;
+
+            return false;
+        }
+
+        void OnPlayerKilled(Player *pPlayer) 
+        {
+            if(IsEncounterInProgress())
+                m_PlayerDeathCount++;
+            if(m_auiEncounter[BOSS_HEIGAN] == IN_PROGRESS)
+                m_HeiganPlayerDeathCount++;
+        }
+
+        void OnCreatureCreate(Creature* pCreature)
         {
             switch(pCreature->GetEntry())
             {
-                case 15989: SapphironGUID = add ? pCreature->GetGUID() : 0; return;
+                case 15989: SapphironGUID = pCreature->GetGUID(); return;
                 case 15953: uiFaerlina = pCreature->GetGUID(); return;
                 case 16064: uiThane = pCreature->GetGUID(); return;
                 case 16065: uiLady = pCreature->GetGUID(); return;
@@ -240,33 +260,43 @@ public:
             //AddMinion(pCreature, add);
         }
 
-        void OnGameObjectCreate(GameObject* pGo, bool add)
+        void OnGameObjectRemove(GameObject* pGo)
         {
             if (pGo->GetGOInfo()->displayId == 6785 || pGo->GetGOInfo()->displayId == 1287)
             {
                 uint32 section = GetEruptionSection(pGo->GetPositionX(), pGo->GetPositionY());
-                if (add)
-                    HeiganEruptionGUID[section].insert(pGo->GetGUID());
-                else
-                    HeiganEruptionGUID[section].erase(pGo->GetGUID());
+                HeiganEruptionGUID[section].erase(pGo->GetGUID());
                 return;
             }
 
-            switch(pGo->GetEntry())
+            if(pGo->GetEntry() == GO_BIRTH)
             {
-                case GO_BIRTH:
-                if (!add && SapphironGUID)
+                if (SapphironGUID)
                 {
                     if (Creature *pSapphiron = instance->GetCreature(SapphironGUID))
                         pSapphiron->AI()->DoAction(DATA_SAPPHIRON_BIRTH);
                     return;
                 }
+            }
+        }
+
+        void OnGameObjectCreate(GameObject* pGo)
+        {
+            if (pGo->GetGOInfo()->displayId == 6785 || pGo->GetGOInfo()->displayId == 1287)
+            {
+                uint32 section = GetEruptionSection(pGo->GetPositionX(), pGo->GetPositionY());
+                HeiganEruptionGUID[section].insert(pGo->GetGUID());
+                return;
+            }
+
+            switch(pGo->GetEntry())
+            {
                 case GO_GOTHIK_GATE:
-                    GothikGateGUID = add ? pGo->GetGUID() : 0;
+                    GothikGateGUID = pGo->GetGUID();
                     pGo->SetGoState(gothikDoorState);
                     break;
-                case GO_HORSEMEN_CHEST: HorsemenChestGUID = add ? pGo->GetGUID() : 0; break;
-                case GO_HORSEMEN_CHEST_HERO: HorsemenChestGUID = add ? pGo->GetGUID() : 0; break;
+                case GO_HORSEMEN_CHEST: HorsemenChestGUID = pGo->GetGUID(); break;
+                case GO_HORSEMEN_CHEST_HERO: HorsemenChestGUID = pGo->GetGUID(); break;
                 case GO_KELTHUZAD_PORTAL01: uiPortals[0] = pGo->GetGUID(); break;
                 case GO_KELTHUZAD_PORTAL02: uiPortals[1] = pGo->GetGUID(); break;
                 case GO_KELTHUZAD_PORTAL03: uiPortals[2] = pGo->GetGUID(); break;
@@ -343,7 +373,6 @@ public:
                     break;
 
             }
-
             //AddDoor(pGo, add);
         }
 
@@ -355,8 +384,8 @@ public:
                     HeiganErupt(value);
                     break;
                 case DATA_GOTHIK_GATE:
-                    if (GameObject* gothikGate = instance->GetGameObject(GothikGateGUID))
-                        gothikGate->SetGoState(GOState(value));
+                    if (GameObject *pGothikGate = instance->GetGameObject(GothikGateGUID))
+                        pGothikGate->SetGoState(GOState(value));
                     gothikDoorState = GOState(value);
                     break;
 
@@ -414,12 +443,25 @@ public:
                 return uiPortals[3];
             case DATA_KELTHUZAD_TRIGGER:
                 return uiKelthuzadTrigger;
+            case DATA_GO_ROOM_HEIGAN:
+                return uiNaxxDoors[DOOR_ROOM_HEIGAN];
+            case DATA_GO_PASSAGE_HEIGAN:
+                return uiNaxxDoors[DOOR_PASSAGE_HEIGAN];
             }
             return 0;
         }
 
         uint32 GetData(uint32 id)
         {
+            if(id == DATA_PLAYER_DEATHS)
+            {
+                if(InstanceFinished())
+                    return m_PlayerDeathCount;
+                else return 1;
+            }
+            if(id == DATA_HEIGAN_PLAYER_DEATHS)
+                return m_HeiganPlayerDeathCount;
+
             return GetNaxxBossState(id);
         }
 
@@ -428,21 +470,25 @@ public:
             //if (!InstanceScript::SetBossState(id, state))
             //    return false;
 
-            if(m_auiEncounter[id] != state)
-            {
-                UpdateNaxxMinionState(id,state);
-                UpdateNaxxDoorState(id,state);
-            }
+            //if(m_auiEncounter[id] != state)
+            //{
+            UpdateNaxxMinionState(id,state);
+            UpdateNaxxDoorState(id,state);
+            //}
 
             if(m_auiEncounter[id] != DONE)
                 m_auiEncounter[id] = state;
 
+            if (id == BOSS_HEIGAN && state == NOT_STARTED)
+                m_HeiganPlayerDeathCount = 0;
+
             if (id == BOSS_HORSEMEN && state == DONE)
             {
-                if (GameObject* pHorsemenChest = instance->GetGameObject(HorsemenChestGUID))
+                if (GameObject *pHorsemenChest = instance->GetGameObject(HorsemenChestGUID))
                     pHorsemenChest->SetRespawnTime(pHorsemenChest->GetRespawnDelay());
             }
-
+            if(state == DONE)
+                SaveToDB();
             return true;
         }
 
@@ -488,10 +534,10 @@ public:
                 break;
             case BOSS_GLUTH:
                 HandleGameObject(uiNaxxDoors[DOOR_PASSAGE_GLUTH], state == DONE);
-                HandleGameObject(uiNaxxDoors[BOSS_THADDIUS], state == DONE);
+                HandleGameObject(uiNaxxDoors[DOOR_ROOM_THADDIUS], state == DONE);
                 break;
             case BOSS_THADDIUS:
-                HandleGameObject(uiNaxxDoors[BOSS_THADDIUS], state != IN_PROGRESS);
+                HandleGameObject(uiNaxxDoors[DOOR_ROOM_THADDIUS], state != IN_PROGRESS);
                 break;
             case BOSS_RAZUVIOUS:
                 HandleGameObject(uiNaxxDoors[DOOR_ROOM_GOTHIK], state == DONE);
@@ -511,6 +557,14 @@ public:
                 HandleGameObject(uiNaxxDoors[DOOR_ROOM_KELTHUZAD],state != IN_PROGRESS);
                 break;
             }
+        }
+
+        bool InstanceFinished()
+        {
+            for(int i = 0; i < MAX_BOSS_NUMBER; ++i)
+                if(m_auiEncounter[i] != DONE)
+                    return false;
+            return true;
         }
 
         void UpdateNaxxMinionState(uint32 id, EncounterState state)
@@ -544,7 +598,7 @@ public:
 
                 for (std::set<uint64>::const_iterator itr = HeiganEruptionGUID[i].begin(); itr != HeiganEruptionGUID[i].end(); ++itr)
                 {
-                    if (GameObject* pHeiganEruption = instance->GetGameObject(*itr))
+                    if (GameObject *pHeiganEruption = instance->GetGameObject(*itr))
                     {
                         pHeiganEruption->SendCustomAnim();
                         pHeiganEruption->CastSpell(NULL, SPELL_ERUPTION);
@@ -565,12 +619,14 @@ public:
                     if (Difficulty(instance->GetSpawnMode()) == RAID_DIFFICULTY_25MAN_NORMAL && (maxHorsemenDiedTime - minHorsemenDiedTime) < 15)
                         return true;
                     return false;
-                case 13233: // Criteria for achievement 2186: The Immortal (25-man)
-                    // TODO.
-                    break;
-                case 13237: // Criteria for achievement 2187: The Undying (10-man)
-                    // TODO.
-                    break;
+                //case 13233: // Criteria for achievement 2186: The Immortal (25-man)
+                //    if (Difficulty(instance->GetSpawnMode()) == RAID_DIFFICULTY_25MAN_NORMAL && InstanceFinished() && m_PlayerDeathCount == 0)
+                //        return true;
+                //    return false;
+                //case 13237: // Criteria for achievement 2187: The Undying (10-man)
+                //    if (Difficulty(instance->GetSpawnMode()) == RAID_DIFFICULTY_10MAN_NORMAL && InstanceFinished() && m_PlayerDeathCount == 0)
+                //        return true;
+                //    return false;
             }
             return false;
         }
@@ -582,7 +638,7 @@ public:
             for(int i = 0; i < MAX_BOSS_NUMBER; ++i)
                 saveStream << m_auiEncounter[i] << " ";
 
-            saveStream << gothikDoorState;
+            saveStream << m_PlayerDeathCount;
             return saveStream.str();
         }
 
@@ -603,39 +659,38 @@ public:
                 }
                 //std::istringstream loadStream(LoadBossState(data));
 
-
-
-                loadStream >> buff;
-                gothikDoorState = GOState(buff);
+                //loadStream >> buff;
+                //gothikDoorState = GOState(buff);
+                loadStream >> m_PlayerDeathCount;
             }
         }
 
         void Update (uint32 diff)
         {
             //Water checks
-            if (SlimeCheckTimer <= diff)
-            {
-                Map::PlayerList const &PlayerList = instance->GetPlayers();
-                if (PlayerList.isEmpty())
-                    return;
+            //if (SlimeCheckTimer <= diff)
+            //{
+            //    Map::PlayerList const &PlayerList = instance->GetPlayers();
+            //    if (PlayerList.isEmpty())
+            //        return;
 
-                for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                {
-                    if (Player* pPlayer = i->getSource())
-                    {
-                        if (pPlayer->isAlive() && /*i->getSource()->GetPositionZ() <= -21.434931f*/pPlayer->IsInWater())
-                        {
-                            if (!pPlayer->HasAura(SPELL_SLIME))
-                            {
-                                pPlayer->CastSpell(pPlayer, SPELL_SLIME,true);
-                            }
-                        }
-                        if (!pPlayer->IsInWater())
-                            pPlayer->RemoveAurasDueToSpell(SPELL_SLIME);
-                    }
-                }
-                SlimeCheckTimer = 1000;//remove stress from core
-            } else SlimeCheckTimer -= diff;
+            //    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+            //    {
+            //        if (Player* pPlayer = i->getSource())
+            //        {
+            //            if (pPlayer->isAlive() && /*i->getSource()->GetPositionZ() <= -21.434931f*/pPlayer->IsInWater())
+            //            {
+            //                if (!pPlayer->HasAura(SPELL_SLIME))
+            //                {
+            //                    pPlayer->CastSpell(pPlayer, SPELL_SLIME,true);
+            //                }
+            //            }
+            //            if (!pPlayer->IsInWater())
+            //                pPlayer->RemoveAurasDueToSpell(SPELL_SLIME);
+            //        }
+            //    }
+            //    SlimeCheckTimer = 1000;//remove stress from core
+            //} else SlimeCheckTimer -= diff;
         }
     };
 
@@ -658,12 +713,16 @@ class AreaTrigger_at_naxxramas_frostwyrm_wing : public AreaTriggerScript
             InstanceScript *data = player->GetInstanceScript();
             if (data)
                 for (uint32 i = BOSS_ANUBREKHAN; i < BOSS_SAPPHIRON; ++i)
-                    if (data->GetBossState(i) != DONE)
+                    if (data->GetData(i) != DONE)
                         return true;
 
             return false;
         }
 };
+
+//DELETE FROM areatrigger_scripts WHERE `entry`=4156;
+//INSERT INTO areatrigger_scripts VALUES
+//   (4156,'at_naxxramas_frostwyrm_wing');
 
 void AddSC_instance_naxxramas()
 {

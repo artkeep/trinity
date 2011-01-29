@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ScriptPCH.h"
@@ -26,7 +26,6 @@
 #define SPELL_SPELL_DISRUPTION  29310
 #define SPELL_DECREPIT_FEVER    RAID_MODE(29998,55011)
 #define SPELL_PLAGUE_CLOUD      29350
-#define ACHIEV_SAFETY_DANCE     RAID_MODE(1996,2139)
 
 enum Events
 {
@@ -41,6 +40,12 @@ enum Phases
 {
     PHASE_FIGHT = 1,
     PHASE_DANCE,
+};
+
+enum Achievment
+{
+        ACHIEVMENT_THE_SAFETY_DANCE_10 = 1996,
+        ACHIEVMENT_THE_SAFETY_DANCE_25 = 2139
 };
 
 class boss_heigan : public CreatureScript
@@ -64,6 +69,7 @@ public:
         void Reset()
         {
             _Reset();
+            SetImmuneToDeathGrip();
         }
 
         void KilledUnit(Unit* /*Victim*/)
@@ -76,12 +82,46 @@ public:
         {
             _JustDied();
             DoScriptText(SAY_DEATH, me);
+
+            if(instance && instance->GetData(DATA_HEIGAN_PLAYER_DEATHS) == 0)
+                instance->DoCompleteAchievement(RAID_MODE(ACHIEVMENT_THE_SAFETY_DANCE_10,ACHIEVMENT_THE_SAFETY_DANCE_25));
+        }
+
+        void TeleportHeiganCheaters()
+        {
+            float x, y, z;
+            me->GetPosition(x, y, z);
+
+            uint64 tempDoorGuid_1 = instance->GetData64(DATA_GO_ROOM_HEIGAN);
+            uint64 tempDoorGuid_2 = instance->GetData64(DATA_GO_PASSAGE_HEIGAN);
+
+            std::list<HostileReference*> &m_threatlist = me->getThreatManager().getThreatList();
+            for (std::list<HostileReference*>::iterator itr = m_threatlist.begin(); itr != m_threatlist.end(); ++itr)
+            if ((*itr)->getTarget()->GetTypeId() == TYPEID_PLAYER)
+                if(Player* player = (*itr)->getTarget()->ToPlayer())
+                {
+                    if(GameObject* door_1 = GameObject::GetGameObject(*me,tempDoorGuid_1))
+                    {
+                        if(player->GetPositionX() > door_1->GetPositionX())
+                            player->NearTeleportTo(x, y, z, 0);
+
+                        continue;
+                    }
+
+                    if(GameObject* door_2 = GameObject::GetGameObject(*me,tempDoorGuid_1))
+                    {
+                        if(player->GetPositionY() < door_2->GetPositionY())
+                            player->NearTeleportTo(x, y, z, 0);
+
+                        continue;
+                    }
+                }
         }
 
         void EnterCombat(Unit * /*who*/)
         {
             _EnterCombat();
-            TeleportCheaters();
+            TeleportHeiganCheaters();
             DoScriptText(SAY_AGGRO, me);
             EnterPhase(PHASE_FIGHT);
         }
@@ -136,7 +176,7 @@ public:
                         break;
                     case EVENT_ERUPT:
                         instance->SetData(DATA_HEIGAN_ERUPT, eruptSection);
-                        TeleportCheaters();
+                        TeleportHeiganCheaters();
 
                         if (eruptSection == 0)
                             eruptDirection = true;
@@ -153,9 +193,7 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
-
 
 void AddSC_boss_heigan()
 {

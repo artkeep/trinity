@@ -30,6 +30,7 @@ enum DeathKnightSpells
     DK_SPELL_CORPSE_EXPLOSION_TRIGGERED     = 43999,
     DISPLAY_GHOUL_CORPSE                    = 25537,
     DK_SPELL_SCOURGE_STRIKE_TRIGGERED       = 70890,
+    DK_SPELL_BLOOD_BOIL_TRIGGERED           = 65658
 };
 
 // 50462 - Anti-Magic Shell (on raid member)
@@ -429,6 +430,49 @@ public:
     }
 };
 
+// 48721 Blood Boil (49939, 49940, 49941)
+class spell_dk_blood_boil : public SpellScriptLoader
+{
+public:
+    spell_dk_blood_boil() : SpellScriptLoader("spell_dk_blood_boil") { }
+
+    class spell_dk_blood_boil_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_dk_blood_boil_SpellScript);
+    private:
+        bool m_executed;
+    public:
+        spell_dk_blood_boil_SpellScript() : m_executed(false) { }
+
+        bool Validate(SpellEntry const * /*spellEntry*/)
+        {
+            if (!sSpellStore.LookupEntry(DK_SPELL_BLOOD_BOIL_TRIGGERED))
+                return false;
+            return true;
+        }
+
+        void HandleAfterHit()
+        {
+            if (m_executed || !GetHitUnit())
+                return;
+
+            m_executed = true;
+            GetCaster()->CastSpell(GetCaster(), DK_SPELL_BLOOD_BOIL_TRIGGERED, true);
+        }
+
+        void Register()
+        {
+            AfterHit += SpellHitFn(spell_dk_blood_boil_SpellScript::HandleAfterHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_dk_blood_boil_SpellScript();
+    }
+};
+
+
 void AddSC_deathknight_spell_scripts()
 {
     new spell_dk_anti_magic_shell_raid();
@@ -439,4 +483,5 @@ void AddSC_deathknight_spell_scripts()
     new spell_dk_scourge_strike();
     new spell_dk_spell_deflection();
     new spell_dk_will_of_the_necropolis();
+    new spell_dk_blood_boil();
 }

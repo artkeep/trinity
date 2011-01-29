@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "Common.h"
@@ -849,55 +851,5 @@ bool ChatHandler::HandleGroupSummonCommand(const char* args)
         pl->TeleportTo(m_session->GetPlayer()->GetMapId(),x,y,z,pl->GetOrientation());
     }
 
-    return true;
-}
-
-// Фун. авто анонс о бане аккаунта
-bool ChatHandler::HandleBanAccMessege(const char* acc,const char* duration, const char* playerName, const char* reason)
-{
-    if (!*acc && !*duration && !*playerName && !*reason && sWorld->getIntConfig(CONFIG_ANNOUNCE_BAN_ACCOUNT_ENABLED))
-        return false;
-
-    sWorld->SendWorldText(LANG_BAN_ACC_MESSAGE,acc,duration,playerName,reason);
-    return true;
-}
-
-// Фун. авто анонс о бане персонажа
-bool ChatHandler::HandleBanCharMessege(const char* charname,const char* duration, const char* playerName, const char* reason)
-{
-    if (!*charname && !*duration && !*playerName && !*reason && sWorld->getIntConfig(CONFIG_ANNOUNCE_BAN_CHARACTER_ENABLED))
-        return false;
-
-    sWorld->SendWorldText(LANG_BAN_CHAR_MESSAGE,charname,duration,playerName,reason);
-    return true;
-}
-
-// Фун. авто анонс о бане по Ип
-bool ChatHandler::HandleBanIPMessege(const char* ip,const char* duration, const char* playerName, const char* reason)
-{
-    if (!*ip && !*duration && !*playerName && !*reason && sWorld->getIntConfig(CONFIG_ANNOUNCE_BAN_IP_ENABLED))
-        return false;
-
-    sWorld->SendWorldText(LANG_BAN_IP_MESSAGE,ip,duration,playerName,reason);
-    return true;
-}
-
-// Фун. авто анонс о молчанке персонажа
-bool ChatHandler::HandleMuteCharMessege(const char* charname, const char* duration, const char* playerName, const char* reason)
-{
-    if (!*charname && !*duration && !*playerName && !*reason && sWorld->getIntConfig(CONFIG_ANNOUNCE_MUTE_CHARACTER_ENABLED))
-        return false;
-
-    sWorld->SendWorldText(LANG_MUTE_CHAR_MESSAGE,charname,duration,playerName,reason);
-    return true;
-}
-
-// Фун. авто анонс о кик персонажа
-bool ChatHandler::HandleKickCharMessege(const char* charname, const char* playerName)
-{
-    if (!*charname && !*playerName && sWorld->getIntConfig(CONFIG_ANNOUNCE_KICK_CHARACTER_ENABLED))
-        return false;
-
-    sWorld->SendWorldText(LANG_KICK_CHAR_MESSAGE,charname,playerName);
     return true;
 }

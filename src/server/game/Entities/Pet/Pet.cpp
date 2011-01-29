@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "Common.h"
@@ -936,6 +938,43 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
         {
             switch (GetEntry())
             {
+                case 26125: // Risen Ghoul
+                {
+                    // Reference : http://www.wowwiki.com/Risen_Ghoul
+                    float strength_mult = 0.7f; 
+                    float stamina_mult  = 0.3f;
+
+                    if(HasAura(48965)) // Ravenous Death, rank 1
+                    {
+                        strength_mult += 0.2f;
+                        stamina_mult  += 0.2f;
+                    }
+
+                    if(HasAura(49571)) // Ravenous Death, rank 2
+                    {
+                        strength_mult += 0.4f;
+                        stamina_mult  += 0.4f;
+                    }
+
+                    if(HasAura(49572)) // Ravenous Death, rank 3
+                    {
+                        strength_mult += 0.6f;
+                        stamina_mult  += 0.6f;
+                    }
+
+                    if(HasAura(58686)) // Glyph of the Ghoul
+                    {
+                        strength_mult += 0.4f;
+                        stamina_mult  += 0.4f;
+                    }
+
+                    SetCreateHealth(75 * petlevel + float(m_owner->GetStat(STAT_STAMINA) * stamina_mult) * 10);
+                    SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)));
+                    SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)));
+                    SetBonusDamage(int32(m_owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.5f) * strength_mult);
+
+                    break;
+                }
                 case 510: // mage Water Elemental
                 {
                     //40% damage bonus of mage's frost damage

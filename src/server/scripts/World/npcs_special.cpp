@@ -2026,6 +2026,7 @@ public:
         {
             me->SetControlled(true,UNIT_STAT_STUNNED);//disable rotate
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);//imune to knock aways like blast wave
+            me->ApplySpellImmune(0, IMMUNITY_ID, 49560, true); // Death Grip jump effect
 
             uiResetTimer = 5000;
             uiDespawnTimer = 15000;
@@ -2605,6 +2606,67 @@ public:
     }
 };
 
+// need correct positions
+const Position movePosition[] = 
+{
+    { 8539.276367f, 624.307678f, 563.883545f, 0.0f },
+    { 8607.274414f, 796.302795f, 597.421082f, 0.0f },
+    { 8689.521484f, 1071.988525f, 607.254333f, 0.0f },
+    { 8759.689453f, 1333.898315f, 514.711304f, 0.0f },
+    { 8854.704102f, 1684.304443f, 267.374268f, 0.0f },
+    { 8868.194336f, 1900.236206f, 136.044876f, 0.0f },
+    { 8893.030273f, 1998.716431f, 88.405754f, 0.0f },
+    { 8958.488281f, 2062.763428f, 22.060783f, 0.0f },
+    { 8980.103516f, 2068.657227f, 12.500456f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f }
+};
+
+class vehicle_knight_gryphon : public CreatureScript
+{
+public:
+    vehicle_knight_gryphon() : CreatureScript("vehicle_knight_gryphon") { }
+
+    struct vehicle_knight_gryphonAI : VehicleAI
+    {
+        vehicle_knight_gryphonAI(Creature *c) : VehicleAI(c) 
+        {
+            MovingStarted = false;
+            curPoint = 0;
+        }
+
+        uint8 curPoint;
+        bool MovingStarted;
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!MovingStarted) {
+                me->GetMotionMaster()->MovePoint(curPoint,movePosition[curPoint]);
+                MovingStarted = true;
+            } else
+                if (me->GetDistance(movePosition[curPoint]) <= 5.0f)
+                {
+                    curPoint++;
+                    if (movePosition[curPoint].GetPositionX() > 8000)
+                        me->GetMotionMaster()->MovePoint(curPoint,movePosition[curPoint]);
+                    else  {
+                        if (me->GetCharmer())
+                            if (me->GetCharmer()->ToPlayer()) 
+                            {
+                                me->GetCharmer()->ToPlayer()->KilledMonsterCredit(me->GetEntry(),0);
+                                me->GetCharmer()->ToPlayer()->ExitVehicle();
+                            }
+                        me->DespawnOrUnsummon();
+                    }
+                }
+        }
+    };
+
+    CreatureAI *GetAI(Creature *creature) const
+    {
+        return new vehicle_knight_gryphonAI(creature);
+    }
+};
+
 void AddSC_npcs_special()
 {
     new npc_air_force_bots;
@@ -2635,5 +2697,6 @@ void AddSC_npcs_special()
     new npc_locksmith;
     new npc_tabard_vendor;
     new npc_experience;
+    new vehicle_knight_gryphon;
 }
 

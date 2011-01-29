@@ -155,7 +155,7 @@ enum FreyaNpcs
     NPC_STORM_LASHER                            = 32919,
     NPC_SNAPLASHER                              = 32916,
     NPC_NATURE_BOMB                             = 34129,
-    OBJECT_NATURE_BOMB                          = 194902,
+    GOB_NATURE_BOMB                             = 194902,
     NPC_EONARS_GIFT                             = 33228,
     NPC_HEALTHY_SPORE                           = 33215,
     NPC_UNSTABLE_SUN_BEAM                       = 33050
@@ -209,7 +209,7 @@ public:
 
     struct boss_freyaAI : public BossAI
     {
-        boss_freyaAI(Creature* pCreature) : BossAI(pCreature, NPC_FREYA)
+        boss_freyaAI(Creature* pCreature) : BossAI(pCreature, BOSS_FREYA)
         {
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
@@ -228,7 +228,7 @@ public:
         
             if (instance)
             {
-                for (uint8 data = DATA_ELDER_BRIGHTLEAF; data <= DATA_ELDER_STONEBARK; ++data)
+                for (uint8 data = DATA_BRIGHTLEAF; data <= DATA_STONEBARK; ++data)
                 {
                     if (Creature *pCreature = Creature::GetCreature((*me), instance->GetData64(data)))
                     {
@@ -314,35 +314,32 @@ public:
             if (instance)
             {
                 // Freya hard mode can be triggered simply by letting the elders alive
-                if (Creature* Brightleaf = me->GetCreature(*me, instance->GetData64(DATA_ELDER_BRIGHTLEAF)))
+                if (Creature* Brightleaf = me->GetCreature(*me, instance->GetData64(DATA_BRIGHTLEAF)))
                     if (Brightleaf->isAlive())
                     {
                         EldersCount++;
                         Brightleaf->SetInCombatWithZone();
-                        Brightleaf->CastSpell(Brightleaf, SPELL_BRIGHTLEAFS_ESSENCE, true);
                         Brightleaf->AddAura(SPELL_BRIGHTLEAFS_ESSENCE, Brightleaf);
                         Brightleaf->AddAura(SPELL_DRAINED_OF_POWER, Brightleaf);
                         events.ScheduleEvent(EVENT_BRIGHTLEAF, urand(15000, 30000));
                     }
             
-                if (Creature* Ironbranch = me->GetCreature(*me, instance->GetData64(DATA_ELDER_IRONBRANCH)))
+                if (Creature* Ironbranch = me->GetCreature(*me, instance->GetData64(DATA_IRONBRANCH)))
                     if (Ironbranch->isAlive())
                     {
                         EldersCount++;
                         Ironbranch->SetInCombatWithZone();
-                        Ironbranch->CastSpell(Ironbranch, SPELL_IRONBRANCHS_ESSENCE, true);
                         Ironbranch->AddAura(SPELL_IRONBRANCHS_ESSENCE, Ironbranch);
                         Ironbranch->AddAura(SPELL_DRAINED_OF_POWER, Ironbranch);
                         events.ScheduleEvent(EVENT_IRONBRANCH, urand(45000, 60000));
                     }
             
-                if (Creature* Stonebark = me->GetCreature(*me, instance->GetData64(DATA_ELDER_STONEBARK)))
+                if (Creature* Stonebark = me->GetCreature(*me, instance->GetData64(DATA_STONEBARK)))
                     if (Stonebark->isAlive())
                     {
                         EldersCount++;
-                        me->AddAura(SPELL_STONEBARKS_ESSENCE, me);
                         Stonebark->SetInCombatWithZone();
-                        Stonebark->CastSpell(Stonebark, SPELL_STONEBARKS_ESSENCE, true);
+                        me->AddAura(SPELL_STONEBARKS_ESSENCE, me);
                         Stonebark->AddAura(SPELL_DRAINED_OF_POWER, Stonebark);
                         events.ScheduleEvent(EVENT_STONEBARK, urand(35000, 45000));
                     }
@@ -983,7 +980,7 @@ public:
             if (uiExplosionTimer <= diff)
             {
                 DoCast(me, SPELL_NATURE_BOMB);
-                if (GameObject* pBomb = me->FindNearestGameObject(OBJECT_NATURE_BOMB, 1))
+                if (GameObject* pBomb = me->FindNearestGameObject(GOB_NATURE_BOMB, 1))
                     me->RemoveGameObject(pBomb, true);
                 me->ForcedDespawn(2000);
                 uiExplosionTimer = 10000;
@@ -1161,9 +1158,16 @@ public:
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             me->SetInCombatWithZone();
-            DoCast(me, SPELL_HEALTHY_SPORE_VISUAL);
-            DoCast(me, SPELL_POTENT_PHEROMONES);
-            DoCast(me, SPELL_GROW);
+        }
+        
+        void UpdateAI(const uint32 diff)
+        {
+            if (!me->HasAura(SPELL_HEALTHY_SPORE_VISUAL))
+            {
+                DoCast(me, SPELL_HEALTHY_SPORE_VISUAL);
+                DoCast(me, SPELL_POTENT_PHEROMONES);
+                DoCast(me, SPELL_GROW);
+            }
         }
     };
 

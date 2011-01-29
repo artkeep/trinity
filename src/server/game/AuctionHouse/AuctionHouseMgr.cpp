@@ -79,7 +79,6 @@ uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32
     sLog->outDebug("MSV:        %u", MSV);
     sLog->outDebug("Items:      %u", count);
     sLog->outDebug("Multiplier: %f", multiplier);
-    sLog->outDebug("Deposit:    %u", deposit);
 
     if (deposit < AH_MINIMUM_DEPOSIT)
         return AH_MINIMUM_DEPOSIT;
@@ -111,7 +110,7 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry *auction, SQLTransaction& 
         else
         {
             bidder_accId = sObjectMgr->GetPlayerAccountIdByGUID(bidder_guid);
-            bidder_security = sAccountMgr->GetSecurity(bidder_accId, realmID);
+            bidder_security = sAccountMgr->GetSecurity(bidder_accId);
 
             if (bidder_security > SEC_PLAYER) // not do redundant DB requests
             {
@@ -218,7 +217,7 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry * auction, SQLTrans
         uint32 profit = auction->bid + auction->deposit - auctionCut;
 
         //FIXME: what do if owner offline
-        if (owner)
+        if (owner && owner->GetGUIDLow() != auctionbot.GetAHBplayerGUID())
         {
             owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS, profit);
             owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_AUCTION_SOLD, auction->bid);
@@ -248,7 +247,7 @@ void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry * auction, SQLTransact
         std::ostringstream subject;
         subject << auction->item_template << ":0:" << AUCTION_EXPIRED << ":0:0";
 
-        if (owner)
+        if (owner && owner->GetGUIDLow() != auctionbot.GetAHBplayerGUID())
             owner->GetSession()->SendAuctionOwnerNotification(auction);
 
         MailDraft(subject.str(), "")                        // TODO: fix body
@@ -272,6 +271,9 @@ void AuctionHouseMgr::SendAuctionOutbiddedMail(AuctionEntry *auction, uint32 new
     {
         std::ostringstream msgAuctionOutbiddedSubject;
         msgAuctionOutbiddedSubject << auction->item_template << ":0:" << AUCTION_OUTBIDDED << ":0:0";
+
+        if (oldBidder && !newBidder)
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, auctionbot.GetAHBplayerGUID(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
 
         if (oldBidder && newBidder)
             oldBidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, newBidder->GetGUID(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
@@ -350,7 +352,7 @@ void AuctionHouseMgr::LoadAuctionItems()
     while (result->NextRow());
 
     sLog->outString(">> Loaded %u auction items in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-    sLog->outString();
+	sLog->outString();
 }
 
 void AuctionHouseMgr::LoadAuctions()
@@ -359,15 +361,14 @@ void AuctionHouseMgr::LoadAuctions()
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_LOAD_AUCTIONS);
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
-
     if (!result)
     {
-        sLog->outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
+		sLog->outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
         sLog->outString();
         return;
     }
 
-    uint32 count = 0;
+	uint32 count = 0;
 
     SQLTransaction trans = CharacterDatabase.BeginTransaction();
     do
@@ -389,7 +390,7 @@ void AuctionHouseMgr::LoadAuctions()
 
     CharacterDatabase.CommitTransaction(trans);
 
-    sLog->outString(">> Loaded %u auctions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+	sLog->outString(">> Loaded %u auctions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
     sLog->outString();
 }
 
@@ -463,10 +464,12 @@ void AuctionHouseObject::AddAuction(AuctionEntry *auction)
 
     AuctionsMap[auction->Id] = auction;
     sScriptMgr->OnAuctionAdd(this, auction);
+    auctionbot.IncrementItemCounts(auction);
 }
 
-bool AuctionHouseObject::RemoveAuction(AuctionEntry *auction, uint32 /*item_template*/)
+bool AuctionHouseObject::RemoveAuction(AuctionEntry *auction, uint32 item_template)
 {
+    auctionbot.DecrementItemCounts(auction, item_template);
     bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
 
     sScriptMgr->OnAuctionRemove(this, auction);

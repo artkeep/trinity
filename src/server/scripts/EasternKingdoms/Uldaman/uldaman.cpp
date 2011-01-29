@@ -19,19 +19,16 @@
 /* ScriptData
 SDName: Uldaman
 SD%Complete: 100
-SDComment: Quest support: 2240, 2278 + 1 trash mob.
+SDComment: Quest support: 2278 + 1 trash mob.
 SDCategory: Uldaman
 EndScriptData */
 
 /* ContentData
 mob_jadespine_basilisk
 npc_lore_keeper_of_norgannon
-go_keystone_chamber
-at_map_chamber
 EndContentData */
 
 #include "ScriptPCH.h"
-#include "uldaman.h"
 
 /*######
 ## mob_jadespine_basilisk
@@ -53,43 +50,43 @@ class mob_jadespine_basilisk : public CreatureScript
 
         struct mob_jadespine_basiliskAI : public ScriptedAI
         {
-            mob_jadespine_basiliskAI(Creature* pCreature) : ScriptedAI(pCreature) {}
+            mob_jadespine_basiliskAI(Creature *c) : ScriptedAI(c) {}
 
-            uint32 uiCslumberTimer;
+            uint32 Cslumber_Timer;
 
             void Reset()
             {
-                uiCslumberTimer = 2000;
+                Cslumber_Timer = 2000;
             }
 
             void EnterCombat(Unit * /*who*/)
             {
             }
 
-            void UpdateAI(const uint32 uiDiff)
+            void UpdateAI(const uint32 diff)
             {
                 //Return since we have no target
                 if (!UpdateVictim())
                     return;
 
-                //uiCslumberTimer
-                if (uiCslumberTimer <= uiDiff)
+                //Cslumber_Timer
+                if (Cslumber_Timer <= diff)
                 {
                     //Cast
                     DoCastVictim(SPELL_CRYSTALLINE_SLUMBER, true);
 
                     //Stop attacking target thast asleep and pick new target
-                    uiCslumberTimer = 28000;
+                    Cslumber_Timer = 28000;
 
-                    Unit* pTarget = SelectUnit(SELECT_TARGET_TOPAGGRO, 0);
+                    Unit* Target = SelectUnit(SELECT_TARGET_TOPAGGRO, 0);
 
-                    if (!pTarget || pTarget == me->getVictim())
-                        pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true);
+                    if (!Target || Target == me->getVictim())
+                        Target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true);
 
-                    if (pTarget)
-                        me->TauntApply(pTarget);
+                    if (Target)
+                        me->TauntApply(Target);
 
-                } else uiCslumberTimer -= uiDiff;
+                } else Cslumber_Timer -= diff;
 
                 DoMeleeAttackIfReady();
             }
@@ -98,50 +95,6 @@ class mob_jadespine_basilisk : public CreatureScript
         CreatureAI* GetAI(Creature* creature) const
         {
             return new mob_jadespine_basiliskAI(creature);
-        }
-};
-
-
-
-/*######
-## go_keystone_chamber
-######*/
-
-class go_keystone_chamber : public GameObjectScript
-{
-public:
-    go_keystone_chamber() : GameObjectScript("go_keystone_chamber") { }
-
-    bool OnGossipHello(Player* /*pPlayer*/, GameObject* pGo)
-    {
-        if (InstanceScript* pInstance = pGo->GetInstanceScript())
-            pInstance->SetData(DATA_IRONAYA_SEAL, IN_PROGRESS); //door animation and save state.
-
-        return false;
-    }
-};
-
-/*######
-## at_map_chamber
-######*/
-
-#define QUEST_HIDDEN_CHAMBER    2240
-
-class AreaTrigger_at_map_chamber : public AreaTriggerScript
-{
-    public:
-
-        AreaTrigger_at_map_chamber()
-            : AreaTriggerScript("at_map_chamber")
-        {
-        }
-
-        bool OnTrigger(Player* pPlayer, AreaTriggerEntry const* /*trigger*/)
-        {
-            if (pPlayer->GetQuestStatus(QUEST_HIDDEN_CHAMBER) == QUEST_STATUS_INCOMPLETE)
-                pPlayer->AreaExploredOrEventHappens(QUEST_HIDDEN_CHAMBER);
-
-            return true;
         }
 };
 
@@ -262,8 +215,6 @@ class npc_lore_keeper_of_norgannon : public CreatureScript
 void AddSC_uldaman()
 {
     new mob_jadespine_basilisk();
-    new go_keystone_chamber();
-    new AreaTrigger_at_map_chamber();
     new npc_lore_keeper_of_norgannon();
 }
 

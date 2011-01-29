@@ -28,7 +28,7 @@ npc_blood_knight_stillblade
 EndContentData */
 
 #include "ScriptPCH.h"
-
+#define NPC_BLOOD_KNIGHT_STILLBLADE    17768
 /*#######
 # npc_blood_knight_stillblade
 #######*/
@@ -76,10 +76,10 @@ public:
 
         void UpdateAI(const uint32 diff)
         {
-            if (me->IsStandState())
+            if (me->getStandState() == UNIT_STAND_STATE_STAND)
             {
                 if (lifeTimer <= diff)
-                    me->AI()->EnterEvadeMode();
+                    Reset();
                 else
                     lifeTimer -= diff;
             }
@@ -90,7 +90,7 @@ public:
             if ((Spellkind->Id == SPELL_SHIMMERING_VESSEL) && !spellHit &&
                 (Hitter->GetTypeId() == TYPEID_PLAYER) && (CAST_PLR(Hitter)->IsActiveQuest(QUEST_REDEEMING_THE_DEAD)))
             {
-                CAST_PLR(Hitter)->AreaExploredOrEventHappens(QUEST_REDEEMING_THE_DEAD);
+                CAST_PLR(Hitter)->KilledMonsterCredit(NPC_BLOOD_KNIGHT_STILLBLADE, 0);
                 DoCast(me, SPELL_REVIVE_SELF);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
                 me->SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);

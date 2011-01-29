@@ -114,7 +114,7 @@ static Locations FlightPoint[]=
 
 static Locations Spawn[]=
 {
-    {1776.27f,1348.74f,19.20f},        //spawn point for pumpkin shrine mob
+    {1776.27f,1348.74f,19.20f},    //spawn point for pumpkin shrine mob
     {1765.28f,1347.46f,17.55f}     //spawn point for smoke
 };
 
@@ -470,7 +470,7 @@ public:
                     wp_reached = false;
                     me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     SaySound(SAY_ENTRANCE);
-                    if (Unit *plr = Unit::GetUnit((*me),PlayerGUID))
+                    if (Player* plr = Unit::GetPlayer((*me),PlayerGUID))
                         DoStartMovement(plr);
                     break;
                 }

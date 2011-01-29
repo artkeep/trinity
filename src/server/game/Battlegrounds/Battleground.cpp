@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "Player.h"
@@ -156,6 +158,7 @@ Battleground::Battleground()
     m_MaxPlayers        = 0;
     m_MinPlayersPerTeam = 0;
     m_MinPlayers        = 0;
+	m_balance           = 0;
 
     m_MapId             = 0;
     m_Map               = NULL;
@@ -331,6 +334,7 @@ void Battleground::Update(uint32 diff)
     /*********************************************************/
 
     // if less then minimum players are in on one side, then start premature finish timer
+	UpdateBalance();
     if (GetStatus() == STATUS_IN_PROGRESS && !isArena() && sBattlegroundMgr->GetPrematureFinishTime() && (GetPlayersCountByTeam(ALLIANCE) < GetMinPlayersPerTeam() || GetPlayersCountByTeam(HORDE) < GetMinPlayersPerTeam()))
     {
         if (!m_PrematureCountDown)
@@ -442,7 +446,9 @@ void Battleground::Update(uint32 diff)
                         plr->GetSession()->SendPacket(&status);
 
                         plr->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
-                        plr->ResetAllPowers();
+						plr->ResetAllPowers();
+
+                        // After 60 seconds of preparation, the match commences. All buffs with fewer than 25 (!) seconds remaining are removed ...
                         // remove auras with duration lower than 30s
                         Unit::AuraApplicationMap & auraMap = plr->GetAppliedAuras();
                         for (Unit::AuraApplicationMap::iterator iter = auraMap.begin(); iter != auraMap.end();)
@@ -450,7 +456,7 @@ void Battleground::Update(uint32 diff)
                             AuraApplication * aurApp = iter->second;
                             Aura * aura = aurApp->GetBase();
                             if (!aura->IsPermanent()
-                                && aura->GetDuration() <= 30*IN_MILLISECONDS
+                                && aura->GetDuration() <= 25*IN_MILLISECONDS
                                 && aurApp->IsPositive()
                                 && (!(aura->GetSpellProto()->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY))
                                 && (!aura->HasEffectType(SPELL_AURA_MOD_INVISIBILITY)))
@@ -780,7 +786,6 @@ void Battleground::EndBattleground(uint32 winner)
                 SetArenaTeamRatingChangeForTeam(winner, winner_change);
                 SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
                 sLog->outArena("Arena match Type: %u for Team1Id: %u - Team2Id: %u ended. WinnerTeamId: %u. Winner rating: +%d, Loser rating: %d", m_ArenaType, m_ArenaTeamIds[BG_TEAM_ALLIANCE], m_ArenaTeamIds[BG_TEAM_HORDE], winner_arena_team->GetId(), winner_change, loser_change);
-            CharacterDatabase.PExecute("INSERT INTO `arena_statistics` (`type`, `winner_id`, `winner_rating`, `winner_change`, `loser_id`, `loser_rating`, `loser_change`) VALUES (%u, %u, %d, %d, %u, %d, %d)",m_ArenaType,winner_arena_team->GetId(),winner_arena_team->GetRating(),winner_change,loser_arena_team->GetId(),loser_arena_team->GetRating(),loser_change);
                 if (sWorld->getBoolConfig(CONFIG_ARENA_LOG_EXTENDED_INFO))
                     for (Battleground::BattlegroundScoreMap::const_iterator itr = GetPlayerScoresBegin(); itr != GetPlayerScoresEnd(); itr++)
                         if (Player* player = sObjectMgr->GetPlayer(itr->first))
@@ -794,14 +799,8 @@ void Battleground::EndBattleground(uint32 winner)
                 winner_arena_team->FinishGame(ARENA_TIMELIMIT_POINTS_LOSS);
                 loser_arena_team->FinishGame(ARENA_TIMELIMIT_POINTS_LOSS);
             }
-        }
-		// -16 rating if there is no winner(after 45+2 mins)
-		else if(winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team && (winner == WINNER_NONE))
-        {
-			SetArenaTeamRatingChangeForTeam(ALLIANCE, -16);
-			SetArenaTeamRatingChangeForTeam(HORDE, -16);
 		}
-        else
+		else
         {
             SetArenaTeamRatingChangeForTeam(ALLIANCE, 0);
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
@@ -839,6 +838,12 @@ void Battleground::EndBattleground(uint32 winner)
         {
             plr->ResurrectPlayer(1.0f);
             plr->SpawnCorpseBones();
+        }
+        // Deduct 16 points from each teams arena-rating if there are no winners after 45+2 minutes
+        else if(winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team && (winner == WINNER_NONE))
+        {
+            SetArenaTeamRatingChangeForTeam(ALLIANCE, -16);
+             SetArenaTeamRatingChangeForTeam(HORDE, -16);
         }
         else
         {
@@ -990,7 +995,7 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
 
     RemovePlayer(plr, guid);                                // BG subclass specific code
 
-    if (participant) // if the player was a match participant, remove auras, calc rating, update queue
+       if (participant) // if the player was a match participant, remove auras, calc rating, update queue
     {
         BattlegroundTypeId bgTypeId = GetTypeID();
         BattlegroundQueueTypeId bgQueueTypeId = BattlegroundMgr::BGQueueTypeId(GetTypeID(), GetArenaType());
@@ -1056,8 +1061,8 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
         if (isBattleground() && GetStatus() < STATUS_WAIT_LEAVE)
         {
             // a player has left the battleground, so there are free slots -> add to queue
-            AddToBGFreeSlotQueue();
-            sBattlegroundMgr->ScheduleQueueUpdate(0, 0, bgQueueTypeId, bgTypeId, GetBracketId());
+			AddToBGFreeSlotQueue();
+			sBattlegroundMgr->ScheduleQueueUpdate(0, 0, bgQueueTypeId, bgTypeId, GetBracketId());
         }
         // Let others know
         WorldPacket data;
@@ -1077,7 +1082,6 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
 
         sLog->outDetail("BATTLEGROUND: Removed player %s from Battleground.", plr->GetName());
         plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId(), true);
-        plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId(), true);
     }
 
     //battleground object will be deleted next Battleground::Update() call
@@ -1200,8 +1204,6 @@ void Battleground::AddPlayer(Player *plr)
 
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
-    plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId(), true);
-    plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId(), true);
 
     // setup BG group membership
     PlayerAddedToBGCheckIfBGIsRunning(plr);
@@ -1363,6 +1365,33 @@ uint32 Battleground::GetFreeSlotsForTeam(uint32 Team) const
 bool Battleground::HasFreeSlots() const
 {
     return GetPlayersSize() < GetMaxPlayers();
+}
+
+void Battleground::UpdateBalance()
+{
+	if (GetPlayersCountByTeam(ALLIANCE) < GetPlayersCountByTeam(HORDE))
+		m_balance = GetPlayersCountByTeam(HORDE) - GetPlayersCountByTeam(ALLIANCE);
+	else if (GetPlayersCountByTeam(HORDE) < GetPlayersCountByTeam(ALLIANCE))
+		m_balance = GetPlayersCountByTeam(ALLIANCE) - GetPlayersCountByTeam(HORDE);
+	else
+		m_balance = 0;
+}
+
+bool Battleground::HasBalance() const
+{
+	if (sWorld->getIntConfig(CONFIG_BALANCE_MINIMUM) < 0)
+		return false;
+	return m_balance > sWorld->getIntConfig(CONFIG_BALANCE_MINIMUM);
+}
+
+bool Battleground::HasBalanceTeam(uint32 TeamId)
+{
+	if (HasBalance())
+	{
+		if (GetPlayersCountByTeam(TeamId) > GetPlayersCountByTeam(GetOtherTeam(TeamId)))
+			return true;
+	}
+	return false;
 }
 
 void Battleground::UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor)
@@ -1923,7 +1952,7 @@ void Battleground::HandleKillUnit(Creature * /*creature*/, Player * /*killer*/)
 
 void Battleground::CheckArenaAfterTimerConditions()
 {
-    EndBattleground(WINNER_NONE);
+	EndBattleground(WINNER_NONE);
 }
 
 void Battleground::CheckArenaWinConditions()

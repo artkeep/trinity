@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include "Common.h"
@@ -253,17 +254,13 @@ void LFGMgr::Update(uint32 diff)
     // Check if a proposal can be formed with the new groups being added
     for (LfgGuidListMap::iterator it = m_newToQueue.begin(); it != m_newToQueue.end(); ++it)
     {
-        uint8 queueId = it->first;
         LfgGuidList& newToQueue = it->second;
-        LfgGuidList& currentQueue = m_currentQueue[queueId];
+        LfgGuidList& currentQueue = m_currentQueue[it->first];
         LfgGuidList firstNew;
         while (!newToQueue.empty())
         {
-            uint64 frontguid = newToQueue.front();
-            sLog->outDebug("LFGMgr::Update: QueueId %u: checking [" UI64FMTD "] newToQueue(%u), currentQueue(%u)", queueId, frontguid, uint32(newToQueue.size()), uint32(currentQueue.size()));
-            firstNew.push_back(frontguid);
-            newToQueue.pop_front();
-
+            sLog->outDebug("LFGMgr::Update: QueueId %u: checking [" UI64FMTD "] newToQueue(%u), currentQueue(%u)", it->first, newToQueue.front(), uint32(newToQueue.size()), uint32(currentQueue.size()));
+            firstNew.push_back(newToQueue.front());
             LfgGuidList temporalList = currentQueue;
             if (LfgProposal* pProposal = FindNewGroups(firstNew, temporalList)) // Group found!
             {
@@ -279,7 +276,7 @@ void LFGMgr::Update(uint32 diff)
                 for (LfgProposalPlayerMap::const_iterator itPlayers = pProposal->players.begin(); itPlayers != pProposal->players.end(); ++itPlayers)
                 {
                     guid = itPlayers->first;
-                    SetState(guid, LFG_STATE_PROPOSAL);
+					SetState(guid, LFG_STATE_PROPOSAL);
                     if (Player* plr = sObjectMgr->GetPlayer(itPlayers->first))
                     {
                         Group *grp = plr->GetGroup();
@@ -288,7 +285,7 @@ void LFGMgr::Update(uint32 diff)
                             uint64 gguid = grp->GetGUID();
                             SetState(gguid, LFG_STATE_PROPOSAL);
                             plr->GetSession()->SendLfgUpdateParty(LfgUpdateData(LFG_UPDATETYPE_PROPOSAL_BEGIN, GetSelectedDungeons(guid), GetComment(guid)));
-                        }
+						}
                         else
                             plr->GetSession()->SendLfgUpdatePlayer(LfgUpdateData(LFG_UPDATETYPE_PROPOSAL_BEGIN, GetSelectedDungeons(guid), GetComment(guid)));
                         plr->GetSession()->SendLfgUpdateProposal(m_lfgProposalId, pProposal);
@@ -299,7 +296,10 @@ void LFGMgr::Update(uint32 diff)
                     UpdateProposal(m_lfgProposalId, guid, true);
             }
             else
-                currentQueue.push_back(frontguid);         // Lfg group not found, add this group to the queue.
+            {
+                currentQueue.push_back(newToQueue.front());// Group not found, add this group to the queue.
+                newToQueue.pop_front();
+            }
             firstNew.clear();
         }
     }
@@ -638,19 +638,18 @@ void LFGMgr::Join(Player* plr, uint8 roles, const LfgDungeonSet& selectedDungeon
             dungeons.clear();
             dungeons.insert(rDungeonId);
         }
-
-        SetState(gguid, LFG_STATE_ROLECHECK);
+		SetState(gguid, LFG_STATE_ROLECHECK);
         // Send update to player
         LfgUpdateData updateData = LfgUpdateData(LFG_UPDATETYPE_JOIN_PROPOSAL, dungeons, comment);
         for (GroupReference* itr = grp->GetFirstMember(); itr != NULL; itr = itr->next())
         {
             if (Player* plrg = itr->getSource())
             {
-                uint64 pguid = plrg->GetGUID();
+				uint64 pguid = plrg->GetGUID();
                 plrg->GetSession()->SendLfgUpdateParty(updateData);
                 SetState(pguid, LFG_STATE_ROLECHECK);
                 if (!isContinue)
-                    SetSelectedDungeons(pguid, dungeons);
+					SetSelectedDungeons(pguid, dungeons);
                 roleCheck->roles[pguid] = 0;
             }
         }
@@ -1763,7 +1762,7 @@ void LFGMgr::TeleportPlayer(Player* plr, bool out, bool fromOpcode /*= false*/)
                     orientation = at->target_Orientation;
                 }
             }
-
+           
             if (error == LFG_TELEPORTERROR_OK)
             {
                 if (!plr->GetMap()->IsDungeon() && !plr->GetMap()->IsRaid())

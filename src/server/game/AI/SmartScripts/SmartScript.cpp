@@ -52,7 +52,7 @@ SmartScript::SmartScript()
     meOrigGUID = 0;
     goOrigGUID = 0;
     mResumeActionList = true;
-    mLastInvoker = NULL;
+	mLastInvoker = NULL;
 }
 
 void SmartScript::OnReset()
@@ -65,7 +65,7 @@ void SmartScript::OnReset()
         (*i).runOnce = false;
     }
     ProcessEventsFor(SMART_EVENT_RESET);
-    mLastInvoker = NULL;
+	mLastInvoker = NULL;
 }
 
 void SmartScript::ProcessEventsFor(SMART_EVENT e, Unit* unit, uint32 var0, uint32 var1, bool bvar, const SpellEntry* spell, GameObject* gob)
@@ -108,7 +108,7 @@ void SmartScript::ProcessAction(SmartScriptHolder &e, Unit* unit, uint32 var0, u
     }
     e.runOnce = true;//used for repeat check
 
-    if (unit)
+	    if (unit)
         mLastInvoker = unit;
 
     if (e.link && e.link != e.event_id)

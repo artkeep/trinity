@@ -40,7 +40,6 @@
 #include "TCSoap.h"
 #include "Timer.h"
 #include "Util.h"
-#include "AuthSocket.h"
 
 #include "BigNumber.h"
 
@@ -135,34 +134,31 @@ int Master::Run()
     sLog->outString("      \\/_/\\/_/   \\/_/\\/_/\\/_/\\/_/\\/__/ `/___/> \\");
     sLog->outString("                                 C O R E  /\\___/");
     sLog->outString("http://TrinityCore.org                    \\/__/\n");
-
+    
 #ifdef USE_SFMT_FOR_RNG
-    sLog->outString("\n");
-    sLog->outString("SFMT has been enabled as the random number generator, if worldserver");
-    sLog->outString("freezes or crashes randomly, first, try disabling SFMT in CMAKE configuration");
-    sLog->outString("\n");
+    sLog->outString( "\n");
+    sLog->outString( "SFMT has been enabled as the random number generator, if worldserver");
+    sLog->outString( "freezes or crashes randomly, first, try disabling SFMT in CMAKE configuration");
+    sLog->outString( "\n");
 #endif //USE_SFMT_FOR_RNG
 
     /// worldd PID file creation
     std::string pidfile = sConfig->GetStringDefault("PidFile", "");
-    if (!pidfile.empty())
+    if(!pidfile.empty())
     {
         uint32 pid = CreatePIDFile(pidfile);
-        if (!pid)
+        if( !pid )
         {
-            sLog->outError("Cannot create PID file %s.\n", pidfile.c_str());
+            sLog->outError( "Cannot create PID file %s.\n", pidfile.c_str() );
             return 1;
         }
 
-        sLog->outString("Daemon PID: %u\n", pid);
+        sLog->outString( "Daemon PID: %u\n", pid );
     }
 
     ///- Start the databases
     if (!_StartDB())
         return 1;
-
-    // set server offline (not connectable)
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET color = (color & ~%u) | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, REALM_FLAG_INVALID, realmID);
 
     ///- Initialize the World
     sWorld->SetInitialWorldSettings();
@@ -174,7 +170,7 @@ int Master::Run()
     CoredSignalHandler SignalBREAK;
     #endif /* _WIN32 */
 
-    // Register core's signal handlers
+    // Register realmd's signal handlers
     ACE_Sig_Handler Handler;
     Handler.register_handler(SIGINT, &SignalINT);
     Handler.register_handler(SIGTERM, &SignalTERM);
@@ -186,6 +182,9 @@ int Master::Run()
     ///- Launch WorldRunnable thread
     ACE_Based::Thread world_thread(new WorldRunnable);
     world_thread.setPriority(ACE_Based::Highest);
+
+    // set server online
+    LoginDatabase.PExecute("UPDATE realmlist SET color = 0, population = 0 WHERE id = '%d'",realmID);
 
     ACE_Based::Thread* cliThread = NULL;
 
@@ -207,25 +206,25 @@ int Master::Run()
         HANDLE hProcess = GetCurrentProcess();
 
         uint32 Aff = sConfig->GetIntDefault("UseProcessors", 0);
-        if (Aff > 0)
+        if(Aff > 0)
         {
             ULONG_PTR appAff;
             ULONG_PTR sysAff;
 
-            if (GetProcessAffinityMask(hProcess,&appAff,&sysAff))
+            if(GetProcessAffinityMask(hProcess,&appAff,&sysAff))
             {
                 ULONG_PTR curAff = Aff & appAff;            // remove non accessible processors
 
-                if (!curAff)
+                if(!curAff )
                 {
                     sLog->outError("Processors marked in UseProcessors bitmask (hex) %x not accessible for Trinityd. Accessible processors bitmask (hex): %x",Aff,appAff);
                 }
                 else
                 {
-                    if (SetProcessAffinityMask(hProcess,curAff))
+                    if(SetProcessAffinityMask(hProcess,curAff))
                         sLog->outString("Using processors (bitmask, hex): %x", curAff);
                     else
-                        sLog->outError("Can't set used processors (hex): %x", curAff);
+                        sLog->outError("Can't set used processors (hex): %x",curAff);
                 }
             }
             sLog->outString("");
@@ -233,8 +232,8 @@ int Master::Run()
 
         bool Prio = sConfig->GetBoolDefault("ProcessPriority", false);
 
-        //if (Prio && (m_ServiceStatus == -1)  /* need set to default process priority class in service mode*/)
-        if (Prio)
+//        if(Prio && (m_ServiceStatus == -1)/* need set to default process priority class in service mode*/)
+        if(Prio)
         {
             if(SetPriorityClass(hProcess,HIGH_PRIORITY_CLASS))
                 sLog->outString("TrinityCore process priority class set to HIGH");
@@ -247,7 +246,7 @@ int Master::Run()
     //Start soap serving thread
     ACE_Based::Thread* soap_thread = NULL;
 
-    if (sConfig->GetBoolDefault("SOAP.Enabled", false))
+    if(sConfig->GetBoolDefault("SOAP.Enabled", false))
     {
         TCSoapRunnable *runnable = new TCSoapRunnable();
         runnable->setListenArguments(sConfig->GetStringDefault("SOAP.IP", "127.0.0.1"), sConfig->GetIntDefault("SOAP.Port", 7878));
@@ -258,7 +257,7 @@ int Master::Run()
     realCurrTime = realPrevTime = getMSTime();
 
     ///- Start up freeze catcher thread
-    if (uint32 freeze_delay = sConfig->GetIntDefault("MaxCoreStuckTime", 0))
+    if(uint32 freeze_delay = sConfig->GetIntDefault("MaxCoreStuckTime", 0))
     {
         FreezeDetectorRunnable *fdr = new FreezeDetectorRunnable();
         fdr->SetDelayTime(freeze_delay*1000);
@@ -268,41 +267,41 @@ int Master::Run()
 
     ///- Launch the world listener socket
     uint16 wsport = sWorld->getIntConfig(CONFIG_PORT_WORLD);
-    std::string bind_ip = sConfig->GetStringDefault("BindIP", "0.0.0.0");
+    std::string bind_ip = sConfig->GetStringDefault ("BindIP", "0.0.0.0");
 
-    if (sWorldSocketMgr->StartNetwork(wsport, bind_ip.c_str ()) == -1)
+    if (sWorldSocketMgr->StartNetwork (wsport, bind_ip.c_str ()) == -1)
     {
         sLog->outError ("Failed to start network");
         World::StopNow(ERROR_EXIT_CODE);
         // go down and shutdown the server
     }
 
-    // set server online (allow connecting now)
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET color = color & ~%u, population = 0 WHERE id = '%u'", REALM_FLAG_INVALID, realmID);
+    sWorldSocketMgr->Wait ();
 
-    sWorldSocketMgr->Wait();
-
-    if (soap_thread)
+    if(soap_thread)
     {
-        soap_thread->wait();
-        soap_thread->destroy();
-        delete soap_thread;
+          soap_thread->wait();
+          soap_thread->destroy();
+          delete soap_thread;
     }
 
     // set server offline
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET color = color | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, realmID);
+    LoginDatabase.PExecute("UPDATE realmlist SET color = 2 WHERE id = '%d'",realmID);
 
     // when the main thread closes the singletons get unloaded
     // since worldrunnable uses them, it will crash if unloaded after master
     world_thread.wait();
-    rar_thread.wait();
+    rar_thread.wait ();
 
     ///- Clean database before leaving
     clearOnlineAccounts();
 
-    _StopDB();
+    ///- Wait for delay threads to end
+    CharacterDatabase.Close();
+    WorldDatabase.Close();
+    LoginDatabase.Close();
 
-    sLog->outString("Halting process...");
+    sLog->outString( "Halting process..." );
 
     if (cliThread)
     {
@@ -365,8 +364,6 @@ int Master::Run()
 /// Initialize connection to the databases
 bool Master::_StartDB()
 {
-    MySQL::Library_Init();
-
     sLog->SetLogDB(false);
     std::string dbstring;
     uint8 async_threads, synch_threads;
@@ -470,26 +467,17 @@ bool Master::_StartDB()
     return true;
 }
 
-void Master::_StopDB()
-{
-    CharacterDatabase.Close();
-    WorldDatabase.Close();
-    LoginDatabase.Close();
-
-    MySQL::Library_End();
-}
-
 /// Clear 'online' status for all accounts with characters in this realm
 void Master::clearOnlineAccounts()
 {
     // Cleanup online status for characters hosted at current realm
     /// \todo Only accounts with characters logged on *this* realm should have online status reset. Move the online column from 'account' to 'realmcharacters'?
-    LoginDatabase.DirectPExecute(
+    LoginDatabase.PExecute(
         "UPDATE account SET online = 0 WHERE online > 0 "
         "AND id IN (SELECT acctid FROM realmcharacters WHERE realmid = '%d')",realmID);
 
-    CharacterDatabase.DirectExecute("UPDATE characters SET online = 0 WHERE online<>0");
+    CharacterDatabase.Execute("UPDATE characters SET online = 0 WHERE online<>0");
 
     // Battleground instance ids reset at server restart
-    CharacterDatabase.DirectExecute("UPDATE character_battleground_data SET instance_id = 0");
+    CharacterDatabase.Execute("UPDATE character_battleground_data SET instance_id = 0");
 }

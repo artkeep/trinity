@@ -184,7 +184,7 @@ void ScriptMgr::Initialize()
     LoadDatabase();
 
     sLog->outString("Loading C++ scripts");
-    
+
     FillSpellSummary();
     AddScripts();
 

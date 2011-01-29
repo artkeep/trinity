@@ -1238,7 +1238,7 @@ void ObjectMgr::LoadLinkedRespawn()
                     error = true;
                     break;
                 }
-                
+
                 guid = MAKE_NEW_GUID(guidLow, slave->id, HIGHGUID_UNIT);
                 linkedGuid = MAKE_NEW_GUID(linkedGuidLow, master->id, HIGHGUID_UNIT);
                 break;
@@ -1333,8 +1333,8 @@ void ObjectMgr::LoadLinkedRespawn()
                     sLog->outErrorDb("Couldn't get creature data for GUIDLow %u", linkedGuidLow);
                     error = true;
                     break;
-                }    
-                
+                }
+
                 const MapEntry* const map = sMapStore.LookupEntry(master->mapid);
                 if (!map || !map->Instanceable() || (master->mapid != slave->mapid))
                 {
@@ -1397,7 +1397,7 @@ bool ObjectMgr::SetCreatureLinkedRespawn(uint32 guidLow, uint32 linkedGuidLow)
         sLog->outErrorDb("LinkedRespawn: Creature '%u' linking to '%u' with not corresponding spawnMask", guidLow, linkedGuidLow);
         return false;
     }
-                
+
     uint64 linkedGuid = MAKE_NEW_GUID(linkedGuidLow, slave->id, HIGHGUID_UNIT);
 
     mLinkedRespawnMap[guid] = linkedGuid;
@@ -1775,7 +1775,7 @@ uint32 ObjectMgr::AddCreData(uint32 entry, uint32 /*team*/, uint32 mapId, float 
 void ObjectMgr::LoadGameobjects()
 {
     uint32 oldMSTime = getMSTime();
-    
+
     uint32 count = 0;
 
     //                                                0                1   2    3           4           5           6
@@ -1961,13 +1961,12 @@ void ObjectMgr::LoadCreatureRespawnTimes()
         return;
     }
 
-
     do
     {
         Field *fields = result->Fetch();
 
         uint32 loguid       = fields[0].GetUInt32();
-        uint64 respawn_time = fields[1].GetUInt64();
+        uint32 respawn_time = fields[1].GetUInt32();
         uint32 instance     = fields[2].GetUInt32();
 
         mCreatureRespawnTimes[MAKE_PAIR64(loguid,instance)] = time_t(respawn_time);
@@ -2004,7 +2003,7 @@ void ObjectMgr::LoadGameobjectRespawnTimes()
         Field *fields = result->Fetch();
 
         uint32 loguid       = fields[0].GetUInt32();
-        uint64 respawn_time = fields[1].GetUInt64();
+        uint32 respawn_time = fields[1].GetUInt32();
         uint32 instance     = fields[2].GetUInt32();
 
         mGORespawnTimes[MAKE_PAIR64(loguid,instance)] = time_t(respawn_time);
@@ -2697,7 +2696,7 @@ void ObjectMgr::LoadItemSetNames()
         itemSetItems.erase(entry);
         ++count;
     } while (result->NextRow());
-    
+
 
     if (!itemSetItems.empty())
     {
@@ -3971,8 +3970,8 @@ void ObjectMgr::LoadGroups()
         CharacterDatabase.Execute(CharacterDatabase.GetPreparedStatement(CHAR_DEL_TINY_GROUPS));
 
         //                                                        0           1           2             3          4      5      6      7      8     9
-        QueryResult result = CharacterDatabase.PQuery("SELECT leaderGuid, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6" 
-        //                                                10     11     12         13              14        15    
+        QueryResult result = CharacterDatabase.PQuery("SELECT leaderGuid, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6"
+        //                                                10     11     12         13              14        15
                                                       ",icon7, icon8, groupType, difficulty, raiddifficulty, guid FROM groups");
         if (!result)
         {
@@ -5703,7 +5702,7 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
         m->sender = fields[2].GetUInt32();
         m->receiver = fields[3].GetUInt32();
         bool has_items = fields[4].GetBool();
-        m->expire_time = (time_t)fields[5].GetUInt64();
+        m->expire_time = time_t(fields[5].GetUInt32());
         m->deliver_time = 0;
         m->COD = fields[6].GetUInt32();
         m->checked = fields[7].GetUInt32();
@@ -7069,10 +7068,10 @@ uint32 ObjectMgr::GeneratePetNumber()
 void ObjectMgr::LoadCorpses()
 {
     uint32 oldMSTime = getMSTime();
-    
+
     //                                                      0           1           2            3         4      5          6         7       8       9     10      11
     QueryResult result = CharacterDatabase.Query("SELECT position_x, position_y, position_z, orientation, map, displayId, itemCache, bytes1, bytes2, guild, flags, dynFlags"
-    //                                               12       13          14        15       16     17        
+    //                                               12       13          14        15       16     17
                                                  ", time, corpse_type, instance, phaseMask, guid, player FROM corpse WHERE corpse_type <> 0");
 
     if (!result)
@@ -7606,7 +7605,7 @@ void ObjectMgr::SaveCreatureRespawnTime(uint32 loguid, uint32 instance, time_t t
         RemoveCreatureRespawnTime(loguid, instance);
         return;
     }
-    
+
     // This function can be called from various map threads concurrently
     {
         m_CreatureRespawnTimesMtx.acquire();
@@ -7654,7 +7653,7 @@ void ObjectMgr::SaveGORespawnTime(uint32 loguid, uint32 instance, time_t t)
         RemoveGORespawnTime(loguid, instance);
         return;
     }
-    
+
     // This function can be called from different map threads concurrently
     {
         m_GORespawnTimesMtx.acquire();
@@ -8181,7 +8180,7 @@ bool ObjectMgr::LoadTrinityStrings(char const* table, int32 min_value, int32 max
         }
     } while (result->NextRow());
 
-    
+
     if (min_value == MIN_TRINITY_STRING_ID)
         sLog->outString(">> Loaded %u Trinity strings from table %s in %u ms", count, table, GetMSTimeDiffToNow(oldMSTime));
     else
@@ -8589,7 +8588,7 @@ void ObjectMgr::LoadTrainerSpell()
     }
 
     uint32 count = 0;
-    
+
     do
     {
 

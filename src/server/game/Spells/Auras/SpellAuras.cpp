@@ -453,7 +453,7 @@ void Aura::_UnapplyForTarget(Unit * target, Unit * caster, AuraApplication * aur
     ASSERT(auraApp);
 
     ApplicationMap::iterator itr = m_applications.find(target->GetGUID());
-    
+
     // TODO: Figure out why this happens
     if (itr == m_applications.end())
     {

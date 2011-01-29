@@ -125,7 +125,7 @@ class Vehicle
         Unit *GetPassenger(int8 seatId) const;
 		void TeleportVehicle(float x, float y, float z, float ang);
         int8 GetNextEmptySeat(int8 seatId, bool next, bool byAura = false) const;
-        
+
         bool AddPassenger(Unit *passenger, int8 seatId = -1, bool byAura = false);
         void EjectPassenger(Unit* passenger, Unit* controller);
         void RemovePassenger(Unit *passenger);

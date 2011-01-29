@@ -262,7 +262,7 @@ void WorldSession::HandlePetitionShowSignOpcode(WorldPacket & recv_data)
         return;
     }
     Field *fields = result->Fetch();
-    uint32 type = fields[0].GetUInt32();
+    uint32 type = fields[0].GetUInt8();
 
     // if guild petition and has guild => error, return;
     if (type == GUILD_CHARTER_TYPE && _player->GetGuildId())
@@ -396,7 +396,7 @@ void WorldSession::HandlePetitionRenameOpcode(WorldPacket & recv_data)
     if (result)
     {
         Field* fields = result->Fetch();
-        type = fields[0].GetUInt32();
+        type = fields[0].GetUInt8();
     }
     else
     {
@@ -616,7 +616,7 @@ void WorldSession::HandleOfferPetitionOpcode(WorldPacket & recv_data)
         return;
 
     Field *fields = result->Fetch();
-    type = fields[0].GetUInt32();
+    type = fields[0].GetUInt8();
 
     sLog->outDebug("OFFER PETITION: type %u, GUID1 %u, to player id: %u", type, GUID_LOPART(petitionguid), GUID_LOPART(plguid));
 
@@ -718,7 +718,7 @@ void WorldSession::HandleTurnInPetitionOpcode(WorldPacket & recv_data)
         Field *fields = result->Fetch();
         ownerguidlo = fields[0].GetUInt32();
         name = fields[1].GetString();
-        type = fields[2].GetUInt32();
+        type = fields[2].GetUInt8();
     }
     else
     {

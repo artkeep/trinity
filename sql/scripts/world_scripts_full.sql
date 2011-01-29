@@ -1046,6 +1046,9 @@ UPDATE `creature_template` SET `ScriptName`='boss_drakos' WHERE `entry`=27654;
 UPDATE `creature_template` SET `ScriptName`='npc_unstable_sphere' WHERE `entry`=28166;
 UPDATE `creature_template` SET `ScriptName`='npc_oculus_drake' WHERE `entry` IN (27657,27658,27659);
 UPDATE `creature_template` SET `ScriptName`='boss_urom' WHERE `entry`=27655;
+UPDATE `creature_template` SET `ScriptName`='boss_varos' WHERE `entry`=27447;
+UPDATE `creature_template` SET `ScriptName`='npc_azure_ring_captain' WHERE `entry`=28236;
+UPDATE `creature_template` SET `ScriptName`='boss_eregos' WHERE `entry`=27656;
 
 /* OBSIDIAN SANCTUM */
 UPDATE `instance_template` SET `script`='instance_obsidian_sanctum' WHERE `map`=615;
@@ -1829,6 +1832,8 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 68861, 'spell_bronjahm_consume_soul'),
 ( 69008, 'spell_bronjahm_soulstorm_channel'),
 ( 68870, 'spell_bronjahm_soulstorm_visual'),
+( 68921, 'spell_bronjahm_soulstorm_targeting'),
+( 69049, 'spell_bronjahm_soulstorm_targeting'),
 -- Pit of Saron
 ( 68786, 'spell_garfrost_permafrost'),
 ( 70336, 'spell_garfrost_permafrost'),
@@ -1847,7 +1852,10 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 72089, 'spell_marrowgar_bone_spike_graveyard'),
 ( 69140, 'spell_marrowgar_coldflame'),
 ( 72705, 'spell_marrowgar_coldflame'),
-( 69147, 'spell_marrowgar_coldflame_trigger'),
+( 69146, 'spell_marrowgar_coldflame_damage'),
+( 70823, 'spell_marrowgar_coldflame_damage'),
+( 70824, 'spell_marrowgar_coldflame_damage'),
+( 70825, 'spell_marrowgar_coldflame_damage'),
 ( 69075, 'spell_marrowgar_bone_storm'),
 ( 70834, 'spell_marrowgar_bone_storm'),
 ( 70835, 'spell_marrowgar_bone_storm'),
@@ -1872,6 +1880,12 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 72438, 'spell_deathbringer_blood_nova'),
 ( 72439, 'spell_deathbringer_blood_nova'),
 ( 72440, 'spell_deathbringer_blood_nova'),
+( 72378, 'spell_deathbringer_blood_nova_targeting'),
+( 73058, 'spell_deathbringer_blood_nova_targeting'),
+( 72255, 'spell_deathbringer_mark_of_the_fallen_champion'),
+( 72444, 'spell_deathbringer_mark_of_the_fallen_champion'),
+( 72445, 'spell_deathbringer_mark_of_the_fallen_champion'),
+( 72446, 'spell_deathbringer_mark_of_the_fallen_champion'),
 ( 71123, 'spell_stinky_precious_decimate'),
 ( 73032, 'spell_festergut_pungent_blight'),
 ( 73031, 'spell_festergut_pungent_blight'),
@@ -1923,6 +1937,10 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 72508, 'spell_putricide_mutated_transformation_dismiss'),
 ( 72509, 'spell_putricide_mutated_transformation_dismiss'),
 ( 72510, 'spell_putricide_mutated_transformation_dismiss'),
+( 70402, 'spell_putricide_mutated_transformation_dmg'),
+( 72511, 'spell_putricide_mutated_transformation_dmg'),
+( 72512, 'spell_putricide_mutated_transformation_dmg'),
+( 72513, 'spell_putricide_mutated_transformation_dmg'),
 ( 70539, 'spell_putricide_regurgitated_ooze'),
 ( 72457, 'spell_putricide_regurgitated_ooze'),
 ( 72875, 'spell_putricide_regurgitated_ooze'),
@@ -1951,10 +1969,22 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 71900, 'spell_blood_queen_bloodbolt'),
 ( 71901, 'spell_blood_queen_bloodbolt'),
 ( 71902, 'spell_blood_queen_bloodbolt'),
+( 71390, 'spell_blood_queen_pact_of_the_darkfallen'),
+( 71340, 'spell_blood_queen_pact_of_the_darkfallen_dmg'),
+( 71341, 'spell_blood_queen_pact_of_the_darkfallen_dmg_target'),
 -- Isle of Conquest
 ( 66630, 'spell_gen_gunship_portal'),
 ( 66637, 'spell_gen_gunship_portal'),
 ( 66656, 'spell_gen_parachute_ic'),
+-- Oculus
+( 50053, 'spell_varos_centrifuge_shield'),
+( 61407, 'spell_varos_energize_core_area_entry'),
+( 62136, 'spell_varos_energize_core_area_entry'),
+( 54069, 'spell_varos_energize_core_area_entry'),
+( 56251, 'spell_varos_energize_core_area_entry'),
+( 50785, 'spell_varos_energize_core_area_enemy'),
+( 59372, 'spell_varos_energize_core_area_enemy'),
+( 51162, 'spell_eregos_planar_shift'),
 -- Trial of Crusader
 ( 66118, 'spell_gen_leeching_swarm'),
 ( 67630, 'spell_gen_leeching_swarm'),
@@ -2000,6 +2030,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 67533, 'spell_item_red_rider_air_rifle'),
 -- warrior
 ( 12975, 'spell_warr_last_stand'),
+( 59725, 'spell_warr_improved_spell_reflection'),
 -- paladin
 (-31850, 'spell_pal_ardent_defender'),
 ( 20425, 'spell_pal_judgement_of_command'),
@@ -2030,6 +2061,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 47948, 'spell_pri_pain_and_suffering_proc'),
 (-47540, 'spell_pri_penance'),
 (   -17, 'spell_pri_reflective_shield_trigger'),
+(-49821, 'spell_pri_mind_sear'),
 -- death knight
 ( 50462, 'spell_dk_anti_magic_shell_raid'),
 ( 48707, 'spell_dk_anti_magic_shell_self'),
@@ -2039,6 +2071,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 (-55090, 'spell_dk_scourge_strike'),
 (-49145, 'spell_dk_spell_deflection'),
 (-52284, 'spell_dk_will_of_the_necropolis'),
+( 48743, 'spell_dk_death_pact'),
 -- shaman
 (-51474, 'spell_sha_astral_shift'),
 ( 39610, 'spell_sha_mana_tide_totem'),
@@ -2059,6 +2092,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( -6201, 'spell_warl_create_healthstone'),
 ( 47193, 'spell_warl_demonic_empowerment'),
 ( 47422, 'spell_warl_everlasting_affliction'),
+(-27285, 'spell_warl_seed_of_corruption'),
 -- druid
 ( 54846, 'spell_dru_glyph_of_starfire'),
 ( 69366, 'spell_dru_moonkin_form_passive'),

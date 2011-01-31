@@ -249,10 +249,75 @@ public:
     }
 };
 
+/*
+* Npc Magister Hathorel (36670)
+*/
+
+#define GOSSIP_TEXT_ARCANIST_TYBALIN "I'm ready to deliver the tome, Magister Tybalin"
+class npc_arcanist_tybalin : public CreatureScript
+{
+public:
+    npc_arcanist_tybalin() : CreatureScript("npc_arcanist_tybalin") { }
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+	     if (pCreature->isQuestGiver())
+            	pPlayer->PrepareQuestMenu(pCreature->GetGUID());
+
+	     if (pPlayer->GetQuestStatus(24451)== QUEST_STATUS_INCOMPLETE){
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_TEXT_ARCANIST_TYBALIN, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+	}
+	pPlayer->TalkedToCreature(pCreature->GetEntry(), pCreature->GetGUID());
+	pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+	
+        return true;
+    }
+
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+    {
+        pPlayer->PlayerTalkClass->ClearMenus();
+        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+            pPlayer->CastSpell(pPlayer, 69722, true);
+
+        return true;
+    }
+};
+
+#define GOSSIP_TEXT_ARCANIST_HATHOREL "I'm ready to deliver the tome, Magister Hathorel"
+class npc_arcanist_hathorel : public CreatureScript
+{
+public:
+    npc_arcanist_hathorel() : CreatureScript("npc_arcanist_hathorel") { }
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+	     if (pCreature->isQuestGiver())
+            	pPlayer->PrepareQuestMenu(pCreature->GetGUID());
+
+	     if (pPlayer->GetQuestStatus(20439)==QUEST_STATUS_INCOMPLETE){
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_TEXT_ARCANIST_HATHOREL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+	}
+	pPlayer->TalkedToCreature(pCreature->GetEntry(), pCreature->GetGUID());
+	pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+	
+        return true;
+    }
+
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+    {
+        pPlayer->PlayerTalkClass->ClearMenus();
+        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+            pPlayer->CastSpell(pPlayer, 69722, true);
+
+        return true;
+    }
+};
+
 void AddSC_dalaran()
 {
     new npc_mageguard_dalaran;
     new npc_hira_snowdawn;
     new npc_archmage_vargoth;
     new npc_steampowered_auctioneer;
+    new npc_arcanist_hathorel;
 }

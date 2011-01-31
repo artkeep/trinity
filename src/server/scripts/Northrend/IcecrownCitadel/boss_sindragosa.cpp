@@ -73,8 +73,21 @@ enum ePoints
     POINT_PHASE_NORMAL             = 2
 };
 
+enum eEvents
+{
+    EVENT_FROST_BREATH,
+    EVENT_ICE_BLAST,
+    EVENT_FLY_PHASE,
+    EVENT_GROUND_PHASE
+};
+
+enum ePhases 
+{
+	PHASE_NORMAL				= 0,
+	PHASE_FLY					= 1
+};
 /*
-Neia?a eanoeo 69846. Eaoeo o?aiu a iiaa. I?e i?ecaieaiee o?aie aie?ai eaoe ac?ua
+Sindragosa casts spell 69846. Bomb flies down to the mob. When it lands, it explodes.
 
 Position: X: 4360.1 Y: 2510.012 Z: 203.4833 O: 3.141593
 Position: X: 4391.1 Y: 2476.4 Z: 203.4833 O: 3.141593
@@ -428,8 +441,7 @@ class npc_rimefang : public CreatureScript
 
             void Reset()
             {
-                uiFrostBreathTimer = 5000;
-                uiIceBlastTimer = 7000;
+                events.Reset();
                 me->SetReactState(REACT_AGGRESSIVE);
                 me->SetStandState(UNIT_STAND_STATE_SIT);
                 //me->SetFlying(true);
@@ -437,6 +449,8 @@ class npc_rimefang : public CreatureScript
 
             void EnterCombat(Unit* /*who*/)
             {
+                events.ScheduleEvent(EVENT_FROST_BREATH, 10000, 0, PHASE_NORMAL);
+                events.ScheduleEvent(EVENT_FLY_PHASE, 30000, 0, PHASE_NORMAL);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
                 DoCast(me, SPELL_FROST_AURA_ADD);
             }
@@ -447,32 +461,77 @@ class npc_rimefang : public CreatureScript
                     if(instance->GetData(DATA_SINDRAGOSA_EVENT) != DONE)
                         instance->SetData(DATA_SPAWN, instance->GetData(DATA_SPAWN)+1);
             }
+            void MovementInform(uint32 type, uint32 id)
+            {
+                if (type != POINT_MOTION_TYPE)
+                    return;
+
+                switch (id)
+                {
+                    case POINT_PHASE_FLY:
+						events.ScheduleEvent(EVENT_ICE_BLAST, 0, 0, PHASE_FLY);
+						events.ScheduleEvent(EVENT_GROUND_PHASE, 15000, 0, PHASE_FLY);
+                        break;
+                    case POINT_PHASE_NORMAL:
+						me->SetFlying(false);
+						SetCombatMovement(true);
+						me->SetReactState(REACT_AGGRESSIVE);
+						me->SetInCombatWithZone();
+                        if (Unit *victim = me->SelectVictim())
+                            AttackStart(victim);
+                        events.ScheduleEvent(EVENT_FLY_PHASE, 50000, 0, PHASE_NORMAL);
+                        events.ScheduleEvent(EVENT_FROST_BREATH, 0, 0, PHASE_NORMAL);
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             void UpdateAI(const uint32 uiDiff)
             {
                 if (!UpdateVictim())
                     return;
-
-                if (uiFrostBreathTimer <= uiDiff)
+                    
+                while (uint32 eventId = events.ExecuteEvent())
                 {
-                    DoCastVictim(SPELL_FROST_BREATH_ADD);
-                    uiFrostBreathTimer = 6000;
-                } else uiFrostBreathTimer -= uiDiff;
-
-                if (uiIceBlastTimer <= uiDiff)
-                {
-                    DoCast(me, SPELL_ICE_BLAST);
-                    uiIceBlastTimer = 8000;
-                } else uiIceBlastTimer -= uiDiff;
-
+                    switch (eventId)
+                    {
+						//Only happens in ground phase
+                        case EVENT_FROST_BREATH:
+                            DoCastVictim(SPELL_FROST_BREATH_ADD);
+                            events.ScheduleEvent(EVENT_FROST_BREATH, 20000, 0, PHASE_NORMAL);
+                            break;
+						//Only happens in flying phase
+                        case EVENT_ICE_BLAST:
+                            DoCast(me, SPELL_ICE_BLAST);
+                            //Spam Ice blast while flying
+                            events.ScheduleEvent(EVENT_ICE_BLAST, 0, 0, PHASE_FLY);
+                            break;
+                        case EVENT_FLY_PHASE:
+							events.Reset();
+							events.SetPhase(PHASE_FLY);
+							me->SetFlying(true);
+							SetCombatMovement(false);
+							me->SetReactState(REACT_PASSIVE);
+							me->AttackStop();
+							me->SetInCombatWithZone();
+							me->GetMotionMaster()->MovePoint(POINT_PHASE_FLY, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 28);
+                            break;
+						case EVENT_GROUND_PHASE:
+							events.Reset();
+							events.SetPhase(PHASE_NORMAL);
+							me->GetMotionMaster()->MovePoint(POINT_PHASE_NORMAL, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() - 28);
+							break;
+                        default:
+                            break;
+                    }
+                }
                 DoMeleeAttackIfReady();
             }
 
         private:
             InstanceScript* instance;
-
-            uint32 uiFrostBreathTimer;
-            uint32 uiIceBlastTimer;
+            EventMap events;
         };
 
         CreatureAI* GetAI(Creature* creature) const

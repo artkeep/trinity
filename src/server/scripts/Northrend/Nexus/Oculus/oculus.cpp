@@ -1,5 +1,8 @@
+
 /*
  * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+ *
+ * Copyright (C) 2010 Myth Project <http://code.google.com/p/mythcore/>
  *
  * Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
@@ -16,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * Author: Bondiano
+ * Author: Bondiano (Thank you bwsrv Mangos)
  */
  
 #include "ScriptPCH.h"
@@ -29,6 +32,9 @@
 #define GOSSIP_ITEM_VERDISA2       "What abilities do Emerald Drakes have?"
 #define GOSSIP_ITEM_ETERNOS1       "I want to fly on the wings of the Bronze Flight"
 #define GOSSIP_ITEM_ETERNOS2       "What abilities do Amber Drakes have?"
+
+#define GO_ORB_OF_NEXUS     188715
+#define GO_NEXUS_PORTAL     189985
 
 #define HAS_ESSENCE(a) ((a)->HasItemCount(ITEM_EMERALD_ESSENCE,1) || (a)->HasItemCount(ITEM_AMBER_ESSENCE,1) || (a)->HasItemCount(ITEM_RUBY_ESSENCE,1))
 
@@ -49,8 +55,8 @@ enum Drakes
     ITEM_AMBER_ESSENCE                            = 37859,
     ITEM_RUBY_ESSENCE                             = 37860,
 
-	//spells
-	SPELL_PARACHUTE								  = 61243    
+        //spells
+        SPELL_PARACHUTE                                                           = 61243    
 };
 
 class mob_centrifige_construct : public CreatureScript
@@ -68,32 +74,32 @@ public:
         InstanceScript* pInstance;
 
 
-	    void DismountPlayers()
-	    {
-		    std::list<HostileReference*>& m_threatlist = me->getThreatManager().getThreatList();
-		    std::list<HostileReference*>::const_iterator i = m_threatlist.begin();
-		    for (i = m_threatlist.begin(); i!= m_threatlist.end(); ++i)
-		    {
-			    Unit* pUnit = Unit::GetUnit((*me), (*i)->getUnitGuid());
-			    if (pUnit && (pUnit->GetTypeId() == TYPEID_PLAYER) )
-			    {
-				    Vehicle* v = pUnit->GetVehicle();
-				    if(v)
-				    {
-					    pUnit->ExitVehicle();
-					    v->Dismiss();
-					    DoCast(pUnit,SPELL_PARACHUTE);					
-				    }
-			    }
-		    }
-	    }
+            void DismountPlayers()
+            {
+                    std::list<HostileReference*>& m_threatlist = me->getThreatManager().getThreatList();
+                    std::list<HostileReference*>::const_iterator i = m_threatlist.begin();
+                    for (i = m_threatlist.begin(); i!= m_threatlist.end(); ++i)
+                    {
+                            Unit* pUnit = Unit::GetUnit((*me), (*i)->getUnitGuid());
+                            if (pUnit && (pUnit->GetTypeId() == TYPEID_PLAYER) )
+                            {
+                                    Vehicle* v = pUnit->GetVehicle();
+                                    if(v)
+                                    {
+                                            pUnit->ExitVehicle();
+                                            v->Dismiss();
+                                            DoCast(pUnit,SPELL_PARACHUTE);                                      
+                                    }
+                            }
+                    }
+            }
 
         void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())
                 return;
-		    DismountPlayers();
+                    DismountPlayers();
             DoMeleeAttackIfReady();
         }
 
@@ -227,11 +233,30 @@ class npc_oculus_drake : public CreatureScript
         }
 
         return true;
-    };
+    }
+
+};
+
+class oculus_teleporter : public GameObjectScript
+{
+public:
+    oculus_teleporter() : GameObjectScript("oculus_teleporter") { }
+
+    bool OnGossipHello(Player* pPlayer, GameObject *pGo)
+    {
+        if(pGo->GetEntry() == GO_ORB_OF_NEXUS)
+            pPlayer->TeleportTo(571, 3872.43f, 6984.34f, 108.055f, 6.20f);
+        if(pGo->GetEntry() == GO_NEXUS_PORTAL)
+            pPlayer->TeleportTo(578, 988.303f, 1056.88f, 359.967f, 3.42f);
+
+        return true;
+    }
+
 };
 
 void AddSC_oculus()
 {
-    new npc_oculus_drake();
-    new mob_centrifige_construct();
+     new npc_oculus_drake();
+     new oculus_teleporter();
+     new mob_centrifige_construct();
 }

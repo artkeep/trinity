@@ -1541,7 +1541,9 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask, bool 
 
                 // Haste modifies duration of channeled spells
                 if (IsChanneledSpell(m_spellInfo))
-                    m_originalCaster->ModSpellCastTime(aurSpellInfo, duration, this);
+                     // Seduction duration should not be affected by casting time mods
+                    if (m_spellInfo->Id != 6358)
+                        m_originalCaster->ModSpellCastTime(aurSpellInfo, duration, this);
 
                 // and duration of auras affected by SPELL_AURA_PERIODIC_HASTE
                 if (m_originalCaster->HasAuraTypeWithAffectMask(SPELL_AURA_PERIODIC_HASTE, aurSpellInfo))
@@ -3508,7 +3510,9 @@ void Spell::handle_immediate()
             if (Player* modOwner = m_caster->GetSpellModOwner())
                 modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration);
             // Apply haste mods
-            m_caster->ModSpellCastTime(m_spellInfo, duration, this);
+            // Seduction duration should not be affected by casting time mods
+            if (m_spellInfo->Id != 6358)
+                m_caster->ModSpellCastTime(m_spellInfo, duration, this);
 
             m_spellState = SPELL_STATE_CASTING;
             m_caster->AddInterruptMask(m_spellInfo->ChannelInterruptFlags);

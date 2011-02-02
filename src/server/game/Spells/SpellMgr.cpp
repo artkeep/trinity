@@ -4047,6 +4047,12 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->DurationIndex = 21;
             count++;
             break;
+        case 18754: // Improved Seduction
+        case 18755:
+        case 18756:
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
+            count++;
+            break;
         default:
             break;
         }

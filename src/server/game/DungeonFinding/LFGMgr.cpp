@@ -217,7 +217,7 @@ void LFGMgr::Update(uint32 diff)
             if (Player* plr = sObjectMgr->GetPlayer(guid))
             {
                 plr->GetSession()->SendLfgRoleCheckUpdate(roleCheck);
-
+                
                 if (itRoles->first == roleCheck->leader)
                     plr->GetSession()->SendLfgJoinResult(LfgJoinResultData(LFG_JOIN_FAILED, LFG_ROLECHECK_MISSING_ROLE));
             }
@@ -1650,7 +1650,7 @@ void LFGMgr::UpdateBoot(Player* plr, bool accept)
         }
     }
 
-    if (agreeNum == pBoot->votedNeeded ||                  // Vote passed
+    if (agreeNum >= pBoot->votedNeeded ||                  // Vote passed
         votesNum == pBoot->votes.size() ||                 // All voted but not passed
         (pBoot->votes.size() - votesNum + agreeNum) < pBoot->votedNeeded) // Vote didnt passed
     {
@@ -1669,7 +1669,7 @@ void LFGMgr::UpdateBoot(Player* plr, bool accept)
 
         uint64 gguid = grp->GetGUID();
         SetState(gguid, LFG_STATE_DUNGEON);
-        if (agreeNum == pBoot->votedNeeded)                // Vote passed - Kick player
+        if (agreeNum >= pBoot->votedNeeded)                // Vote passed - Kick player
         {
             Player::RemoveFromGroup(grp, pBoot->victim);
             if (Player* victim = sObjectMgr->GetPlayer(pBoot->victim))
@@ -1793,10 +1793,10 @@ void LFGMgr::TeleportPlayer(Player* plr, bool out, bool fromOpcode /*= false*/)
 /**
    Give completion reward to player
 
-   @param[in]     dungeonId Id of the dungeon finished
+   @param[in]     dungeonId Dungeonid (Obsolete)
    @param[in]     plr Player to reward
 */
-void LFGMgr::RewardDungeonDoneFor(const uint32 dungeonId, Player* player)
+void LFGMgr::RewardDungeonDoneFor(const uint32 /*dungeonId*/, Player* player)
 {
     Group* group = player->GetGroup();
     if (!group || !group->isLFGGroup())
@@ -1807,12 +1807,6 @@ void LFGMgr::RewardDungeonDoneFor(const uint32 dungeonId, Player* player)
 
     uint64 guid = player->GetGUID();
     uint64 gguid = player->GetGroup()->GetGUID();
-    uint32 gDungeonId = GetDungeon(gguid);
-    if (gDungeonId != dungeonId)
-    {
-        sLog->outDebug("LFGMgr::RewardDungeonDoneFor: [" UI64FMTD "] Finished dungeon %u but group queued for %u. Ignoring", guid, dungeonId, gDungeonId);
-        return;
-    }
 
     if (GetState(guid) == LFG_STATE_FINISHED_DUNGEON)
     {

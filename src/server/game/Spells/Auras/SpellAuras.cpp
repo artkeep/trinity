@@ -1050,6 +1050,20 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                     }
                 }
                 break;
+            case SPELLFAMILY_DRUID:
+                if (!caster)
+                    break;
+                // Rejuvenation
+                if (GetSpellProto()->SpellFamilyFlags[0] & 0x10 && GetEffect(0))
+                {
+                    // Druid T8 Restoration 4P Bonus
+                    if (AuraEffect* aurEff = caster->GetAuraEffect(64760,0))
+                    {
+                        int32 basepoints0 = GetEffect(0)->GetAmount();
+                        caster->CastCustomSpell(target, 64801, &basepoints0, NULL, NULL, true, NULL, GetEffect(0));
+                    }
+                } 
+                break;
             case SPELLFAMILY_ROGUE:
                 // Sprint (skip non player casted spells by category)
                 if (GetSpellProto()->SpellFamilyFlags[0] & 0x40 && GetSpellProto()->Category == 44)

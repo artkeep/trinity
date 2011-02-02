@@ -2295,6 +2295,21 @@ void Spell::EffectApplyAura(SpellEffIndex effIndex)
         return;
     ASSERT(unitTarget == m_spellAura->GetOwner());
     m_spellAura->_ApplyEffectForTargets(effIndex);
+
+    // Tier 10 Bonus Hacks
+	switch (m_spellInfo->Id)
+    {
+        case 16870:
+        {
+            // Druid T10 (Balance) 2P items bonus	
+            if (unitTarget->HasAura(70718)) 
+            {
+                int32 proc_effect = 15;
+                m_caster->CastCustomSpell(m_caster, 70721, & proc_effect, NULL, NULL, true);
+            }
+            break;
+        }
+    }
 }
 
 void Spell::EffectApplyAreaAura(SpellEffIndex effIndex)

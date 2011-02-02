@@ -3603,9 +3603,15 @@ void SpellMgr::LoadSpellCustomAttr()
         case 3286:
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
             spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
+			count++;  
+		    break;
+       case 71880:
+       case 71892:
+            spellInfo->SpellFamilyName = SPELLFAMILY_GENERIC;
+            spellInfo->procChance = 20;
             count++;
             break;
-        // Heroism
+			// Heroism
         case 32182:
             spellInfo->excludeCasterAuraSpell = 57723; // Exhaustion
             count++;

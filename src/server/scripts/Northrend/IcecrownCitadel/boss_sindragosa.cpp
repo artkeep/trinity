@@ -70,15 +70,21 @@ enum Spells
 enum ePoints
 {
     POINT_PHASE_FLY                = 1,
-    POINT_PHASE_NORMAL             = 2
+    POINT_PHASE_NORMAL             = 2,
+    POINT_LANDING                  = 3
 };
 
 enum eEvents
 {
+    //Rimefang
     EVENT_FROST_BREATH,
     EVENT_ICE_BLAST,
     EVENT_FLY_PHASE,
-    EVENT_GROUND_PHASE
+    EVENT_GROUND_PHASE,
+    //Spinestalker
+    EVENT_TAIL_SWEEP,
+    EVENT_CLEAVE,
+    EVENT_BELLOWING_ROAR
 };
 
 enum ePhases 
@@ -104,7 +110,11 @@ const Position SpawnLoc[]=
     {4407.439f, 2484.905f, 230.374f, 3.166f}, //center Z + 30
     {4671.521f, 2481.815f, 343.365f, 3.166f} //spawn pos
 };*/
-
+const Position DragonLoc[] = 
+{
+    {4430.0f, 2460.0f, 203.386f, 3.166f}, //Rimefang landing position
+    {4430.0f, 2506.0f, 203.386f, 3.166f}  //Spinestalker landing position
+};
 class boss_sindragosa : public CreatureScript
 {
     public:
@@ -437,20 +447,45 @@ class npc_rimefang : public CreatureScript
             npc_rimefangAI(Creature* creature) : ScriptedAI(creature)
             {
                 instance = creature->GetInstanceScript();
+                creature->SetVisible(false);
+                creature->SetReactState(REACT_PASSIVE);
+                creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             }
 
             void Reset()
             {
                 events.Reset();
-                me->SetReactState(REACT_AGGRESSIVE);
                 me->SetStandState(UNIT_STAND_STATE_SIT);
-                //me->SetFlying(true);
+            }
+
+            void DoAction(const int32 action)
+            {
+                switch (action)
+                {
+                    case ACTION_LAND:
+                        //me->GetMotionMaster()->MovementExpired();
+                        //me->GetMotionMaster()->Clear();
+                        //me->SetDefaultMovementType(IDLE_MOTION_TYPE);
+                        //me->GetMotionMaster()->Clear();
+                        //me->GetMotionMaster()->Initialize();
+                        //me->GetMotionMaster()->MovePoint(POINT_LANDING, DragonLoc[0]);
+                        me->SetPhaseMask(1, true); 
+                        me->SendMovementFlagUpdate();
+                        me->SetVisible(true);
+                        me->SetReactState(REACT_AGGRESSIVE);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                        break;
+                    default:
+                        ScriptedAI::DoAction(action);
+                }
             }
 
             void EnterCombat(Unit* /*who*/)
             {
+                events.Reset();
                 events.ScheduleEvent(EVENT_FROST_BREATH, 10000, 0, PHASE_NORMAL);
                 events.ScheduleEvent(EVENT_FLY_PHASE, 30000, 0, PHASE_NORMAL);
+                events.SetPhase(PHASE_NORMAL);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
                 DoCast(me, SPELL_FROST_AURA_ADD);
             }
@@ -468,8 +503,23 @@ class npc_rimefang : public CreatureScript
 
                 switch (id)
                 {
+                    //case POINT_LANDING:
+                    //    //me->GetMotionMaster()->MovementExpired();
+                    //    //me->StopMoving();
+                    //    //me->GetMotionMaster()->Clear();
+                    //    //me->SetDefaultMovementType(IDLE_MOTION_TYPE);
+                    //    //me->StopMoving();
+                    //    //me->GetMotionMaster()->Clear();
+                    //    //me->GetMotionMaster()->MoveIdle();
+                    //    me->SetReactState(REACT_AGGRESSIVE);
+                    //    me->SetFlying(false);
+                    //    me->SetStandState(UNIT_STAND_STATE_SIT);
+                    //    me->SetHomePosition(DragonLoc[0]);
+                    //    me->SetPosition(DragonLoc[0], false);
+                    //    me->GetMotionMaster()->MoveTargetedHome();
+                    //    break;
                     case POINT_PHASE_FLY:
-						events.ScheduleEvent(EVENT_ICE_BLAST, 0, 0, PHASE_FLY);
+						events.ScheduleEvent(EVENT_ICE_BLAST, 100, 0, PHASE_FLY);
 						events.ScheduleEvent(EVENT_GROUND_PHASE, 15000, 0, PHASE_FLY);
                         break;
                     case POINT_PHASE_NORMAL:
@@ -491,7 +541,9 @@ class npc_rimefang : public CreatureScript
             {
                 if (!UpdateVictim())
                     return;
-                    
+                if (me->HasUnitState(UNIT_STAT_CASTING))
+                    return;
+                events.Update(uiDiff);
                 while (uint32 eventId = events.ExecuteEvent())
                 {
                     switch (eventId)
@@ -505,7 +557,7 @@ class npc_rimefang : public CreatureScript
                         case EVENT_ICE_BLAST:
                             DoCast(me, SPELL_ICE_BLAST);
                             //Spam Ice blast while flying
-                            events.ScheduleEvent(EVENT_ICE_BLAST, 0, 0, PHASE_FLY);
+                            events.ScheduleEvent(EVENT_ICE_BLAST, 100, 0, PHASE_FLY);
                             break;
                         case EVENT_FLY_PHASE:
 							events.Reset();
@@ -550,62 +602,117 @@ class npc_spinestalker : public CreatureScript
             npc_spinestalkerAI(Creature* creature) : ScriptedAI(creature)
             {
                 instance = creature->GetInstanceScript();
+                creature->SetVisible(false);
+                creature->SetReactState(REACT_PASSIVE);
+                creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
             }
 
             void Reset()
             {
-                uiRoarTimer = 14000;
-                uiCleaveTimer = 6000;
-                uiSweepTimer = 7000;
-                me->SetReactState(REACT_AGGRESSIVE);
+                events.Reset();
                 me->SetStandState(UNIT_STAND_STATE_SIT);
-                //me->SetFlying(true);
+            }
+
+            void DoAction(const int32 action)
+            {
+                switch (action)
+                {
+                    case ACTION_LAND:
+                        me->SetPhaseMask(1, true); 
+                        me->SendMovementFlagUpdate();
+                        me->SetVisible(true);
+                        me->SetReactState(REACT_AGGRESSIVE);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                        //me->GetMotionMaster()->MovementExpired();
+                        //me->GetMotionMaster()->Clear();
+                        //me->SetDefaultMovementType(IDLE_MOTION_TYPE);
+                        //me->GetMotionMaster()->Clear();
+                        //me->GetMotionMaster()->Initialize();
+                        //me->GetMotionMaster()->MovePoint(POINT_LANDING, DragonLoc[1]);
+                        break;
+                    default:
+                        ScriptedAI::DoAction(action);
+                }
             }
 
             void EnterCombat(Unit* /*who*/)
             {
+                events.Reset();
+                events.ScheduleEvent(EVENT_CLEAVE, 8000);
+                events.ScheduleEvent(EVENT_TAIL_SWEEP, 10000);
+                events.ScheduleEvent(EVENT_BELLOWING_ROAR, 20000);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
                 DoCast(me, SPELL_FROST_AURA_ADD);
             }
 
             void JustDied(Unit* /*killer*/)
             {
-                if(instance)
-                    if(instance->GetData(DATA_SINDRAGOSA_EVENT) != DONE)
-                        instance->SetData(DATA_SPAWN, instance->GetData(DATA_SPAWN)+1);
+                if(instance->GetData(DATA_SINDRAGOSA_EVENT) != DONE)
+                    instance->SetData(DATA_SPAWN, instance->GetData(DATA_SPAWN)+1);
             }
+
+            //void MovementInform(uint32 type, uint32 id)
+            //{
+            //    if (type != POINT_MOTION_TYPE)
+            //        return;
+
+            //    switch (id)
+            //    {
+            //        case POINT_LANDING:
+            //            //me->GetMotionMaster()->MovementExpired();
+            //            //me->StopMoving();
+            //            //me->GetMotionMaster()->Clear();
+            //            //me->SetDefaultMovementType(IDLE_MOTION_TYPE);
+            //            //me->StopMoving();
+            //            //me->GetMotionMaster()->Clear();
+            //            //me->GetMotionMaster()->MoveIdle();
+            //            me->SetReactState(REACT_AGGRESSIVE);
+            //            me->SetFlying(false);
+            //            me->SetStandState(UNIT_STAND_STATE_SIT);
+            //            me->SetHomePosition(DragonLoc[1]);
+            //            me->SetPosition(DragonLoc[1], true);
+            //            me->NearTeleportTo(DragonLoc[1].GetPositionX(), DragonLoc[1].GetPositionY(), DragonLoc[1].GetPositionZ(), DragonLoc[1].GetOrientation(), true);
+            //            me->GetMotionMaster()->MoveTargetedHome();
+            //            break;
+            //    }
+            //}
 
             void UpdateAI(const uint32 uiDiff)
             {
                 if (!UpdateVictim())
                     return;
-
-                if (uiRoarTimer <= uiDiff)
+                if (me->HasUnitState(UNIT_STAT_CASTING))
+                    return;
+                events.Update(uiDiff);
+                while (uint32 eventId = events.ExecuteEvent())
                 {
-                    DoCastAOE(SPELL_BELLOWING_ROAR);
-                    uiRoarTimer = 15000;
-                } else uiRoarTimer -= uiDiff;
-
-                if (uiCleaveTimer <= uiDiff)
-                {
-                    DoCastVictim(SPELL_CLEAVE_ADD);
-                    uiCleaveTimer = 5000;
-                } else uiCleaveTimer -= uiDiff;
-
-                if (uiSweepTimer <= uiDiff)
-                {
-                    DoCast(SPELL_TAIL_SWEEP);
-                    uiSweepTimer = 7000;
-                } else uiSweepTimer -= uiDiff;
-
+                    switch (eventId)
+                    {
+                        case EVENT_BELLOWING_ROAR:
+                        {
+                            DoCastAOE(SPELL_BELLOWING_ROAR);
+                            events.ScheduleEvent(EVENT_BELLOWING_ROAR, 30000);
+                            break;
+                        }
+                        case EVENT_CLEAVE:
+                        {
+                            DoCastVictim(SPELL_CLEAVE_ADD);
+                            events.ScheduleEvent(EVENT_CLEAVE, 5000);
+                            break;
+                        }
+                        case EVENT_TAIL_SWEEP:
+                        {
+                            DoCast(SPELL_TAIL_SWEEP);
+                            events.ScheduleEvent(EVENT_TAIL_SWEEP, 20000);
+                            break;
+                        }
+                    }
+                }
                 DoMeleeAttackIfReady();
             }
         private:
             InstanceScript* instance;
-
-            uint32 uiRoarTimer;
-            uint32 uiCleaveTimer;
-            uint32 uiSweepTimer;
+            EventMap events;
         };
 
         CreatureAI* GetAI(Creature* creature) const
@@ -768,6 +875,38 @@ class spell_sindragosa_blistering_cold : public SpellScriptLoader
         }
 };
 
+class npc_icc_frostwing_mob : public CreatureScript
+{
+    public:
+        npc_icc_frostwing_mob() : CreatureScript("npc_icc_frostwing_mob") { }
+
+        struct npc_icc_frostwing_mobAI : public ScriptedAI
+        {
+            npc_icc_frostwing_mobAI(Creature* pCreature) : ScriptedAI(pCreature)
+            {
+                pInstance = pCreature->GetInstanceScript();
+            }
+            void JustRespawned()
+            {
+                if(pInstance && pInstance->GetData(DATA_SINDRAGOSA_EVENT) != DONE)
+                {
+                    uint32 dataType = (me->GetHomePosition().GetPositionY() < 2480.0f) ? DATA_FROSTWING_MOB_RIGHT : DATA_FROSTWING_MOB_LEFT;
+                    pInstance->SetData(dataType, pInstance->GetData(dataType)+1);
+                }
+            }
+            void JustDied(Unit* /*killer*/)
+            {
+                uint32 dataType = (me->GetHomePosition().GetPositionY() < 2480.0f) ? DATA_FROSTWING_MOB_RIGHT : DATA_FROSTWING_MOB_LEFT;
+                pInstance->SetData(dataType, pInstance->GetData(dataType)-1);
+            }
+        private:
+            InstanceScript *pInstance;
+        };
+        CreatureAI* GetAI(Creature* pCreature) const
+        {
+            return new npc_icc_frostwing_mobAI(pCreature);
+        }
+};
 
 void AddSC_boss_sindragosa()
 {
@@ -780,4 +919,5 @@ void AddSC_boss_sindragosa()
     new spell_sindragosa_unchained_magic();
     new spell_sindragosa_ice_tomb_effect();
     new spell_sindragosa_blistering_cold();
+    new npc_icc_frostwing_mob();
 }

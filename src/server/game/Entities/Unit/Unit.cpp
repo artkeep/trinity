@@ -6639,7 +6639,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 // Judgement of Wisdom
                 case 20186:
                 {
-                    if (pVictim && pVictim->isAlive() && pVictim->getPowerType() == POWER_MANA)
+                    if (pVictim)
                     {
                         // 2% of base mana
                         basepoints0 = int32(CalculatePctN(pVictim->GetCreateMana(), 2));
@@ -6811,6 +6811,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 {
                     triggered_spell_id = 54968;
                     basepoints0 = CalculatePctN(int32(damage), triggerAmount);
+                    break;
+                }
+                // Paladin T8 Holy 2P Bonus
+                case 64890:
+                {
+                    triggered_spell_id = 64891;
+                    basepoints0 = CalculatePctN(int32(damage), int32(triggerAmount/3));
                     break;
                 }
                 case 71406: // Tiny Abomination in a Jar

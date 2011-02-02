@@ -2275,6 +2275,17 @@ void Spell::EffectTeleportUnits(SpellEffIndex /*effIndex*/)
             }
             return;
         }
+        case 29131:
+        {
+            //Warrior T10(Tank) 4 items bonus
+            if (unitTarget->HasAura(70844))
+            {
+                int32 absorbtion = m_caster->GetMaxHealth();
+                absorbtion *= 0.20;
+                m_caster->CastCustomSpell(m_caster, 70845, &absorbtion, NULL, NULL, true);
+            }
+            break;
+        }
     }
 }
 

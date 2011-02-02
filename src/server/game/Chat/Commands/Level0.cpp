@@ -97,7 +97,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
 
     PSendSysMessage(_FULLVERSION);
     PSendSysMessage(LANG_CONNECTED_PLAYERS, PlayersNum, MaxPlayersNum);
-	PSendSysMessage("AspirineCore");
+    PSendSysMessage("TrinityCore");
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, uptime.c_str());
     PSendSysMessage("Update time diff: %u.", updateTime);

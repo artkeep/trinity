@@ -1432,7 +1432,8 @@ REPLACE INTO `outdoorpvp_template` (`TypeId`, `ScriptName`, `Comment`) VALUES
 (4, 'outdoorpvp_zm', 'Zangarmarsh'),
 (5, 'outdoorpvp_si', 'Silithus'),
 (6, 'outdoorpvp_ep', 'Eastern Plaguelands'),
-(7, 'outdoorpvp_wg', 'Wintergrasp');
+(7, 'outdoorpvp_gh', 'Grizzly Hills'),
+(8, 'outdoorpvp_wg', 'Wintergrasp');
 
 DELETE FROM `achievement_criteria_data` WHERE `criteria_id`=12993 AND `type`=11;
 INSERT INTO `achievement_criteria_data` (`criteria_id`,`type`,`value1`,`value2`,`ScriptName`) VALUES
@@ -4024,7 +4025,7 @@ UPDATE creature_template SET npcflag=npcflag|32768 WHERE entry   IN (31841,31842
 UPDATE creature_template SET faction_A = '1802', faction_H = '1802' WHERE entry IN (30499,28312,28319);
 UPDATE creature_template SET faction_A = '1801', faction_H = '1801' WHERE entry IN (30400,32629,32627);
 UPDATE creature_template SET npcflag=npcflag|32768 WHERE entry   IN (31841,31842);
-REPLACE INTO `outdoorpvp_template` VALUES ('7', 'outdoorpvp_wg', 'Wintergrasp');
+REPLACE INTO `outdoorpvp_template` VALUES ('8', 'outdoorpvp_wg', 'Wintergrasp');
 UPDATE `creature_template` SET `ScriptName` = 'npc_demolisher_engineerer' WHERE `entry` IN (30400,30499);
 REPLACE INTO `conditions` VALUES ('13', '0', '56663', '0', '18', '1', '27852', '0', '0', '', null);
 REPLACE INTO `conditions` VALUES ('13', '0', '56575', '0', '18', '1', '27852', '0', '0', '', null);
@@ -5886,7 +5887,7 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 /* WG scriptname */
 DELETE FROM `outdoorpvp_template` WHERE TypeId=7;
 INSERT INTO `outdoorpvp_template` (`TypeId`, `ScriptName`, `comment`) VALUES 
-('7', 'outdoorpvp_wg', 'Wintergrasp');
+('8', 'outdoorpvp_wg', 'Wintergrasp');
 
 UPDATE `creature_template` SET `ScriptName` = 'npc_demolisher_engineerer' WHERE `entry` IN (30400,30499);
 
@@ -6826,5 +6827,10 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_icc_valithria_blazing_skeleto
 -- Rimefang and Spinestalker positions are corrected according to http://www.youtube.com/watch?v=OtprVV-3q1w
 UPDATE `creature_template` SET `MovementType` = 0 WHERE `entry` IN (37533, 37534);
 UPDATE `creature` SET `MovementType` = 0 WHERE `id` IN (37533, 37534);
-UPDATE `creature` SET `position_x` = 4430, `position_y` = 2460, `position_z` = 203.386 WHERE `id` = 37533;
-UPDATE `creature` SET `position_x` = 4430, `position_y` = 2506, `position_z` = 203.386 WHERE `id` = 37534;
+UPDATE `creature` SET `position_x` = 4430, `position_y` = 2460, `position_z` = 203.386, `orientation` = 3.142 WHERE `id` = 37533;
+UPDATE `creature` SET `position_x` = 4430, `position_y` = 2506, `position_z` = 203.386, `orientation` = 3.142 WHERE `id` = 37534;
+-- Rimefang and Spinestalker - setting their initial positions
+-- DELETE FROM `creature` WHERE `id` IN (37533, 37534);
+-- INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `modelid`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `spawndist`, `currentwaypoint`, `curhealth`, `curmana`, `DeathState`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`) VALUES('115557','37533','631','15','1','27982','0','4524.07','2394.83','217.802','2.66691','7200','0','0','3235440','41690','0','2','0','0','0');
+-- INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `modelid`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `spawndist`, `currentwaypoint`, `curhealth`, `curmana`, `DeathState`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`) VALUES('115556','37534','631','15','1','27982','0','4490.85','2544.37','217.248','1.32662','7200','0','0','3235440','41690','0','2','0','0','0');
+UPDATE `creature_template` SET `ScriptName` = 'npc_icc_frostwing_mob' WHERE `entry` IN (37531, 37532);

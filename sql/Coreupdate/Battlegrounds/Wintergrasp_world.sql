@@ -37,9 +37,9 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('wg timer', '3', 'Syntax: .wg timer $minutes\r\nChange the current timer. Min value = 1, Max value 60 (Wartime), 1440 (Not Wartime)');
 
 /* WG scriptname */
-DELETE FROM `outdoorpvp_template` WHERE TypeId=7;
+DELETE FROM `outdoorpvp_template` WHERE TypeId=8;
 INSERT INTO `outdoorpvp_template` (`TypeId`, `ScriptName`, `comment`) VALUES 
-('7', 'outdoorpvp_wg', 'Wintergrasp');
+('8', 'outdoorpvp_wg', 'Wintergrasp');
 
 UPDATE `creature_template` SET `ScriptName` = 'npc_demolisher_engineerer' WHERE `entry` IN (30400,30499);
 

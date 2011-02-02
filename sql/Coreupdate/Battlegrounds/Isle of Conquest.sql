@@ -1,14 +1,14 @@
-ÔªøUPDATE gameobject_template SET size=2.151325 WHERE entry=195451;
+UPDATE gameobject_template SET size=2.151325 WHERE entry=195451;
 UPDATE gameobject_template SET size=2.151325 WHERE entry=195452;
 UPDATE gameobject_template SET size=3.163336 WHERE entry=195223;
 UPDATE creature_template SET speed_run=1.142857 WHERE entry=36154;
 UPDATE creature_template SET speed_run=1.142857 WHERE entry=36169;
 
--- Canon de la canonni–∏re de l'Alliance
+-- Canon de la canonniËre de l'Alliance
 -- http://fr.wowhead.com/npc=34929
 UPDATE `creature_template` SET `spell1`=69495,`VehicleId`='452' WHERE `entry` =34929;
 
--- Canon de la canonni–∏re de la Horde
+-- Canon de la canonniËre de la Horde
 -- http://fr.wowhead.com/npc=34935
 UPDATE `creature_template` SET `spell1`=68825,`VehicleId`='453' WHERE `entry` =34935;
 
@@ -20,15 +20,15 @@ UPDATE `creature_template` SET `VehicleId`=160,`spell1`=67452,`spell2`='68169' W
 -- http://fr.wowhead.com/npc=34793
 UPDATE `creature_template` SET `VehicleId`=438,`spell1`=66218,`spell2`=66296 WHERE `entry`=34793;
 
--- D–πmolisseur
+-- DÈmolisseur
 -- http://fr.wowhead.com/npc=34775
 UPDATE `creature_template` SET `VehicleId`='509',`spell1`='67442',`spell2`='68068' WHERE `entry` =34775;
 
--- Engin de si–∏ge
+-- Engin de siËge
 -- http://fr.wowhead.com/npc=34776
 UPDATE `creature_template` SET `VehicleId`=447,`spell1`=67816,`spell2`=69502 WHERE `entry`=34776;
 
--- Engin de si–∏ge
+-- Engin de siËge
 -- http://fr.wowhead.com/npc=35069
 UPDATE `creature_template` SET `VehicleId`=436,`spell1`=67816,`spell2`=69502 WHERE `entry`=35069;
 
@@ -48,11 +48,11 @@ UPDATE `creature_template` SET `spell1`='68832' WHERE `entry` =34778;
 -- http://fr.wowhead.com/npc=36356
 UPDATE `creature_template` SET `spell1`='68832' WHERE `entry` =36356;
 
--- Tourelle de si–∏ge
+-- Tourelle de siËge
 -- http://fr.wowhead.com/npc=34777
 UPDATE `creature_template` SET `spell1`=67462,`spell2`=69505 WHERE `entry`=34777;
 
--- Tourelle de si–∏ge
+-- Tourelle de siËge
 -- http://fr.wowhead.com/npc=36355
 UPDATE `creature_template` SET `spell1`=67462,`spell2`=69505 WHERE `entry`=36355;
 
@@ -68,25 +68,25 @@ INSERT IGNORE `trinity_string` (`entry`, `content_default`, `content_loc1`, `con
 (12037, 'L''Alliance a pris le donjon de la Horde !', NULL, 'L''Alliance a pris le donjon de la Horde !', NULL, NULL, NULL, NULL, NULL, NULL),
 (12036, 'La Horde a pris le donjon de l''Alliance !', NULL, 'La Horde a pris le donjon de l''Alliance !', NULL, NULL, NULL, NULL, NULL, NULL),
 (12035, '%s l''emporte !', NULL, '%s l''emporte !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12034, '%s a attaqu–π le donjon de la Horde !', NULL, '%s a attaqu–π le donjon de la Horde !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12033, '%s a attaqu–π le donjon de l''Alliance !', NULL, '%s a attaqu–π le donjon de l''Alliance !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12032, 'La porte ouest du donjon de la Horde est d–πtruite !', NULL, 'La porte ouest du donjon de la Horde est d–πtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12031, 'La porte est du donjon de la Horde est d–πtruite !', NULL, 'La porte est du donjon de la Horde est d–πtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12030, 'La porte sud du donjon de la Horde est d–πtruite !', NULL, 'La porte sud du donjon de la Horde est d–πtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12029, 'La porte ouest du donjon de l''Alliance est d–πtruite !', NULL, 'La porte ouest du donjon de l''Alliance est d–πtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12028, 'La porte est du donjon de l''Alliance est d–πtruite !', NULL, 'La porte est du donjon de l''Alliance est d–πtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
-(12027, 'La porte nord du donjon de l''Alliance est d–πtruite !', NULL, 'La porte nord du donjon de l''Alliance est d–πtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12034, '%s a attaquÈ le donjon de la Horde !', NULL, '%s a attaquÈ le donjon de la Horde !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12033, '%s a attaquÈ le donjon de l''Alliance !', NULL, '%s a attaquÈ le donjon de l''Alliance !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12032, 'La porte ouest du donjon de la Horde est dÈtruite !', NULL, 'La porte ouest du donjon de la Horde est dÈtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12031, 'La porte est du donjon de la Horde est dÈtruite !', NULL, 'La porte est du donjon de la Horde est dÈtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12030, 'La porte sud du donjon de la Horde est dÈtruite !', NULL, 'La porte sud du donjon de la Horde est dÈtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12029, 'La porte ouest du donjon de l''Alliance est dÈtruite !', NULL, 'La porte ouest du donjon de l''Alliance est dÈtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12028, 'La porte est du donjon de l''Alliance est dÈtruite !', NULL, 'La porte est du donjon de l''Alliance est dÈtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
+(12027, 'La porte nord du donjon de l''Alliance est dÈtruite !', NULL, 'La porte nord du donjon de l''Alliance est dÈtruite !', NULL, NULL, NULL, NULL, NULL, NULL),
 (12026, 'The battle will begin in 15 seconds!', NULL, 'La bataille commencera dans 15 secondes.', NULL, NULL, NULL, NULL, NULL, NULL),
-(12025, '$n has assaulted the %s', '', '$n a attaqu–π %s !', '', '', '', '', '', ''),
-(12024, '$n has defended the %s', '', '$n a d–πfendu %s', '', '', '', '', '', ''),
-(12023, '$n claims the %s! If left unchallenged, the %s will control it in 1 minute!', NULL, '$n –∞ attaqu–π %s! Si rien n\'est fait, %s le contr—Ñlera dans 1 minute!', NULL, NULL, NULL, NULL, NULL, NULL),
+(12025, '$n has assaulted the %s', '', '$n a attaquÈ %s !', '', '', '', '', '', ''),
+(12024, '$n has defended the %s', '', '$n a dÈfendu %s', '', '', '', '', '', ''),
+(12023, '$n claims the %s! If left unchallenged, the %s will control it in 1 minute!', NULL, '$n ‡ attaquÈ %s! Si rien n\'est fait, %s le contrÙlera dans 1 minute!', NULL, NULL, NULL, NULL, NULL, NULL),
 (12022, 'Alliance', NULL, 'L''Alliance', NULL, NULL, NULL, NULL, NULL, NULL),
 (12021, 'Horde', NULL, 'La Horde', NULL, NULL, NULL, NULL, NULL, NULL),
 (12020, 'The %s has taken the %s', NULL, '%s a pris %s', NULL, NULL, NULL, NULL, NULL, NULL),
 (12019, 'Workshop', NULL, 'l''atelier', NULL, NULL, NULL, NULL, NULL, NULL),
 (12018, 'Docks', NULL, 'les docks', NULL, NULL, NULL, NULL, NULL, NULL),
 (12017, 'Refinery', NULL, 'la raffinerie', NULL, NULL, NULL, NULL, NULL, NULL),
-(12016, 'Quarry', NULL, 'la carri–∏re', NULL, NULL, NULL, NULL, NULL, NULL),
+(12016, 'Quarry', NULL, 'la carriËre', NULL, NULL, NULL, NULL, NULL, NULL),
 (12015, 'Hangar', NULL, 'le hangar', NULL, NULL, NULL, NULL, NULL, NULL),
 (12014, 'The battle has begun!', NULL, 'Que la bataille commence !', NULL, NULL, NULL, NULL, NULL, NULL),
 (12013, 'The battle will begin in 30 seconds!', NULL, 'La bataille commencera dans 30 secondes.', NULL, NULL, NULL, NULL, NULL, NULL),
@@ -107,75 +107,75 @@ UPDATE `creature_template` SET `spell1`=69495 WHERE `entry` =35410;
 
 -- Horde Gunship Cannon
 -- http://www.wowhead.com/npc=34935
--- –Ω–µ–ø–æ–Ω—è—Ç–Ω–æ –ø–æ—á–µ–º—É `VehicleId`='453' –ø–æ–∫–∞ —É–±—Ä–∞–ª
--- —Å–ø–µ–ª–ª 66529 –º–æ–∂–µ—Ç –±—ã—Ç—å –∫—Ä–∏–≤–æ–π
+-- ÌÂÔÓÌˇÚÌÓ ÔÓ˜ÂÏÛ `VehicleId`='453' ÔÓÍ‡ Û·‡Î
+-- ÒÔÂÎÎ 66529 ÏÓÊÂÚ ·˚Ú¸ ÍË‚ÓÈ
 UPDATE `creature_template` SET `spell1`=66529 WHERE `entry` =34935;
 UPDATE `creature_template` SET `spell1`=68825 WHERE `entry` =35427;
 
 -- Keep Cannon
 -- http://www.wowhead.com/npc=34944
--- –Ω–µ–ø–æ–Ω—è—Ç–Ω–æ –ø–æ—á–µ–º—É `VehicleId`=160 –ø–æ–∫–∞ —É–±—Ä–∞–ª
+-- ÌÂÔÓÌˇÚÌÓ ÔÓ˜ÂÏÛ `VehicleId`=160 ÔÓÍ‡ Û·‡Î
 UPDATE `creature_template` SET `spell1`=68170,`spell2`='66541' WHERE `entry` =34944;
 UPDATE `creature_template` SET `spell1`=67452,`spell2`='68169' WHERE `entry` =35429;
 
 -- Catapult
 -- http://www.wowhead.com/npc=34793
--- `VehicleId`=438 —É–±—Ä–∞–ª
--- –Ω–∞ –≤–æ–≤—Ö–µ–¥–µ –Ω–µ—Ç –≥–µ—Ä–æ–∏–∫ —Å–ø–µ–ª–æ–≤
+-- `VehicleId`=438 Û·‡Î
+-- Ì‡ ‚Ó‚ıÂ‰Â ÌÂÚ „ÂÓËÍ ÒÔÂÎÓ‚
 UPDATE `creature_template` SET `spell1`=66218,`spell2`=66296 WHERE `entry`=34793;
 UPDATE `creature_template` SET `spell1`=66218,`spell2`=66296 WHERE `entry`=35413;
 
 -- Demolisher
 -- http://www.wowhead.com/npc=34775
--- —É–±—Ä–∞–ª `VehicleId`='509'
+-- Û·‡Î `VehicleId`='509'
 UPDATE `creature_template` SET `spell1`='67440',`spell2`='67441' WHERE `entry` =34775;
 UPDATE `creature_template` SET `spell1`='68068',`spell2`='67442' WHERE `entry` =35415;
 
 -- Siege Engine
 -- http://www.wowhead.com/npc=34776
--- `VehicleId`=447 —É–±—Ä–∞–ª
+-- `VehicleId`=447 Û·‡Î
 UPDATE `creature_template` SET `spell1`=67796,`spell2`=67797 WHERE `entry`=34776;
 UPDATE `creature_template` SET `spell1`=67816,`spell2`=69502 WHERE `entry`=35431;
 
 -- Siege Engine
 -- http://www.wowhead.com/npc=35069
--- `VehicleId`=436, —É–±—Ä–∞–ª 
+-- `VehicleId`=436, Û·‡Î 
 UPDATE `creature_template` SET `spell1`=67796,`spell2`=67797 WHERE `entry`=35069;
 UPDATE `creature_template` SET `spell1`=67816,`spell2`=69502 WHERE `entry`=35433;
 
 -- Glaive Thrower
 -- http://www.wowhead.com/npc=34802
--- `VehicleId`=447 —É–±—Ä–∞–ª
+-- `VehicleId`=447 Û·‡Î
 UPDATE `creature_template` SET `spell1`=66456,`spell2`=67195 WHERE `entry`=34802;
 UPDATE `creature_template` SET `spell1`=68827,`spell2`=69515 WHERE `entry`=35419;
 
 -- Glaive Thrower
 -- http://www.wowhead.com/npc=35273
--- `VehicleId`=447, —É–±—Ä–∞–ª
+-- `VehicleId`=447, Û·‡Î
 UPDATE `creature_template` SET `spell1`=67034,`spell2`=67195 WHERE `entry`=35273;
 UPDATE `creature_template` SET `spell1`=68826,`spell2`=69515 WHERE `entry`=35421;
 
 -- Flame Turret
 -- http://www.wowhead.com/npc=34778
--- –Ω–µ—Ç –≥–µ—Ä–æ–∏–∫ —Å–ø–µ–ª–∞
+-- ÌÂÚ „ÂÓËÍ ÒÔÂÎ‡
 UPDATE `creature_template` SET `spell1`='68832' WHERE `entry` =34778;
 UPDATE `creature_template` SET `spell1`='68832' WHERE `entry` =35417;
 
 -- Flame Turret
 -- http://www.wowhead.com/npc=36356
--- –Ω–µ—Ç –≥–µ—Ä–æ–∏–∫ —Å–ø–µ–ª–∞
+-- ÌÂÚ „ÂÓËÍ ÒÔÂÎ‡
 UPDATE `creature_template` SET `spell1`='68832' WHERE `entry` =36356;
 UPDATE `creature_template` SET `spell1`='68832' WHERE `entry` =36358;
 
 -- Siege Turret
 -- http://www.wowhead.com/npc=34777
--- –Ω–µ—Ç –≥–µ—Ä–æ–∏–∫ —Å–ø–µ–ª–∞
+-- ÌÂÚ „ÂÓËÍ ÒÔÂÎ‡
 UPDATE `creature_template` SET `spell1`=67462,`spell2`=69505 WHERE `entry`=34777;
 UPDATE `creature_template` SET `spell1`=67462,`spell2`=69505 WHERE `entry`=35436;
 
 -- Siege Turret
 -- http://www.wowhead.com/npc=36355
--- –Ω–µ—Ç –≥–µ—Ä–æ–∏–∫ —Å–ø–µ–ª–∞
+-- ÌÂÚ „ÂÓËÍ ÒÔÂÎ‡
 UPDATE `creature_template` SET `spell1`=67462,`spell2`=69505 WHERE `entry`=36355;
 UPDATE `creature_template` SET `spell1`=67462,`spell2`=69505 WHERE `entry`=36357;
 
@@ -193,3 +193,6 @@ INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `modelid`
 (250182, 23472, 628, 3, 1, 0, 0, 324.262, -745.282, 49.4923, 1.55901, 300, 0, 0, 4120, 0, 0, 0),
 (250180, 23472, 628, 3, 1, 0, 0, 311.937, -918.894, 48.6856, 4.76736, 300, 0, 0, 4120, 0, 0, 0),
 (250186, 23472, 628, 3, 1, 0, 0, 430.61, -857.491, 48.198, 0.074609, 300, 0, 0, 4120, 0, 0, 0);
+
+-- Fix Exploit Isle Of conquest 
+UPDATE creature_template SET `ScriptName`='bosses_isle_of_conquest' WHERE `entry` IN (34924,34922);

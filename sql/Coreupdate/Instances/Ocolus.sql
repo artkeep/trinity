@@ -1,4 +1,4 @@
-﻿-- Ocolus
+-- Ocolus
 --Ruby drake
 UPDATE `creature_template` SET `mindmg` = 422, `maxdmg` = 586, `attackpower` = 642, `dynamicflags` = 8, `minrangedmg` = 345, `maxrangedmg` = 509, `rangedattackpower` = 103, `spell1` = 50232, `spell2` = 50248, `spell3` = 50240, `spell4` =  50253, `spell5` = 53112, `VehicleId` = 70 WHERE `entry` = 27756;
 -- Amber Drake
@@ -77,3 +77,14 @@ INSERT INTO creature_onkill_reputation (creature_id,RewOnKillRepFaction1,RewOnKi
 (27642,1037,1052,7,0,5,7,0,5,1),
 (28153,1037,1052,7,0,5,7,0,5,1),
 (28236,1037,1052,7,0,25,7,0,25,1);
+
+-- Nexus
+UPDATE `creature_template` SET `flags_extra` = 0 WHERE `entry` = 26918;
+
+-- Oculus
+UPDATE gameobject_template SET ScriptName="oculus_teleporter" WHERE entry in (188715, 189985);
+-- dragon spells
+update creature_template set spell1 = 50328, spell2 = 50341, spell3 = 50344, `InhabitType` = 5 where entry = 27692;
+update creature_template set spell1 = 50232, spell2 = 50248, spell3 = 50240, spell4 = 50253, `InhabitType` = 5 where entry = 27756;
+update creature_template set spell1 = 49840, spell2 = 49838, spell3 = 49592, `InhabitType` = 5 where entry = 27755;
+UPDATE `creature_template` SET `npcflag` = 1 WHERE `entry` = 27659;

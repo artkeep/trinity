@@ -1665,8 +1665,8 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
             {
                 case 44544: // Fingers of Frost
                 {
-                    int32 key = (aurApp->GetBase()->GetApplyTime() & 0x7FFFFFFF);
-
+                    int32 key = int32(uint32(uint32(aurApp->GetBase()->GetApplyTime()) & uint32(0x7FFFFFFF)));
+ 
                     // See if we already have the indicator aura. If not, create one.
                     if (Aura * aura = target->GetAura(74396))
                     {

@@ -7948,8 +7948,8 @@ bool Unit::HandleAuraProc(Unit * pVictim, uint32 damage, Aura * triggeredByAura,
                 {
                     *handled = true;
 
-                    int32 key = (triggeredByAura->GetApplyTime() & 0x7FFFFFFF);
-
+                    int32 key = int32(uint32(uint32(triggeredByAura->GetApplyTime()) & uint32(0x7FFFFFFF)));
+ 
                     if (Aura * aura = GetAura(74396))
                         if (aura->GetEffect(EFFECT_0)->GetAmount() == key)
                             if (aura->DropCharge())

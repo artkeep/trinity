@@ -260,6 +260,7 @@ enum eCreatures
     CREATURE_SINDRAGOSA              = 36853,
     CREATURE_ICE_TOMB                = 36980,
     CREATURE_RIMEFANG                = 37533,
+    CREATURE_ICY_BLAST               = 36731,
     CREATURE_SPINESTALKER            = 37534,
     CREATURE_LICH_KING               = 36597,
     CREATURE_TIRION_ICC              = 38995,

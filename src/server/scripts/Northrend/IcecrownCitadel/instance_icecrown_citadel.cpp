@@ -521,6 +521,16 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return 0;
             }
 
+            uint32 GetCompletedEncounterMask() const
+            {
+                uint32 mask = 0;
+                for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
+                    if (GetBossState(i) == DONE)
+                        mask |= 1 << i;
+
+                return mask;
+            }
+
             void SetData(uint32 type, uint32 data)
             {
                 switch(type)
@@ -638,12 +648,12 @@ class instance_icecrown_citadel : public InstanceMapScript
                             }
                             else
                             {
-                                HandleGameObject(uiOrangeMonsterDoor, true);
                                 if (GameObject* go = instance->GetGameObject(uiProfDoorOrange))
                                     HandleGameObject(uiProfDoorOrange, true, go);
                             }
                             HandleGameObject(uiOrangePipe, true);
                             HandleGameObject(uiGasValve, true);
+                            HandleGameObject(uiOrangeMonsterDoor, true);
                         }
                         if(data == NOT_STARTED)
                         {
@@ -674,12 +684,12 @@ class instance_icecrown_citadel : public InstanceMapScript
                             }
                             else
                             {
-                                HandleGameObject(uiGreenMonsterDoor, true);
                                 if (GameObject* go = instance->GetGameObject(uiProfDoorGreen))
                                     HandleGameObject(uiProfDoorGreen, false, go);
                             }
                             HandleGameObject(uiGreenPipe, true);
                             HandleGameObject(uiOozeValve, true);
+                            HandleGameObject(uiGreenMonsterDoor, true);
                         }
                         if(data == NOT_STARTED)
                         {

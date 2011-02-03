@@ -5885,7 +5885,7 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('wg timer', '3', 'Syntax: .wg timer $minutes\r\nChange the current timer. Min value = 1, Max value 60 (Wartime), 1440 (Not Wartime)');
 
 /* WG scriptname */
-DELETE FROM `outdoorpvp_template` WHERE TypeId=7;
+DELETE FROM `outdoorpvp_template` WHERE `ScriptName`='outdoorpvp_wg';
 INSERT INTO `outdoorpvp_template` (`TypeId`, `ScriptName`, `comment`) VALUES 
 ('8', 'outdoorpvp_wg', 'Wintergrasp');
 
@@ -6834,3 +6834,6 @@ UPDATE `creature` SET `position_x` = 4430, `position_y` = 2506, `position_z` = 2
 -- INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `modelid`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `spawndist`, `currentwaypoint`, `curhealth`, `curmana`, `DeathState`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`) VALUES('115557','37533','631','15','1','27982','0','4524.07','2394.83','217.802','2.66691','7200','0','0','3235440','41690','0','2','0','0','0');
 -- INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `modelid`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `spawndist`, `currentwaypoint`, `curhealth`, `curmana`, `DeathState`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`) VALUES('115556','37534','631','15','1','27982','0','4490.85','2544.37','217.248','1.32662','7200','0','0','3235440','41690','0','2','0','0','0');
 UPDATE `creature_template` SET `ScriptName` = 'npc_icc_frostwing_mob' WHERE `entry` IN (37531, 37532);
+UPDATE `creature_template` SET `ScriptName` = 'npc_icc_icy_blast' WHERE `entry` = 36731;
+DELETE FROM `spell_script_names` WHERE `spell_id` = 71376;
+INSERT INTO `spell_script_names` VALUES (71376,'spell_icc_icy_blast');

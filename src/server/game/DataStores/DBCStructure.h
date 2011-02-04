@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef TRINITY_DBCSTRUCTURE_H
@@ -530,8 +528,6 @@ struct AreaTableEntry
     {
         if (mapid == 609)
             return true;
-        if (zone == 4395)
-            return true;
         return (flags & AREA_FLAG_SANCTUARY);
     }
 };
@@ -845,18 +841,7 @@ struct FactionEntry
     char*       name[16];                                   // 23-38    m_name_lang
                                                             // 39 string flags
     //char*     description[16];                            // 40-55    m_description_lang
-
                                                             // 56 string flags
-    int GetIndexFitTo(uint32 raceMask, uint32 classMask) const
-    {
-        for (int i = 0; i < 4; ++i)
-        {
-            if ((BaseRepRaceMask[i] == 0 || (BaseRepRaceMask[i] & raceMask)) &&
-                (BaseRepClassMask[i] == 0 || (BaseRepClassMask[i] & classMask)))
-                return i;
-        }
-        return -1;
-    }
 };
 
 #define MAX_FACTION_RELATIONS 4
@@ -954,9 +939,6 @@ struct GlyphSlotEntry
 // All Gt* DBC store data for 100 levels, some by 100 per class/race
 #define GT_MAX_LEVEL    100
 
-// gtOCTClassCombatRatingScalar.dbc stores data for 32 ratings, look at MAX_COMBAT_RATING for real used amount
-#define GT_MAX_RATING   32
-
 struct GtBarberShopCostBaseEntry
 {
     float   cost;
@@ -983,11 +965,6 @@ struct GtChanceToSpellCritBaseEntry
 };
 
 struct GtChanceToSpellCritEntry
-{
-    float    ratio;
-};
-
-struct GtOCTClassCombatRatingScalarEntry
 {
     float    ratio;
 };

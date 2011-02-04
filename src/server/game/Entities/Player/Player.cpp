@@ -5606,20 +5606,6 @@ float Player::GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const
     return 0.0f;
 }
 
-float Player::GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const
-{
-    switch (attType)
-    {
-        case BASE_ATTACK:
-            return GetUInt32Value(PLAYER_EXPERTISE) / 4.0f;
-        case OFF_ATTACK:
-            return GetUInt32Value(PLAYER_OFFHAND_EXPERTISE) / 4.0f;
-        default:
-            break;
-    }
-    return 0.0f;
-}
-
 float Player::OCTRegenHPPerSpirit()
 {
     uint8 level = getLevel();

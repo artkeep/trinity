@@ -59,9 +59,19 @@ int32 ReputationMgr::GetBaseReputation(FactionEntry const* factionEntry) const
 
     uint32 raceMask = m_player->getRaceMask();
     uint32 classMask = m_player->getClassMask();
-    int idx = factionEntry->GetIndexFitTo(raceMask, classMask);
+    for (int i=0; i < 4; i++)
+    {
+        if ((factionEntry->BaseRepRaceMask[i] & raceMask  ||
+            (factionEntry->BaseRepRaceMask[i] == 0  &&
+             factionEntry->BaseRepClassMask[i] != 0)) &&
+            (factionEntry->BaseRepClassMask[i] & classMask ||
+             factionEntry->BaseRepClassMask[i] == 0)
+)
+            return factionEntry->BaseRepValue[i];
+    }
 
-    return idx >= 0 ? factionEntry->BaseRepValue[idx] : 0;
+    // in faction.dbc exist factions with (RepListId >=0, listed in character reputation list) with all BaseRepRaceMask[i] == 0
+    return 0;
 }
 
 int32 ReputationMgr::GetReputation(FactionEntry const* factionEntry) const

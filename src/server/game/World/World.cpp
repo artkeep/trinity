@@ -1475,7 +1475,7 @@ void World::SetInitialWorldSettings()
     sGameEventMgr->LoadFromDB();                                 // TODOLEAK: add scopes
 
     sLog->outString("Loading Dungeon boss data...");
-    sLFGMgr->LoadDungeonEncounters();
+    sObjectMgr->LoadInstanceEncounters();
 
     sLog->outString("Loading LFG rewards...");
     sLFGMgr->LoadRewards();

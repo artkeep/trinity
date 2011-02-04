@@ -60,7 +60,18 @@ enum Spells
     SPELL_ASPHYXATION         = 71665,
     SPELL_FROST_AURA_ADD      = 71387,
     SPELL_FROST_BREATH_ADD    = 71386,
-    SPELL_ICE_BLAST           = 71376,
+    SPELL_ICY_BLAST           = 71376,
+
+    SPELL_ICY_BLAST_GROUND_10N= 69238,
+    SPELL_ICY_BLAST_GROUND_10H= 69628,
+    SPELL_ICY_BLAST_GROUND_25N= 71380,
+    SPELL_ICY_BLAST_GROUND_25H= 71381,
+
+    SPELL_ICY_BAST_IMPACT_10N = 71377,
+    SPELL_ICY_BAST_IMPACT_10H = 69233,
+    SPELL_ICY_BAST_IMPACT_25N = 69646,
+    SPELL_ICY_BAST_IMPACT_25H = 71377,
+
     SPELL_BELLOWING_ROAR      = 36922,
     SPELL_CLEAVE_ADD          = 40505,
     SPELL_TAIL_SWEEP          = 71369,
@@ -77,8 +88,8 @@ enum ePoints
 enum eEvents
 {
     //Rimefang
-    EVENT_FROST_BREATH,
-    EVENT_ICE_BLAST,
+    EVENT_FROST_BREATH = 1,
+    EVENT_ICY_BLAST,
     EVENT_FLY_PHASE,
     EVENT_GROUND_PHASE,
     //Spinestalker
@@ -91,6 +102,11 @@ enum ePhases
 {
 	PHASE_NORMAL				= 0,
 	PHASE_FLY					= 1
+};
+
+enum eSindragosaActions
+{
+    ACTION_ICY_BLAST_IMPACT = 1
 };
 /*
 Sindragosa casts spell 69846. Bomb flies down to the mob. When it lands, it explodes.
@@ -450,6 +466,8 @@ class npc_rimefang : public CreatureScript
                 creature->SetVisible(false);
                 creature->SetReactState(REACT_PASSIVE);
                 creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                creature->SetStandState(UNIT_STAND_STATE_SIT);
+                originalFaction = creature->getFaction();
             }
 
             void Reset()
@@ -474,6 +492,7 @@ class npc_rimefang : public CreatureScript
                         me->SetVisible(true);
                         me->SetReactState(REACT_AGGRESSIVE);
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                        me->SetStandState(UNIT_STAND_STATE_SIT);
                         break;
                     default:
                         ScriptedAI::DoAction(action);
@@ -486,12 +505,22 @@ class npc_rimefang : public CreatureScript
                 events.ScheduleEvent(EVENT_FROST_BREATH, 10000, 0, PHASE_NORMAL);
                 events.ScheduleEvent(EVENT_FLY_PHASE, 30000, 0, PHASE_NORMAL);
                 events.SetPhase(PHASE_NORMAL);
+                me->setFaction(1620); //Become everyone's enemy
                 me->SetStandState(UNIT_STAND_STATE_STAND);
                 DoCast(me, SPELL_FROST_AURA_ADD);
             }
-
+            void JustReachedHome()
+            {
+                me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                me->RemoveByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
+                me->SetFlying(false);
+                me->setFaction(originalFaction);
+                me->SetReactState(REACT_AGGRESSIVE);
+                UnsummonSpecificCreaturesNearby(me, CREATURE_ICY_BLAST, 80.0f);
+            }
             void JustDied(Unit* /*killer*/)
             {
+                me->setFaction(originalFaction);
                 if(instance)
                     if(instance->GetData(DATA_SINDRAGOSA_EVENT) != DONE)
                         instance->SetData(DATA_SPAWN, instance->GetData(DATA_SPAWN)+1);
@@ -519,18 +548,27 @@ class npc_rimefang : public CreatureScript
                     //    me->GetMotionMaster()->MoveTargetedHome();
                     //    break;
                     case POINT_PHASE_FLY:
-						events.ScheduleEvent(EVENT_ICE_BLAST, 100, 0, PHASE_FLY);
+						events.ScheduleEvent(EVENT_ICY_BLAST, 100, 0, PHASE_FLY);
 						events.ScheduleEvent(EVENT_GROUND_PHASE, 15000, 0, PHASE_FLY);
                         break;
                     case POINT_PHASE_NORMAL:
-						me->SetFlying(false);
-						SetCombatMovement(true);
-						me->SetReactState(REACT_AGGRESSIVE);
-						me->SetInCombatWithZone();
+                        me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                        me->RemoveByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
+                        me->SetFlying(false);
+                        me->SetReactState(REACT_AGGRESSIVE);
                         if (Unit *victim = me->SelectVictim())
                             AttackStart(victim);
+
+
+      //                  me->RemoveByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
+						//me->SetFlying(false);
+						//SetCombatMovement(true);
+						//me->SetReactState(REACT_AGGRESSIVE);
+						//me->SetInCombatWithZone();
+      //                  if (Unit *victim = me->SelectVictim())
+      //                      AttackStart(victim);
                         events.ScheduleEvent(EVENT_FLY_PHASE, 50000, 0, PHASE_NORMAL);
-                        events.ScheduleEvent(EVENT_FROST_BREATH, 0, 0, PHASE_NORMAL);
+                        events.ScheduleEvent(EVENT_FROST_BREATH, 1000, 0, PHASE_NORMAL);
                         break;
                     default:
                         break;
@@ -554,19 +592,33 @@ class npc_rimefang : public CreatureScript
                             events.ScheduleEvent(EVENT_FROST_BREATH, 20000, 0, PHASE_NORMAL);
                             break;
 						//Only happens in flying phase
-                        case EVENT_ICE_BLAST:
-                            DoCast(me, SPELL_ICE_BLAST);
+                        case EVENT_ICY_BLAST:
+                            if(Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100.0f, true))
+                            {
+                                Position posBeacon;
+                                pTarget->GetRandomNearPosition(posBeacon, 5.0f);
+                                Unit *pBeacon = DoSummon(CREATURE_ICY_BLAST, posBeacon, 60000, TEMPSUMMON_TIMED_DESPAWN);
+                                DoCast(pBeacon, SPELL_ICY_BLAST);
+                            }
                             //Spam Ice blast while flying
-                            events.ScheduleEvent(EVENT_ICE_BLAST, 100, 0, PHASE_FLY);
+                            events.ScheduleEvent(EVENT_ICY_BLAST, 3000, 0, PHASE_FLY);
                             break;
                         case EVENT_FLY_PHASE:
 							events.Reset();
 							events.SetPhase(PHASE_FLY);
-							me->SetFlying(true);
-							SetCombatMovement(false);
-							me->SetReactState(REACT_PASSIVE);
-							me->AttackStop();
-							me->SetInCombatWithZone();
+                            DoStopAttack();
+                            me->SetReactState(REACT_PASSIVE);
+
+                            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                            me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
+                            me->SetFlying(true);
+
+                            //me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
+							//me->SetFlying(true);
+							//SetCombatMovement(false);
+							//me->SetReactState(REACT_PASSIVE);
+							//me->AttackStop();
+							//me->SetInCombatWithZone();
 							me->GetMotionMaster()->MovePoint(POINT_PHASE_FLY, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 28);
                             break;
 						case EVENT_GROUND_PHASE:
@@ -584,6 +636,7 @@ class npc_rimefang : public CreatureScript
         private:
             InstanceScript* instance;
             EventMap events;
+            uint32 originalFaction;
         };
 
         CreatureAI* GetAI(Creature* creature) const
@@ -605,6 +658,7 @@ class npc_spinestalker : public CreatureScript
                 creature->SetVisible(false);
                 creature->SetReactState(REACT_PASSIVE);
                 creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                creature->SetStandState(UNIT_STAND_STATE_SIT);
             }
 
             void Reset()
@@ -623,6 +677,7 @@ class npc_spinestalker : public CreatureScript
                         me->SetVisible(true);
                         me->SetReactState(REACT_AGGRESSIVE);
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                        me->SetStandState(UNIT_STAND_STATE_SIT);
                         //me->GetMotionMaster()->MovementExpired();
                         //me->GetMotionMaster()->Clear();
                         //me->SetDefaultMovementType(IDLE_MOTION_TYPE);
@@ -908,6 +963,89 @@ class npc_icc_frostwing_mob : public CreatureScript
         }
 };
 
+class npc_icc_icy_blast : public CreatureScript
+{
+    public:
+        npc_icc_icy_blast() : CreatureScript("npc_icc_icy_blast") { }
+
+        struct npc_icc_icy_blastAI : public ScriptedAI
+        {
+            npc_icc_icy_blastAI(Creature* pCreature) : ScriptedAI(pCreature)
+            {
+                pInstance = pCreature->GetInstanceScript();
+                bAlreadyHit = false;
+            }
+            void Reset()
+            {
+                me->CastSpell(me, 65686, true); //Just for visual aura
+            }
+            void DamageTaken(Unit* attacker, uint32& damage)
+            {
+                damage = 0;
+                me->SetHealth(me->GetMaxHealth());
+            }
+            void DoAction(const int32 action)
+            {
+                switch (action)
+                {
+                    case ACTION_ICY_BLAST_IMPACT:
+                        me->RemoveAurasDueToSpell(65686); //Just for visual aura
+                        DoCast(me, RAID_MODE<uint32>(SPELL_ICY_BLAST_GROUND_10N, SPELL_ICY_BLAST_GROUND_25N, SPELL_ICY_BLAST_GROUND_10H, SPELL_ICY_BLAST_GROUND_25H));
+                        break;
+                }
+            }
+            // Called when hit by a spell
+            void SpellHit(Unit*, const SpellEntry* sp) 
+            {
+                if (bAlreadyHit) 
+                    return;
+                if (!sp || sp->Id != SPELL_ICY_BLAST)
+                    return;
+                bAlreadyHit = true;
+                DoAction(ACTION_ICY_BLAST_IMPACT);
+            }
+        private:
+            InstanceScript *pInstance;
+            bool bAlreadyHit;
+        };
+        CreatureAI* GetAI(Creature* pCreature) const
+        {
+            return new npc_icc_icy_blastAI(pCreature);
+        }
+};
+class spell_icy_blast : public SpellScriptLoader
+{
+    public:
+        spell_icy_blast() : SpellScriptLoader("spell_icc_icy_blast") { }
+
+
+        class spell_icy_blast_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_icy_blast_SpellScript);
+
+            void HandleScript(SpellEffIndex effIndex)
+            {
+                uint32 effVal = uint32(GetEffectValue());
+                PreventHitDefaultEffect(effIndex);
+                if (!(GetHitUnit() && GetHitUnit()->isAlive() && GetHitUnit()->GetEntry() == CREATURE_ICY_BLAST))
+                    return;
+                if (Creature *pIcyBlast = GetHitUnit()->ToCreature())
+                    pIcyBlast->AI()->DoAction(ACTION_ICY_BLAST_IMPACT);
+            }
+
+            void Register()
+            {
+                OnEffect += SpellEffectFn(spell_icy_blast_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_TRIGGER_MISSILE);
+            }
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_icy_blast_SpellScript();
+        }
+};
+
+
 void AddSC_boss_sindragosa()
 {
     new boss_sindragosa();
@@ -919,5 +1057,7 @@ void AddSC_boss_sindragosa()
     new spell_sindragosa_unchained_magic();
     new spell_sindragosa_ice_tomb_effect();
     new spell_sindragosa_blistering_cold();
+    new spell_icy_blast();
     new npc_icc_frostwing_mob();
+    new npc_icc_icy_blast();
 }

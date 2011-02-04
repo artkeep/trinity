@@ -806,6 +806,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                         uiEncounter[11] = data;
                         break;
                     case DATA_SPAWN:
+                        uiEncounter[12] = data;
                         if(data >= 2)
                             Creature* sindragosa = instance->SummonCreature(CREATURE_SINDRAGOSA, SpawnLoc[0]);
                         break;

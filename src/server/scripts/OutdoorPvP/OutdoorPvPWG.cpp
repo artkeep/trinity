@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
  *
- * Patch supported by ChaosUA & TCRU community http://trinity-core.ru/
+ * Copyright (C) 2010 Myth Project <http://bitbucket.org/sun/myth-core/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,8 +59,6 @@ void _RespawnCreatureIfNeeded(Creature *cr, uint32 entry)
     if (cr)
     {
         cr->UpdateEntry(entry); // SetOriginalEntry as used before may lead to crash
-       if (cr->GetAreaId() == 4575)
-           cr->AI()->EnterEvadeMode();
         if (entry != cr->GetEntry() || !cr->isAlive())
             cr->Respawn(true);
         cr->SetVisible(true);
@@ -788,7 +786,6 @@ void OutdoorPvPWG::OnCreatureCreate(Creature *creature)
         }
         case CREATURE_QUESTGIVER:
             m_questgivers[creature->GetDBTableGUIDLow()] = creature;
-            creature->SetReactState(REACT_PASSIVE);
             break;
         case CREATURE_ENGINEER:
             for (OutdoorPvP::OPvPCapturePointMap::iterator itr = m_capturePoints.begin(); itr != m_capturePoints.end(); ++itr)
@@ -1044,8 +1041,7 @@ bool OutdoorPvPWG::UpdateCreatureInfo(Creature *creature)
             pMap = creature->GetMap();
             if (isWarTime())
             {
-				/* Uncomment if want to enable ressurect for both factions at graveyard
-                if (creature->GetAreaId() == 4575) // Select Fortress Spirit
+              /*  if (creature->GetAreaId() == 4575) // Select Fortress Spirit
                 {
                     FortressSpirit = creature;
                     if (getDefenderTeam() == TEAM_ALLIANCE) // Fortress Spirit Alliance
@@ -1072,10 +1068,6 @@ bool OutdoorPvPWG::UpdateCreatureInfo(Creature *creature)
                 creature->DisappearAndDie();
             }
             return false;
-       case CREATURE_QUESTGIVER:
-           if (creature)
-               creature->AI()->EnterEvadeMode();
-           return false;
         case CREATURE_GUARD:
         case CREATURE_SPECIAL:
         {
@@ -1111,8 +1103,6 @@ bool OutdoorPvPWG::UpdateQuestGiverPosition(uint32 guid, Creature *creature)
             creature->getHostileRefManager().deleteReferences();
         }
         creature->SetHomePosition(pos);
-       if (creature->GetEntry() != 30400 || creature->GetEntry() != 30499)
-           creature->SetReactState(REACT_AGGRESSIVE);
         creature->DestroyForNearbyPlayers();
         if (!creature->GetMap()->IsLoaded(pos.GetPositionX(), pos.GetPositionY()))
             creature->GetMap()->LoadGrid(pos.GetPositionX(), pos.GetPositionY());
@@ -1468,7 +1458,6 @@ bool OutdoorPvPWG::Update(uint32 diff)
                                     if (Driver && Driver->isAlive())
                                     {
                                         Creature* New = i->getSource()->SummonCreature(Old->GetEntry(), 5141.191406f, 2841.045410f, 408.703217f, 3.163321f, TEMPSUMMON_MANUAL_DESPAWN);
-                                        m_vehicles[TEAM_ALLIANCE].insert(New);
                                         New->SetPower(POWER_MANA, Old->GetPower(POWER_MANA));
                                         New->SetPower(POWER_RAGE, Old->GetPower(POWER_RAGE));
                                         New->SetPower(POWER_FOCUS, Old->GetPower(POWER_FOCUS));
@@ -1509,7 +1498,6 @@ bool OutdoorPvPWG::Update(uint32 diff)
                                     if (Driver && Driver->isAlive())
                                     {
                                         Creature* New = i->getSource()->SummonCreature(Old->GetEntry(), 5141.191406f, 2841.045410f, 408.703217f, 3.163321f, TEMPSUMMON_MANUAL_DESPAWN);
-                                        m_vehicles[TEAM_ALLIANCE].insert(New);
                                         New->SetPower(POWER_MANA, Old->GetPower(POWER_MANA));
                                         New->SetPower(POWER_RAGE, Old->GetPower(POWER_RAGE));
                                         New->SetPower(POWER_FOCUS, Old->GetPower(POWER_FOCUS));
@@ -1556,8 +1544,7 @@ bool OutdoorPvPWG::Update(uint32 diff)
                                     if (Driver && Driver->isAlive())
                                     {
                                         Creature* New = i->getSource()->SummonCreature(Old->GetEntry(), 5141.191406f, 2841.045410f, 408.703217f, 3.163321f, TEMPSUMMON_MANUAL_DESPAWN);
-                                        m_vehicles[TEAM_HORDE].insert(New);
-										New->SetPower(POWER_MANA, Old->GetPower(POWER_MANA));
+                                        New->SetPower(POWER_MANA, Old->GetPower(POWER_MANA));
                                         New->SetPower(POWER_RAGE, Old->GetPower(POWER_RAGE));
                                         New->SetPower(POWER_FOCUS, Old->GetPower(POWER_FOCUS));
                                         New->SetPower(POWER_ENERGY, Old->GetPower(POWER_ENERGY));
@@ -1597,8 +1584,7 @@ bool OutdoorPvPWG::Update(uint32 diff)
                                     if (Driver && Driver->isAlive())
                                     {
                                         Creature* New = i->getSource()->SummonCreature(Old->GetEntry(), 5141.191406f, 2841.045410f, 408.703217f, 3.163321f, TEMPSUMMON_MANUAL_DESPAWN);
-                                        m_vehicles[TEAM_HORDE].insert(New);
-										New->SetPower(POWER_MANA, Old->GetPower(POWER_MANA));
+                                        New->SetPower(POWER_MANA, Old->GetPower(POWER_MANA));
                                         New->SetPower(POWER_RAGE, Old->GetPower(POWER_RAGE));
                                         New->SetPower(POWER_FOCUS, Old->GetPower(POWER_FOCUS));
                                         New->SetPower(POWER_ENERGY, Old->GetPower(POWER_ENERGY));
@@ -1817,9 +1803,7 @@ void OutdoorPvPWG::StartBattle()
         }
     }
 
-	//Uncomment to tele Defenders inside Fortress
     //TeamCastSpell(getDefenderTeam(), SPELL_TELEPORT_FORTRESS);
-
     //Remove Essence of Wintergrasp to all players
     sWorld->setWorldState(WORLDSTATE_WINTERGRASP_CONTROLING_FACTION, TEAM_NEUTRAL);
     sWorld->UpdateAreaDependentAuras();

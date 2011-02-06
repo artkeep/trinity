@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Common.h"
@@ -374,8 +372,7 @@ uint32 Group::RemoveMember(const uint64 &guid, const RemoveMethod &method /* = G
         return m_memberSlots.size();
 
     // remove member and change leader (if need) only if strong more 2 members _before_ member remove (BG allow 1 member group)
-//    if (GetMembersCount() > (isBGGroup() ? 1u : 2u))
-    if (GetMembersCount() > ((isBGGroup() || isLFGGroup()) ? 1u : 2u)|| (method == 2 && GetMembersCount()>1))
+    if (GetMembersCount() > (isBGGroup() ? 1u : 2u))
     {
         bool leaderChanged = _removeMember(guid);
 
@@ -395,9 +392,7 @@ uint32 Group::RemoveMember(const uint64 &guid, const RemoveMethod &method /* = G
 
             //we already removed player from group and in player->GetGroup() is his original group!
             if (Group* group = player->GetGroup())
-            {
                 group->SendUpdate();
-            }
             else
             {
                 data.Initialize(SMSG_GROUP_LIST, 1+1+1+1+8+4+4+8);
@@ -433,7 +428,6 @@ void Group::ChangeLeader(const uint64 &guid)
     if (slot == m_memberSlots.end())
         return;
 
-    sScriptMgr->OnGroupChangeLeader(this, m_leaderGuid, guid);
     _setLeader(guid);
 
     WorldPacket data(SMSG_GROUP_SET_LEADER, slot->name.size()+1);
@@ -1111,7 +1105,7 @@ void Group::SendUpdate()
         data << uint8(citr->flags);
         data << uint8(citr->roles);
         if (isLFGGroup())
-        {            
+        {
             data << uint8(sLFGMgr->GetState(m_guid) == LFG_STATE_FINISHED_DUNGEON ? 2 : 0); // FIXME - Dungeon save status? 2 = done
             data << uint32(sLFGMgr->GetDungeon(m_guid));
         }
@@ -1326,6 +1320,8 @@ void Group::_setLeader(const uint64 &guid)
     member_witerator slot = _getMemberWSlot(guid);
     if (slot == m_memberSlots.end())
         return;
+
+    sScriptMgr->OnGroupChangeLeader(this, m_leaderGuid, guid);
 
     if (!isBGGroup())
     {

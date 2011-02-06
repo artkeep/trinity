@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Unit.h"
@@ -940,6 +938,9 @@ bool Guardian::UpdateStats(Stats stat)
     if (stat >= MAX_STATS)
         return false;
 
+    // value = ((base_value * base_pct) + total_value) * total_pct
+    float value  = GetTotalStatValue(stat);
+    ApplyStatBuffMod(stat, m_statFromOwner[stat], false);
     float ownersBonus = 0.0f;
 
     Unit *owner = GetOwner();
@@ -967,11 +968,15 @@ bool Guardian::UpdateStats(Stats stat)
         if (aurEff)
             mod += CalculatePctN(1.0f, aurEff->GetAmount());                                                    // Glyph of the Ghoul adds a flat value to the scale mod
         ownersBonus = float(owner->GetStat(stat)) * mod;
+        value += ownersBonus;
     }
     else if (stat == STAT_STAMINA)
     {
         if (owner->getClass() == CLASS_WARLOCK && isPet())
+        {
             ownersBonus = CalculatePctN(owner->GetStat(STAT_STAMINA), 75);
+            value += ownersBonus;
+        }
         else
         {
             mod = 0.45f;
@@ -988,13 +993,18 @@ bool Guardian::UpdateStats(Stats stat)
                 }
             }
             ownersBonus = float(owner->GetStat(stat)) * mod;
+            value += ownersBonus;
         }
     }
-    //warlock's and mage's pets gain 30% of owner's intellect
+                                                            //warlock's and mage's pets gain 30% of owner's intellect
     else if (stat == STAT_INTELLECT)
+    {
         if (owner->getClass() == CLASS_WARLOCK || owner->getClass() == CLASS_MAGE)
+        {
             ownersBonus = CalculatePctN(owner->GetStat(stat), 30);
-
+            value += ownersBonus;
+        }
+    }
 /*
     else if (stat == STAT_STRENGTH)
     {
@@ -1002,18 +1012,10 @@ bool Guardian::UpdateStats(Stats stat)
             value += float(owner->GetStat(stat)) * 0.3f;
     }
 */
-    UnitMods unitMod = UnitMods(UNIT_MOD_STAT_START + stat);
 
-    ApplyStatBuffMod(stat, m_statFromOwner[stat], false);
-    m_auraModifiersGroup[unitMod][TOTAL_VALUE] -= m_statFromOwner[stat];
-    m_statFromOwner[stat] = ownersBonus;
-    
-    ApplyStatBuffMod(stat, m_statFromOwner[stat], true);
-    m_auraModifiersGroup[unitMod][TOTAL_VALUE] += m_statFromOwner[stat];
-
-    // value = ((base_value * base_pct) + total_value) * total_pct
-    float value  = GetTotalStatValue(stat);
     SetStat(stat, int32(value));
+    m_statFromOwner[stat] = ownersBonus;
+    ApplyStatBuffMod(stat, m_statFromOwner[stat], true);
 
     switch (stat)
     {
@@ -1066,7 +1068,7 @@ void Guardian::UpdateArmor()
     UnitMods unitMod = UNIT_MOD_ARMOR;
 
     // hunter and warlock pets gain 35% of owner's armor value
-    if(isPet()&&!IsPetGhoul())
+    if (isPet()&&!IsPetGhoul())
         bonus_armor = float(CalculatePctN(m_owner->GetArmor(), 35));
 
     value  = GetModifierValue(unitMod, BASE_VALUE);

@@ -495,6 +495,7 @@ void AddSC_boss_lady_deathwhisper();
 void AddSC_boss_festergut();
 void AddSC_boss_saurfang();
 void AddSC_boss_blood_queen_lana_thel();
+void AddSC_gunship_battle();
 void AddSC_boss_baltharus();	//RubySanctum
 void AddSC_boss_halion();
 void AddSC_boss_ragefire();
@@ -1206,6 +1207,7 @@ void AddNorthrendScripts()
     AddSC_boss_festergut();
     AddSC_boss_saurfang();
     AddSC_boss_blood_queen_lana_thel();
+    AddSC_gunship_battle();
 	AddSC_boss_baltharus();	//RubySanctum
     AddSC_boss_halion();
     AddSC_boss_ragefire();

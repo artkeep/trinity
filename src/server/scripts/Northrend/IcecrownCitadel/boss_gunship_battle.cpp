@@ -19,3 +19,34 @@
 #include "ScriptPCH.h"
 #include "icecrown_citadel.h"
 #include "MapManager.h"
+
+#define START_EVENT "Mh, which Texts say him?"
+
+class gunship_battle : public TransportScript
+{
+};
+
+class npc_muradin_bronzebeard : public CreatureScript
+{
+    public:
+        npc_muradin_bronzebeard() : CreatureScript("npc_muradin_bronzebeard") { }
+
+        bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+        {
+            InstanceScript* pInstance = pCreature->GetInstanceScript();
+            if (pInstance && pInstance->GetBossState(DATA_GUNSHIP_BATTLE_EVENT) != DONE)
+            {
+                if (!pCreature->GetTransport())
+                    pPlayer->ADD_GOSSIP_ITEM(0, START_EVENT, 631, 1000);
+                pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+                return true;
+            }
+
+            return false;
+        }
+};
+
+void AddSC_gunship_battle()
+{
+    new npc_muradin_bronzebeard();
+}

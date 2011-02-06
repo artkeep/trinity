@@ -22,7 +22,7 @@
 
 const Position SpawnLoc[]=
 {
-    {4671.521f, 2481.815f, 343.365f, 3.166f} //spawn pos
+    {4571.521f, 2481.815f, 343.365f, 3.166f} //spawn pos
 };
 static const DoorData doorData[] =
 {
@@ -269,11 +269,18 @@ class instance_icecrown_citadel : public InstanceMapScript
                         uiTirion = creature->GetGUID();
                         break;
                     case CREATURE_FROSTWING_WHELP:
+                        if (uiEncounter[10] != DONE)
+                        {
+                            uiEncounter[12] = 0;
+                            creature->Respawn(true);
+                        }
                         if (creature->isAlive())
+                        {
                             if (creature->GetPositionY() < 2480.0f)
                                 ++uiFrostwingMobsRight;
                             else
                                 ++uiFrostwingMobsLeft;
+                        }
                         break;
                     case CREATURE_FROSTWARDEN_HANDLER:
                         if (creature->isAlive())
@@ -283,10 +290,22 @@ class instance_icecrown_citadel : public InstanceMapScript
                                 ++uiFrostwingMobsLeft;
                         break;
                     case CREATURE_RIMEFANG:
+                        if (uiEncounter[10] != DONE)
+                        {
+                            uiEncounter[12] = 0;
+                            creature->Respawn(true);
+                            creature->AI()->DoAction(ACTION_NOT_LANDED);
+                        }
                         uiRimefang = creature->GetGUID();
                         creature->SetReactState(REACT_PASSIVE);
                         break;
                     case CREATURE_SPINESTALKER:
+                        if (uiEncounter[10] != DONE)
+                        {
+                            uiEncounter[12] = 0;
+                            creature->Respawn(true);
+                            creature->AI()->DoAction(ACTION_NOT_LANDED);
+                        }
                         uiSpinestalker = creature->GetGUID();
                         creature->SetReactState(REACT_PASSIVE);
                         break;
@@ -561,8 +580,6 @@ class instance_icecrown_citadel : public InstanceMapScript
 
                             if (GameObject* MarrowgarTp = instance->GetGameObject(uiMarrowgarTp))
                                 MarrowgarTp->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
-
-						
 						}
                         if(data == IN_PROGRESS)
                             HandleGameObject(uiMarrowgarEntrance, false);
@@ -808,7 +825,8 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_SPAWN:
                         uiEncounter[12] = data;
                         if(data >= 2)
-                            Creature* sindragosa = instance->SummonCreature(CREATURE_SINDRAGOSA, SpawnLoc[0]);
+                            if (Creature* sindragosa = instance->SummonCreature(CREATURE_SINDRAGOSA, SpawnLoc[0]))
+                                sindragosa->AI()->DoAction(ACTION_LAND);
                         break;
                     case DATA_BONED_ACHIEVEMENT:
                         isBonedEligible = data ? true : false;

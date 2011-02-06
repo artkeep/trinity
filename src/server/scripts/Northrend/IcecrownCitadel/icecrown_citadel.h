@@ -102,7 +102,8 @@ enum ePutricideActions
 };
 enum eAdditionalActions
 {
-    ACTION_LAND = 100500
+    ACTION_LAND = 100,
+    ACTION_NOT_LANDED = 101
 };
 enum Data
 {
@@ -258,6 +259,8 @@ enum eCreatures
     CREATURE_COLUMN_OF_FROST         = 37918,
     CREATURE_COMBAT_TRIGGER          = 38752,
     CREATURE_SINDRAGOSA              = 36853,
+    CREATURE_FROST_BOMB_LANDING_MARK = 37186,
+    CREATURE_FROST_BOMB_EXPLOSION_VISUAL = 34149,
     CREATURE_ICE_TOMB                = 36980,
     CREATURE_RIMEFANG                = 37533,
     CREATURE_ICY_BLAST               = 36731,

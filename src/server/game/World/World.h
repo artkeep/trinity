@@ -66,7 +66,6 @@ enum ShutdownExitCode
     SHUTDOWN_EXIT_CODE = 0,
     ERROR_EXIT_CODE    = 1,
     RESTART_EXIT_CODE  = 2,
-    CRASH_EXIT_CODE    = 3,
 };
 
 /// Timers for different object refresh rates

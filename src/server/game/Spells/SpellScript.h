@@ -160,7 +160,7 @@ class SpellScript : public _SpellScript
             private:
                 SpellHitFnType pHitHandlerScript;
         };
-
+		
         class UnitTargetHandler : public _SpellScript::EffectHook
         {
             public:
@@ -176,8 +176,8 @@ class SpellScript : public _SpellScript
         #define SPELLSCRIPT_FUNCTION_CAST_DEFINES(CLASSNAME) \
         class EffectHandlerFunction : public SpellScript::EffectHandler { public: EffectHandlerFunction(SpellEffectFnType _pEffectHandlerScript,uint8 _effIndex, uint16 _effName) : SpellScript::EffectHandler((SpellScript::SpellEffectFnType)_pEffectHandlerScript, _effIndex, _effName) {} }; \
         class HitHandlerFunction : public SpellScript::HitHandler { public: HitHandlerFunction(SpellHitFnType _pHitHandlerScript) : SpellScript::HitHandler((SpellScript::SpellHitFnType)_pHitHandlerScript) {} }; \
-        class UnitTargetHandlerFunction : public SpellScript::UnitTargetHandler { public: UnitTargetHandlerFunction(SpellUnitTargetFnType _pUnitTargetHandlerScript, uint8 _effIndex, uint16 _targetType) : SpellScript::UnitTargetHandler((SpellScript::SpellUnitTargetFnType)_pUnitTargetHandlerScript, _effIndex, _targetType) {} }; \
-
+		class UnitTargetHandlerFunction : public SpellScript::UnitTargetHandler { public: UnitTargetHandlerFunction(SpellUnitTargetFnType _pUnitTargetHandlerScript, uint8 _effIndex, uint16 _targetType) : SpellScript::UnitTargetHandler((SpellScript::SpellUnitTargetFnType)_pUnitTargetHandlerScript, _effIndex, _targetType) {} }; \
+		
         #define PrepareSpellScript(CLASSNAME) SPELLSCRIPT_FUNCTION_TYPE_DEFINES(CLASSNAME) SPELLSCRIPT_FUNCTION_CAST_DEFINES(CLASSNAME)
     public:
         bool _Validate(SpellEntry const * entry);
@@ -186,11 +186,9 @@ class SpellScript : public _SpellScript
         bool _IsEffectPrevented(SpellEffIndex effIndex) { return m_hitPreventEffectMask & (1<<effIndex); }
         bool _IsDefaultEffectPrevented(SpellEffIndex effIndex) { return m_hitPreventDefaultEffectMask & (1<<effIndex); }
         void _PrepareScriptCall(SpellScriptHookType hookType);
-
-	void _FinishScriptCall();
-        bool IsInHitPhase() { return (m_currentScriptState >= HOOK_SPELL_HIT_START && m_currentScriptState < HOOK_SPELL_HIT_END); };
-        bool IsInEffectHook() { return (m_currentScriptState == SPELL_SCRIPT_HOOK_EFFECT); };
-
+		void _FinishScriptCall();
+        bool IsInHitPhase() { return (m_currentScriptState >= HOOK_SPELL_HIT_START && m_currentScriptState < HOOK_SPELL_HIT_END); }
+        bool IsInEffectHook() { return (m_currentScriptState == SPELL_SCRIPT_HOOK_EFFECT); }
     private:
         Spell * m_spell;
         uint8 m_hitPreventEffectMask;

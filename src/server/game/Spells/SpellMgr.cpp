@@ -2353,7 +2353,7 @@ void SpellMgr::LoadPetDefaultSpells()
         }
     }
 
-
+    
     sLog->outString(">> Loaded %u summonable creature templates in %u ms", countCreature, GetMSTimeDiffToNow(oldMSTime));
     sLog->outString();
 }
@@ -3587,16 +3587,9 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_INITIAL_AGGRO;
             count++;
             break;
-        case 61407: // Energize Cores
-        case 62136: // Energize Cores
-        case 54069: // Energize Cores
+        case 54069: // Energize Cores 
         case 56251: // Energize Cores
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENTRY_SRC;
-            count++;
-            break;
-        case 50785: // Energize Cores
-        case 59372: // Energize Cores
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENEMY_SRC;
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CONE_ENTRY;
             count++;
             break;
         // Bind
@@ -3682,16 +3675,6 @@ void SpellMgr::LoadSpellCustomAttr()
         case 27820:                             // Mana Detonation
         //case 28062: case 39090:                 // Positive/Negative Charge
         //case 28085: case 39093:
-
-        case 69782: case 69796:                 // Ooze Flood
-        case 69798: case 69801:                 // Ooze Flood
-        case 69538: case 69553: case 69610:     // Ooze Combine
-        case 71447: case 71481:                 // Bloodbolt Splash
-        case 71482: case 71483:                 // Bloodbolt Splash
-        case 71390:                             // Pact of the Darkfallen
-            mSpellCustomAttr[i] |= SPELL_ATTR0_CU_EXCLUDE_SELF;
-            count++;
-            break;
         case 44978: case 45001: case 45002:     // Wild Magic
         case 45004: case 45006: case 45010:     // Wild Magic
         case 31347: // Doom
@@ -3743,7 +3726,8 @@ void SpellMgr::LoadSpellCustomAttr()
        	case 62661: // Searing Flames
         case 61915: // Lightning Whirl 10
 	    case 63483: // Lightning Whirl 25
-		    spellInfo->InterruptFlags = 47;
+	    case 55098: // Transformation
+                    spellInfo->InterruptFlags = 47;
 		    count++;
 		    break;
         case 38310: // Multi-Shot
@@ -3977,6 +3961,10 @@ void SpellMgr::LoadSpellCustomAttr()
         case 70860: // Frozen Throne Teleport
         case 70861: // Sindragosa's Lair Teleport
             spellInfo->EffectImplicitTargetA[0] = TARGET_DST_DB;
+            count++;
+            break;
+        case 33206: // Pain Suppression
+            spellInfo->AttributesEx5 &= ~SPELL_ATTR5_USABLE_WHILE_STUNNED;
             count++;
             break;
         case 53241: // Marked for Death (Rank 1)

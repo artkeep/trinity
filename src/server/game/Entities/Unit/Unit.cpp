@@ -152,7 +152,8 @@ m_vehicleKit(NULL), m_unitTypeMask(UNIT_MASK_NONE), m_HostileRefManager(this)
         m_auraModifiersGroup[i][TOTAL_VALUE] = 0.0f;
         m_auraModifiersGroup[i][TOTAL_PCT] = 1.0f;
     }
-
+    // implement 50% base damage from offhand
+    m_auraModifiersGroup[UNIT_MOD_DAMAGE_OFFHAND][TOTAL_PCT] = 0.5f;
     for (uint8 i = 0; i < MAX_ATTACK; ++i)
     {
         m_weaponDamage[i][MINDAMAGE] = BASE_MINDAMAGE;

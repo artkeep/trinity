@@ -3621,6 +3621,13 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->MaxAffectedTargets = 1;
             count++;
             break;
+        // Icecrown Citadel: Sindragosa's Unchained Magic
+        case 69762:
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
+            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
+            spellInfo->MaxAffectedTargets = 1;
+            count++;
+            break;
         // Bloodlust
         case 2825:
             spellInfo->excludeCasterAuraSpell = 57724; // Sated

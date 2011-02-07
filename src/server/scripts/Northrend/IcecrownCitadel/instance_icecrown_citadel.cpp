@@ -118,6 +118,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 uiSindragossaTransporter = 0;
                 uiSindragosaDoor1       = 0;
                 uiSindragosaDoor2       = 0;
+                uiSindragosaIceWall     = 0;
                 uiFirstTp               = 0;
                 uiMarrowgarTp           = 0;
                 uiFlightWarTp           = 0;
@@ -269,11 +270,6 @@ class instance_icecrown_citadel : public InstanceMapScript
                         uiTirion = creature->GetGUID();
                         break;
                     case CREATURE_FROSTWING_WHELP:
-                        if (uiEncounter[10] != DONE)
-                        {
-                            uiEncounter[12] = 0;
-                            creature->Respawn(true);
-                        }
                         if (creature->isAlive())
                         {
                             if (creature->GetPositionY() < 2480.0f)
@@ -284,30 +280,21 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case CREATURE_FROSTWARDEN_HANDLER:
                         if (creature->isAlive())
+                        {
                             if (creature->GetPositionY() < 2480.0f)
                                 ++uiFrostwingMobsRight;
                             else
                                 ++uiFrostwingMobsLeft;
+                        }
                         break;
                     case CREATURE_RIMEFANG:
-                        if (uiEncounter[10] != DONE)
-                        {
-                            uiEncounter[12] = 0;
-                            creature->Respawn(true);
-                            creature->AI()->DoAction(ACTION_NOT_LANDED);
-                        }
+                        if(uiEncounter[12] >= 2)
+                            if (Creature* sindragosa = instance->SummonCreature(CREATURE_SINDRAGOSA, SpawnLoc[0]))
+                                sindragosa->AI()->DoAction(ACTION_LAND);
                         uiRimefang = creature->GetGUID();
-                        creature->SetReactState(REACT_PASSIVE);
                         break;
                     case CREATURE_SPINESTALKER:
-                        if (uiEncounter[10] != DONE)
-                        {
-                            uiEncounter[12] = 0;
-                            creature->Respawn(true);
-                            creature->AI()->DoAction(ACTION_NOT_LANDED);
-                        }
                         uiSpinestalker = creature->GetGUID();
-                        creature->SetReactState(REACT_PASSIVE);
                         break;
 
                 }
@@ -376,6 +363,9 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case SINDRAGOSSA_DOOR_2:
                         uiSindragosaDoor2 = go->GetGUID();
+                        break;
+                    case GO_SINDRAGOSA_ICE_WALL:
+                        uiSindragosaIceWall = go->GetGUID();
                         break;
                     case PROF_COLLISION_DOOR:
                         uiProfCollisionDoor = go->GetGUID();
@@ -812,7 +802,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                         uiEncounter[9] = data;
                         break;
                     case DATA_SINDRAGOSA_EVENT:
-                        if(data == DONE)
+                        if (data == IN_PROGRESS)
+                            HandleGameObject(uiSindragosaIceWall, false);
+                        else
+                            HandleGameObject(uiSindragosaIceWall, true);
+                        if (data == DONE)
                         {
                             HandleGameObject(uiSindragosaDoor1, true);
                             HandleGameObject(uiSindragosaDoor2, true);
@@ -824,7 +818,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case DATA_SPAWN:
                         uiEncounter[12] = data;
-                        if(data >= 2)
+                        if(uiEncounter[12] >= 2)
                             if (Creature* sindragosa = instance->SummonCreature(CREATURE_SINDRAGOSA, SpawnLoc[0]))
                                 sindragosa->AI()->DoAction(ACTION_LAND);
                         break;
@@ -910,7 +904,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 std::ostringstream saveStream;
                 saveStream << "I C" << uiEncounter[0] << " " << uiEncounter[1] << " " << uiEncounter[2] << " " << uiEncounter[3]
                 << " " << uiEncounter[4] << " " << uiEncounter[5] << " " << uiEncounter[6] << " " << uiEncounter[7] << " " << uiEncounter[8]
-                << " " << uiEncounter[9] << " " << uiEncounter[10] << " " << uiEncounter[11];
+                << " " << uiEncounter[9] << " " << uiEncounter[10] << " " << uiEncounter[11] << " " << uiEncounter[12];
 
                 OUT_SAVE_INST_DATA_COMPLETE;
                 return saveStream.str();
@@ -972,10 +966,10 @@ class instance_icecrown_citadel : public InstanceMapScript
                 OUT_LOAD_INST_DATA(in);
 
                 char dataHead1, dataHead2;
-                uint32 data0,data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11;
+                uint32 data0,data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12;
 
                 std::istringstream loadStream(in);
-                loadStream >> dataHead1 >> dataHead2 >> data0 >> data1 >> data2 >> data3 >> data4 >> data5 >> data6 >> data7 >> data8 >> data9 >> data10 >> data11;
+                loadStream >> dataHead1 >> dataHead2 >> data0 >> data1 >> data2 >> data3 >> data4 >> data5 >> data6 >> data7 >> data8 >> data9 >> data10 >> data11 >> data12;
 
                 if (dataHead1 == 'I' && dataHead2 == 'C')
                 {
@@ -991,7 +985,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                     uiEncounter[9] = data9;
                     uiEncounter[10] = data10;
                     uiEncounter[11] = data11;
-
+                    uiEncounter[12] = data12;
                     for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                     {
                         loadStream >> uiEncounter[i];
@@ -1062,6 +1056,7 @@ class instance_icecrown_citadel : public InstanceMapScript
             uint64 uiDreamwalkerCache;
             uint64 uiSindragosaDoor1;
             uint64 uiSindragosaDoor2;
+            uint64 uiSindragosaIceWall;
             uint64 uiFirstTp;
             uint64 uiMarrowgarTp;
             uint64 uiFlightWarTp;
@@ -1114,6 +1109,23 @@ void UnsummonSpecificCreaturesNearby(Creature *ref, uint32 entry, float radius)
             summon->DespawnOrUnsummon();
     }
 }
+uint32 GetPhase(const EventMap &em)
+{
+    switch (em.GetPhaseMask())
+    {
+        case 0x01: return 0;
+        case 0x02: return 1;
+        case 0x04: return 2;
+        case 0x08: return 3;
+        case 0x10: return 4;
+        case 0x20: return 5;
+        case 0x40: return 6;
+        case 0x80: return 7;
+        default:
+            return 0;
+    }
+}
+
 void AddSC_instance_icecrown_citadel()
 {
     new instance_icecrown_citadel();

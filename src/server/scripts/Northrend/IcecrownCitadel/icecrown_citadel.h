@@ -387,8 +387,10 @@ enum eGameobjects_TrinityCore
     // Sindragosa
     GO_SINDRAGOSA_ENTRANCE_DOOR             = 201373,
     GO_SINDRAGOSA_SHORTCUT_ENTRANCE_DOOR    = 201369,
-    GO_SINDRAGOSA_SHORTCUT_EXIT_DOOR        = 201379
+    GO_SINDRAGOSA_SHORTCUT_EXIT_DOOR        = 201379,
+    GO_SINDRAGOSA_ICE_WALL                  = 201385
 };
 void DespawnAllCreaturesAround(Creature *ref, uint32 entry);
 void UnsummonSpecificCreaturesNearby(Creature *ref, uint32 entry, float radius);
+uint32 GetPhase(const EventMap &em);
 #endif

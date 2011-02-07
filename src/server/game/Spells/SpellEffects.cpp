@@ -805,6 +805,15 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
         {
             switch (m_spellInfo->Id)
             {
+                case 54015: //Set Oracle Faction Honored
+                case 53487: //Set Wolvar Faction Honored
+                {
+                    if (effIndex==0)
+                    {
+                            unitTarget->ToPlayer()->SetReputation(m_spellInfo->EffectBasePoints[0]+1,21000);
+                    }
+                    return;
+                }
                 case 8593:                                  // Symbol of life (restore creature to life)
                 case 31225:                                 // Shimmering Vessel (restore creature to life)
                 {
@@ -1832,7 +1841,7 @@ void Spell::EffectForceCast(SpellEffIndex effIndex)
     }
 
     Unit * caster = GetTriggeredSpellCaster(spellInfo, m_caster, unitTarget);
-
+ 
     caster->CastSpell(unitTarget, spellInfo, true, NULL, NULL, m_originalCasterGUID);
 }
 
@@ -2275,17 +2284,6 @@ void Spell::EffectTeleportUnits(SpellEffIndex /*effIndex*/)
             }
             return;
         }
-        case 29131:
-        {
-            //Warrior T10(Tank) 4 items bonus
-            if (unitTarget->HasAura(70844))
-            {
-                int32 absorbtion = m_caster->GetMaxHealth();
-                absorbtion *= 0.20;
-                m_caster->CastCustomSpell(m_caster, 70845, &absorbtion, NULL, NULL, true);
-            }
-            break;
-        }
     }
 }
 
@@ -2306,6 +2304,17 @@ void Spell::EffectApplyAura(SpellEffIndex effIndex)
             {
                 int32 proc_effect = 15;
                 m_caster->CastCustomSpell(m_caster, 70721, & proc_effect, NULL, NULL, true);
+            }
+            break;
+        }
+        case 29131:
+        {
+            //Warrior T10(Tank) 4 items bonus
+            if (unitTarget->HasAura(70844))
+            {
+                int32 absorbtion = m_caster->GetMaxHealth();
+                absorbtion *= 0.20;
+                m_caster->CastCustomSpell(m_caster, 70845, &absorbtion, NULL, NULL, true);
             }
             break;
         }
@@ -2773,15 +2782,17 @@ void Spell::EffectPersistentAA(SpellEffIndex effIndex)
             delete dynObj;
             return;
         }
+        caster->AddDynObject(dynObj);
         dynObj->GetMap()->Add(dynObj);
 
         if (Aura * aura = Aura::TryCreate(m_spellInfo, dynObj, caster, &m_spellValue->EffectBasePoints[0]))
-        {
             m_spellAura = aura;
-            m_spellAura->_RegisterForTargets();
-        }
         else
+        {
+            ASSERT(false);
             return;
+        }
+        m_spellAura->_RegisterForTargets();
     }
     ASSERT(m_spellAura->GetDynobjOwner());
     m_spellAura->_ApplyEffectForTargets(effIndex);
@@ -2993,6 +3004,36 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
 
     uint32 lockId = 0;
     uint64 guid = 0;
+
+    // selection by spell family
+    switch (m_spellInfo->SpellFamilyName)	
+    {
+ 		
+        case SPELLFAMILY_GENERIC:	
+        {
+ 		
+            switch (m_spellInfo->Id)
+            {
+ 		
+                case 38790:
+                {
+ 		
+                    if (!m_caster || m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+ 		
+
+ 		
+                    m_caster->ToPlayer()->KilledMonsterCredit(22112,0);	
+                    return;
+ 		
+                    }
+ 		
+              }
+ 		
+         }
+ 		
+    }
+ 		
 
     // Get lockId
     if (gameObjTarget)
@@ -3613,10 +3654,14 @@ void Spell::EffectAddFarsight(SpellEffIndex effIndex)
     }
     dynObj->SetDuration(duration);
     dynObj->SetUInt32Value(DYNAMICOBJECT_BYTES, 0x80000002);
+    m_caster->AddDynObject(dynObj);
 
     dynObj->setActive(true);    //must before add to map to be put in world container
     dynObj->GetMap()->Add(dynObj); //grid will also be loaded
-    dynObj->SetCasterViewpoint();
+
+    // Need to update visibility of object for client to accept farsight guid
+    m_caster->ToPlayer()->SetViewpoint(dynObj, true);
+    //m_caster->ToPlayer()->UpdateVisibilityOf(dynObj);
 }
 
 void Spell::EffectUntrainTalents(SpellEffIndex /*effIndex*/)
@@ -4623,6 +4668,34 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
         {
             switch(m_spellInfo->Id)
             {
+                //Sunreaver Disguis
+                case 69672:
+                {
+                    if (unitTarget->GetTypeId() != TYPEID_PLAYER)
+                    return;
+
+                    if (unitTarget->ToPlayer()->getGender() == GENDER_FEMALE)
+                        unitTarget->CastSpell(unitTarget, 70973, false);
+                    else
+                        unitTarget->CastSpell(unitTarget, 70974, false);
+
+                    return;
+                        
+                }
+                //Silver Covenant Disguise
+                case 69673:
+                {
+                    if (unitTarget->GetTypeId() != TYPEID_PLAYER)
+                    return;
+
+                    if (unitTarget->ToPlayer()->getGender() == GENDER_FEMALE)
+                        unitTarget->CastSpell(unitTarget, 70971, false);
+                    else
+                        unitTarget->CastSpell(unitTarget, 70972, false);
+
+                    return;
+                        
+                }
                 //Teleport to Lake Wintergrasp
                 case 58622:
                 {
@@ -5153,7 +5226,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                     uint32 spellID = SpellMgr::CalculateSpellEffectAmount(m_spellInfo, 0);
                     uint32 questID = SpellMgr::CalculateSpellEffectAmount(m_spellInfo, 1);
 
-                    if (unitTarget->ToPlayer()->GetQuestStatus(questID) == QUEST_STATUS_COMPLETE && !unitTarget->ToPlayer()->GetQuestRewardStatus (questID))
+                    if (unitTarget->ToPlayer()->GetQuestStatus(questID) == QUEST_STATUS_COMPLETE)
                         unitTarget->CastSpell(unitTarget, spellID, true);
 
                     return;

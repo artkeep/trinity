@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _PLAYER_H
@@ -387,6 +385,27 @@ enum PlayerFlags
 
     PLAYER_FLAGS_NO_XP_GAIN     = 0x02000000
 };
+
+#define PLAYER_TITLE_MASK_ALLIANCE_PVP             \
+    (PLAYER_TITLE_PRIVATE | PLAYER_TITLE_CORPORAL |  \
+      PLAYER_TITLE_SERGEANT_A | PLAYER_TITLE_MASTER_SERGEANT | \
+      PLAYER_TITLE_SERGEANT_MAJOR | PLAYER_TITLE_KNIGHT | \
+      PLAYER_TITLE_KNIGHT_LIEUTENANT | PLAYER_TITLE_KNIGHT_CAPTAIN | \
+      PLAYER_TITLE_KNIGHT_CHAMPION | PLAYER_TITLE_LIEUTENANT_COMMANDER | \
+      PLAYER_TITLE_COMMANDER | PLAYER_TITLE_MARSHAL | \
+      PLAYER_TITLE_FIELD_MARSHAL | PLAYER_TITLE_GRAND_MARSHAL)
+
+#define PLAYER_TITLE_MASK_HORDE_PVP                           \
+    (PLAYER_TITLE_SCOUT | PLAYER_TITLE_GRUNT |  \
+      PLAYER_TITLE_SERGEANT_H | PLAYER_TITLE_SENIOR_SERGEANT | \
+      PLAYER_TITLE_FIRST_SERGEANT | PLAYER_TITLE_STONE_GUARD | \
+      PLAYER_TITLE_BLOOD_GUARD | PLAYER_TITLE_LEGIONNAIRE | \
+      PLAYER_TITLE_CENTURION | PLAYER_TITLE_CHAMPION | \
+      PLAYER_TITLE_LIEUTENANT_GENERAL | PLAYER_TITLE_GENERAL | \
+      PLAYER_TITLE_WARLORD | PLAYER_TITLE_HIGH_WARLORD)
+
+#define PLAYER_TITLE_MASK_ALL_PVP  \
+    (PLAYER_TITLE_MASK_ALLIANCE_PVP | PLAYER_TITLE_MASK_HORDE_PVP)
 
 // used for PLAYER__FIELD_KNOWN_TITLES field (uint64), (1<<bit_index) without (-1)
 // can't use enum for uint64 values
@@ -998,21 +1017,6 @@ class Player : public Unit, public GridObject<Player>
     public:
         explicit Player (WorldSession *session);
         ~Player ();
-
-        //movement anticheat
-        uint32 m_anti_lastmovetime;     //last movement time
-        float  m_anti_MovedLen;         //Length of traveled way
-        uint32 m_anti_NextLenCheck;
-        float  m_anti_BeginFallZ;    //alternative falling begin
-        uint32 m_anti_lastalarmtime;    //last time when alarm generated
-        uint32 m_anti_alarmcount;       //alarm counter
-        uint32 m_anti_TeleTime;
-        bool m_CanFly;
-        uint32 Anti__GetLastTeleTime() const { return m_anti_TeleTime; }
-        void Anti__SetLastTeleTime(uint32 TeleTime) { m_anti_TeleTime=TeleTime; }
-        //bool CanFly() const { return HasUnitMovementFlag(MOVEMENTFLAG_CAN_FLY); }
-        bool CanFly() const { return m_CanFly;  }
-        void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
 
         void CleanupsBeforeDelete(bool finalCleanup = true);
 
@@ -1657,6 +1661,8 @@ class Player : public Unit, public GridObject<Player>
         void RemoveSpellCategoryCooldown(uint32 cat, bool update = false);
         void SendClearCooldown(uint32 spell_id, Unit* target);
 
+        GlobalCooldownMgr& GetGlobalCooldownMgr() { return m_GlobalCooldownMgr; }
+
         void RemoveCategoryCooldown(uint32 cat);
         void RemoveArenaSpellCooldowns(bool removeActivePetCooldowns = false);
         void RemoveAllSpellCooldown();
@@ -1990,6 +1996,7 @@ class Player : public Unit, public GridObject<Player>
             if (value)
                 AddKnownCurrency(ITEM_ARENA_POINTS_ID); // Arena Points
         }
+        void UpdateKnownTitles();
 
         //End of PvP System
 
@@ -2258,6 +2265,8 @@ class Player : public Unit, public GridObject<Player>
         float m_homebindZ;
 
         WorldLocation GetStartPosition() const;
+        /** World of Warcraft Armory **/
+        void WriteWowArmoryDatabaseLog(uint32 type, uint32 data);
 
         // currently visible objects at player client
         typedef std::set<uint64> ClientGUIDs;
@@ -2399,7 +2408,6 @@ class Player : public Unit, public GridObject<Player>
         void ResyncRunes(uint8 count);
         void AddRunePower(uint8 index);
         void InitRunes();
-        void UpdateRuneRegen(RuneType rune);
 
         AchievementMgr& GetAchievementMgr() { return m_achievementMgr; }
         AchievementMgr const& GetAchievementMgr() const { return m_achievementMgr; }
@@ -2565,6 +2573,8 @@ class Player : public Unit, public GridObject<Player>
         PlayerTalentMap *m_talents[MAX_TALENT_SPECS];
         uint32 m_lastPotionId;                              // last used health/mana potion in combat, that block next potion use
 
+        GlobalCooldownMgr m_GlobalCooldownMgr;
+
         uint8 m_activeSpec;
         uint8 m_specsCount;
 
@@ -2578,8 +2588,7 @@ class Player : public Unit, public GridObject<Player>
         uint32 m_baseFeralAP;
         uint32 m_baseManaRegen;
         uint32 m_baseHealthRegen;
-		int32 m_spellPenetrationItemMod;
-        uint32 m_baseSpellPenetration;
+        int32 m_spellPenetrationItemMod;
 
         SpellModList m_spellMods[MAX_SPELLMOD];
         //uint32 m_pad;

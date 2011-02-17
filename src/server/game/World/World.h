@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /// \addtogroup world The World
@@ -162,12 +160,14 @@ enum WorldBoolConfigs
     CONFIG_CHATLOG_BGROUND,
     CONFIG_DUNGEON_FINDER_ENABLE,
     CONFIG_AUTOBROADCAST,
+    CONFIG_DUEL_RESET_COOLDOWN,
+    CONFIG_PREVENT_PLAYERS_ACCESS_TO_GMISLAND,
     CONFIG_ALLOW_TICKETS,
+    CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
+    CONFIG_PRESERVE_CUSTOM_CHANNELS,
     CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED,
     CONFIG_OUTDOORPVP_WINTERGRASP_CUSTOM_HONOR,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE,
-    CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
-    CONFIG_PRESERVE_CUSTOM_CHANNELS,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -313,7 +313,7 @@ enum WorldIntConfigs
     CONFIG_MAX_RESULTS_LOOKUP_COMMANDS,
     CONFIG_DB_PING_INTERVAL,
     CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
-    CONFIG_BALANCE_MINIMUM,
+    CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
     CONFIG_OUTDOORPVP_WINTERGRASP_START_TIME,
     CONFIG_OUTDOORPVP_WINTERGRASP_BATTLE_TIME,
     CONFIG_OUTDOORPVP_WINTERGRASP_INTERVAL,
@@ -326,8 +326,6 @@ enum WorldIntConfigs
     CONFIG_OUTDOORPVP_WINTERGRASP_SAVESTATE_PERIOD,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK,
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF,
-    CONFIG_DUEL_RESET_COOLDOWN,
-    CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
     CONFIG_MAX_INSTANCES_PER_HOUR,
     INT_CONFIG_VALUE_COUNT
 };
@@ -355,11 +353,8 @@ enum Rates
     RATE_DROP_ITEM_REFERENCED_AMOUNT,
     RATE_DROP_MONEY,
     RATE_XP_KILL,
-    RATE_XP_KILL_PREMIUM,
     RATE_XP_QUEST,
-    RATE_XP_QUEST_PREMIUM,
     RATE_XP_EXPLORE,
-    RATE_XP_EXPLORE_PREMIUM,
     RATE_REPAIRCOST,
     RATE_REPUTATION_GAIN,
     RATE_REPUTATION_LOWLEVEL_KILL,
@@ -400,8 +395,29 @@ enum Rates
     RATE_DURABILITY_LOSS_PARRY,
     RATE_DURABILITY_LOSS_ABSORB,
     RATE_DURABILITY_LOSS_BLOCK,
+    RATE_PVP_RANK_EXTRA_HONOR,   
     RATE_MOVESPEED,
     MAX_RATES
+};
+	
+enum HonorKillPvPRank
+{
+    HKRANK00,
+    HKRANK01,
+    HKRANK02,
+    HKRANK03,
+    HKRANK04,
+    HKRANK05,
+    HKRANK06,
+    HKRANK07,
+    HKRANK08,
+    HKRANK09,
+    HKRANK10,
+    HKRANK11,
+    HKRANK12,
+    HKRANK13,
+    HKRANK14,
+    HKRANKMAX
 };
 
 /// Can be used in SMSG_AUTH_RESPONSE packet
@@ -548,7 +564,6 @@ class World
         ~World();
 
         WorldSession* FindSession(uint32 id) const;
-        void SendWintergraspState();
         void AddSession(WorldSession *s);
         void SendAutoBroadcast();
         bool RemoveSession(uint32 id);
@@ -651,6 +666,8 @@ class World
         void SendZoneText(uint32 zone, const char *text, WorldSession *self = 0, uint32 team = 0);
         void SendServerMessage(ServerMessageType type, const char *text = "", Player* player = NULL);
 
+        uint32 pvp_ranks[HKRANKMAX];
+
         /// Are we in the middle of a shutdown?
         bool IsShutdowning() const { return m_ShutdownTimer > 0; }
         void ShutdownServ(uint32 time, uint32 options, uint8 exitcode);
@@ -735,32 +752,6 @@ class World
         static int32 GetVisibilityNotifyPeriodOnContinents(){ return m_visibility_notify_periodOnContinents; }
         static int32 GetVisibilityNotifyPeriodInInstances() { return m_visibility_notify_periodInInstances;  }
         static int32 GetVisibilityNotifyPeriodInBGArenas()  { return m_visibility_notify_periodInBGArenas;   }
-		
-        //movement anticheat enable flag
-        inline bool GetMvAnticheatEnable()             {return m_MvAnticheatEnable;}
-        inline bool GetMvAnticheatKick()               {return m_MvAnticheatKick;}
-        inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
-        inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
-        inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
-        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
-        inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
-        inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
-        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
-        
-
-        void SetWintergrapsTimer(uint32 timer, uint32 state)
-        {
-            m_WintergrapsTimer = timer;
-            m_WintergrapsState = state;
-        }
-
-        uint32 GetWintergrapsTimer() { return m_WintergrapsTimer; }
-        uint32 GetWintergrapsState() { return m_WintergrapsState; }
-
-        uint32 m_WintergrapsTimer;
-        uint32 m_WintergrapsState;
-
-        
 
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
@@ -790,6 +781,18 @@ class World
 
         uint32 GetCleaningFlags() { return m_CleaningFlags; }
         void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
+		
+        uint32 GetWintergrapsTimer() { return m_WintergrapsTimer; }
+        uint32 GetWintergrapsState() { return m_WintergrapsState; }
+        uint32 m_WintergrapsTimer;
+        uint32 m_WintergrapsState;
+        void SendWintergraspState();
+        void SetWintergrapsTimer(uint32 timer, uint32 state)
+        {
+            m_WintergrapsTimer = timer;
+            m_WintergrapsState = state;
+        }
+
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -857,21 +860,6 @@ class World
         static int32 m_visibility_notify_periodOnContinents;
         static int32 m_visibility_notify_periodInInstances;
         static int32 m_visibility_notify_periodInBGArenas;
-		
-       //movement anticheat enable flag
-        bool m_MvAnticheatEnable;
-        bool m_MvAnticheatKick;
-        uint32 m_MvAnticheatAlarmCount;
-        uint32 m_MvAnticheatAlarmPeriod;
-        unsigned char m_MvAntiCheatBan;
-        std::string m_MvAnticheatBanTime;
-        unsigned char m_MvAnticheatGmLevel;
-        bool m_MvAnticheatKill;
-        float m_MvAnticheatMaxXYT;
-        
-
-
-
 
         // CLI command holder to be thread safe
         ACE_Based::LockedQueue<CliCommandHolder*,ACE_Thread_Mutex> cliCmdQueue;

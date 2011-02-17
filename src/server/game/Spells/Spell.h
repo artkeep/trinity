@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef __SPELL_H
@@ -396,7 +394,7 @@ class Spell
         void EffectTriggerSpellWithValue(SpellEffIndex effIndex);
         void EffectTriggerRitualOfSummoning(SpellEffIndex effIndex);
         void EffectKillCreditPersonal(SpellEffIndex effIndex);
-        void EffectKillCreditGroup(SpellEffIndex effIndex);
+        void EffectKillCredit(SpellEffIndex effIndex);
         void EffectQuestFail(SpellEffIndex effIndex);
         void EffectQuestStart(SpellEffIndex effIndex);
         void EffectRedirectThreat(SpellEffIndex effIndex);
@@ -545,6 +543,10 @@ class Spell
 
         void SetSpellValue(SpellValueMod mod, int32 value);
     protected:
+
+        bool HasGlobalCooldown();
+        void TriggerGlobalCooldown();
+        void CancelGlobalCooldown();
 
         void SendLoot(uint64 guid, LootType loottype);
 
@@ -768,8 +770,6 @@ namespace Trinity
                         if (target->isTotem())
                             continue;
                         if (!target->isAttackableByAOE(i_requireDeadTarget))
-                            continue;
-                        if (!i_source->canSeeOrDetect(target, false))
                             continue;
                         if (i_source->IsControlledByPlayer())
                         {

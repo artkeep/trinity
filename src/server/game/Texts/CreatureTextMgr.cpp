@@ -1,19 +1,18 @@
 /*
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Common.h"
@@ -166,7 +165,7 @@ uint32 CreatureTextMgr::SendChat(Creature* source, uint8 textGroup, uint64 whisp
             uint32 r = urand(0, 100);
             offset++;
             if (r <= chance)
-                break;        
+                break;
         }
     }
     uint32 pos = 0;
@@ -303,7 +302,7 @@ void CreatureTextMgr::BuildMonsterChat(WorldPacket *data, WorldObject* source, C
     *data << (uint32)(strlen(source->GetName())+1);
     *data << source->GetName();
     *data << (uint64)whisperGuid;                           // Unit Target
-    if (whisperGuid && !IS_PLAYER_GUID(whisperGuid))        //can only whisper players 
+    if (whisperGuid && !IS_PLAYER_GUID(whisperGuid))        //can only whisper players
     {
         sLog->outError("CreatureTextMgr: WorldObject(%s) TypeId %u GuidLow %u sent WHISPER msg to Non-Player target. Ignoring.",source->GetName(), uint32(source->GetTypeId()), source->GetGUIDLow());
         return;
@@ -321,7 +320,7 @@ void CreatureTextMgr::SendChatPacket(WorldPacket *data, WorldObject* source, Cha
         return;
 
     float dist = sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY);
-    
+
     switch (msgtype)
     {
         case CHAT_TYPE_YELL:

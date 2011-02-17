@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Player.h"
@@ -158,7 +156,6 @@ Battleground::Battleground()
     m_MaxPlayers        = 0;
     m_MinPlayersPerTeam = 0;
     m_MinPlayers        = 0;
-	m_balance           = 0;
 
     m_MapId             = 0;
     m_Map               = NULL;
@@ -334,7 +331,6 @@ void Battleground::Update(uint32 diff)
     /*********************************************************/
 
     // if less then minimum players are in on one side, then start premature finish timer
-	UpdateBalance();
     if (GetStatus() == STATUS_IN_PROGRESS && !isArena() && sBattlegroundMgr->GetPrematureFinishTime() && (GetPlayersCountByTeam(ALLIANCE) < GetMinPlayersPerTeam() || GetPlayersCountByTeam(HORDE) < GetMinPlayersPerTeam()))
     {
         if (!m_PrematureCountDown)
@@ -446,9 +442,7 @@ void Battleground::Update(uint32 diff)
                         plr->GetSession()->SendPacket(&status);
 
                         plr->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
-						plr->ResetAllPowers();
-
-                        // After 60 seconds of preparation, the match commences. All buffs with fewer than 25 (!) seconds remaining are removed ...
+                        plr->ResetAllPowers();
                         // remove auras with duration lower than 30s
                         Unit::AuraApplicationMap & auraMap = plr->GetAppliedAuras();
                         for (Unit::AuraApplicationMap::iterator iter = auraMap.begin(); iter != auraMap.end();)
@@ -456,7 +450,7 @@ void Battleground::Update(uint32 diff)
                             AuraApplication * aurApp = iter->second;
                             Aura * aura = aurApp->GetBase();
                             if (!aura->IsPermanent()
-                                && aura->GetDuration() <= 25*IN_MILLISECONDS
+                                && aura->GetDuration() <= 30*IN_MILLISECONDS
                                 && aurApp->IsPositive()
                                 && (!(aura->GetSpellProto()->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY))
                                 && (!aura->HasEffectType(SPELL_AURA_MOD_INVISIBILITY)))
@@ -464,13 +458,6 @@ void Battleground::Update(uint32 diff)
                             else
                                 ++iter;
                         }
-
-                        // ... and rage/runic power is reset to 0
-                        if (plr->getPowerType() == POWER_RUNIC_POWER)
-                            plr->SetPower(POWER_RUNIC_POWER,0);
-                        else
-                            if (plr->getPowerType() == POWER_RAGE)
-                                plr->SetPower(POWER_RAGE,0);
                     }
 
                 CheckArenaWinConditions();
@@ -785,6 +772,47 @@ void Battleground::EndBattleground(uint32 winner)
                     winner_matchmaker_rating, loser_matchmaker_rating, winner_change, loser_change);
                 SetArenaTeamRatingChangeForTeam(winner, winner_change);
                 SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+                /** World of Warcraft Armory **/
+                uint32 maxChartID;
+                QueryResult result = CharacterDatabase.PQuery("SELECT MAX(gameid) FROM armory_game_chart");
+                if(!result)
+                    maxChartID = 0;
+                else
+                {
+                    maxChartID = (*result)[0].GetUInt32();
+                    result.release();
+                }
+                uint32 gameID = maxChartID+1;
+                for(BattlegroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
+                {
+                    Player *plr = sObjectMgr->GetPlayer(itr->first);
+                    if (!plr)
+                        continue;
+                    uint32 plTeamID = plr->GetArenaTeamId(winner_arena_team->GetSlot());
+                    int changeType;
+                    uint32 resultRating;
+                    uint32 resultTeamID;
+                    int32 ratingChange;
+                    if (plTeamID == winner_arena_team->GetId())
+                    {
+                        changeType = 1; //win
+                        resultRating = winner_team_rating;
+                        resultTeamID = plTeamID;
+                        ratingChange = winner_change;
+                    }
+                    else
+                    {
+                        changeType = 2; //lose
+                        resultRating = loser_team_rating;
+                        resultTeamID = loser_arena_team->GetId();
+                        ratingChange = loser_change;
+                    }
+                    std::ostringstream sql_query;
+                    //                                                        gameid,              teamid,                     guid,                    changeType,             ratingChange,               teamRating,                  damageDone,                          deaths,                          healingDone,                           damageTaken,,                           healingTaken,                         killingBlows,                      mapId,                 start,                   end
+                    sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetGUID() << "', '" << changeType << "', '" << ratingChange  << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
+                    CharacterDatabase.Execute(sql_query.str().c_str());
+                }
+                /** World of Warcraft Armory **/
                 sLog->outArena("Arena match Type: %u for Team1Id: %u - Team2Id: %u ended. WinnerTeamId: %u. Winner rating: +%d, Loser rating: %d", m_ArenaType, m_ArenaTeamIds[BG_TEAM_ALLIANCE], m_ArenaTeamIds[BG_TEAM_HORDE], winner_arena_team->GetId(), winner_change, loser_change);
                 if (sWorld->getBoolConfig(CONFIG_ARENA_LOG_EXTENDED_INFO))
                     for (Battleground::BattlegroundScoreMap::const_iterator itr = GetPlayerScoresBegin(); itr != GetPlayerScoresEnd(); itr++)
@@ -799,8 +827,8 @@ void Battleground::EndBattleground(uint32 winner)
                 winner_arena_team->FinishGame(ARENA_TIMELIMIT_POINTS_LOSS);
                 loser_arena_team->FinishGame(ARENA_TIMELIMIT_POINTS_LOSS);
             }
-		}
-		else
+        }
+        else
         {
             SetArenaTeamRatingChangeForTeam(ALLIANCE, 0);
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
@@ -838,12 +866,6 @@ void Battleground::EndBattleground(uint32 winner)
         {
             plr->ResurrectPlayer(1.0f);
             plr->SpawnCorpseBones();
-        }
-        // Deduct 16 points from each teams arena-rating if there are no winners after 45+2 minutes
-        else if(winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team && (winner == WINNER_NONE))
-        {
-            SetArenaTeamRatingChangeForTeam(ALLIANCE, -16);
-             SetArenaTeamRatingChangeForTeam(HORDE, -16);
         }
         else
         {
@@ -995,7 +1017,7 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
 
     RemovePlayer(plr, guid);                                // BG subclass specific code
 
-       if (participant) // if the player was a match participant, remove auras, calc rating, update queue
+    if (participant) // if the player was a match participant, remove auras, calc rating, update queue
     {
         BattlegroundTypeId bgTypeId = GetTypeID();
         BattlegroundQueueTypeId bgQueueTypeId = BattlegroundMgr::BGQueueTypeId(GetTypeID(), GetArenaType());
@@ -1061,8 +1083,8 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
         if (isBattleground() && GetStatus() < STATUS_WAIT_LEAVE)
         {
             // a player has left the battleground, so there are free slots -> add to queue
-			AddToBGFreeSlotQueue();
-			sBattlegroundMgr->ScheduleQueueUpdate(0, 0, bgQueueTypeId, bgTypeId, GetBracketId());
+            AddToBGFreeSlotQueue();
+            sBattlegroundMgr->ScheduleQueueUpdate(0, 0, bgQueueTypeId, bgTypeId, GetBracketId());
         }
         // Let others know
         WorldPacket data;
@@ -1367,33 +1389,6 @@ bool Battleground::HasFreeSlots() const
     return GetPlayersSize() < GetMaxPlayers();
 }
 
-void Battleground::UpdateBalance()
-{
-	if (GetPlayersCountByTeam(ALLIANCE) < GetPlayersCountByTeam(HORDE))
-		m_balance = GetPlayersCountByTeam(HORDE) - GetPlayersCountByTeam(ALLIANCE);
-	else if (GetPlayersCountByTeam(HORDE) < GetPlayersCountByTeam(ALLIANCE))
-		m_balance = GetPlayersCountByTeam(ALLIANCE) - GetPlayersCountByTeam(HORDE);
-	else
-		m_balance = 0;
-}
-
-bool Battleground::HasBalance() const
-{
-	if (sWorld->getIntConfig(CONFIG_BALANCE_MINIMUM) < 0)
-		return false;
-	return m_balance > sWorld->getIntConfig(CONFIG_BALANCE_MINIMUM);
-}
-
-bool Battleground::HasBalanceTeam(uint32 TeamId)
-{
-	if (HasBalance())
-	{
-		if (GetPlayersCountByTeam(TeamId) > GetPlayersCountByTeam(GetOtherTeam(TeamId)))
-			return true;
-	}
-	return false;
-}
-
 void Battleground::UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor)
 {
     //this procedure is called from virtual function implemented in bg subclass
@@ -1432,6 +1427,14 @@ void Battleground::UpdatePlayerScore(Player *Source, uint32 type, uint32 value, 
         case SCORE_HEALING_DONE:                            // Healing Done
             itr->second->HealingDone += value;
             break;
+        /** World of Warcraft Armory **/
+        case SCORE_DAMAGE_TAKEN:
+            itr->second->DamageTaken += value;              // Damage Taken
+            break;
+        case SCORE_HEALING_TAKEN:
+            itr->second->HealingTaken += value;             // Healing Taken
+            break;
+        /** World of Warcraft Armory **/
         default:
             sLog->outError("Battleground: Unknown player score type %u", type);
             break;
@@ -1952,7 +1955,7 @@ void Battleground::HandleKillUnit(Creature * /*creature*/, Player * /*killer*/)
 
 void Battleground::CheckArenaAfterTimerConditions()
 {
-	EndBattleground(WINNER_NONE);
+    EndBattleground(WINNER_NONE);
 }
 
 void Battleground::CheckArenaWinConditions()

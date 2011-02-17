@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Common.h"
@@ -135,7 +133,7 @@ CreatureBaseStats const* CreatureBaseStats::GetBaseStats(uint8 level, uint8 unit
 
 bool ForcedDespawnDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
 {
-    m_owner.DespawnOrUnsummon();
+    m_owner.ForcedDespawn();
     return true;
 }
 
@@ -156,7 +154,6 @@ m_formation(NULL)
 
     m_CreatureSpellCooldowns.clear();
     m_CreatureCategoryCooldowns.clear();
-    m_GlobalCooldown = 0;
     DisableReputationGain = false;
     //m_unit_movement_flags = MONSTER_MOVE_WALK;
 
@@ -210,7 +207,7 @@ void Creature::RemoveFromWorld()
 void Creature::DisappearAndDie()
 {
     DestroyForNearbyPlayers();
-    //SetVisible(false);
+    //SetVisibility(VISIBILITY_OFF);
     //ObjectAccessor::UpdateObjectVisibility(this);
     if (isAlive())
         setDeathState(JUST_DIED);
@@ -437,11 +434,6 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data)
 
 void Creature::Update(uint32 diff)
 {
-    if (m_GlobalCooldown <= diff)
-        m_GlobalCooldown = 0;
-    else
-        m_GlobalCooldown -= diff;
-
     if (IsAIEnabled && TriggerJustRespawned)
     {
         TriggerJustRespawned = false;
@@ -2175,8 +2167,6 @@ void Creature::AddCreatureSpellCooldown(uint32 spellid)
 
     if (spellInfo->Category)
         _AddCreatureCategoryCooldown(spellInfo->Category, time(NULL));
-
-    m_GlobalCooldown = spellInfo->StartRecoveryTime;
 }
 
 bool Creature::HasCategoryCooldown(uint32 spell_id) const
@@ -2184,10 +2174,6 @@ bool Creature::HasCategoryCooldown(uint32 spell_id) const
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
     if (!spellInfo)
         return false;
-
-    // check global cooldown if spell affected by it
-    if (spellInfo->StartRecoveryCategory > 0 && m_GlobalCooldown > 0)
-        return true;
 
     CreatureSpellCooldowns::const_iterator itr = m_CreatureCategoryCooldowns.find(spellInfo->Category);
     return(itr != m_CreatureCategoryCooldowns.end() && time_t(itr->second + (spellInfo->CategoryRecoveryTime / IN_MILLISECONDS)) > time(NULL));

@@ -1,19 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Common.h"
@@ -56,17 +56,11 @@ Vehicle::Vehicle(Unit *unit, VehicleEntry const *vehInfo) : me(unit), m_vehicleI
             me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ROOT, true);
             me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_DECREASE_SPEED, true);
             me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_CONFUSE, true);
-            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
+            me->ApplySpellImmune(0, IMMUNITY_ID, 49560, true); // Death Grip jump effect
             break;
         default:
             break;
     }
-
-    // [Баг][Хак] Божественного вмешательства
-    me->ApplySpellImmune(0, IMMUNITY_ID, 19752, true);
-    me->ApplySpellImmune(0, IMMUNITY_ID, 53601, true);
-    me->ApplySpellImmune(0, IMMUNITY_ID, 53551, true);
-    me->ApplySpellImmune(0, IMMUNITY_ID, 17, true);
 }
 
 Vehicle::~Vehicle()
@@ -82,10 +76,10 @@ void Vehicle::Install()
         switch (m_vehicleInfo->m_powerType)
         {
             case POWER_STEAM:
-			case POWER_HEAT:
+            case POWER_HEAT:
             case POWER_BLOOD:
             case POWER_OOZE:
-			case POWER_WRATH:
+            case POWER_WRATH:
                 me->setPowerType(POWER_ENERGY);
                 me->SetMaxPower(POWER_ENERGY, 100);
                 break;
@@ -288,9 +282,6 @@ bool Vehicle::AddPassenger(Unit *unit, int8 seatId, bool byAura)
     if (unit->GetVehicle() != this)
         return false;
 
-    if (unit->GetTypeId() == TYPEID_PLAYER && unit->GetMap()->IsBattleArena())
-        return false;
-
     SeatMap::iterator seat;
     if (seatId < 0) // no specific seat requirement
     {
@@ -337,15 +328,7 @@ bool Vehicle::AddPassenger(Unit *unit, int8 seatId, bool byAura)
     if (seat->second.seatInfo->m_flags && !(seat->second.seatInfo->m_flags & VEHICLE_SEAT_FLAG_UNK11))
         unit->AddUnitState(UNIT_STAT_ONVEHICLE);
 
-	switch (GetVehicleInfo()->m_ID)
-    {
-        case 380: //Kologarn
-        case 353: //XT-002
-            unit->ClearUnitState(UNIT_STAT_ONVEHICLE);
-            break;
-    }
-
-     unit->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
+    unit->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_ROOT);
     VehicleSeatEntry const *veSeat = seat->second.seatInfo;
     unit->m_movementInfo.t_pos.m_positionX = veSeat->m_attachmentOffsetX;
     unit->m_movementInfo.t_pos.m_positionY = veSeat->m_attachmentOffsetY;
@@ -385,9 +368,11 @@ bool Vehicle::AddPassenger(Unit *unit, int8 seatId, bool byAura)
                 me->ToCreature()->AI()->PassengerBoarded(unit, seat->first, true);
 
             // update all passenger's positions
-            RelocatePassengers(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), 0);
+            RelocatePassengers(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
         }
     }
+    unit->DestroyForNearbyPlayers();
+    unit->UpdateObjectVisibility(false);
 
     if (GetBase()->GetTypeId() == TYPEID_UNIT)
         sScriptMgr->OnAddPassenger(this, unit, seatId);

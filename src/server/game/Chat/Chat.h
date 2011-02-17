@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef TRINITYCORE_CHAT_H
@@ -126,13 +124,6 @@ class ChatHandler
         static bool LoadCommandTable() { return load_command_table;}
         static void SetLoadCommandTable(bool val){ load_command_table = val;};
 
-        // Фун. авто анонс (бан, молчанка, кик)
-        bool HandleBanCharMessege(const char* charname, const char* duration, const char* playerName, const char* reason);
-        bool HandleBanIPMessege(const char* ip, const char* duration, const char* playerName, const char* reason);
-        bool HandleBanAccMessege(const char* acc, const char* duration, const char* playerName, const char* reason);
-        bool HandleMuteCharMessege(const char* charname, const char* duration, const char* playerName, const char* reason);
-        bool HandleKickCharMessege(const char* charname, const char* playerName);
-
     protected:
         explicit ChatHandler() : m_session(NULL) {}      // for CLI subclass
         static bool SetDataForCommandInTable(ChatCommand *table, const char* text, uint32 security, std::string const& help, std::string const& fullcommand);
@@ -140,7 +131,6 @@ class ChatHandler
         bool ShowHelpForCommand(ChatCommand *table, const char* cmd);
         bool ShowHelpForSubCommands(ChatCommand *table, char const* cmd, char const* subcmd);
 
-		bool HandleAHBotOptionsCommand(const char * args);
         bool HandleNameAnnounceCommand(const char* args);
         bool HandleGMNameAnnounceCommand(const char* args);
         bool HandleGMAnnounceCommand(const char* args);
@@ -256,13 +246,6 @@ class ChatHandler
         bool HandleUnBanCharacterCommand(const char* args);
         bool HandleUnBanIPCommand(const char* args);
 
-        bool HandleWintergraspStatusCommand(const char *args);
-        bool HandleWintergraspStartCommand(const char *args);
-        bool HandleWintergraspStopCommand(const char *args);
-        bool HandleWintergraspEnableCommand(const char *args);
-        bool HandleWintergraspSwitchTeamCommand(const char *args);
-        bool HandleWintergraspTimerCommand(const char *args);
-
         bool HandleHelpCommand(const char* args);
         bool HandleCommandsCommand(const char* args);
         bool HandleStartCommand(const char* args);
@@ -285,7 +268,6 @@ class ChatHandler
         bool HandlePInfoCommand(const char* args);
         bool HandleMuteCommand(const char* args);
         bool HandleUnmuteCommand(const char* args);
-	    bool HandleFlyHackerCommand(const char * args);
         bool HandleMovegensCommand(const char* args);
         bool HandleFreezeCommand(const char *args);
         bool HandleUnFreezeCommand(const char *args);
@@ -375,6 +357,14 @@ class ChatHandler
         bool HandleUnBanHelper(BanMode mode,char const* args);
         void HandleCharacterLevel(Player* player, uint64 player_guid, uint32 oldlevel, uint32 newlevel);
         void HandleLearnSkillRecipesHelper(Player* player,uint32 skill_id);
+
+        //Wintergrasp
+        bool HandleWintergraspStatusCommand(const char *args);
+        bool HandleWintergraspStartCommand(const char *args);
+        bool HandleWintergraspStopCommand(const char *args);
+        bool HandleWintergraspEnableCommand(const char *args);
+        bool HandleWintergraspSwitchTeamCommand(const char *args);
+        bool HandleWintergraspTimerCommand(const char *args);
 
         // Stores informations about a deleted character
         struct DeletedInfo

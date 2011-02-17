@@ -52,7 +52,7 @@ SmartScript::SmartScript()
     meOrigGUID = 0;
     goOrigGUID = 0;
     mResumeActionList = true;
-	mLastInvoker = NULL;
+    mLastInvoker = NULL;
 }
 
 void SmartScript::OnReset()
@@ -65,7 +65,7 @@ void SmartScript::OnReset()
         (*i).runOnce = false;
     }
     ProcessEventsFor(SMART_EVENT_RESET);
-	mLastInvoker = NULL;
+    mLastInvoker = NULL;
 }
 
 void SmartScript::ProcessEventsFor(SMART_EVENT e, Unit* unit, uint32 var0, uint32 var1, bool bvar, const SpellEntry* spell, GameObject* gob)
@@ -108,7 +108,7 @@ void SmartScript::ProcessAction(SmartScriptHolder &e, Unit* unit, uint32 var0, u
     }
     e.runOnce = true;//used for repeat check
 
-	    if (unit)
+    if (unit)
         mLastInvoker = unit;
 
     if (e.link && e.link != e.event_id)
@@ -1225,6 +1225,24 @@ void SmartScript::ProcessAction(SmartScriptHolder &e, Unit* unit, uint32 var0, u
                         else
                             (*itr)->ToCreature()->GetMotionMaster()->MoveIdle();
                     }
+                break;
+            }
+        case SMART_ACTION_SET_UNIT_FIELD_BYTES_1:
+            {
+                ObjectList* targets = GetTargets(e, unit);
+                if (!targets) return;
+                for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); itr++)
+                    if (IsUnit((*itr)))
+                        (*itr)->ToUnit()->SetByteFlag(UNIT_FIELD_BYTES_1, 0, e.action.setunitByte.byte1);
+                break;
+            }
+        case SMART_ACTION_REMOVE_UNIT_FIELD_BYTES_1:
+            {
+                ObjectList* targets = GetTargets(e, unit);
+                if (!targets) return;
+                for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); itr++)
+                    if (IsUnit((*itr)))
+                        (*itr)->ToUnit()->RemoveByteFlag(UNIT_FIELD_BYTES_1, 0, e.action.delunitByte.byte1);
                 break;
             }
         default:

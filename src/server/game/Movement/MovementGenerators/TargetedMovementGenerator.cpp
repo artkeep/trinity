@@ -1,31 +1,27 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ByteBuffer.h"
 #include "TargetedMovementGenerator.h"
 #include "Errors.h"
 #include "Creature.h"
-//#include "MapManager.h"
 #include "CreatureAI.h"
 #include "DestinationHolderImp.h"
-//#include "VMapFactory.h"
 #include "World.h"
 
 #define SMALL_ALPHA 0.05f
@@ -113,66 +109,20 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
             return false;
     }
 
-// Crash
-/*    float ox,oy,oz;
-    owner.GetPosition(ox,oy,oz);
-    VMAP::IVMapManager *vMapManager = VMAP::VMapFactory::createOrGetVMapManager();*/
-
     if (!i_offset)
     {
         // to nearest random contact position
         i_target->GetRandomContactPoint(&owner, x, y, z, 0, MELEE_RANGE - 0.5f);
-// Crash
-/*        //sky - just for little servers...
-        if(!vMapManager->isInLineOfSight(i_target->GetMapId(), x,y,z, ox,oy,oz))
-        {
-            //itarget NOT IN LOS? forget his xyz and go directly to target position...
-            i_offset = 0.2f;
-            i_target->GetPosition(x, y, z);
-            x += 0.4f;
-            y += 0.4f;
-        }*/
     }
     else if (!i_angle && !owner.HasUnitState(UNIT_STAT_FOLLOW))
     {
         // caster chase
         i_target->GetContactPoint(&owner, x, y, z, i_offset * urand(80, 95) * 0.01f);
-// Crash
-/*        //sky - this new calls to IsWithinLOSInMap needs a good cpu, use just for little servers...
-        if(!i_target->IsWithinLOSInMap(&owner))
-        {
-            float destx,desty,destz;
-            i_target->GetPosition(destx,desty,destz);
-
-            sLog->outDebug("itarget LOS? chase... retry xyz!");
-
-            bool col = VMAP::VMapFactory::createOrGetVMapManager()->getObjectHitPos(i_target->GetMapId(),destx,desty,destz+2.0f,ox,oy,oz+2.0f,x,y,z,0);
-
-            if (col) // We had a collision!
-            {
-                //sLog->outDebug("itarget chase HIT! c(%.2f,%.2f,%.2f)=>(%.2f,%.2f,%.2f) s(%.2f)\n",x,y,z, destx,desty,destz,owner.GetObjectSize());
-                x -= (owner.GetObjectSize() * cos(i_angle));
-                y -= (owner.GetObjectSize() * sin(i_angle));
-                z += 0.5f;
-            }
-        }*/
-
     }
     else
     {
         // to at i_offset distance from target and i_angle from target facing
         i_target->GetClosePoint(x,y,z,owner.GetObjectSize(),i_offset,i_angle);
-// Crash
-/*        //sky - just for little servers...
-        if(!vMapManager->isInLineOfSight(i_target->GetMapId(), x,y,z, ox,oy,oz))
-        {
-            //itarget NOT IN LOS? forget xyz and use target pos...
-            i_offset = 0.2f;
-            i_target->GetPosition(x, y, z);
-            x += 0.4f;
-            y += 0.4f;
-        }*/
-
     }
 
     /*

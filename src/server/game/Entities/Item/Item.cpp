@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
  #include <ace/Auto_Ptr.h>
@@ -1019,6 +1017,15 @@ Item* Item::CreateItem(uint32 item, uint32 count, Player const* player)
         Item *pItem = NewItemOrBag(pProto);
         if (pItem->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_ITEM), item, player))
         {
+            /** World of Warcraft Armory **/
+            if (pProto->Quality > 2 && pProto->Flags != 2048 && (pProto->Class == ITEM_CLASS_WEAPON || pProto->Class == ITEM_CLASS_ARMOR) && player)
+            {
+                std::ostringstream ss;
+                sLog->outDetail("WoWArmory: write feed log (guid: %u, type: 2, data: %u)", player->GetGUIDLow(), item);
+                ss << "REPLACE INTO character_feed_log (guid, type, data, date, counter, item_guid) VALUES (" << player->GetGUIDLow() << ", 2, " << item << ", UNIX_TIMESTAMP(NOW()), 1," << pItem->GetGUIDLow()  << ")";
+                CharacterDatabase.PExecute( ss.str().c_str() );
+            }
+            /** World of Warcraft Armory **/
             pItem->SetCount(count);
             return pItem;
         }

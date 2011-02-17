@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "LootMgr.h"
@@ -868,8 +866,21 @@ ByteBuffer& operator<<(ByteBuffer& b, LootView const& lv)
         }
         case ALL_PERMISSION:
         case MASTER_PERMISSION:
+        case OWNER_PERMISSION:
         {
-            uint8 slot_type = (lv.permission == MASTER_PERMISSION) ? LOOT_SLOT_TYPE_MASTER : LOOT_SLOT_TYPE_ALLOW_LOOT;
+            uint8 slot_type = LOOT_SLOT_TYPE_ALLOW_LOOT;
+            switch (lv.permission)
+            {
+                case MASTER_PERMISSION:
+                    slot_type = LOOT_SLOT_TYPE_MASTER;
+                    break;
+                case OWNER_PERMISSION:
+                    slot_type = LOOT_SLOT_TYPE_OWNER;
+                    break;
+                default:
+                    break;
+            }
+
             for (uint8 i = 0; i < l.items.size(); ++i)
             {
                 if (!l.items[i].is_looted && !l.items[i].freeforall && l.items[i].conditions.empty() && l.items[i].AllowedForPlayer(lv.viewer))
@@ -885,6 +896,7 @@ ByteBuffer& operator<<(ByteBuffer& b, LootView const& lv)
             return b;                                       // nothing output more
     }
 
+    LootSlotType slotType = lv.permission == OWNER_PERMISSION ? LOOT_SLOT_TYPE_OWNER : LOOT_SLOT_TYPE_ALLOW_LOOT;
     QuestItemMap const& lootPlayerQuestItems = l.GetPlayerQuestItems();
     QuestItemMap::const_iterator q_itr = lootPlayerQuestItems.find(lv.viewer->GetGUIDLow());
     if (q_itr != lootPlayerQuestItems.end())
@@ -897,7 +909,7 @@ ByteBuffer& operator<<(ByteBuffer& b, LootView const& lv)
             {
                 b << uint8(l.items.size() + (qi - q_list->begin()));
                 b << item;
-                b << uint8(LOOT_SLOT_TYPE_ALLOW_LOOT);
+                b << uint8(slotType);
                 ++itemsShown;
             }
         }
@@ -913,8 +925,9 @@ ByteBuffer& operator<<(ByteBuffer& b, LootView const& lv)
             LootItem &item = l.items[fi->index];
             if (!fi->is_looted && !item.is_looted)
             {
-                b << uint8(fi->index) << item;
-                b << uint8(LOOT_SLOT_TYPE_ALLOW_LOOT);
+                b << uint8(fi->index);
+                b << item;
+                b << uint8(slotType);
                 ++itemsShown;
             }
         }
@@ -930,8 +943,9 @@ ByteBuffer& operator<<(ByteBuffer& b, LootView const& lv)
             LootItem &item = l.items[ci->index];
             if (!ci->is_looted && !item.is_looted)
             {
-                b << uint8(ci->index) << item;
-                b << uint8(LOOT_SLOT_TYPE_ALLOW_LOOT);
+                b << uint8(ci->index);
+                b << item;
+                b << uint8(slotType);
                 ++itemsShown;
             }
         }

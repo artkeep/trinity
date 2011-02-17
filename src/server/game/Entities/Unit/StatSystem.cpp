@@ -330,6 +330,8 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                 ShapeshiftForm form = GetShapeshiftForm();
                 // Check if Predatory Strikes is skilled
                 float mLevelMult = 0.0f;
+                float mFeralMult = 0.0;
+                short applied = 0;
                 switch (form)
                 {
                     case FORM_CAT:
@@ -342,12 +344,20 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                         {
                             // Predatory Strikes (effect 0)
                             if ((*itr)->GetEffIndex() == 0 && (*itr)->GetSpellProto()->SpellIconID == 1563)
-                            {
-                                mLevelMult = CalculatePctN(1.0f, (*itr)->GetAmount());
-                                break;
+                            {                                
+                                mLevelMult = (*itr)->GetAmount() / 100.0f;
+                                if( applied ) break;
+                                applied = 1;
                             }
-                        }
-                        break;
+                            // Predatory Strikes (effect 1)
+                            if ((*itr)->GetEffIndex() == 1 && (*itr)->GetSpellProto()->SpellIconID == 1563)
+                             {
+                                mFeralMult = (*itr)->GetAmount() / 100.0f;
+                                if( applied ) break;
+                                applied = 1;
+                             }
+                         }
+                         break;
                     }
                     default: break;
                 }
@@ -355,10 +365,10 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                 switch (form)
                 {
                     case FORM_CAT:
-                        val2 = getLevel() * (mLevelMult + 2.0f) + GetStat(STAT_STRENGTH) * 2.0f + GetStat(STAT_AGILITY) - 20.0f + m_baseFeralAP; break;
+                        val2 = getLevel()*(mLevelMult+2.0f) + GetStat(STAT_STRENGTH)*2.0f + GetStat(STAT_AGILITY) - 20.0f + (m_baseFeralAP*(mFeralMult+1.0f)); break;
                     case FORM_BEAR:
                     case FORM_DIREBEAR:
-                        val2 = getLevel() * (mLevelMult + 3.0f) + GetStat(STAT_STRENGTH) * 2.0f - 20.0f + m_baseFeralAP; break;
+                        val2 = getLevel()*(mLevelMult+3.0f) + GetStat(STAT_STRENGTH)*2.0f - 20.0f + (m_baseFeralAP*(mFeralMult+1.0f)); break;
                     case FORM_MOONKIN:
                         val2 = getLevel() * (mLevelMult + 1.5f) + GetStat(STAT_STRENGTH) * 2.0f - 20.0f + m_baseFeralAP; break;
                     default:
@@ -930,8 +940,6 @@ void Creature::UpdateDamagePhysical(WeaponAttackType attType)
 #define ENTRY_TREANT            1964
 #define ENTRY_FIRE_ELEMENTAL    15438
 #define ENTRY_GHOUL             26125
-#define ENTRY_VIPER             19921
-#define ENTRY_VEN_SNAKE         19833
 
 bool Guardian::UpdateStats(Stats stat)
 {
@@ -1083,7 +1091,7 @@ void Guardian::UpdateArmor()
 void Guardian::UpdateMaxHealth()
 {
     UnitMods unitMod = UNIT_MOD_HEALTH;
-    float stamina = GetStat(STAT_STAMINA) + GetCreateStat(STAT_STAMINA);
+    float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
 
     float multiplicator;
     switch(GetEntry())
@@ -1093,18 +1101,16 @@ void Guardian::UpdateMaxHealth()
         case ENTRY_SUCCUBUS:    multiplicator = 9.1f;   break;
         case ENTRY_FELHUNTER:   multiplicator = 9.5f;   break;
         case ENTRY_FELGUARD:    multiplicator = 11.0f;  break;
-        case ENTRY_GHOUL:       multiplicator = 10.0f;   break;
-        case ENTRY_VIPER:       multiplicator = 0.0f;   break;
-        case ENTRY_VEN_SNAKE:   multiplicator = 0.0f;   break;
+        case ENTRY_GHOUL:       multiplicator = 10.0f;  break;
         default:                multiplicator = 10.0f;  break;
     }
 
     float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
     value  *= GetModifierValue(unitMod, BASE_PCT);
-	if (GetEntry()==ENTRY_GHOUL)
-    value  += GetModifierValue(unitMod, TOTAL_VALUE) + (stamina+GetCreateStat(STAT_STAMINA)) * multiplicator;
-	else
-    value  += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
+    if (GetEntry()==ENTRY_GHOUL)
+        value  += GetModifierValue(unitMod, TOTAL_VALUE) + (stamina+GetCreateStat(STAT_STAMINA)) * multiplicator;
+    else
+        value  += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
     value  *= GetModifierValue(unitMod, TOTAL_PCT);
 
     SetMaxHealth((uint32)value);

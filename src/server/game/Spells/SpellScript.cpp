@@ -1,19 +1,18 @@
 /*
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <string>
@@ -617,20 +616,20 @@ void AuraScript::_PrepareScriptCall(AuraScriptHookType hookType, AuraApplication
         case AURA_SCRIPT_HOOK_EFFECT_APPLY:
         case AURA_SCRIPT_HOOK_EFFECT_REMOVE:
         case AURA_SCRIPT_HOOK_EFFECT_PERIODIC:
-		case AURA_SCRIPT_HOOK_EFFECT_ABSORB:
-		case AURA_SCRIPT_HOOK_EFFECT_MANASHIELD:
-            m_defaultActionPrevented = false; 
+        case AURA_SCRIPT_HOOK_EFFECT_ABSORB:
+        case AURA_SCRIPT_HOOK_EFFECT_MANASHIELD:
+            m_defaultActionPrevented = false;
             break;
         default:
             break;
     }
-	m_auraApplication = aurApp;
+    m_auraApplication = aurApp;
 }
 
 void AuraScript::_FinishScriptCall()
 {
     m_currentScriptState = SPELL_SCRIPT_STATE_NONE;
-	m_auraApplication = NULL;
+    m_auraApplication = NULL;
 }
 
 bool AuraScript::_IsDefaultActionPrevented()
@@ -648,7 +647,7 @@ bool AuraScript::_IsDefaultActionPrevented()
     }
 }
 
-void AuraScript::PreventDefaultAction() 
+void AuraScript::PreventDefaultAction()
 {
     switch (m_currentScriptState)
     {

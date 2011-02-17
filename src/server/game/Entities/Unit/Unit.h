@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef __UNIT_H
@@ -813,10 +811,10 @@ class DamageInfo
 private:
     Unit * const m_attacker;
     Unit * const m_victim;
-    DamageEffectType const m_damageType;
+    uint32 m_damage;
     SpellEntry const * const m_spellInfo;
     SpellSchoolMask const m_schoolMask;
-    uint32 m_damage;
+    DamageEffectType const m_damageType;
     uint32 m_absorb;
     uint32 m_resist;
     uint32 m_block;
@@ -853,9 +851,9 @@ public:
     }
     Unit * GetAttacker() const { return m_attacker; };
     Unit * GetVictim() const { return m_victim; };
-    DamageEffectType const GetDamageType() const { return m_damageType; };
+    DamageEffectType GetDamageType() const { return m_damageType; };
     SpellEntry const * GetSpellInfo() const { return m_spellInfo; };
-    SpellSchoolMask const GetSchoolMask() const { return m_schoolMask; };
+    SpellSchoolMask GetSchoolMask() const { return m_schoolMask; };
     uint32 GetDamage() const { return m_damage; };
     uint32 GetAbsorb() const { return m_absorb; };
     uint32 GetResist() const { return m_resist; };
@@ -940,6 +938,30 @@ enum CurrentSpellTypes
 
 #define CURRENT_FIRST_NON_MELEE_SPELL 1
 #define CURRENT_MAX_SPELL             4
+
+struct GlobalCooldown
+{
+    explicit GlobalCooldown(uint32 _dur = 0, uint32 _time = 0) : duration(_dur), cast_time(_time) {}
+
+    uint32 duration;
+    uint32 cast_time;
+};
+
+typedef UNORDERED_MAP<uint32 /*category*/, GlobalCooldown> GlobalCooldownList;
+
+class GlobalCooldownMgr                                     // Shared by Player and CharmInfo
+{
+    public:
+        GlobalCooldownMgr() {}
+
+    public:
+        bool HasGlobalCooldown(SpellEntry const* spellInfo) const;
+        void AddGlobalCooldown(SpellEntry const* spellInfo, uint32 gcd);
+        void CancelGlobalCooldown(SpellEntry const* spellInfo);
+
+    private:
+        GlobalCooldownList m_GlobalCooldowns;
+};
 
 enum ActiveStates
 {
@@ -1061,6 +1083,8 @@ struct CharmInfo
 
         CharmSpellEntry* GetCharmSpell(uint8 index) { return &(m_charmspells[index]); }
 
+        GlobalCooldownMgr& GetGlobalCooldownMgr() { return m_GlobalCooldownMgr; }
+
         void SetIsCommandAttack(bool val);
         bool IsCommandAttack();
         void SetIsAtStay(bool val);
@@ -1092,6 +1116,8 @@ struct CharmInfo
         float m_stayX;
         float m_stayY;
         float m_stayZ;
+
+        GlobalCooldownMgr m_GlobalCooldownMgr;
 };
 
 // for clearing special attacks

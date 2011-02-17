@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "SpellMgr.h"
@@ -275,9 +273,6 @@ int32 GetSpellDuration(SpellEntry const *spellInfo)
 {
     if (!spellInfo)
         return 0;
-    //Awaken Plagued Zombies spell (id 71159) fix: zombies should spawn not for just 3 seconds, but until they are killed
-    if (spellInfo->Id == 71159)
-        return 0; 
     SpellDurationEntry const *du = sSpellDurationStore.LookupEntry(spellInfo->DurationIndex);
     if (!du)
         return 0;
@@ -421,7 +416,7 @@ uint32 CalculatePowerCost(SpellEntry const * spellInfo, Unit const * caster, Spe
     if (spellInfo->AttributesEx4 & SPELL_ATTR4_SPELL_VS_EXTEND_COST)
         powerCost += caster->GetAttackTime(OFF_ATTACK)/100;
     // Apply cost mod by spell
-    if (Player * modOwner = caster->GetSpellModOwner())
+    if (Player* modOwner = caster->GetSpellModOwner())
         modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_COST, powerCost);
 
     if (spellInfo->Attributes & SPELL_ATTR0_LEVEL_DAMAGE_CALCULATION)
@@ -763,8 +758,7 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
                 case 34700: // Allergic Reaction
                 case 61987: // Avenging Wrath Marker
                 case 61988: // Divine Shield exclude aura
-                case 63322: // Saronite Vapors
-                        return false;
+                    return false;
                 case 30877: // Tag Murloc
                     return true;
                 default:
@@ -810,10 +804,6 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
         default:
             break;
     }
-
-    // Amplify Magic / Dampen Magic
-    if (spellproto->SpellFamilyName == SPELLFAMILY_MAGE && spellproto->SpellFamilyFlags[0] & 0x2000 && spellproto->SpellFamilyFlags[2] & 0x8)
-        return true;
 
     // Special case: effects which determine positivity of whole spell
     for (uint8 i = 0; i<MAX_SPELL_EFFECTS; ++i)
@@ -895,8 +885,6 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
                 case SPELL_AURA_MOD_STUN:                   //have positive and negative spells, we can't sort its correctly at this moment.
                     if (effIndex == 0 && spellproto->Effect[1] == 0 && spellproto->Effect[2] == 0)
                         return false;                       // but all single stun aura spells is negative
-                    if (spellproto->Id == 46968)
-                        return false;
                     break;
                 case SPELL_AURA_MOD_PACIFY_SILENCE:
                     if (spellproto->Id == 24740)             // Wisp Costume
@@ -2353,7 +2341,7 @@ void SpellMgr::LoadPetDefaultSpells()
         }
     }
 
-    
+
     sLog->outString(">> Loaded %u summonable creature templates in %u ms", countCreature, GetMSTimeDiffToNow(oldMSTime));
     sLog->outString();
 }
@@ -2676,7 +2664,7 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
     }
 
     // continent limitation (virtual continent)
-    if ((spellInfo->AttributesEx4 & SPELL_ATTR4_CAST_ONLY_IN_OUTLAND) && !(player && player->isGameMaster()))
+    if (spellInfo->AttributesEx4 & SPELL_ATTR4_CAST_ONLY_IN_OUTLAND)
     {
         uint32 v_map = GetVirtualMapForMapAndZone(map_id, zone_id);
         MapEntry const *mapEntry = sMapStore.LookupEntry(v_map);
@@ -2819,7 +2807,6 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         // Event spells
         case SPELLFAMILY_UNK1:
             return DIMINISHING_NONE;
-            break;
         case SPELLFAMILY_GENERIC:
             // some generic arena related spells have by some strange reason MECHANIC_TURN
             if  (spellproto->Mechanic == MECHANIC_TURN)
@@ -2827,9 +2814,6 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
             break;
         case SPELLFAMILY_MAGE:
         {
-            // Dragon's Breath
-            if  (spellproto->SpellIconID == 1548)
-                return DIMINISHING_POLYMORPH;
             // Frostbite
             if (spellproto->SpellFamilyFlags[1] & 0x80000000)
                 return DIMINISHING_TRIGGER_ROOT;
@@ -2869,8 +2853,8 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
             // Howl of Terror
             else if (spellproto->SpellFamilyFlags[1] & 0x8)
                 return DIMINISHING_FEAR_BLIND;
-            // Seduction (Lesser Invisibility have same SpellFamilyFlags)
-            else if (spellproto->SpellFamilyFlags[0] & 0x40000000 && spellproto->SpellIconID != 331)
+            // Seduction
+            else if (spellproto->SpellFamilyFlags[1] & 0x10000000)
                 return DIMINISHING_FEAR_BLIND;
             break;
         }
@@ -2923,22 +2907,12 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         }
         case SPELLFAMILY_HUNTER:
         {
-            // Freezing Trap & Freezing Arrow & Wyvern Sting
-            if  (spellproto->SpellIconID == 180 || spellproto->SpellIconID == 1721)
-                return DIMINISHING_POLYMORPH;
             // Hunter's mark
             if ((spellproto->SpellFamilyFlags[0] & 0x400) && spellproto->SpellIconID == 538)
                 return DIMINISHING_LIMITONLY;
             // Scatter Shot
             if ((spellproto->SpellFamilyFlags[0] & 0x40000) && spellproto->SpellIconID == 132)
                 return DIMINISHING_NONE;
-            break;
-        }
-        case SPELLFAMILY_PRIEST:
-        {
-            // Shackle Undead
-            if (spellproto->SpellIconID == 27)
-                return DIMINISHING_POLYMORPH;
             break;
         }
         default:
@@ -3076,9 +3050,20 @@ DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group)
     return DRTYPE_NONE;
 }
 
+bool IsPartOfSkillLine(uint32 skillId, uint32 spellId)
+{
+    SkillLineAbilityMapBounds skillBounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
+    for (SkillLineAbilityMap::const_iterator itr = skillBounds.first; itr != skillBounds.second; ++itr)
+        if (itr->second->skillId == skillId)
+            return true;
+
+    return false;
+}
+
 bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const
 {
-OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+
     if (gender != GENDER_NONE)                   // not in expected gender
         if (!player || gender != player->getGender())
             return false;
@@ -3108,6 +3093,7 @@ OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197)
     {
         case 58600: // No fly Zone - Dalaran
             {
+			{
                 if (!player)
                     return false;
 
@@ -3116,6 +3102,21 @@ OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197)
                     return false;
                 if (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY))
                     return false;
+			}
+            break;
+        case 58730: // No fly Zone - Wintergrasp
+			{
+				if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
+				{
+				  if ((pvpWG->isWarTime()==false) || !player || (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY)) || player->HasAura(45472) || player->HasAura(44795) || player->GetPositionZ())
+				    return false;
+				}
+                break;
+			}
+        case 58045: // Essence of Wintergrasp - Wintergrasp
+        case 57940: // Essence of Wintergrasp - Northrend
+             if (!player || player->GetTeamId() != sWorld->getWorldState(WORLDSTATE_WINTERGRASP_CONTROLING_FACTION))
+             return false;
                 break;
             }
         case SPELL_OIL_REFINERY: // Oil Refinery - Isle of Conquest.
@@ -3205,11 +3206,8 @@ bool SpellMgr::CanAurasStack(Aura const *aura1, Aura const *aura2, bool sameCast
         // Hack for Incanter's Absorption
         if (spellId_1 == 44413)
             return true;
-        // and another one for Explosive Shot from different hunters
-        if (spellId_1 == 60053 && !sameCaster)
-            return true;
         if (aura1->GetCastItemGUID() && aura2->GetCastItemGUID())
-            if (aura1->GetCastItemGUID() != aura2->GetCastItemGUID() && (sSpellMgr->GetSpellCustomAttr(spellId_1) & SPELL_ATTR0_CU_ENCHANT_PROC))
+            if (aura1->GetCastItemGUID() != aura2->GetCastItemGUID() && (GetSpellCustomAttr(spellId_1) & SPELL_ATTR0_CU_ENCHANT_PROC))
                 return true;
         // same spell with same caster should not stack
         return false;
@@ -3477,17 +3475,14 @@ void SpellMgr::LoadSpellCustomAttr()
 {
     uint32 oldMSTime = getMSTime();
 
-    mSpellCustomAttr.resize(GetSpellStore()->GetNumRows());
-
+    mSpellCustomAttr.resize(GetSpellStore()->GetNumRows(), 0);  // initialize with 0 values
 
     uint32 count = 0;
 
-    SpellEntry *spellInfo;
-    for (uint32 i = 0; i < GetSpellStore()->GetNumRows(); ++i)
+    SpellEntry* spellInfo = NULL;
+    for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
     {
-
-        mSpellCustomAttr[i] = 0;
-        spellInfo = (SpellEntry*)GetSpellStore()->LookupEntry(i);
+        spellInfo = (SpellEntry*)sSpellStore.LookupEntry(i);
         if (!spellInfo)
             continue;
 
@@ -3523,6 +3518,36 @@ void SpellMgr::LoadSpellCustomAttr()
                         spellInfo->Effect[j] = SPELL_EFFECT_TRIGGER_MISSILE;
                     count++;
                     break;
+                case SPELL_EFFECT_ENCHANT_ITEM:
+                case SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY:
+                case SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC:
+                case SPELL_EFFECT_ENCHANT_HELD_ITEM:
+                {
+                    // only enchanting profession enchantments procs can stack
+                    if (IsPartOfSkillLine(SKILL_ENCHANTING, i))
+                    {
+                        uint32 enchantId = spellInfo->EffectMiscValue[j];
+                        SpellItemEnchantmentEntry const *enchant = sSpellItemEnchantmentStore.LookupEntry(enchantId);
+                        for (uint8 s = 0; s < MAX_ITEM_ENCHANTMENT_EFFECTS; ++s)
+                        {
+                            if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
+                                continue;
+
+                            SpellEntry const *procInfo = sSpellStore.LookupEntry(enchant->spellid[s]);
+                            if (!procInfo)
+                                continue;
+
+                            // if proced directly from enchantment, not via proc aura
+                            // NOTE: Enchant Weapon - Blade Ward also has proc aura spell and is proced directly
+                            // however its not expected to stack so this check is good
+                            if (IsSpellHaveAura(procInfo, SPELL_AURA_PROC_TRIGGER_SPELL))
+                                continue;
+
+                            mSpellCustomAttr[enchant->spellid[s]] |= SPELL_ATTR0_CU_ENCHANT_PROC;
+                        }
+                    }
+                    break;
+                }
             }
 
             switch (SpellTargetType[spellInfo->EffectImplicitTargetA[j]])
@@ -3581,43 +3606,43 @@ void SpellMgr::LoadSpellCustomAttr()
             count++;
         }
 
-        switch(i)
+        switch (i)
         {
         case 49838: // Stop Time
             spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_INITIAL_AGGRO;
             count++;
             break;
-        case 54069: // Energize Cores 
+        case 61407: // Energize Cores
+        case 62136: // Energize Cores
+        case 54069: // Energize Cores
         case 56251: // Energize Cores
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CONE_ENTRY;
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENTRY_SRC;
+            count++;
+            break;
+        case 50785: // Energize Cores
+        case 59372: // Energize Cores
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENEMY_SRC;
+            count++;
+            break;
+        case 71880:
+        case 71892:
+            spellInfo->SpellFamilyName = SPELLFAMILY_GENERIC;
+            spellInfo->procChance = 20;
             count++;
             break;
         // Bind
         case 3286:
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
             spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
-			count++;  
-		    break;
-       case 71880:
-       case 71892:
-            spellInfo->SpellFamilyName = SPELLFAMILY_GENERIC;
-            spellInfo->procChance = 20;
             count++;
             break;
-			// Heroism
+        // Heroism
         case 32182:
             spellInfo->excludeCasterAuraSpell = 57723; // Exhaustion
             count++;
             break;
         // Blazing Harpoon
         case 61588:
-            spellInfo->MaxAffectedTargets = 1;
-            count++;
-            break;
-        // Icecrown Citadel: Sindragosa's Unchained Magic
-        case 69762:
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
-            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
             spellInfo->MaxAffectedTargets = 1;
             count++;
             break;
@@ -3645,6 +3670,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 26029: // dark glare
         case 37433: // spout
         case 43140: case 43215: // flame breath
+        case 70461: // Coldflame Trap
             mSpellCustomAttr[i] |= SPELL_ATTR0_CU_CONE_LINE;
             count++;
             break;
@@ -3675,6 +3701,15 @@ void SpellMgr::LoadSpellCustomAttr()
         case 27820:                             // Mana Detonation
         //case 28062: case 39090:                 // Positive/Negative Charge
         //case 28085: case 39093:
+        case 69782: case 69796:                 // Ooze Flood
+        case 69798: case 69801:                 // Ooze Flood
+        case 69538: case 69553: case 69610:     // Ooze Combine
+        case 71447: case 71481:                 // Bloodbolt Splash
+        case 71482: case 71483:                 // Bloodbolt Splash
+        case 71390:                             // Pact of the Darkfallen
+            mSpellCustomAttr[i] |= SPELL_ATTR0_CU_EXCLUDE_SELF;
+            count++;
+            break;
         case 44978: case 45001: case 45002:     // Wild Magic
         case 45004: case 45006: case 45010:     // Wild Magic
         case 31347: // Doom
@@ -3691,15 +3726,9 @@ void SpellMgr::LoadSpellCustomAttr()
         case 45761: // Shoot
         case 42611: // Shoot
         case 62374: // Pursued
-		case 62488: // Activate Construct
-   		case 63018:
-   		case 65121:
-  		case 63024:
-  		case 64234:
-  		case 62016: // Charge Orb
-             spellInfo->MaxAffectedTargets = 1;
-             count++;
-             break;
+            spellInfo->MaxAffectedTargets = 1;
+            count++;
+            break;
         case 52479: // Gift of the Harvester
             spellInfo->MaxAffectedTargets = 1;
             // a trap always has dst = src?
@@ -3723,13 +3752,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->MaxAffectedTargets = 3;
             count++;
             break;
-       	case 62661: // Searing Flames
-        case 61915: // Lightning Whirl 10
-	    case 63483: // Lightning Whirl 25
-	    case 55098: // Transformation
-                    spellInfo->InterruptFlags = 47;
-		    count++;
-		    break;
         case 38310: // Multi-Shot
         case 53385: // Divine Storm (Damage)
             spellInfo->MaxAffectedTargets = 4;
@@ -3778,11 +3800,16 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->procCharges = 1;
             count++;
             break;
+        case 53390: // Tidal Wave
+            spellInfo->procCharges = 2;
+            count++;
+            break;
         case 44544:    // Fingers of Frost
             spellInfo->EffectSpellClassMask[0] = flag96(685904631, 1151048, 0);
             count++;
             break;
         case 74396:    // Fingers of Frost visual buff
+            spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
             count++;
             break;
@@ -3819,14 +3846,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectRadiusIndex[0] = 37;
             count++;
             break;
-        // Blade barrier ranks 2-5 - Effect 1 (dummy) has invalid target - disable effect (we don't use it)
-        case 49500:
-        case 49501:
-        case 55225:
-        case 55226:
-            spellInfo->Effect[1] = 0;
-            count++;
-            break;
         // Master Shapeshifter: missing stance data for forms other than bear - bear version has correct data
         // To prevent aura staying on target after talent unlearned
         case 48420:
@@ -3845,13 +3864,14 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectBasePoints[2] += 30000;
             count++;
             break;
+        // some dummy spell only has dest, should push caster in this case
         case 62324: // Throw Passenger
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
-              count++;
-              break;
-        case 62907: // Freya's Ward
-         case 62947:
-             spellInfo->DurationIndex = 0;
+            spellInfo->Targets |= TARGET_FLAG_UNIT_CASTER;
+            count++;
+            break;
+        case 16834: // Natural shapeshifter
+        case 16835:
+            spellInfo->DurationIndex = 21;
             count++;
             break;
         case 51735: // Ebon Plague
@@ -3878,12 +3898,7 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AttributesEx &= ~SPELL_ATTR1_CANT_TARGET_SELF;
             count++;
             break;
-        case 62713: // Ironbranch's Essence
-        case 62968: // Brightleaf's Essence
-          spellInfo->DurationIndex = 39;
-            count++;
-            break;
-// target allys instead of enemies, target A is src_caster, spells with effect like that have ally target
+        // target allys instead of enemies, target A is src_caster, spells with effect like that have ally target
         // this is the only known exception, probably just wrong data
         case 29214: // Wrath of the Plaguebringer
         case 54836: // Wrath of the Plaguebringer
@@ -3896,10 +3911,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
             count++;
             break;
-        case 38790:
-            spellInfo->Effect[1] = SPELL_EFFECT_KILL_CREDIT_GROUP;
-            spellInfo->EffectMiscValue[1] = 22112;
-            count++;
         case 25771: // Forbearance - wrong mechanic immunity in DBC since 3.0.x
             spellInfo->EffectMiscValue[0] = MECHANIC_IMMUNE_SHIELD;
             count++;
@@ -3909,22 +3920,6 @@ void SpellMgr::LoadSpellCustomAttr()
             // may be db data bug, or blizz may keep reapplying area auras every update with checking immunity
             // that will be clear if we get more spells with problem like this
             spellInfo->AttributesEx |= SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY;
-            count++;
-            break;
-        case 63675: // Improved Devouring Plague
-            spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
-            count++;
-            break;
-        case 69055:     // Saber Lash
-        case 70814:     // Saber Lash
-            spellInfo->EffectRadiusIndex[0] = 8;
-            count++;
-            break;
-        case 69075:     // Bone Storm
-        case 70834:     // Bone Storm
-        case 70835:     // Bone Storm
-        case 70836:     // Bone Storm
-            spellInfo->EffectRadiusIndex[0] = 12;
             count++;
             break;
         case 18500: // Wing Buffet
@@ -3945,22 +3940,21 @@ void SpellMgr::LoadSpellCustomAttr()
             mSpellCustomAttr[i] |= SPELL_ATTR0_CU_IGNORE_ARMOR;
             count++;
             break;
+        case 20224: // Seals of the Pure (Rank 1)
+        case 20225: // Seals of the Pure (Rank 2)
+        case 20330: // Seals of the Pure (Rank 3)
+        case 20331: // Seals of the Pure (Rank 4)
+        case 20332: // Seals of the Pure (Rank 5)
+            spellInfo->EffectSpellClassMask[EFFECT_0][1] = 0x20400800;
+            count++;
+            break;
         // Strength of the Pack
         case 64381:
             spellInfo->StackAmount = 4;
             count++;
             break;
-        // THESE SPELLS ARE WORKING CORRECTLY EVEN WITHOUT THIS HACK
-        // THE ONLY REASON ITS HERE IS THAT CURRENT GRID SYSTEM
-        // DOES NOT ALLOW FAR OBJECT SELECTION (dist > 333)
-        case 70781: // Light's Hammer Teleport
-        case 70856: // Oratory of the Damned Teleport
-        case 70857: // Rampart of Skulls Teleport
-        case 70858: // Deathbringer's Rise Teleport
-        case 70859: // Upper Spire Teleport
-        case 70860: // Frozen Throne Teleport
-        case 70861: // Sindragosa's Lair Teleport
-            spellInfo->EffectImplicitTargetA[0] = TARGET_DST_DB;
+        case 63675: // Improved Devouring Plague
+            spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
             count++;
             break;
         case 33206: // Pain Suppression
@@ -3976,15 +3970,6 @@ void SpellMgr::LoadSpellCustomAttr()
             count++;
             break;
         case 70728: // Exploit Weakness
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
-            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_PET;
-            count++;
-            break;
-        // this is here until targetAuraSpell and alike support SpellDifficulty.dbc
-        case 70459: // Ooze Eruption Search Effect
-            spellInfo->targetAuraSpell = 0;
-            count++;
-            break;
         case 70840: // Devious Minds
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
             spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_PET;
@@ -3995,45 +3980,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_MASTER;
             count++;
             break;
-        case 71413: // Green Ooze Summon
-        case 71414: // Orange Ooze Summon
-            spellInfo->EffectImplicitTargetA[0] = TARGET_DEST_DEST;
-            count++;
-            break;
-        // THIS IS HERE BECAUSE COOLDOWN ON CREATURE PROCS IS NOT IMPLEMENTED
-        case 71604: // Mutated Strength
-        case 72673: // Mutated Strength
-        case 72674: // Mutated Strength
-        case 72675: // Mutated Strength
-            spellInfo->Effect[1] = 0;
-            count++;
-            break;
-        case 70447: // Volatile Ooze Adhesive
-        case 72836: // Volatile Ooze Adhesive
-        case 72837: // Volatile Ooze Adhesive
-        case 72838: // Volatile Ooze Adhesive
-        case 70672: // Gaseous Bloat
-        case 72455: // Gaseous Bloat
-        case 72832: // Gaseous Bloat
-        case 72833: // Gaseous Bloat
-            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
-            spellInfo->EffectImplicitTargetB[1] = TARGET_UNIT_TARGET_ENEMY;
-            spellInfo->EffectImplicitTargetB[2] = TARGET_UNIT_TARGET_ENEMY;
-            count++;
-            break;
-        case 70911: // Unbound Plague
-        case 72854: // Unbound Plague
-        case 72855: // Unbound Plague
-        case 72856: // Unbound Plague
-            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
-            count++;
-            break;
-        case 71518: // Unholy Infusion Quest Credit
-        case 72934: // Blood Infusion Quest Credit
-        case 72289: // Frost Infusion Quest Credit
-            spellInfo->EffectRadiusIndex[0] = 28;   // another missing radius
-            count++;
-            break;
         case 71708: // Empowered Flare
         case 72785: // Empowered Flare
         case 72786: // Empowered Flare
@@ -4041,32 +3987,117 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
             count++;
             break;
-        case 19970: // Entangling Roots (Rank 6)
-        case 19971: // Entangling Roots (Rank 5)
-        case 19972: // Entangling Roots (Rank 4)
-        case 19973: // Entangling Roots (Rank 3)
-        case 19974: // Entangling Roots (Rank 2)
-        case 19975: // Entangling Roots (Rank 1)
-        case 27010: // Entangling Roots (Rank 7)
-        case 53313: // Entangling Roots (Rank 8)
-            spellInfo->CastingTimeIndex = 1;
+        // ICECROWN CITADEL SPELLS
+        // THESE SPELLS ARE WORKING CORRECTLY EVEN WITHOUT THIS HACK
+        // THE ONLY REASON ITS HERE IS THAT CURRENT GRID SYSTEM
+        // DOES NOT ALLOW FAR OBJECT SELECTION (dist > 333)
+        case 70781: // Light's Hammer Teleport
+        case 70856: // Oratory of the Damned Teleport
+        case 70857: // Rampart of Skulls Teleport
+        case 70858: // Deathbringer's Rise Teleport
+        case 70859: // Upper Spire Teleport
+        case 70860: // Frozen Throne Teleport
+        case 70861: // Sindragosa's Lair Teleport
+            spellInfo->EffectImplicitTargetA[0] = TARGET_DST_DB;
             count++;
             break;
-        case 71340: // Pact of the Darkfallen
+        case 69055: // Saber Lash (Lord Marrowgar)
+        case 70814: // Saber Lash (Lord Marrowgar)
+            spellInfo->EffectRadiusIndex[0] = 8;
+            count++;
+            break;
+        case 69075: // Bone Storm (Lord Marrowgar)
+        case 70834: // Bone Storm (Lord Marrowgar)
+        case 70835: // Bone Storm (Lord Marrowgar)
+        case 70836: // Bone Storm (Lord Marrowgar)
+        case 72378: // Blood Nova (Deathbringer Saurfang)
+        case 73058: // Blood Nova (Deathbringer Saurfang)
+            spellInfo->EffectRadiusIndex[0] = 12;
+            count++;
+            break;
+        case 72385: // Boiling Blood (Deathbringer Saurfang)
+        case 72441: // Boiling Blood (Deathbringer Saurfang)
+        case 72442: // Boiling Blood (Deathbringer Saurfang)
+        case 72443: // Boiling Blood (Deathbringer Saurfang)
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
+            spellInfo->EffectImplicitTargetB[0] = 0;
+            count++;
+            break;
+        case 70460: // Coldflame Jets
+            spellInfo->DurationIndex = 1;   // 10 seconds
+            break;
+        case 71413: // Green Ooze Summon (Professor Putricide)
+        case 71414: // Orange Ooze Summon (Professor Putricide)
+            spellInfo->EffectImplicitTargetA[0] = TARGET_DEST_DEST;
+            count++;
+            break;
+            // this is here until targetAuraSpell and alike support SpellDifficulty.dbc
+        case 70459: // Ooze Eruption Search Effect (Professor Putricide)
+            spellInfo->targetAuraSpell = 0;
+            count++;
+            break;
+        // THIS IS HERE BECAUSE COOLDOWN ON CREATURE PROCS IS NOT IMPLEMENTED
+        case 71604: // Mutated Strength (Professor Putricide)
+        case 72673: // Mutated Strength (Professor Putricide)
+        case 72674: // Mutated Strength (Professor Putricide)
+        case 72675: // Mutated Strength (Professor Putricide)
+            spellInfo->Effect[1] = 0;
+            count++;
+            break;
+        case 70447: // Volatile Ooze Adhesive (Professor Putricide)
+        case 72836: // Volatile Ooze Adhesive (Professor Putricide)
+        case 72837: // Volatile Ooze Adhesive (Professor Putricide)
+        case 72838: // Volatile Ooze Adhesive (Professor Putricide)
+        case 70672: // Gaseous Bloat (Professor Putricide)
+        case 72455: // Gaseous Bloat (Professor Putricide)
+        case 72832: // Gaseous Bloat (Professor Putricide)
+        case 72833: // Gaseous Bloat (Professor Putricide)
+            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
+            spellInfo->EffectImplicitTargetB[1] = TARGET_UNIT_TARGET_ENEMY;
+            spellInfo->EffectImplicitTargetB[2] = TARGET_UNIT_TARGET_ENEMY;
+            count++;
+            break;
+        case 70911: // Unbound Plague (Professor Putricide)
+        case 72854: // Unbound Plague (Professor Putricide)
+        case 72855: // Unbound Plague (Professor Putricide)
+        case 72856: // Unbound Plague (Professor Putricide)
+            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ENEMY;
+            count++;
+            break;
+        case 71518: // Unholy Infusion Quest Credit (Professor Putricide)
+        case 72934: // Blood Infusion Quest Credit (Blood-Queen Lana'thel)
+        case 72289: // Frost Infusion Quest Credit (Sindragosa)
+            spellInfo->EffectRadiusIndex[0] = 28;   // another missing radius
+            count++;
+            break;
+        case 71340: // Pact of the Darkfallen (Blood-Queen Lana'thel)
             spellInfo->DurationIndex = 21;
             count++;
             break;
-        case 18754: // Improved Seduction
-        case 18755:
-        case 18756:
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
+        case 71266: // Swarming Shadows
+            spellInfo->AreaGroupId = 0;
+            count++;
+            break;
+        case 71357: // Order Whelp
+            spellInfo->EffectRadiusIndex[0] = 22;
+            count++;
+            break;
+        case 70598: // Sindragosa's Fury
+            spellInfo->EffectImplicitTargetA[0] = TARGET_DST_CASTER;
+            count++;
+            break;
+        case 69846: // Frost Bomb
+            spellInfo->speed = 10;
+            spellInfo->EffectImplicitTargetA[0] = TARGET_DEST_TARGET_ANY;
+            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ANY;
+            spellInfo->Effect[1] = 0;
             count++;
             break;
         default:
             break;
         }
 
-        switch(spellInfo->SpellFamilyName)
+        switch (spellInfo->SpellFamilyName)
         {
             case SPELLFAMILY_WARRIOR:
                 // Shout
@@ -4086,9 +4117,6 @@ void SpellMgr::LoadSpellCustomAttr()
                 // Roar
                 else if (spellInfo->SpellFamilyFlags[0] & 0x8)
                     mSpellCustomAttr[i] |= SPELL_ATTR0_CU_AURA_CC;
-                // Entangling Roots
-                else if (spellInfo->SpellFamilyFlags[0] & 0x200)
-                    spellInfo->CastingTimeIndex = 1;
                 else
                     break;
                 count++;
@@ -4101,25 +4129,6 @@ void SpellMgr::LoadSpellCustomAttr()
                     break;
                 count++;
                 break;
-        }
-    }
-
-    for (uint32 i = 0; i < sSpellItemEnchantmentStore.GetNumRows(); ++i)
-    {
-        SpellItemEnchantmentEntry const *enchant = sSpellItemEnchantmentStore.LookupEntry(i);
-        if (!enchant)
-            continue;
-
-        for (uint8 s = 0; s < MAX_ITEM_ENCHANTMENT_EFFECTS; ++s)
-        {
-            if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
-                continue;
-
-            SpellEntry const *spellInfo = sSpellStore.LookupEntry(enchant->spellid[s]);
-            if (!spellInfo)
-                continue;
-
-            mSpellCustomAttr[enchant->spellid[s]] |= SPELL_ATTR0_CU_ENCHANT_PROC;
         }
     }
 

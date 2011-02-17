@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 
@@ -188,6 +186,11 @@ bool Condition::Meets(Player * player, Unit* invoker)
                 }
                 break;
             }
+        case CONDITION_DRUNKENSTATE:
+            {
+                condMeets = (uint32)Player::GetDrunkenstateByValue(player->GetDrunkValue()) >= mConditionValue1;
+                break;
+            }
         case CONDITION_NEAR_CREATURE:
             {
                 condMeets = GetClosestCreatureWithEntry(player, mConditionValue1, (float)mConditionValue2) ? true : false;
@@ -196,11 +199,6 @@ bool Condition::Meets(Player * player, Unit* invoker)
         case CONDITION_NEAR_GAMEOBJECT:
             {
                 condMeets = GetClosestGameObjectWithEntry(player, mConditionValue1, (float)mConditionValue2) ? true : false;
-                break;
-            }
-        case CONDITION_TITLE:
-            {
-                condMeets = player->HasTitle(mConditionValue1);
                 break;
             }
         default:
@@ -1014,16 +1012,6 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond)
                 }
                 break;
             }
-        case CONDITION_TITLE:
-        {
-            CharTitlesEntry const* titleEntry = sCharTitlesStore.LookupEntry(cond->mSourceEntry);
-            if (!titleEntry)
-            {
-                sLog->outErrorDb("SourceEntry %u in `condition` table, does not exist in `CharTitles.dbc`, ignoring.", cond->mSourceEntry);
-                return false;
-            }
-            break;
-        }
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU:
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU_OPTION:
         case CONDITION_SOURCE_TYPE_NONE:
@@ -1356,6 +1344,15 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
                 if (cond->mConditionValue2 >= LVL_COND_MAX)
                 {
                     sLog->outErrorDb("Level condition has invalid option (%u), skipped", cond->mConditionValue2);
+                    return false;
+                }
+                break;
+            }
+        case CONDITION_DRUNKENSTATE:
+            {
+                if (cond->mConditionValue1 > DRUNKEN_SMASHED)
+                {
+                    sLog->outErrorDb("DrunkState condition has invalid state (%u), skipped", cond->mConditionValue1);
                     return false;
                 }
                 break;

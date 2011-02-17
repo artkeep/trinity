@@ -1,21 +1,19 @@
 /*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * Copyright (C) 2008-2010 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Common.h"
@@ -38,13 +36,13 @@ void WorldSession::HandleDismissCritter(WorldPacket &recv_data)
     uint64 guid;
     recv_data >> guid;
 
-    sLog->outDebug("WORLD: Received CMSG_DISMISS_CRITTER for GUID " UI64FMTD "", guid);
+    sLog->outDebug("WORLD: Received CMSG_DISMISS_CRITTER for GUID " UI64FMTD, guid);
 
     Unit* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
 
     if (!pet)
     {
-        sLog->outError("Vanitypet (GUID: %u) does not exist - player '%s' (GUID: %u / ACCOUNT: %u) attempted to dismiss it",
+        sLog->outDebug("Vanitypet (guid: %u) does not exist - player '%s' (guid: %u / account: %u) attempted to dismiss it (possibly lagged out)",
                 uint32(GUID_LOPART(guid)), GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), GetAccountId());
         return;
     }
@@ -86,12 +84,12 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 
     if (!pet->isAlive())
     {
-	        SpellEntry const* spell = (flag == ACT_ENABLED || flag == ACT_PASSIVE) ? sSpellStore.LookupEntry(spellid) : NULL;
-	        if (!spell)
-	            return;
-	        if (!(spell->Attributes & SPELL_ATTR0_CASTABLE_WHILE_DEAD))
-	            return;
-	    }
+        SpellEntry const* spell = (flag == ACT_ENABLED || flag == ACT_PASSIVE) ? sSpellStore.LookupEntry(spellid) : NULL;
+        if (!spell)
+            return;
+        if (!(spell->Attributes & SPELL_ATTR0_CASTABLE_WHILE_DEAD))
+            return;
+    }
 
     //TODO: allow control charmed player?
     if (pet->GetTypeId() == TYPEID_PLAYER && !(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))
@@ -297,7 +295,7 @@ void WorldSession::HandlePetActionHelper(Unit *pet, uint64 guid1, uint16 spellid
             }
 
             if (spellInfo->StartRecoveryCategory > 0)
-                if (pet->ToCreature()->GetGlobalCooldown() > 0)
+                if (pet->GetCharmInfo() && pet->GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
                     return;
 
             for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
@@ -752,19 +750,10 @@ void WorldSession::HandlePetCastSpellOpcode(WorldPacket& recvPacket)
     {
         sLog->outError("WORLD: unknown PET spell id %i", spellId);
         return;
-    } 
-    
-    switch(spellId)
-    {
-	    case 64077:
-	    {
-		    _player->CastSpell(caster, spellId, true);
-		    return;
-	    }
     }
 
     if (spellInfo->StartRecoveryCategory > 0) // Check if spell is affected by GCD
-        if (caster->GetTypeId() == TYPEID_UNIT && caster->ToCreature()->GetGlobalCooldown() > 0)
+        if (caster->GetCharmInfo() && caster->GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo) && caster->GetTypeId() == TYPEID_UNIT)
         {
             caster->SendPetCastFail(spellId, SPELL_FAILED_NOT_READY);
             return;

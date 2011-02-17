@@ -3922,13 +3922,19 @@ void AuraEffect::HandleAuraAllowFlight(AuraApplication const * aurApp, uint8 mod
 
     if (Player *plr = target->m_movedPlayer)
     {
-        // allow fly
-        WorldPacket data;
-        if (apply)
-            data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
-        else
-            data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-        data.append(target->GetPackGUID());
+         // allow fly
+         WorldPacket data;
+         if (apply)
+        {
+            ((Player*)target)->SetCanFly(true);
+             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+        }
+         else
+        {
+             data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
+            ((Player*)target)->SetCanFly(false);
+        }
+         data.append(target->GetPackGUID());
         data << uint32(0);                                      // unk
         plr->SendDirectMessage(&data);
     }
@@ -3950,9 +3956,15 @@ void AuraEffect::HandleAuraWaterWalk(AuraApplication const * aurApp, uint8 mode,
 
     WorldPacket data;
     if (apply)
+                {
+                	  ((Player*)target)->SetCanFly(true);
         data.Initialize(SMSG_MOVE_WATER_WALK, 8+4);
+                }
     else
+                {
         data.Initialize(SMSG_MOVE_LAND_WALK, 8+4);
+                    ((Player*)target)->SetCanFly(false);
+                }
     data.append(target->GetPackGUID());
     data << uint32(0);
     target->SendMessageToSet(&data,true);

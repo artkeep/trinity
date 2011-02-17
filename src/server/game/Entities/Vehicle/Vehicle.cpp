@@ -61,6 +61,12 @@ Vehicle::Vehicle(Unit *unit, VehicleEntry const *vehInfo) : me(unit), m_vehicleI
         default:
             break;
     }
+
+    // [Баг][Хак] Божественного вмешательства
+    me->ApplySpellImmune(0, IMMUNITY_ID, 19752, true);
+    me->ApplySpellImmune(0, IMMUNITY_ID, 53601, true);
+    me->ApplySpellImmune(0, IMMUNITY_ID, 53551, true);
+    me->ApplySpellImmune(0, IMMUNITY_ID, 17, true);
 }
 
 Vehicle::~Vehicle()

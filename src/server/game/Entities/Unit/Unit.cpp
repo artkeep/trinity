@@ -673,10 +673,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             if (Battleground *bg = killer->GetBattleground())
             {
                 bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damage);
-                /** World of Warcraft Armory **/
-                if (Battleground *bgV = ((Player*)pVictim)->GetBattleground())
-                    bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_DAMAGE_TAKEN, damage);
-                /** World of Warcraft Armory **/
             }
         }
         killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE, damage, 0, pVictim);
@@ -5127,20 +5123,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 case 21063:
                     triggered_spell_id = 21064;
                     break;
-		//Item - Icecrown 25 Normal Caster Weapon Proc
-		case 71845:
-                {
-                    triggered_spell_id = 71843;
-                    target = this;
-                    break;
-                }
-		//Item - Icecrown 25 Heroic Caster Weapon Proc
-		case 71846:
-                {
-                    triggered_spell_id = 71844;
-                    target = this;
-                    break;
-                }
                 // Vampiric Aura (boss spell)
                 case 38196:
                 {
@@ -5205,6 +5187,20 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 // Sunwell Exalted Caster Neck (??? neck)
                 // cast ??? Light's Wrath if Exalted by Aldor
                 // cast ??? Arcane Bolt if Exalted by Scryers
+					//Item - Icecrown 25 Normal Caster Weapon Proc 
+					case 71845: 
+                    { 
+                        triggered_spell_id = 71843; 
+                        target = this; 
+                        break; 
+                    } 
+					//Item - Icecrown 25 Heroic Caster Weapon Proc 
+					case 71846: 
+					{ 
+						triggered_spell_id = 71844; 
+						target = this; 
+						break; 
+					}
                 case 46569:
                     return false;                           // old unused version
                 // Sunwell Exalted Caster Neck (Shattered Sun Pendant of Acumen neck)
@@ -9887,10 +9883,6 @@ int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth)
     {
         pVictim->ToPlayer()->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_TOTAL_HEALING_RECEIVED, gain);
         pVictim->ToPlayer()->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED, addhealth);
-        /** World of Warcraft Armory **/
-        if (Battleground *bgV = pVictim->ToPlayer()->GetBattleground())
-            bgV->UpdatePlayerScore((Player*)pVictim, SCORE_HEALING_TAKEN, gain);
-        /** World of Warcraft Armory **/
     }
 
     return gain;
@@ -15235,9 +15227,6 @@ void Unit::Kill(Unit *pVictim, bool durabilityLoss)
                     if (creature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
                     {
                         ((InstanceMap *)m)->PermBindAllPlayers(creditedPlayer);
-                        /** World of Warcraft Armory **/
-                        creditedPlayer->WriteWowArmoryDatabaseLog(3, creature->GetCreatureInfo()->Entry);
-                        /** World of Warcraft Armory **/
                     }
                 }
                 else

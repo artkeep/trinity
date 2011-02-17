@@ -522,6 +522,17 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     rest_type=REST_TYPE_NO;
     ////////////////////Rest System/////////////////////
 
+    //movement anticheat
+    m_anti_lastmovetime = 0;   //last movement time
+    m_anti_NextLenCheck = 0;
+    m_anti_MovedLen = 0.0f;
+    m_anti_BeginFallZ = INVALID_HEIGHT;
+    m_anti_lastalarmtime = 0;    //last time when alarm generated
+    m_anti_alarmcount = 0;       //alarm counter
+    m_anti_TeleTime = 0;
+    m_CanFly=false;
+    /////////////////////////////////
+
     m_mailsLoaded = false;
     m_mailsUpdated = false;
     unReadMails = 0;
@@ -1773,7 +1784,7 @@ bool Player::ToggleAFK()
     bool state = HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_AFK);
 
     // afk player not allowed in battleground
-    if (state && InBattleground())
+    if (state && InBattleground() && !InArena())
         LeaveBattleground();
 
     return state;
@@ -2710,7 +2721,9 @@ void Player::GiveXP(uint32 xp, Unit *victim, float group_rate)
     uint8 level = getLevel();
 
     sScriptMgr->OnGivePlayerXP(this, xp, victim);
-
+    if(level < 66 && GetMapId() == 571) // Fixed varios exploit de leveleos antes en Northrend.		
+         return;
+ 
     // Favored experience increase START
     uint32 zone = GetZoneId();
     float favored_exp_mult = 0;
@@ -6612,6 +6625,8 @@ void Player::CheckAreaExploreAndOutdoor()
                 {
                     XP = uint32(sObjectMgr->GetBaseXP(p->area_level)*sWorld->getRate(RATE_XP_EXPLORE));
                 }
+                if(GetSession()->IsPremium())
+                XP *= sWorld->getRate(RATE_XP_EXPLORE_PREMIUM);
 
                 GiveXP(XP, NULL);
                 SendExplorationExperience(area,XP);
@@ -7171,15 +7186,6 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
         sOutdoorPvPMgr->HandlePlayerLeaveZone(this, m_zoneUpdateId);
         sOutdoorPvPMgr->HandlePlayerEnterZone(this, newZone);
         SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
-    }
-     // Prevent players from accessing GM Island
-    if (sWorld->getBoolConfig(CONFIG_PREVENT_PLAYERS_ACCESS_TO_GMISLAND))
-    {
-        if (newZone == 876 && GetSession()->GetSecurity() == SEC_PLAYER)
-        {
-            sLog->outError("Player (GUID: %u) tried to access GM Island.", GetGUIDLow());
-            TeleportTo(13,1.118799,0.477914,-144.708650,3.133046);
-        }
     }
 
     m_zoneUpdateId    = newZone;
@@ -18070,17 +18076,6 @@ void Player::SaveToDB()
     std::string sql_name = m_name;
     CharacterDatabase.escape_string(sql_name);
     
-    /** World of Warcraft Armory **/
-    std::ostringstream ps;
-    ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
-    for(uint16 i = 0; i < m_valuesCount; ++i )
-    {
-        ps << GetUInt32Value(i) << " ";
-    }
-    ps << "')";
-    CharacterDatabase.Execute( ps.str().c_str() );
-    /** World of Warcraft Armory **/
-
     std::ostringstream ss;
     ss << "REPLACE INTO characters (guid,account,name,race,class,gender,level,xp,money,playerBytes,playerBytes2,playerFlags,"
         "map, instance_id, instance_mode_mask, position_x, position_y, position_z, orientation, "

@@ -180,12 +180,15 @@ class WorldSession
 {
     friend class CharacterHandler;
     public:
-        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter);
+        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter);
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
         bool PlayerLogout() const { return m_playerLogout; }
         bool PlayerLogoutWithSave() const { return m_playerLogout && m_playerSave; }
+        inline bool Anti__CheatOccurred(uint32 CurTime,const char* Reason,float Speed,const char* Op=NULL,
+                                float Val1=0.0f,uint32 Val2=0,MovementInfo* MvInfo=NULL);
+        bool Anti__ReportCheat(const char* Reason,float Speed,const char* Op=NULL,float Val1=0.0f,uint32 Val2=0,MovementInfo* MvInfo=NULL);
 
         void SizeError(WorldPacket const& packet, uint32 size) const;
 
@@ -208,6 +211,7 @@ class WorldSession
         void SendClientCacheVersion(uint32 version);
 
         AccountTypes GetSecurity() const { return _security; }
+        bool IsPremium() const { return _ispremium; }
         uint32 GetAccountId() const { return _accountId; }
         Player* GetPlayer() const { return _player; }
         char const* GetPlayerName() const;
@@ -893,6 +897,7 @@ class WorldSession
         AccountTypes _security;
         uint32 _accountId;
         uint8 m_expansion;
+        bool _ispremium;
 
         time_t _logoutTime;
         bool m_inQueue;                                     // session wait in auth.queue

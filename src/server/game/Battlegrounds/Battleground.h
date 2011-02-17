@@ -209,10 +209,6 @@ enum ScoreType
     //SOTA
     SCORE_DESTROYED_DEMOLISHER  = 18,
     SCORE_DESTROYED_WALL        = 19,
-    /** World of Warcraft Armory **/
-    SCORE_DAMAGE_TAKEN          = 20,
-    SCORE_HEALING_TAKEN         = 21
-    /** World of Warcraft Armory **/
 };
 
 enum ArenaType

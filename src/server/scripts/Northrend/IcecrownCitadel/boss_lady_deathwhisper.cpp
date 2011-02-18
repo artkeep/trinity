@@ -164,7 +164,7 @@ class boss_lady_deathwhisper : public CreatureScript
 
         struct boss_lady_deathwhisperAI : public BossAI
         {
-            boss_lady_deathwhisperAI(Creature* creature) : BossAI(creature, DATA_LADY_DEATHWHISPER)
+            boss_lady_deathwhisperAI(Creature* creature) : BossAI(creature, DATA_DEATHWHISPER_EVENT)
             {
                 introDone = false;
                 dominateMindCount = RAID_MODE<uint8>(0,1,1,3);
@@ -191,7 +191,7 @@ class boss_lady_deathwhisper : public CreatureScript
                 me->RemoveAurasDueToSpell(SPELL_MANA_BARRIER);
                 me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TAUNT, false);
                 me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, false);
-			}
+            }
 
             void MoveInLineOfSight(Unit* who)
             {
@@ -239,16 +239,16 @@ class boss_lady_deathwhisper : public CreatureScript
                 me->RemoveAurasDueToSpell(SPELL_SHADOW_CHANNELING);
                 DoCast(me, SPELL_MANA_BARRIER, true);
 
-                instance->SetBossState(DATA_LADY_DEATHWHISPER, IN_PROGRESS);
-				instance->SetData(DATA_DEATHWHISPER_EVENT, IN_PROGRESS);
+                instance->SetBossState(DATA_DEATHWHISPER_EVENT, IN_PROGRESS);
+                instance->SetData(DATA_DEATHWHISPER_EVENT, IN_PROGRESS);
             }
 
             void JustDied(Unit* killer)
             {
                 Talk(SAY_DEATH);
 
-                instance->SetBossState(DATA_LADY_DEATHWHISPER, DONE);
-				instance->SetData(DATA_DEATHWHISPER_EVENT, DONE);
+                instance->SetBossState(DATA_DEATHWHISPER_EVENT, DONE);
+                instance->SetData(DATA_DEATHWHISPER_EVENT, DONE);
                 std::set<uint32> livingAddEntries;
                 // Full House achievement
                 for (SummonList::iterator itr = summons.begin(); itr != summons.end(); ++itr)
@@ -282,8 +282,8 @@ class boss_lady_deathwhisper : public CreatureScript
 
             void JustReachedHome()
             {
-                instance->SetBossState(DATA_LADY_DEATHWHISPER, FAIL);
-				instance->SetData(DATA_DEATHWHISPER_EVENT, FAIL);
+                instance->SetBossState(DATA_DEATHWHISPER_EVENT, FAIL);
+                instance->SetData(DATA_DEATHWHISPER_EVENT, FAIL);
                 summons.DespawnAll();
             }
 

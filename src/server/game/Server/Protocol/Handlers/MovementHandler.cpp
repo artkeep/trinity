@@ -40,7 +40,7 @@
 
 void WorldSession::HandleMoveWorldportAckOpcode(WorldPacket & /*recv_data*/)
 {
-    sLog->outDebug("WORLD: got MSG_MOVE_WORLDPORT_ACK.");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: got MSG_MOVE_WORLDPORT_ACK.");
     HandleMoveWorldportAckOpcode();
 }
 
@@ -197,7 +197,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
 
 void WorldSession::HandleMoveTeleportAck(WorldPacket& recv_data)
 {
-    sLog->outDebug("MSG_MOVE_TELEPORT_ACK");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "MSG_MOVE_TELEPORT_ACK");
     uint64 guid;
 
     recv_data.readPackGUID(guid);
@@ -780,7 +780,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
 void WorldSession::HandleForceSpeedChangeAck(WorldPacket &recv_data)
 {
     uint32 opcode = recv_data.GetOpcode();
-    sLog->outDebug("WORLD: Recvd %s (%u, 0x%X) opcode", LookupOpcodeName(opcode), opcode, opcode);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd %s (%u, 0x%X) opcode", LookupOpcodeName(opcode), opcode, opcode);
 
     /* extract packet */
     uint64 guid;
@@ -858,7 +858,7 @@ void WorldSession::HandleForceSpeedChangeAck(WorldPacket &recv_data)
 
 void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
 {
-    sLog->outDebug("WORLD: Recvd CMSG_SET_ACTIVE_MOVER");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_SET_ACTIVE_MOVER");
 
     uint64 guid;
     recv_data >> guid;
@@ -886,7 +886,7 @@ void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
 
 void WorldSession::HandleMoveNotActiveMover(WorldPacket &recv_data)
 {
-    sLog->outDebug("WORLD: Recvd CMSG_MOVE_NOT_ACTIVE_MOVER");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_MOVE_NOT_ACTIVE_MOVER");
 
     uint64 old_mover_guid;
     recv_data.readPackGUID(old_mover_guid);
@@ -900,7 +900,7 @@ void WorldSession::HandleMoveNotActiveMover(WorldPacket &recv_data)
 
 void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
 {
-    sLog->outDebug("WORLD: Recvd CMSG_DISMISS_CONTROLLED_VEHICLE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_DISMISS_CONTROLLED_VEHICLE");
     recv_data.hexlike();
 
     uint64 vehicleGUID = _player->GetCharmGUID();
@@ -926,7 +926,7 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
 
 void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
 {
-    sLog->outDebug("WORLD: Recvd CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE");
     recv_data.hexlike();
 
     Unit* vehicle_base = GetPlayer()->GetVehicleBase();
@@ -1082,7 +1082,7 @@ void WorldSession::HandleEjectPassenger(WorldPacket &data)
 
 void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
 {
-    sLog->outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_EXIT");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_REQUEST_VEHICLE_EXIT");
     recv_data.hexlike();
 
     if (Vehicle* vehicle = GetPlayer()->GetVehicle())
@@ -1108,7 +1108,7 @@ void WorldSession::HandleMountSpecialAnimOpcode(WorldPacket& /*recv_data*/)
 
 void WorldSession::HandleMoveKnockBackAck(WorldPacket & recv_data)
 {
-    sLog->outDebug("CMSG_MOVE_KNOCK_BACK_ACK");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_MOVE_KNOCK_BACK_ACK");
 
     uint64 guid;                                            // guid - unused
     recv_data.readPackGUID(guid);
@@ -1135,7 +1135,7 @@ void WorldSession::HandleMoveKnockBackAck(WorldPacket & recv_data)
 
 void WorldSession::HandleMoveHoverAck(WorldPacket& recv_data)
 {
-    sLog->outDebug("CMSG_MOVE_HOVER_ACK");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_MOVE_HOVER_ACK");
 
     uint64 guid;                                            // guid - unused
     recv_data.readPackGUID(guid);
@@ -1150,7 +1150,7 @@ void WorldSession::HandleMoveHoverAck(WorldPacket& recv_data)
 
 void WorldSession::HandleMoveWaterWalkAck(WorldPacket& recv_data)
 {
-    sLog->outDebug("CMSG_MOVE_WATER_WALK_ACK");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_MOVE_WATER_WALK_ACK");
 
     uint64 guid;                                            // guid - unused
     recv_data.readPackGUID(guid);

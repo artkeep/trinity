@@ -402,7 +402,7 @@ uint32 CalculatePowerCost(SpellEntry const * spellInfo, Unit const * caster, Spe
                 break;
             case POWER_RUNE:
             case POWER_RUNIC_POWER:
-                sLog->outDebug("CalculateManaCost: Not implemented yet!");
+                sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "CalculateManaCost: Not implemented yet!");
                 break;
             default:
                 sLog->outError("CalculateManaCost: Unknown power type '%d' in spell %d", spellInfo->powerType, spellInfo->Id);
@@ -772,6 +772,11 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
             // Ignite
             if (spellproto->SpellIconID == 45)
                 return true;
+            break;
+        case SPELLFAMILY_WARRIOR:
+	     // Shockwave
+            if (spellId == 46968)
+                return false;
             break;
         case SPELLFAMILY_PRIEST:
             switch (spellId)
@@ -1225,7 +1230,7 @@ void SpellMgr::LoadSpellTargetPositions()
         if (found)
         {
 //            if (!sSpellMgr->GetSpellTargetPosition(i))
-//                sLog->outDebug("Spell (ID: %u) does not have record in `spell_target_position`", i);
+//                sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell (ID: %u) does not have record in `spell_target_position`", i);
         }
     }
 
@@ -3747,10 +3752,13 @@ void SpellMgr::LoadSpellCustomAttr()
         case 54172: // Divine Storm (heal)
         case 29213: // Curse of the Plaguebringer - Noth
         case 28542: // Life Drain - Sapphiron
-        case 66588: // Flaming Spear
         case 54171: // Divine Storm
             spellInfo->MaxAffectedTargets = 3;
             count++;
+            break;
+        case 66588: // Flaming Spear
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
+            spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
             break;
         case 38310: // Multi-Shot
         case 53385: // Divine Storm (Damage)
@@ -3846,6 +3854,13 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectRadiusIndex[0] = 37;
             count++;
             break;
+        // Ghoul's explosion - fix wrong target(?) + make instakill
+	    case 47496:
+	    spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENEMY_DST;
+	    spellInfo->EffectImplicitTargetB[0] = 0;
+	    spellInfo->Effect[1] = SPELL_EFFECT_INSTAKILL;
+	    count++;
+	    break;
         // Master Shapeshifter: missing stance data for forms other than bear - bear version has correct data
         // To prevent aura staying on target after talent unlearned
         case 48420:

@@ -137,6 +137,9 @@ void PetAI::UpdateAI(const uint32 diff)
             if (!spellInfo)
                 continue;
 
+            if (me->GetCharmInfo() && me->GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
+                continue;
+
             // ignore some combinations of combat state and combat/noncombat spells
             if (!me->getVictim())
             {

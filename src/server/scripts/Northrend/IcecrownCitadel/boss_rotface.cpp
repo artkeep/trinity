@@ -844,11 +844,10 @@ class spell_rotface_large_ooze_buff_combine : public SpellScriptLoader
                                     rotface->AI()->Talk(SAY_UNSTABLE_EXPLOSION);
                                 }
 
-                        if (InstanceScript* instance = GetCaster()->GetInstanceScript())
-                            if (BossAI* rotface = (BossAI*)Unit::GetCreature(*GetCaster(), instance->GetData64(GUID_ROTFACE)))
-                                GetCaster()->CastSpell(GetCaster(), SPELL_UNSTABLE_OOZE_EXPLOSION, true);
+                        GetCaster()->CastSpell(GetCaster(), SPELL_UNSTABLE_OOZE_EXPLOSION, true);
                         if (InstanceScript* instance = GetCaster()->GetInstanceScript())
                             instance->SetData(DATA_OOZE_DANCE_ACHIEVEMENT, uint32(false));
+                        return;
                     }
                 }
 

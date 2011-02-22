@@ -316,14 +316,10 @@ bool Creature::InitEntry(uint32 Entry, uint32 /*team*/, const CreatureData *data
     SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
 
     // Load creature equipment
-    if (!data || data->equipmentId == 0)
-    {                                                       // use default from the template
+    if (!data || data->equipmentId == 0)                    // use default from the template
         LoadEquipment(cinfo->equipmentId);
-    }
-    else if (data && data->equipmentId != -1)
-    {                                                       // override, -1 means no equipment
+    else if (data && data->equipmentId != -1)               // override, -1 means no equipment
         LoadEquipment(data->equipmentId);
-    }
 
     SetName(normalInfo->Name);                              // at normal entry always
 
@@ -706,7 +702,7 @@ bool Creature::AIM_Initialize(CreatureAI* ai)
     // make sure nothing can change the AI during AI update
     if (m_AI_locked)
     {
-        sLog->outDebug("AIM_Initialize: failed to init, locked.");
+        sLog->outDebug(LOG_FILTER_TSCR, "AIM_Initialize: failed to init, locked.");
         return false;
     }
 
@@ -758,53 +754,51 @@ bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, 
     }
 
     //oX = x;     oY = y;    dX = x;    dY = y;    m_moveTime = 0;    m_startMove = 0;
-    const bool bResult = CreateFromProto(guidlow, Entry, vehId, team, data);
+    if (!CreateFromProto(guidlow, Entry, vehId, team, data))
+        return false;
 
-    if (bResult)
+    switch (GetCreatureInfo()->rank)
     {
-        switch (GetCreatureInfo()->rank)
-        {
-            case CREATURE_ELITE_RARE:
-                m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_RARE);
-                break;
-            case CREATURE_ELITE_ELITE:
-                m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_ELITE);
-                break;
-            case CREATURE_ELITE_RAREELITE:
-                m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_RAREELITE);
-                break;
-            case CREATURE_ELITE_WORLDBOSS:
-                m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_WORLDBOSS);
-                break;
-            default:
-                m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_NORMAL);
-                break;
-        }
-        LoadCreaturesAddon();
-        CreatureModelInfo const *minfo = sObjectMgr->GetCreatureModelRandomGender(GetNativeDisplayId());
-        if (minfo && !isTotem())                               // Cancel load if no model defined or if totem
-        {
-            uint32 display_id = minfo->modelid;                // it can be different (for another gender)
-
-            SetDisplayId(display_id);
-            SetNativeDisplayId(display_id);
-            SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
-        }
-
-        if (GetCreatureInfo()->InhabitType & INHABIT_AIR)
-        {
-            if (GetDefaultMovementType() == IDLE_MOTION_TYPE)
-                AddUnitMovementFlag(MOVEMENTFLAG_CAN_FLY);
-            else
-                SetFlying(true);
-        }
-
-        if (GetCreatureInfo()->InhabitType & INHABIT_WATER)
-        {
-            AddUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
-        }
-        LastUsedScriptID = GetCreatureInfo()->ScriptID;
+        case CREATURE_ELITE_RARE:
+            m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_RARE);
+            break;
+        case CREATURE_ELITE_ELITE:
+            m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_ELITE);
+            break;
+        case CREATURE_ELITE_RAREELITE:
+            m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_RAREELITE);
+            break;
+        case CREATURE_ELITE_WORLDBOSS:
+            m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_WORLDBOSS);
+            break;
+        default:
+            m_corpseDelay = sWorld->getIntConfig(CONFIG_CORPSE_DECAY_NORMAL);
+            break;
     }
+
+    LoadCreaturesAddon();
+    CreatureModelInfo const *minfo = sObjectMgr->GetCreatureModelRandomGender(GetNativeDisplayId());
+    if (minfo && !isTotem())                               // Cancel load if no model defined or if totem
+    {
+        uint32 display_id = minfo->modelid;                // it can be different (for another gender)
+
+        SetDisplayId(display_id);
+        SetNativeDisplayId(display_id);
+        SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
+    }
+
+    if (GetCreatureInfo()->InhabitType & INHABIT_AIR)
+    {
+        if (GetDefaultMovementType() == IDLE_MOTION_TYPE)
+            AddUnitMovementFlag(MOVEMENTFLAG_CAN_FLY);
+        else
+            SetFlying(true);
+    }
+
+    if (GetCreatureInfo()->InhabitType & INHABIT_WATER)
+        AddUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
+
+    LastUsedScriptID = GetCreatureInfo()->ScriptID;
 
     // TODO: Replace with spell, handle from DB
     if (isSpiritHealer())
@@ -812,7 +806,7 @@ bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, 
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
         m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
     }
-    else if(isSpiritGuide())
+    else if (isSpiritGuide())
     {
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST | GHOST_VISIBILITY_ALIVE);
         m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST | GHOST_VISIBILITY_ALIVE);
@@ -821,7 +815,7 @@ bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, 
     if (Entry == VISUAL_WAYPOINT)
         SetVisible(false);
 
-    return bResult;
+    return true;
 }
 
 bool Creature::isCanTrainingOf(Player* pPlayer, bool msg) const
@@ -1389,7 +1383,7 @@ void Creature::DeleteFromDB()
 {
     if (!m_DBTableGuid)
     {
-        sLog->outDebug("Trying to delete not saved creature!");
+        sLog->outError("Trying to delete not saved creature! LowGUID: %u, Entry: %u", GetGUIDLow(), GetEntry());
         return;
     }
 
@@ -1853,7 +1847,7 @@ void Creature::SendAIReaction(AiReaction reactionType)
 
     ((WorldObject*)this)->SendMessageToSet(&data, true);
 
-    sLog->outDebug("WORLD: Sent SMSG_AI_REACTION, type %u.", reactionType);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent SMSG_AI_REACTION, type %u.", reactionType);
 }
 
 void Creature::CallAssistance()
@@ -2106,7 +2100,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
             }
 
             AddAura(AdditionalSpellInfo, cAura->effectMask, this);
-            sLog->outDebug("Spell: %u with AuraEffectMask %u added to creature (GUID: %u Entry: %u)", cAura->spell_id, cAura->effectMask,GetGUIDLow(),GetEntry());
+            sLog->outDebug(LOG_FILTER_UNITS, "Spell: %u with AuraEffectMask %u added to creature (GUID: %u Entry: %u)", cAura->spell_id, cAura->effectMask,GetGUIDLow(),GetEntry());
         }
     }
     return true;

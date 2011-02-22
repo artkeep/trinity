@@ -238,7 +238,6 @@ class boss_blood_council_controller : public CreatureScript
 
             void EnterCombat(Unit* who)
             {
-                CleanupBloodPrinceCouncil(instance, this);
                 if (!instance->CheckRequiredBosses(DATA_BLOOD_PRINCE_COUNCIL_EVENT, who->ToPlayer()))
                 {
                     EnterEvadeMode();
@@ -462,7 +461,6 @@ class boss_prince_keleseth_icc : public CreatureScript
 
             void EnterCombat(Unit* who)
             {
-                CleanupBloodPrinceCouncil(instance, this);
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(GUID_BLOOD_PRINCES_CONTROL)))
                     if (!controller->isInCombat())
                         controller->AI()->AttackStart(who);
@@ -479,10 +477,10 @@ class boss_prince_keleseth_icc : public CreatureScript
 
             void JustReachedHome()
             {
+                CleanupBloodPrinceCouncil(instance, this);
                 me->SetHealth(spawnHealth);
                 isEmpowered = false;
                 removeFeignDeath(me);
-                CleanupBloodPrinceCouncil(instance, this);
             }
 
             void JustRespawned()
@@ -652,7 +650,6 @@ class boss_prince_taldaram_icc : public CreatureScript
 
             void EnterCombat(Unit* who)
             {
-                CleanupBloodPrinceCouncil(instance, this);
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(GUID_BLOOD_PRINCES_CONTROL)))
                     if (!controller->isInCombat())
                         controller->AI()->AttackStart(who);
@@ -859,7 +856,6 @@ class boss_prince_valanar_icc : public CreatureScript
 
             void EnterCombat(Unit* who)
             {
-                CleanupBloodPrinceCouncil(instance, this);
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(GUID_BLOOD_PRINCES_CONTROL)))
                     if (!controller->isInCombat())
                         controller->AI()->AttackStart(who);

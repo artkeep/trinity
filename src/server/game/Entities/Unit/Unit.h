@@ -1535,6 +1535,8 @@ class Unit : public WorldObject
         void SendRemoveFromThreatListOpcode(HostileReference* pHostileReference);
         void SendThreatListUpdate();
 
+        void SendClearTarget();
+
         void BuildHeartBeatMsg(WorldPacket *data) const;
 
         bool isAlive() const { return (m_deathState == ALIVE); };
@@ -1658,8 +1660,8 @@ class Unit : public WorldObject
 
         void RemoveAurasDueToSpell(uint32 spellId, uint64 caster = NULL, uint8 reqEffMask = 0, AuraRemoveMode removeMode = AURA_REMOVE_BY_DEFAULT);
         void RemoveAuraFromStack(uint32 spellId, uint64 caster = NULL, AuraRemoveMode removeMode = AURA_REMOVE_BY_DEFAULT);
-        inline void RemoveAuraFromStack(AuraMap::iterator &iter,AuraRemoveMode removeMode);
-        void RemoveAurasDueToSpellByDispel(uint32 spellId, uint64 casterGUID, Unit *dispeller);
+        inline void RemoveAuraFromStack(AuraMap::iterator &iter, AuraRemoveMode removeMode, uint8 chargesRemoved = 1);
+        void RemoveAurasDueToSpellByDispel(uint32 spellId, uint64 casterGUID, Unit *dispeller, uint8 chargesRemoved = 1);
         void RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit *stealer);
         void RemoveAurasDueToItemSpell(Item* castItem,uint32 spellId);
         void RemoveAurasByType(AuraType auraType, uint64 casterGUID = 0, Aura * except = NULL, bool negative = true, bool positive = true);
@@ -1713,7 +1715,7 @@ class Unit : public WorldObject
 
         int32 GetTotalAuraModifier(AuraType auratype) const;
         float GetTotalAuraMultiplier(AuraType auratype) const;
-        int32 GetMaxPositiveAuraModifier(AuraType auratype);
+        int32 GetMaxPositiveAuraModifier(AuraType auratype) const;
         int32 GetMaxNegativeAuraModifier(AuraType auratype) const;
 
         int32 GetTotalAuraModifierByMiscMask(AuraType auratype, uint32 misc_mask) const;
@@ -2057,7 +2059,7 @@ class Unit : public WorldObject
         void EnterVehicle(Unit *base, int8 seatId = -1, AuraApplication const * aurApp = NULL) { EnterVehicle(base->GetVehicleKit(), seatId, aurApp); }
         void EnterVehicle(Vehicle *vehicle, int8 seatId = -1, AuraApplication const * aurApp = NULL);
         void ExitVehicle();
-        void ChangeSeat(int8 seatId, bool next = true, bool byAura = false);
+        void ChangeSeat(int8 seatId, bool next = true);
 
         void BuildMovementPacket(ByteBuffer *data) const;
 

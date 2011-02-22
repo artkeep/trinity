@@ -1377,7 +1377,8 @@ class spell_putricide_mutated_transformation : public SpellScriptLoader
                 TempSummon* summon = caster->GetMap()->SummonCreature(entry, pos, properties, duration, caster);
                 if (!summon || !summon->IsVehicle())
                     return;
-
+                //Disallow abomination's growth
+                summon->ApplySpellImmune(SPELL_GROW_ABOMINATION, IMMUNITY_ID, SPELL_GROW_ABOMINATION, true);
                 caster->CastSpell(summon, SPELL_MUTATED_TRANSFORMATION_NAME, true);
                 summon->CastSpell(summon, SPELL_ABOMINATION_VEHICLE_POWER_DRAIN, true);
                 summon->CastSpell(summon, SPELL_MUTATED_TRANSFORMATION_DAMAGE, true);
@@ -1602,7 +1603,7 @@ public:
                     {
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, -5.0f, true))
                             DoCast(target, SPELL_COMBOBULATING_SPRAY);
-                        events.ScheduleEvent(EVENT_COMBOBULATING_SPRAY, 20000);
+                        events.ScheduleEvent(EVENT_COMBOBULATING_SPRAY, 40000);
                         break;
                     }
                     case EVENT_PLAGUE_BLAST:  
@@ -1613,18 +1614,8 @@ public:
                     }
                     case EVENT_PLAGUE_STREAM:
                     {
-                        if (me->getAttackers().empty())
-                        {
-                            if (Unit *friendlyMob = me->SelectNearbyTarget(20.0f))
-                            {
-                                DoCast(friendlyMob, SPELL_PLAGUE_STREAM);
-                                events.ScheduleEvent(EVENT_PLAGUE_STREAM, 20000);
-                            }
-                        }
-                        else
-                        {
-                            events.ScheduleEvent(EVENT_PLAGUE_STREAM, 10000);
-                        }
+                        DoCast(SPELL_PLAGUE_STREAM);
+                        events.ScheduleEvent(EVENT_PLAGUE_STREAM, 40000);
                         break;
                     }
                     default:

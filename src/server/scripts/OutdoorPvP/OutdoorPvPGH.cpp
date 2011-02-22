@@ -26,8 +26,8 @@
 
 
 OPvPCapturePointGH::OPvPCapturePointGH(OutdoorPvP *pvp) :
-OPvPCapturePoint(pvp), 
-m_capturable(true), 
+OPvPCapturePoint(pvp),
+m_capturable(true),
 m_ControllingFaction(0),
 m_VentureState(VENTURE_N)
 {

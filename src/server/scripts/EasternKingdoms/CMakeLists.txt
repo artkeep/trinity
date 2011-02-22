@@ -121,7 +121,7 @@ set(scripts_STAT_SRCS
   EasternKingdoms/BlackrockSpire/boss_highlord_omokk.cpp
   EasternKingdoms/BlackrockSpire/boss_the_beast.cpp
   EasternKingdoms/BlackrockSpire/blackrock_spire.cpp
-  EasternKingdoms/BlackrockSpire/instance_blackrock_spire.cpp	
+  EasternKingdoms/BlackrockSpire/instance_blackrock_spire.cpp
   EasternKingdoms/BlackrockSpire/blackrock_spire.h
   EasternKingdoms/SunwellPlateau/boss_eredar_twins.cpp
   EasternKingdoms/SunwellPlateau/boss_kiljaeden.cpp

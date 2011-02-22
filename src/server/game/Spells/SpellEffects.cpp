@@ -234,7 +234,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 
 void Spell::EffectNULL(SpellEffIndex /*effIndex*/)
 {
-    sLog->outDebug("WORLD: Spell Effect DUMMY");
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "WORLD: Spell Effect DUMMY");
 }
 
 void Spell::EffectUnused(SpellEffIndex /*effIndex*/)
@@ -289,7 +289,15 @@ void Spell::EffectInstaKill(SpellEffIndex /*effIndex*/)
 
         m_caster->CastSpell(m_caster, spellID, true);
     }
-
+    //Death pact should affect only his ghoul
+    if (m_spellInfo->Id == 48743)
+    {
+        if (unitTarget->GetTypeId() != TYPEID_UNIT || unitTarget->GetEntry() != 26125)
+            return;
+        //Do not harm other ghouls
+        if (unitTarget->GetOwnerGUID() != m_caster->GetGUID())
+            return;
+    }
     if (m_caster == unitTarget)                              // prevent interrupt message
         finish();
 
@@ -627,58 +635,64 @@ void Spell::SpellDamageSchoolDmg(SpellEffIndex effIndex)
             case SPELLFAMILY_ROGUE:
             {
                 // Envenom
-                if (m_caster->GetTypeId() == TYPEID_PLAYER && (m_spellInfo->SpellFamilyFlags[1] & 0x8))
+                if (m_spellInfo->SpellFamilyFlags[EFFECT_1] & 0x8)
                 {
-                    // consume from stack dozes not more that have combo-points
-                    if (uint32 combo = m_caster->ToPlayer()->GetComboPoints())
-                    {
-                        // Lookup for Deadly poison (only attacker applied)
-                        if (AuraEffect const * aurEff = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_ROGUE, 0x10000, 0, 0, m_caster->GetGUID()))
+                    if (!m_caster->ToPlayer())
+                        return;
+
+                    uint32 combo = m_caster->ToPlayer()->GetComboPoints();
+                    if (!combo)
+                        return;
+
+                    AuraEffect const * aurEffA = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_ROGUE, 0x10000, 0, 0, m_caster->GetGUID());
+                    if (!aurEffA)
+                        return;
+
+                    uint32 doses = aurEffA->GetBase()->GetStackAmount();
+                    if (doses > combo)
+                        doses = combo;
+
+                    // Master Poisoner
+                    bool needConsume = true;
+                    Unit::AuraEffectList const & auras = m_caster->ToPlayer()->GetAuraEffectsByType(SPELL_AURA_MOD_AURA_DURATION_BY_DISPEL_NOT_STACK);
+                    for (Unit::AuraEffectList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                        if (((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE) &&
+                            ((*itr)->GetSpellProto()->SpellIconID == 1960))
                         {
-                            // count consumed deadly poison doses at target
-                            bool needConsume = true;
-                            uint32 spellId = aurEff->GetId();
-                            uint32 doses = aurEff->GetBase()->GetStackAmount();
-                            if (doses > combo)
-                                doses = combo;
-                            // Master Poisoner
-                            Unit::AuraEffectList const& auraList = m_caster->ToPlayer()->GetAuraEffectsByType(SPELL_AURA_MOD_AURA_DURATION_BY_DISPEL_NOT_STACK);
-                            for (Unit::AuraEffectList::const_iterator iter = auraList.begin(); iter != auraList.end(); ++iter)
-                            {
-                                if ((*iter)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE && (*iter)->GetSpellProto()->SpellIconID == 1960)
-                                {
-                                    uint32 chance = SpellMgr::CalculateSpellEffectAmount((*iter)->GetSpellProto(), 2, m_caster);
-
-                                    if (chance && roll_chance_i(chance))
-                                        needConsume = false;
-
-                                    break;
-                                }
-                            }
-
-                            if (needConsume)
-                                for (uint32 i = 0; i < doses; ++i)
-                                    unitTarget->RemoveAuraFromStack(spellId);
-                            damage *= doses;
-                            damage += int32(((Player*)m_caster)->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * doses);
+                            uint32 chance = SpellMgr::CalculateSpellEffectAmount((*itr)->GetSpellProto(), EFFECT_2);
+                            if ((chance >= 100) || roll_chance_i(chance))
+                                needConsume = false;
+                            break;
                         }
-                        // Eviscerate and Envenom Bonus Damage (item set effect)
-                        if (m_caster->HasAura(37169))
-                            damage += ((Player*)m_caster)->GetComboPoints()*40;
-                    }
+                    if (needConsume)
+                        for (uint32 i = 0; i < doses; ++i)
+                            unitTarget->RemoveAuraFromStack(aurEffA->GetId());
+
+                    damage *= doses;
+                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * combo);
+
+                    // Eviscerate and Envenom Bonus Damage
+                    if (AuraEffect const * aurEffB = m_caster->GetAuraEffect(37169, EFFECT_0, m_caster->GetGUID()))
+                        damage += combo * aurEffB->GetAmount();
+                    break;
                 }
                 // Eviscerate
-                else if ((m_spellInfo->SpellFamilyFlags[0] & 0x00020000) && m_caster->GetTypeId() == TYPEID_PLAYER)
+                if (m_spellInfo->SpellFamilyFlags[EFFECT_0] & 0x20000)
                 {
-                    if (uint32 combo = ((Player*)m_caster)->GetComboPoints())
-                    {
-                        float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
-                        damage += irand(int32(ap * combo * 0.03f), int32(ap * combo * 0.07f));
+                    if (!m_caster->ToPlayer())
+                        return;
 
-                        // Eviscerate and Envenom Bonus Damage (item set effect)
-                        if (m_caster->HasAura(37169))
-                            damage += combo*40;
-                    }
+                    uint32 combo = m_caster->ToPlayer()->GetComboPoints();
+                    if (!combo)
+                        return;
+
+                    float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
+                    damage += irand(int32(ap * combo * 0.03f), int32(ap * combo * 0.07f));
+
+                    // Eviscerate and Envenom Bonus Damage
+                    if (AuraEffect const * aurEffB = m_caster->GetAuraEffect(37169, EFFECT_0, m_caster->GetGUID()))
+                        damage += combo * aurEffB->GetAmount();
+                    break;
                 }
                 break;
             }
@@ -890,7 +904,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                     Creature* creatureTarget = unitTarget->ToCreature();
 
                     m_caster->SummonGameObject(179644, creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(), creatureTarget->GetOrientation(), 0, 0, 0, 0, uint32(creatureTarget->GetRespawnTime()-time(NULL)));
-                    sLog->outDebug("SummonGameObject at SpellEfects.cpp EffectDummy for Spell 23019");
+                    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "SummonGameObject at SpellEfects.cpp EffectDummy for Spell 23019");
 
                     creatureTarget->DespawnOrUnsummon();
 
@@ -1531,6 +1545,12 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                 }
                 return;
             }
+            // Hungering Cold 
+            if (m_spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_DK_HUNGERING_COLD) 
+            { 
+                unitTarget->CastSpell(m_caster, 51209, true); 
+                return; 
+            }
             switch (m_spellInfo->Id)
             {
             case 49560: // Death Grip
@@ -1574,6 +1594,24 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                 break;
             }
             break;
+        case SPELLFAMILY_ROGUE:
+            switch(GetSpellInfo()->Id)
+            {
+                case 45176: // Master Poisoner Proc Trigger (SERVERSIDE)
+                {
+                    uint32 spellId = damage;
+                    uint32 value = SpellMgr::CalculateSpellEffectAmount(m_triggeredByAuraSpell, EFFECT_0);
+
+                    if (AuraEffect * aurEff = unitTarget->GetAuraEffect(spellId, EFFECT_2, m_caster->GetGUID()))
+                        aurEff->SetAmount(value);
+                    return;
+                }
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
     }
 
     //spells triggered by dummy effect should not miss
@@ -1601,7 +1639,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
     }
 
     // normal DB scripted effect
-    sLog->outDebug("Spell ScriptStart spellid %u in EffectDummy(%u)", m_spellInfo->Id, effIndex);
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell ScriptStart spellid %u in EffectDummy(%u)", m_spellInfo->Id, effIndex);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, uint32(m_spellInfo->Id | (effIndex << 24)), m_caster, unitTarget);
 
     // Script based implementation. Must be used only for not good for implementation in core spell effects
@@ -2034,7 +2072,7 @@ void Spell::EffectTeleportUnits(SpellEffIndex /*effIndex*/)
     m_targets.m_dstPos.GetPosition(x, y, z, orientation);
     if (!orientation && m_targets.getUnitTarget())
         orientation = m_targets.getUnitTarget()->GetOrientation();
-    sLog->outDebug("Spell::EffectTeleportUnits - teleport unit to %u %f %f %f %f\n", mapid, x, y, z, orientation);
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell::EffectTeleportUnits - teleport unit to %u %f %f %f %f\n", mapid, x, y, z, orientation);
 
     if (mapid == unitTarget->GetMapId())
         unitTarget->NearTeleportTo(x, y, z, orientation, unitTarget == m_caster);
@@ -2164,7 +2202,7 @@ void Spell::EffectUnlearnSpecialization(SpellEffIndex effIndex)
 
     _player->removeSpell(spellToUnlearn);
 
-    sLog->outDebug("Spell: Player %u has unlearned spell %u from NpcGUID: %u", _player->GetGUIDLow(), spellToUnlearn, m_caster->GetGUIDLow());
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell: Player %u has unlearned spell %u from NpcGUID: %u", _player->GetGUIDLow(), spellToUnlearn, m_caster->GetGUIDLow());
 }
 
 void Spell::EffectPowerDrain(SpellEffIndex effIndex)
@@ -2206,7 +2244,7 @@ void Spell::EffectSendEvent(SpellEffIndex effIndex)
     /*
     we do not handle a flag dropping or clicking on flag in battleground by sendevent system
     */
-    sLog->outDebug("Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[effIndex], m_spellInfo->Id);
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[effIndex], m_spellInfo->Id);
 
     Object *pTarget;
     if (focusObject)
@@ -2414,7 +2452,7 @@ void Spell::EffectHealthLeech(SpellEffIndex effIndex)
     if (!unitTarget || !unitTarget->isAlive() || damage < 0)
         return;
 
-    sLog->outDebug("HealthLeech :%i", damage);
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "HealthLeech :%i", damage);
 
     float healMultiplier = SpellMgr::CalculateSpellEffectValueMultiplier(m_spellInfo, effIndex, m_originalCaster, this);
 
@@ -2794,7 +2832,7 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
                 // TODO: possible must be moved to loot release (in different from linked triggering)
                 if (gameObjTarget->GetGOInfo()->chest.eventId)
                 {
-                    sLog->outDebug("Chest ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->chest.eventId,gameObjTarget->GetDBTableGUIDLow());
+                    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Chest ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->chest.eventId,gameObjTarget->GetDBTableGUIDLow());
                     player->GetMap()->ScriptsStart(sEventScripts, gameObjTarget->GetGOInfo()->chest.eventId, player, gameObjTarget);
                 }
 
@@ -2816,7 +2854,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
 {
     if (m_caster->GetTypeId() != TYPEID_PLAYER)
     {
-        sLog->outDebug("WORLD: Open Lock - No Player Caster!");
+        sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "WORLD: Open Lock - No Player Caster!");
         return;
     }
 
@@ -2890,7 +2928,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
     }
     else
     {
-        sLog->outDebug("WORLD: Open Lock - No GameObject/Item Target!");
+        sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "WORLD: Open Lock - No GameObject/Item Target!");
         return;
     }
 
@@ -3248,7 +3286,7 @@ void Spell::EffectLearnSpell(SpellEffIndex effIndex)
     uint32 spellToLearn = (m_spellInfo->Id == 483 || m_spellInfo->Id == 55884) ? damage : m_spellInfo->EffectTriggerSpell[effIndex];
     player->learnSpell(spellToLearn, false);
 
-    sLog->outDebug("Spell: Player %u has learned spell %u from NpcGUID=%u", player->GetGUIDLow(), spellToLearn, m_caster->GetGUIDLow());
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell: Player %u has learned spell %u from NpcGUID=%u", player->GetGUIDLow(), spellToLearn, m_caster->GetGUIDLow());
 }
 
 typedef std::list< std::pair<uint32, uint64> > DispelList;
@@ -3307,7 +3345,7 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
 
     // Ok if exist some buffs for dispel try dispel it
     uint32 failCount = 0;
-    DispelList success_list;
+    DispelChargesList success_list;
     WorldPacket dataFail(SMSG_DISPEL_FAILED, 8+8+4+4+damage*4);
     // dispel N = damage buffs (or while exist buffs for dispel)
     for (int32 count = 0; count < damage && !dispel_list.empty();)
@@ -3327,7 +3365,17 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
         {
             if (success)
             {
-                success_list.push_back(std::make_pair(itr->first->GetId(), itr->first->GetCasterGUID()));
+                bool alreadyListed = false;
+                for (DispelChargesList::iterator successItr = success_list.begin(); successItr != success_list.end(); ++successItr)
+                {
+                    if (successItr->first->GetId() == itr->first->GetId())
+                    {
+                        ++successItr->second;
+                        alreadyListed = true;
+                    }
+                }
+                if (!alreadyListed)
+                    success_list.push_back(std::make_pair(itr->first, 1));
                 --itr->second;
                 if (itr->second <= 0)
                     dispel_list.erase(itr);
@@ -3354,19 +3402,19 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
     if (success_list.empty())
         return;
 
-    WorldPacket dataSuccess(SMSG_SPELLDISPELLOG, 8+8+4+1+4+damage*5);
+    WorldPacket dataSuccess(SMSG_SPELLDISPELLOG, 8+8+4+1+4+success_list.size()*5);
     // Send packet header
     dataSuccess.append(unitTarget->GetPackGUID());         // Victim GUID
     dataSuccess.append(m_caster->GetPackGUID());           // Caster GUID
     dataSuccess << uint32(m_spellInfo->Id);                // dispel spell id
     dataSuccess << uint8(0);                               // not used
     dataSuccess << uint32(success_list.size());            // count
-    for (DispelList::iterator itr = success_list.begin(); itr != success_list.end(); ++itr)
+    for (DispelChargesList::iterator itr = success_list.begin(); itr != success_list.end(); ++itr)
     {
         // Send dispelled spell info
-        dataSuccess << uint32(itr->first);              // Spell Id
+        dataSuccess << uint32(itr->first->GetId());              // Spell Id
         dataSuccess << uint8(0);                        // 0 - dispelled !=0 cleansed
-        unitTarget->RemoveAurasDueToSpellByDispel(itr->first, itr->second, m_caster);
+        unitTarget->RemoveAurasDueToSpellByDispel(itr->first->GetId(), itr->first->GetCasterGUID(), m_caster, itr->second);
     }
     m_caster->SendMessageToSet(&dataSuccess, true);
 
@@ -3508,7 +3556,7 @@ void Spell::EffectAddHonor(SpellEffIndex /*effIndex*/)
     if (m_CastItem)
     {
         unitTarget->ToPlayer()->RewardHonor(NULL, 1, damage/10);
-        sLog->outDebug("SpellEffect::AddHonor (spell_id %u) rewards %d honor points (item %u) for player: %u", m_spellInfo->Id, damage/10, m_CastItem->GetEntry(),unitTarget->ToPlayer()->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "SpellEffect::AddHonor (spell_id %u) rewards %d honor points (item %u) for player: %u", m_spellInfo->Id, damage/10, m_CastItem->GetEntry(),unitTarget->ToPlayer()->GetGUIDLow());
         return;
     }
 
@@ -3517,13 +3565,13 @@ void Spell::EffectAddHonor(SpellEffIndex /*effIndex*/)
     {
         uint32 honor_reward = Trinity::Honor::hk_honor_at_level(unitTarget->getLevel(), float(damage));
         unitTarget->ToPlayer()->RewardHonor(NULL, 1, honor_reward);
-        sLog->outDebug("SpellEffect::AddHonor (spell_id %u) rewards %u honor points (scale) to player: %u", m_spellInfo->Id, honor_reward, unitTarget->ToPlayer()->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points (scale) to player: %u", m_spellInfo->Id, honor_reward, unitTarget->ToPlayer()->GetGUIDLow());
     }
     else
     {
         //maybe we have correct honor_gain in damage already
         unitTarget->ToPlayer()->RewardHonor(NULL, 1, damage);
-        sLog->outDebug("SpellEffect::AddHonor (spell_id %u) rewards %u honor points (non scale) for player: %u", m_spellInfo->Id, damage, unitTarget->ToPlayer()->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points (non scale) for player: %u", m_spellInfo->Id, damage, unitTarget->ToPlayer()->GetGUIDLow());
     }
 }
 
@@ -5562,7 +5610,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
     }
 
     // normal DB scripted effect
-    sLog->outDebug("Spell ScriptStart spellid %u in EffectScriptEffect(%u)", m_spellInfo->Id, effIndex);
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell ScriptStart spellid %u in EffectScriptEffect(%u)", m_spellInfo->Id, effIndex);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, uint32(m_spellInfo->Id | (effIndex << 24)), m_caster, unitTarget);
 }
 
@@ -5712,7 +5760,7 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
 
     Player* pTarget = (Player*)unitTarget;
 
-    sLog->outDebug("Spell Effect: Stuck");
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell Effect: Stuck");
     sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
 
     if (pTarget->isInFlight())
@@ -6700,7 +6748,7 @@ void Spell::EffectMilling(SpellEffIndex /*effIndex*/)
 
 void Spell::EffectSkill(SpellEffIndex /*effIndex*/)
 {
-    sLog->outDebug("WORLD: SkillEFFECT");
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "WORLD: SkillEFFECT");
 }
 
 /* There is currently no need for this effect. We handle it in Battleground.cpp
@@ -6727,7 +6775,7 @@ void Spell::EffectSpiritHeal(SpellEffIndex /*effIndex*/)
 // remove insignia spell effect
 void Spell::EffectSkinPlayerCorpse(SpellEffIndex /*effIndex*/)
 {
-    sLog->outDebug("Effect: SkinPlayerCorpse");
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Effect: SkinPlayerCorpse");
     if ((m_caster->GetTypeId() != TYPEID_PLAYER) || (unitTarget->GetTypeId() != TYPEID_PLAYER) || (unitTarget->isAlive()))
         return;
 
@@ -6736,7 +6784,7 @@ void Spell::EffectSkinPlayerCorpse(SpellEffIndex /*effIndex*/)
 
 void Spell::EffectStealBeneficialBuff(SpellEffIndex effIndex)
 {
-    sLog->outDebug("Effect: StealBeneficialBuff");
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Effect: StealBeneficialBuff");
 
     if (!unitTarget || unitTarget == m_caster)                 // can't steal from self
         return;

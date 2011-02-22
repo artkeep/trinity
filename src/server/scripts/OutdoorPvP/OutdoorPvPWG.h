@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
  *
- * Copyright (C) 2010 Myth Project <http://bitbucket.org/sun/myth-core/>
+ * Patch supported by ChaosUA & TCRU community http://trinity-core.ru/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -259,6 +259,8 @@ class OutdoorPvPWG : public OutdoorPvP
         // BG end
         void SendInitWorldStatesTo(Player *player = NULL) const;
         uint32 m_timer;
+       bool m_changeAlly;
+       bool m_changeHorde;
 
     protected:
         // Temporal BG specific till 3.2

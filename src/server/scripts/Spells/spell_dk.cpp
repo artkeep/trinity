@@ -34,6 +34,7 @@ enum DeathKnightSpells
     DK_SPELL_SCOURGE_STRIKE_TRIGGERED           = 70890,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_TALENT_R1   = 49189,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
+    DK_SPELL_BLOOD_TAP                          = 45529,
 };
 
 // 50462 - Anti-Magic Shell (on raid member)
@@ -207,17 +208,45 @@ class spell_dk_corpse_explosion : public SpellScriptLoader
                 if (Unit* unitTarget = GetHitUnit())
                 {
                     int32 bp = 0;
+                    bool ghoul = false;
                     // Living ghoul as a target
                     if (unitTarget->isAlive())
+                    {
+                        ghoul = true;
                         bp = int32(unitTarget->CountPctFromMaxHealth(25));
+                    }
                     // Some corpse
                     else
-                        bp = GetEffectValue();
-                    GetCaster()->CastCustomSpell(unitTarget, SpellMgr::CalculateSpellEffectAmount(GetSpellInfo(), 1), &bp, NULL, NULL, true);
-                    // Corpse Explosion (Suicide)
-                    unitTarget->CastCustomSpell(unitTarget, DK_SPELL_CORPSE_EXPLOSION_TRIGGERED, &bp, NULL, NULL, true);
-                    // Set corpse look
-                    unitTarget->SetDisplayId(DISPLAY_GHOUL_CORPSE + urand(0, 3));
+                        bp = GetEffectValue();	
+
+                    uint32 spellid = SpellMgr::CalculateSpellEffectAmount(GetSpellInfo(), 1);
+
+                    // ghoul case
+                    if (ghoul)
+                    {
+                        spellid = 47496;
+                        // ap bonus is offlike?
+                        bp += GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK) * 0.1f;
+                        // ghoul cast on self, 1,5 seconds
+                        unitTarget->CastCustomSpell(unitTarget, spellid, &bp, NULL, NULL, false);
+                    }
+                    else 
+                        GetCaster()->CastCustomSpell(unitTarget, spellid, &bp, NULL, NULL, true);
+
+                    // ghoul is dead already by 47496
+                    if (!ghoul)
+                    {
+                        // Corpse Explosion (Suicide)
+                        unitTarget->CastCustomSpell(unitTarget, DK_SPELL_CORPSE_EXPLOSION_TRIGGERED, &bp, NULL, NULL, true);
+                        // Set corpse look
+                        unitTarget->SetDisplayId(DISPLAY_GHOUL_CORPSE + urand(0, 3));
+                    }
+
+                    // impossible to summon a new pet for a time when corpse exist, don't know how on offy
+                    /*if (ghoul)
+                    {
+                        DoSomethingToRemoveCorpse();
+                    }*/              
                 }
             }
 
@@ -324,40 +353,51 @@ class spell_dk_runic_power_feed : public SpellScriptLoader
 // 55090 Scourge Strike (55265, 55270, 55271)
 class spell_dk_scourge_strike : public SpellScriptLoader
 {
+public:
+    spell_dk_scourge_strike() : SpellScriptLoader("spell_dk_scourge_strike") { }
+ 
+    class spell_dk_scourge_strike_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_dk_scourge_strike_SpellScript)
+    private:
+        float m_multip;
     public:
-        spell_dk_scourge_strike() : SpellScriptLoader("spell_dk_scourge_strike") { }
-
-        class spell_dk_scourge_strike_SpellScript : public SpellScript
+        spell_dk_scourge_strike_SpellScript() : m_multip(0.0f) { }
+ 
+        bool Validate(SpellEntry const * /*spellEntry*/)
         {
-            PrepareSpellScript(spell_dk_scourge_strike_SpellScript);
-
-            bool Validate(SpellEntry const * /*spellEntry*/)
-            {
-                if (!sSpellStore.LookupEntry(DK_SPELL_SCOURGE_STRIKE_TRIGGERED))
-                    return false;
-                return true;
-            }
-
-            void HandleDummy(SpellEffIndex /*effIndex*/)
-            {
-                Unit* caster = GetCaster();
-                if (Unit* unitTarget = GetHitUnit())
-                {
-                    int32 bp = CalculatePctN(GetHitDamage(), GetEffectValue() * unitTarget->GetDiseasesByCaster(caster->GetGUID()));
-                    caster->CastCustomSpell(unitTarget, DK_SPELL_SCOURGE_STRIKE_TRIGGERED, &bp, NULL, NULL, true);
-                }
-            }
-
-            void Register()
-            {
-                OnEffect += SpellEffectFn(spell_dk_scourge_strike_SpellScript::HandleDummy, EFFECT_2, SPELL_EFFECT_DUMMY);
-            }
-        };
-
-        SpellScript* GetSpellScript() const
-        {
-            return new spell_dk_scourge_strike_SpellScript();
+            if (!sSpellStore.LookupEntry(DK_SPELL_SCOURGE_STRIKE_TRIGGERED))
+                return false;
+            return true;
         }
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            Unit* caster = GetCaster();
+            if (Unit* unitTarget = GetHitUnit())
+                m_multip = (GetEffectValue() * unitTarget->GetDiseasesByCaster(caster->GetGUID())) / 100.0f;
+        }
+ 
+        void HandleAfterHit()
+        {
+            Unit* caster = GetCaster();
+            if (Unit* unitTarget = GetHitUnit())
+            {
+                int32 bp = GetTrueDamage() * m_multip;
+                caster->CastCustomSpell(unitTarget, DK_SPELL_SCOURGE_STRIKE_TRIGGERED, &bp, NULL, NULL, true);
+            }
+        }
+ 
+        void Register()
+        {
+            OnEffect += SpellEffectFn(spell_dk_scourge_strike_SpellScript::HandleDummy, EFFECT_2, SPELL_EFFECT_DUMMY);
+            AfterHit += SpellHitFn(spell_dk_scourge_strike_SpellScript::HandleAfterHit);
+        }
+    };
+ 
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_dk_scourge_strike_SpellScript();
+    }
 };
 
 // 49145 - Spell Deflection
@@ -468,6 +508,50 @@ class spell_dk_will_of_the_necropolis : public SpellScriptLoader
         }
 };
 
+// 45529 Blood Tap
+class spell_dk_blood_tap : public SpellScriptLoader
+{
+public:
+    spell_dk_blood_tap() : SpellScriptLoader("spell_dk_blood_tap") { }
+
+    class spell_dk_blood_tap_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_dk_blood_tap_SpellScript)
+        bool Validate(SpellEntry const * /*spellEntry*/)
+        {
+            if (!sSpellStore.LookupEntry(DK_SPELL_BLOOD_TAP))
+                return false;
+            return true;
+        }
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            Unit* caster = GetCaster();
+            for (uint32 i = 0; i < MAX_RUNES; ++i)
+            {
+                if (caster->ToPlayer()->GetBaseRune(i) == RUNE_BLOOD && caster->ToPlayer()->GetRuneCooldown(i) != 0)
+                {
+                    caster->ToPlayer()->SetRuneCooldown(i, 0);
+                    caster->ToPlayer()->ResyncRunes(MAX_RUNES);
+                    return;
+                }
+            }
+        }
+
+        void Register()
+        {
+            OnEffect += SpellEffectFn(spell_dk_blood_tap_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_ACTIVATE_RUNE);
+        }
+    
+            
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_dk_blood_tap_SpellScript();
+    }
+};
+      
 void AddSC_deathknight_spell_scripts()
 {
     new spell_dk_anti_magic_shell_raid();
@@ -479,4 +563,5 @@ void AddSC_deathknight_spell_scripts()
     new spell_dk_scourge_strike();
     new spell_dk_spell_deflection();
     new spell_dk_will_of_the_necropolis();
+    new spell_dk_blood_tap();
 }

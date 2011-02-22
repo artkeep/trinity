@@ -286,7 +286,7 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
     if (!GetUInt32Value(ITEM_FIELD_DURATION))
         return;
 
-    sLog->outDebug("Item::UpdateDuration Item (Entry: %u Duration %u Diff %u)",GetEntry(),GetUInt32Value(ITEM_FIELD_DURATION),diff);
+    sLog->outDebug(LOG_FILTER_PLAYER_ITEMS, "Item::UpdateDuration Item (Entry: %u Duration %u Diff %u)",GetEntry(),GetUInt32Value(ITEM_FIELD_DURATION),diff);
 
     if (GetUInt32Value(ITEM_FIELD_DURATION) <= diff)
     {
@@ -680,7 +680,7 @@ void Item::AddToUpdateQueueOf(Player *player)
 
     if (player->GetGUID() != GetOwnerGUID())
     {
-        sLog->outDebug("Item::AddToUpdateQueueOf - Owner's guid (%u) and player's guid (%u) don't match!", GUID_LOPART(GetOwnerGUID()), player->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_PLAYER_ITEMS, "Item::AddToUpdateQueueOf - Owner's guid (%u) and player's guid (%u) don't match!", GUID_LOPART(GetOwnerGUID()), player->GetGUIDLow());
         return;
     }
 
@@ -700,7 +700,7 @@ void Item::RemoveFromUpdateQueueOf(Player *player)
 
     if (player->GetGUID() != GetOwnerGUID())
     {
-        sLog->outDebug("Item::RemoveFromUpdateQueueOf - Owner's guid (%u) and player's guid (%u) don't match!", GUID_LOPART(GetOwnerGUID()), player->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_PLAYER_ITEMS, "Item::RemoveFromUpdateQueueOf - Owner's guid (%u) and player's guid (%u) don't match!", GUID_LOPART(GetOwnerGUID()), player->GetGUIDLow());
         return;
     }
 
@@ -1017,6 +1017,15 @@ Item* Item::CreateItem(uint32 item, uint32 count, Player const* player)
         Item *pItem = NewItemOrBag(pProto);
         if (pItem->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_ITEM), item, player))
         {
+            /** World of Warcraft Armory **/
+            if (pProto->Quality > 2 && pProto->Flags != 2048 && (pProto->Class == ITEM_CLASS_WEAPON || pProto->Class == ITEM_CLASS_ARMOR) && player)
+            {
+                std::ostringstream ss;
+                sLog->outDetail("WoWArmory: write feed log (guid: %u, type: 2, data: %u)", player->GetGUIDLow(), item);
+                ss << "REPLACE INTO character_feed_log (guid, type, data, date, counter, item_guid) VALUES (" << player->GetGUIDLow() << ", 2, " << item << ", UNIX_TIMESTAMP(NOW()), 1," << pItem->GetGUIDLow()  << ")";
+                CharacterDatabase.PExecute( ss.str().c_str() );
+            }
+            /** World of Warcraft Armory **/
             pItem->SetCount(count);
             return pItem;
         }

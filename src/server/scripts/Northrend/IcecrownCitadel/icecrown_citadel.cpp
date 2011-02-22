@@ -1321,6 +1321,7 @@ public:
 
         void HandlePaladinEvents()
         {
+            Creature *valkyrHerald;
             switch (uint32 eventId = events.ExecuteEvent())
             {
                 case EVENT_CAN_CAST_RADIANCE_AURA:
@@ -1330,9 +1331,9 @@ public:
                 }
                 case EVENT_FLASH_OF_LIGHT:
                 {
-                    if (urand(0, 1) && me->GetOwner()->isAlive() && me->GetOwner()->GetDistance(me) < 40.0f)
+                    if ((valkyrHerald = me->FindNearestCreature(NPC_VALKYR_HERALD, 40.0f)) && urand(0, 1))
                     {
-                        DoCast(me->GetOwner(), SPELL_FLASH_OF_LIGHT);
+                        DoCast(valkyrHerald, SPELL_FLASH_OF_LIGHT);
                     }
                     else
                     {
@@ -1342,8 +1343,8 @@ public:
                         for (std::list<Creature*>::const_iterator itr = others.begin(); itr != others.end(); ++itr)
                             if (!pMob || pMob->GetHealthPct() < (*itr)->GetHealthPct())
                                 pMob = (*itr);
-                        if (!pMob && me->GetOwner() && me->GetOwner()->isAlive())
-                            pMob = me->GetOwner();
+                        if (!pMob)
+                            pMob = valkyrHerald;
                         if (pMob)
                             DoCast(pMob, SPELL_FLASH_OF_LIGHT);
                     }
@@ -1352,20 +1353,9 @@ public:
                 }
                 case EVENT_CLEANSE:
                 {
-                    if (urand(0, 1) && me->GetOwner()->isAlive() && me->GetOwner()->GetDistance(me) < 30.0f)
-                    {
-                        DoCast(me->GetOwner(), SPELL_CLEANSE);
-                    }
-                    else
-                    {
-                        std::list<Creature*> others;
-                        GetCreatureListWithEntryInGrid(others, me, NPC_SEVERED_ESSENCE, 40.0f);
-                        std::list<Creature*>::iterator itr = others.begin();
-                        std::advance(itr, urand(0, others.size()-1));
-                        //DoCast(pMob, SPELL_CLEANSE);
-
-                    }
-                    events.ScheduleEvent(EVENT_CLEANSE, 4000);
+                    if (valkyrHerald = me->FindNearestCreature(NPC_VALKYR_HERALD, 30.0f))
+                        DoCast(valkyrHerald, SPELL_CLEANSE);
+                    events.ScheduleEvent(EVENT_CLEANSE, 5000);
                     break;
                 }
                 case EVENT_RADIANCE_AURA:
@@ -1378,13 +1368,14 @@ public:
 
         void HandlePriestEvents()
         {
+            Creature *valkyrHerald;
             switch (uint32 eventId = events.ExecuteEvent())
             {
                 case EVENT_RENEW:
                 {
-                    if (urand(0, 1) && me->GetOwner()->isAlive() && me->GetOwner()->GetDistance(me) < 40.0f && me->GetOwner()->HasAura(SPELL_RENEW))
+                    if ((valkyrHerald = me->FindNearestCreature(NPC_VALKYR_HERALD, 40.0f)) && urand(0, 1))
                     {
-                        DoCast(me->GetOwner(), SPELL_RENEW);
+                        DoCast(valkyrHerald, SPELL_RENEW);
                     }
                     else
                     {
@@ -1409,8 +1400,8 @@ public:
                                     pMob = (*itr);
                             }
                         }
-                        if (!pMob && me->GetOwner() && me->GetOwner()->isAlive())
-                            pMob = me->GetOwner();
+                        if (!pMob)
+                            pMob = valkyrHerald;
                         if (pMob)
                             DoCast(pMob, SPELL_RENEW);
                     }
@@ -1419,9 +1410,9 @@ public:
                 }
                 case EVENT_GREATER_HEAL:
                 {
-                    if (urand(0, 1) && me->GetOwner() && me->GetOwner()->isAlive() && me->GetOwner()->GetDistance(me) < 40.0f)
+                    if ((valkyrHerald = me->FindNearestCreature(NPC_VALKYR_HERALD, 40.0f)) && urand(0, 1))
                     {
-                        DoCast(me->GetOwner(), SPELL_GREATER_HEAL);
+                        DoCast(valkyrHerald, SPELL_GREATER_HEAL);
                     }
                     else
                     {
@@ -1431,8 +1422,8 @@ public:
                         for (std::list<Creature*>::const_iterator itr = others.begin(); itr != others.end(); ++itr)
                             if (!pMob || pMob->GetHealthPct() < (*itr)->GetHealthPct())
                                 pMob = (*itr);
-                        if (!pMob && me->GetOwner() && me->GetOwner()->isAlive())
-                            pMob = me->GetOwner();
+                        if (!pMob)
+                            pMob = valkyrHerald;
                         if (pMob)
                             DoCast(pMob, SPELL_GREATER_HEAL);
                     }

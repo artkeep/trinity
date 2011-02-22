@@ -168,12 +168,11 @@ class instance_icecrown_citadel : public InstanceMapScript
 
             bool IsEncounterInProgress() const
             {
+                if (!instance->GetPlayersCountExceptGMs())
+                    return false;
                 for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
-                {
                     if (uiEncounter[i] == IN_PROGRESS)
                         return true;
-                }
-
                 return false;
             }
 
@@ -323,6 +322,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case NPC_LICH_KING:
                     {
                         uiLichKing = creature->GetGUID();
+                        break;
+                    }
+                    case NPC_TIRION_ICC:
+                    {
+                        uiTirion = creature->GetGUID();
                         break;
                     }
                 }
@@ -1115,11 +1119,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                             HandleGameObject(uiCrimsonHallDoorRight, true);
                             HandleGameObject(uiCrimsonHallDoorLeft, true);
                         }
-                        if(data == NOT_STARTED || data == FAIL)
-                            HandleGameObject(uiCrimsonHallDoor1, true);
-
-                        if(data == IN_PROGRESS)
-                            HandleGameObject(uiCrimsonHallDoor1, false);
+                        HandleGameObject(uiCrimsonHallDoor1, data != IN_PROGRESS);
                         uiEncounter[DATA_BLOOD_PRINCE_COUNCIL_EVENT] = data;
                         break;
                     }

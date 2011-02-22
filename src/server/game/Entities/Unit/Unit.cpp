@@ -5138,20 +5138,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 case 21063:
                     triggered_spell_id = 21064;
                     break;
-		//Item - Icecrown 25 Normal Caster Weapon Proc
-		case 71845:
-                {
-                    triggered_spell_id = 71843;
-                    target = this;
-                    break;
-                }
-		//Item - Icecrown 25 Heroic Caster Weapon Proc
-		case 71846:
-                {
-                    triggered_spell_id = 71844;
-                    target = this;
-                    break;
-                }
                 // Vampiric Aura (boss spell)
                 case 38196:
                 {

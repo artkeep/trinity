@@ -31,8 +31,6 @@ void AddSC_npc_hunterpetvendor();
 // Custom
 //NPC Transport Service
 void AddSC_npc_mount();	
-// Argent Tournament quest scripts
-void AddSC_ArgentTournament();
 
 // spells
 void AddSC_deathknight_spell_scripts();
@@ -1272,7 +1270,5 @@ void AddCustomScripts()
     AddSC_npc_mount();		
     //Hunter Pet Vendor
     AddSC_npc_hunterpetvendor();	
-    // Custom
-    AddSC_ArgentTournament();
 #endif
 }

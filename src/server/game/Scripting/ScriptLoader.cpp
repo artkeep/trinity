@@ -1214,7 +1214,7 @@ void AddNorthrendScripts()
     AddSC_boss_falric();
     AddSC_boss_marwyn();
     AddSC_boss_lich_king_hr();
-	AddSC_instance_icecrown_citadel();    // Icecrown Citadel
+    AddSC_instance_icecrown_citadel();    // Icecrown Citadel
     AddSC_icecrown_citadel();
     AddSC_boss_valithria();
     AddSC_boss_lichking();
@@ -1227,7 +1227,7 @@ void AddNorthrendScripts()
     AddSC_boss_festergut();
     AddSC_boss_saurfang();
     AddSC_boss_blood_queen_lana_thel();
-	AddSC_boss_baltharus();	//RubySanctum
+    AddSC_boss_baltharus();	//RubySanctum
     AddSC_boss_halion();
     AddSC_boss_ragefire();
     AddSC_boss_zarithrian();

@@ -321,7 +321,11 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_raging_spirit_icc' WHERE `ent
 REPLACE INTO `spell_script_names` VALUES
 (72754, 'spell_lich_king_defile'),
 (72429, 'spell_lich_king_tirion_mass_resurrection'),
-(74115, 'spell_lich_king_pain_and_suffering');
+(74115, 'spell_lich_king_pain_and_suffering'),
+(70501,'spell_vile_spirit_target_search'),
+(68765,'spell_valkyr_eject_passenger'),
+(69030,'spell_valkyr_target_search');
+UPDATE `creature_template` set `ScriptName` = 'npc_ice_sphere_icc' WHERE `entry` = 36633;
 
 -- Blood Prince entries FROM TrinityCore
 DELETE FROM `creature_template` WHERE `entry` IN (37970, 37972, 37973, 38401, 38784, 38785, 38399, 38769, 38770, 38400, 38771, 38772);

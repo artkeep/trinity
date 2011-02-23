@@ -29,7 +29,6 @@ void AddSC_npc_teleport();
 //Hunter Pet Vendor
 void AddSC_npc_hunterpetvendor();
 // Custom
-void AddSC_DuelReset();
 //NPC Transport Service
 void AddSC_npc_mount();	
 // Argent Tournament quest scripts

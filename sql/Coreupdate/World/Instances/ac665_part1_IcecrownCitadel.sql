@@ -1,6 +1,3 @@
-﻿-- Cleanup
-UPDATE `creature_template` SET `ScriptName`='' WHERE `entry` IN (SELECT `id` FROM `creature` WHERE `map` = 631);
-
 -- GameObject
 UPDATE `gameobject_template` SET `ScriptName` = 'go_icecrown_teleporter' WHERE `entry` IN (202223,202235,202242,202243,202244,202245,202246);
 UPDATE `gameobject_template` SET `flags` = 32 WHERE `entry` IN (202235,202242,202243,202244,202245,202246);
@@ -83,9 +80,13 @@ UPDATE `creature_template` SET `minlevel`=82,`maxlevel`=82,`flags_extra`=`flags_
 UPDATE `creature_template` SET `minlevel`=82,`maxlevel`=82,`exp`=2,`flags_extra`=`flags_extra`|0x80 WHERE `entry`=38422; -- Shock Vortex
 UPDATE `creature_template` SET `minlevel`=82,`maxlevel`=82,`exp`=2,`speed_walk`=1.57143,`unit_flags`=33554432,`flags_extra`=`flags_extra`|0x80 WHERE `entry`=38332; -- Ball of Flame
 UPDATE `creature_template` SET `minlevel`=82,`maxlevel`=82,`exp`=2,`speed_walk`=1.57143,`unit_flags`=33554432,`flags_extra`=`flags_extra`|0x80 WHERE `entry`=38451; -- Ball of Inferno Flame
-UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`equipment_id`=10092,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37970,38401,38784,38785); -- Prince Valanar
-UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`equipment_id`=10077,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37972,38399,38769,38770); -- Prince Keleseth
-UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`equipment_id`=10091,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37973,38400,38771,38772); -- Prince Taldaram
+-- UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`equipment_id`=10092,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37970,38401,38784,38785); -- Prince Valanar
+-- UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`equipment_id`=10077,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37972,38399,38769,38770); -- Prince Keleseth
+-- UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`equipment_id`=10091,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37973,38400,38771,38772); -- Prince Taldaram
+UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37970,38401,38784,38785); -- Prince Valanar
+UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37972,38399,38769,38770); -- Prince Keleseth
+UPDATE `creature_template` SET `unit_flags`=536904000,`RegenHealth`=0,`speed_run`=1.428571,`speed_walk`=1.6 WHERE `entry` IN (37973,38400,38771,38772); -- Prince Taldaram
+
 UPDATE `creature_model_info` SET `bounding_radius`=0.5425,`combat_reach`=1.75 WHERE `modelid` IN (30856,30857,30858);
 UPDATE `creature_template` SET `RegenHealth`=0 WHERE `entry`=38369; -- Dark Nucleus
 UPDATE `creature_template` SET  `dynamicflags` = 8 WHERE entry IN (37970, 38401, 38784, 38785);
@@ -207,18 +208,18 @@ INSERT INTO `spell_linked_spell` (`spell_trigger`,`spell_effect`,`type`,`comment
 
 -- Linked Respawn
 
-DELETE FROM `linked_respawn` WHERE `guid` IN (136104,136105,136107,67608,67614,67901,77641,77642,77643,115558);
-INSERT INTO `linked_respawn` (`guid`,`linkedGuid`) VALUES
-(136104,136104), -- Lord Marrowgar
-(136105,136105), -- Lady Deathwhisper
-(136107,136107), -- Deathbringer Saurfang
-(67608,67608), -- Festergut
-(67614,67614), -- Rotface
-(67901,67901), -- Professor Putricide
-(77641,77641), -- Prince Keleseth
-(77642,77642), -- Prince Taldaram
-(77643,77643), -- Prince Valanar
-(115558,115558); -- Blood-Queen Lana'thel
+-- DELETE FROM `linked_respawn` WHERE `guid` IN (136104,136105,136107,67608,67614,67901,77641,77642,77643,115558);
+-- INSERT INTO `linked_respawn` (`guid`,`linkedGuid`) VALUES
+-- (136104,136104), -- Lord Marrowgar
+-- (136105,136105), -- Lady Deathwhisper
+-- (136107,136107), -- Deathbringer Saurfang
+-- (67608,67608), -- Festergut
+-- (67614,67614), -- Rotface
+-- (67901,67901), -- Professor Putricide
+-- (77641,77641), -- Prince Keleseth
+-- (77642,77642), -- Prince Taldaram
+-- (77643,77643), -- Prince Valanar
+-- (115558,115558); -- Blood-Queen Lana'thel
 
 -- Npc spell click spell
 
@@ -234,7 +235,8 @@ DELETE FROM `spell_script_names` WHERE `spell_id` IN (71412,71415) AND `ScriptNa
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (72262) AND `ScriptName`='spell_lich_king_quake';
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (74361) AND `ScriptName`='spell_lich_king_valkyr_summon';
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (70541,73779,73780,73781) AND `ScriptName`='spell_lich_king_infection';
-DELETE FROM `spell_script_names` WHERE `spell_id` IN (70338,73785,73786,73787) AND `ScriptName`='spell_lich_king_necrotic_plague';
+-- DELETE FROM `spell_script_names` WHERE `spell_id` IN (70338,73785,73786,73787) AND `ScriptName`='spell_lich_king_necrotic_plague';
+DELETE FROM `spell_script_names` WHERE `spell_id` IN (70337,73912,73913,73914) AND `ScriptName`='spell_lich_king_necrotic_plague';
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (69075,70834,70835,70836) AND `ScriptName`='spell_lord_marrowgar_bone_storm';
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (70126) AND `ScriptName`='spell_sindragosa_ice_tomb';
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (70127,72528,72529,72530) AND `ScriptName`='spell_sindragosa_mystic_buffet';
@@ -278,10 +280,14 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (73779,'spell_lich_king_infection'),
 (73780,'spell_lich_king_infection'),
 (73781,'spell_lich_king_infection'),
-(70338,'spell_lich_king_necrotic_plague'),
-(73785,'spell_lich_king_necrotic_plague'),
-(73786,'spell_lich_king_necrotic_plague'),
-(73787,'spell_lich_king_necrotic_plague'),
+-- (70338,'spell_lich_king_necrotic_plague'),
+-- (73785,'spell_lich_king_necrotic_plague'),
+-- (73786,'spell_lich_king_necrotic_plague'),
+-- (73787,'spell_lich_king_necrotic_plague'),
+(70337,'spell_lich_king_necrotic_plague'),
+(73912,'spell_lich_king_necrotic_plague'),
+(73913,'spell_lich_king_necrotic_plague'),
+(73914,'spell_lich_king_necrotic_plague'),
 (69075,'spell_lord_marrowgar_bone_storm'),
 (70834,'spell_lord_marrowgar_bone_storm'),
 (70835,'spell_lord_marrowgar_bone_storm'),

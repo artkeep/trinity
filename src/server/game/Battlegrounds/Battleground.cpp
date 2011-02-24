@@ -1034,6 +1034,7 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
             if (!group->RemoveMember(guid))                // group was disbanded
             {
                 SetBgRaid(team, NULL);
+                delete group;
             }
         }
         DecreaseInvitedCount(team);

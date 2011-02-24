@@ -1736,13 +1736,6 @@ void Spell::EffectForceCast(SpellEffIndex effIndex)
         }
     }
 
-    switch (triggered_spell_id)
-    {
-        case 62056: case 63985:         // Stone Grip Forcecast (10m, 25m)
-            unitTarget->CastSpell(unitTarget, spellInfo, true);     // Don't send m_originalCasterGUID param here or underlying
-            return;                                                 // AureEffect::HandleAuraControlVehicle will fail on caster == target
-    }
-
     Unit * caster = GetTriggeredSpellCaster(spellInfo, m_caster, unitTarget);
 
     caster->CastSpell(unitTarget, spellInfo, true, NULL, NULL, m_originalCasterGUID);
@@ -4401,8 +4394,8 @@ void Spell::EffectInterruptCast(SpellEffIndex effIndex)
             {
                 if (m_originalCaster)
                 {
-                    int32 duration = m_originalCaster->ModSpellDuration(m_spellInfo, unitTarget, m_originalCaster->CalcSpellDuration(m_spellInfo), false);
-                    unitTarget->ProhibitSpellScholl(GetSpellSchoolMask(curSpellInfo), duration/*GetSpellDuration(m_spellInfo)*/);
+                    int32 duration = GetSpellDuration(m_spellInfo);
+                    unitTarget->ProhibitSpellScholl(GetSpellSchoolMask(curSpellInfo), unitTarget->ModSpellDuration(m_spellInfo, unitTarget, duration, false));
                 }
                 ExecuteLogEffectInterruptCast(effIndex, unitTarget, curSpellInfo->Id);
                 unitTarget->InterruptSpell(CurrentSpellTypes(i), false);

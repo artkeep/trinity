@@ -1,10 +1,8 @@
 /*
-* Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
-*
-* Copyright (C) 2010 Myth Project <http://code.google.com/p/mythcore/>
-*
-* Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-*
+ * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+ *
+ * Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+ *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
@@ -181,10 +179,10 @@ public:
         switch(pCreature->GetEntry())
         {
             case NPC_JAINA:
-                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Р›РµРґРё Р”Р¶Р°Р№РЅР°, РјС‹ РіРѕС‚РѕРІС‹ Рє СЃР»РµРґСѓСЋС‰РµР№ РјРёСЃСЃРёРё!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Леди Джайна, мы готовы к следующей миссии!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
                 break;
             case NPC_SYLVANA:
-                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Р›РµРґРё РЎРёР»СЊРІР°РЅР°, РјС‹ РіРѕС‚РѕРІС‹ Рє СЃР»РµРґСѓСЋС‰РµР№ РјРёСЃСЃРёРё!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Леди Сильвана, мы готовы к следующей миссии!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
                 break;
         }
 
@@ -223,7 +221,7 @@ public:
         {
             if(!m_pInstance)
                 return
-            //sLog->outDebug("EventMGR: creature %u received signal %u ",me->GetEntry(),m_pInstance->GetData(TYPE_EVENT));
+            sLog->outDebug(LOG_FILTER_TSCR, "EventMGR: creature %u received signal %u ",me->GetEntry(),m_pInstance->GetData(TYPE_EVENT));
             m_pInstance->SetData(TYPE_PHASE, 1);
             m_pInstance->SetData(TYPE_EVENT, 0);
             Step = 1;
@@ -287,7 +285,8 @@ public:
                     }
                     if(me->GetEntry() == NPC_SYLVANA)
                     {
-                        DoScriptText(SAY_SYLVANA_INTRO_02, me);
+                        DoScriptText(SAY_SYLVANA_INTRO_03, me);
+                        //DoScriptText(SAY_SYLVANA_INTRO_02, me);
                         JumpNextStep(6000);
                     }
                     break;
@@ -709,7 +708,7 @@ public:
         if(pCreature->isQuestGiver())
            pPlayer->PrepareQuestMenu( pCreature->GetGUID());
 
-        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "РџРѕР±РµР¶Р°Р»Рё!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Побежали!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
 
         pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
 
@@ -1327,6 +1326,13 @@ public:
                 return;
             DoScriptText(SAY_DEATH, me);
             m_pInstance->SetData(TYPE_FROST_GENERAL, DONE);
+            
+            me->SummonCreature(BOSS_LICH_KING, 5564.25f, 2274.69f, 733.01f, 3.93f, TEMPSUMMON_DEAD_DESPAWN);
+            
+            if(m_pInstance->GetData(DATA_TEAM_IN_INSTANCE)==ALLIANCE)
+                me->SummonCreature(NPC_JAINA_OUTRO, 5556.27f, 2266.28f, 733.01f, 0.8f, TEMPSUMMON_DEAD_DESPAWN);
+            else
+                me->SummonCreature(NPC_SYLVANA_OUTRO, 5556.27f, 2266.28f, 733.01f, 0.8f, TEMPSUMMON_DEAD_DESPAWN);
         }
 
         void MoveInLineOfSight(Unit* pWho)

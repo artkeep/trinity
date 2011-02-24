@@ -6619,7 +6619,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             if (dummySpell->SpellFamilyFlags[1]&0x00080000)
             {
                 // HoT only if has Infusion of Light talent
-                if ((HasAura(53569) || HasAura(53576) && procFlag & PROC_FLAG_TAKEN_POSITIVE_MAGIC_SPELL))
+                if ((HasAura(53569) || HasAura(53576) && procFlag & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_POS))
                 {
                     if (procSpell->SpellFamilyName == SPELLFAMILY_PALADIN
                         && (procSpell->SpellFamilyFlags[0] & 0x40000000))
@@ -6634,12 +6634,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 else
                     triggered_spell_id = 58597;
                 target = this;
-                /*// some unknown bug with avoidance of CD
-                if (GetTypeId() == TYPEID_PLAYER && ToPlayer()->HasSpellCooldown(58597))
-                    return false;
-                if (Aura * aura = GetAura(58597))
-                    if (aura->GetDuration() + 6*IN_MILISECONDS >= aura->GetMaxDuration())
-                        return false;*/
                 break;
             }
             // Righteous Vengeance

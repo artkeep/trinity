@@ -71,6 +71,7 @@
 #include "CharacterDatabaseCleaner.h"
 #include "InstanceScript.h"
 #include <cmath>
+#include "OutdoorPvPWG.h"
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 

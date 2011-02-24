@@ -6616,26 +6616,30 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 return true;
             }
             // Sacred Shield
-            if (dummySpell->SpellFamilyFlags[1] & 0x80000)
+            if (dummySpell->SpellFamilyFlags[1]&0x00080000)
             {
-                if (procFlag & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_POS)
+                // HoT only if has Infusion of Light talent
+                if ((HasAura(53569) || HasAura(53576) && procFlag & PROC_FLAG_TAKEN_POSITIVE_MAGIC_SPELL))
                 {
-                    if ((procSpell->SpellFamilyName == SPELLFAMILY_PALADIN) && (procSpell->SpellFamilyFlags[0] & 0x40000000))
+                    if (procSpell->SpellFamilyName == SPELLFAMILY_PALADIN
+                        && (procSpell->SpellFamilyFlags[0] & 0x40000000))
                     {
-                        basepoints0 = damage / 12;
-
-                        if (basepoints0)
-                            CastCustomSpell(this, 66922, &basepoints0, NULL, NULL, true, 0, triggeredByAura, pVictim->GetGUID());
-
+                        basepoints0 = int32(float(damage)/12.0f);
+                        CastCustomSpell(this,66922,&basepoints0,NULL,NULL,true,0,triggeredByAura, pVictim->GetGUID());
                         return true;
                     }
                     else
                         return false;
                 }
-                else if (damage > 0)
+                else
                     triggered_spell_id = 58597;
-
                 target = this;
+                /*// some unknown bug with avoidance of CD
+                if (GetTypeId() == TYPEID_PLAYER && ToPlayer()->HasSpellCooldown(58597))
+                    return false;
+                if (Aura * aura = GetAura(58597))
+                    if (aura->GetDuration() + 6*IN_MILISECONDS >= aura->GetMaxDuration())
+                        return false;*/
                 break;
             }
             // Righteous Vengeance

@@ -319,13 +319,23 @@ DELETE FROM `areatrigger_teleport` WHERE `id` = 5718;
 UPDATE `creature_template` SET `ScriptName` = 'npc_shambling_horror_icc' WHERE `entry` = 37698;
 UPDATE `creature_template` SET `ScriptName` = 'npc_raging_spirit_icc' WHERE `entry` = 36701;
 REPLACE INTO `spell_script_names` VALUES
-(72754, 'spell_lich_king_defile'),
+(72743, 'spell_lich_king_defile'),
 (72429, 'spell_lich_king_tirion_mass_resurrection'),
 (74115, 'spell_lich_king_pain_and_suffering'),
-(70501,'spell_vile_spirit_target_search'),
-(68765,'spell_valkyr_eject_passenger'),
-(69030,'spell_valkyr_target_search');
-UPDATE `creature_template` set `ScriptName` = 'npc_ice_sphere_icc' WHERE `entry` = 36633;
+(70501, 'spell_vile_spirit_target_search'),
+(68576, 'spell_valkyr_eject_passenger'),
+(69030, 'spell_valkyr_target_search'),
+(72133, 'spell_lich_king_pain_and_suffering_effect'),
+(73789, 'spell_lich_king_pain_and_suffering_effect'),
+(73788, 'spell_lich_king_pain_and_suffering_effect'),
+(73790, 'spell_lich_king_pain_and_suffering_effect'),
+(70498, 'spell_lich_king_vile_spirit_summon'),
+(70500, 'spell_lich_king_vile_spirit_summon_visual');
+UPDATE `creature_template` SET `ScriptName` = 'npc_ice_sphere_icc' WHERE `entry` = 36633;
+UPDATE `creature_template` SET `ScriptName` = 'npc_defile_icc' WHERE `entry` = 38757;
+UPDATE `creature_template` SET `unit_flags` = 0 WHERE `entry` IN (36609, 39120, 39121, 39122);
+UPDATE `creature_template` SET `vehicleid` = 533 WHERE `entry` IN (36609, 39120, 39121, 39122);
+UPDATE `creature` SET `position_z` = 1040 WHERE `id` = 22515 AND `map` = 631;
 
 -- Blood Prince entries FROM TrinityCore
 DELETE FROM `creature_template` WHERE `entry` IN (37970, 37972, 37973, 38401, 38784, 38785, 38399, 38769, 38770, 38400, 38771, 38772);

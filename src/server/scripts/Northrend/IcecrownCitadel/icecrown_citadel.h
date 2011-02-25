@@ -304,19 +304,21 @@ enum eCreatures
     NPC_COLUMN_OF_FROST                         = 37918,
     NPC_COMBAT_TRIGGER                          = 38752,
 
-     // Sindragosa
-     NPC_SINDRAGOSA                             = 36853,
-     NPC_SPINESTALKER                           = 37534,
-     NPC_RIMEFANG                               = 37533,
-     NPC_FROSTWARDEN_HANDLER                    = 37531,
-     NPC_FROSTWING_WHELP                        = 37532,
-     NPC_ICY_BLAST                              = 38223,
-     NPC_FROST_BOMB                             = 37186,
-     NPC_ICE_TOMB                               = 36980,
+    // Sindragosa
+    NPC_SINDRAGOSA                             = 36853,
+    NPC_SPINESTALKER                           = 37534,
+    NPC_RIMEFANG                               = 37533,
+    NPC_FROSTWARDEN_HANDLER                    = 37531,
+    NPC_FROSTWING_WHELP                        = 37532,
+    NPC_ICY_BLAST                              = 38223,
+    NPC_FROST_BOMB                             = 37186,
+    NPC_ICE_TOMB                               = 36980,
 
-    NPC_FROST_BOMB_EXPLOSION_VISUAL             = 34149,
+    //Lich King
     NPC_LICH_KING                               = 36597,
     NPC_TIRION_ICC                              = 38995,
+    NPC_PLATFORM_DESTRUCTIBLE_EDGE_STALKER      = 22515,
+    NPC_FROST_BOMB_EXPLOSION_VISUAL             = 34149,
     CREAUTRE_MENETHIL                           = 38579,
     NPC_FROSTMOURNE_TRIGGER                     = 38584,
     NPC_TERENAS_F                               = 36823, //for frostmourne
@@ -443,6 +445,7 @@ enum TeleporterSpells
 };
 void DespawnAllCreaturesAround(Creature *ref, uint32 entry);
 void UnsummonSpecificCreaturesNearby(Creature *ref, uint32 entry, float radius);
+void LeaveOnlyPlayers(std::list<Unit*> &unitList);
 uint32 GetPhase(const EventMap &em);
 // Declaration
 extern Position const SindragosaSpawnPos;

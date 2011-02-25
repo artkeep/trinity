@@ -113,8 +113,12 @@ enum Spells
     SPELL_PLAGUE_SIPHON              = 74074,
     SPELL_REMORSELESS_WINTER          = 68981,
     SPELL_REMORSELESS_WINTER_DAMAGE   = 68983,
-    SPELL_PAIN_AND_SUFFERING         = 74115,
-    SPELL_PAIN_AND_SUFFERING_DAMAGE  = 74117,
+    SPELL_PAIN_AND_SUFFERING_10N     = 72133,
+    SPELL_PAIN_AND_SUFFERING_10H     = 73789,
+    SPELL_PAIN_AND_SUFFERING_25N     = 73788,
+    SPELL_PAIN_AND_SUFFERING_25H     = 73790,
+    //SPELL_PAIN_AND_SUFFERING         = 74115,
+    //SPELL_PAIN_AND_SUFFERING_DAMAGE  = 74117,
     //SPELL_RANDOM_TALK                = 73985,
     SPELL_WINGS_OF_THE_DAMNED        = 74352,
     SPELL_SOUL_REAPER                = 69409,
@@ -134,7 +138,8 @@ enum Spells
     SPELL_REVIVE_EFFECT              = 72423,
     SPELL_CLONE_PLAYER               = 57507,
     SPELL_DEFILE                     = 72743,
-    SPELL_INCREASE_DEFILE            = 72756,
+    SPELL_DEFILE_DAMAGE              = 72754,
+    SPELL_DEFILE_INCREASE            = 72756,
     SPELL_ICE_PULSE                  = 69091,
     SPELL_ICE_BURST                  = 69108,
     SPELL_LIFE_SIPHON                = 73783,
@@ -152,7 +157,8 @@ enum Spells
     SPELL_SUMMON_MENETHIL            = 72420, //caster - 38584
     SPELL_MENETHIL_VISUAL            = 72372,
     SPELL_VALKYR_CARRY_CAN_CAST      = 74506,
-    SPELL_VALKYR_MOVE_PLAYER         = 68985, //74445
+    SPELL_VALKYR_GRAB_PLAYER         = 68985, //74445,
+    SPELL_RIDE_VEHICLE               = 46598,
     SPELL_VALKYR_TARGET_SEARCH       = 69030,
     SPELL_VALKYR_CHARGE              = 74399,
     SPELL_VALKYR_EJECT_PASSENGER     = 68576,
@@ -173,9 +179,11 @@ enum Spells
 enum eActions
 {
     ACTION_PHASESWITCH_1        = 1, //phase 1 and 3
-    ACTION_PHASESWITCH_2        = 2, //phase 2 and 4
-    ACTION_START_EVENT          = 3,
-    ACTION_RESET
+    ACTION_PHASESWITCH_2,            //phase 2 and 4
+    ACTION_START_EVENT,
+    ACTION_RESET,
+    ACTION_CANCEL_ALL_TRANSITION_EVENTS,
+    ACTION_DESPAWN
 };
 enum eSetGuid
 {
@@ -187,7 +195,8 @@ enum ePoints
     POINT_PLATFORM_CENTER            = 3659701,
     POINT_PLATFORM_END               = 3659702,
     POINT_VALKYR_END                 = 3659703,
-    POINT_VALKYR_ZET                 = 3659704
+    POINT_VALKYR_ZET                 = 3659704,
+    POINT_VALKYR_CONTINUE_FLYING     = 3659705
 };
 
 struct Position StartEvent[]=
@@ -248,6 +257,7 @@ Player *SelectRandomPlayerInTheMap(Map *pMap)
     Player *target = *it;
     return target;
 }
+
 class boss_the_lich_king : public CreatureScript
 {
     public:
@@ -321,17 +331,22 @@ class boss_the_lich_king : public CreatureScript
                     massResurrection->EffectRadiusIndex[0] = 4;
                     massResurrection->AttributesEx3 |= SPELL_ATTR3_REQUIRE_DEAD_TARGET;
                 }
-                if (SpellEntry *painAndSuffering = GET_SPELL(SPELL_PAIN_AND_SUFFERING))
+                //if (SpellEntry *summonVileSpirits = GET_SPELL(SPELL_SUMMON_VILE_SPIRIT))
+                //{
+                //    summonVileSpirits->EffectApplyAuraName[0] = SPELL_AURA_LINKED;
+                //}
+                if (SpellEntry *defileDamage = GET_SPELL(SPELL_DEFILE_DAMAGE))
                 {
-                    //Disable casting auxilary spells behind the boss.
-                    painAndSuffering->Effect[0] = 0;
-                    painAndSuffering->Effect[1] = 0;
-                    painAndSuffering->EffectAmplitude[2] = 1500;
+                    defileDamage->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
+                    defileDamage->EffectImplicitTargetB[1] = TARGET_UNIT_TARGET_ENEMY;
                 }
-                if (SpellEntry *defile = GET_SPELL(SPELL_DEFILE))
-                {
-                    defile->EffectAmplitude[0] = 8.0f;
-                }
+                //if (SpellEntry *painAndSuffering = GET_SPELL(SPELL_PAIN_AND_SUFFERING))
+                //{
+                //    //Disable casting auxilary spells behind the boss.
+                //    painAndSuffering->Effect[0] = 0;
+                //    painAndSuffering->Effect[1] = 0;
+                //    painAndSuffering->EffectAmplitude[2] = 1500;
+                //}
             }
 
             void EnterEvadeMode()
@@ -406,7 +421,7 @@ class boss_the_lich_king : public CreatureScript
                         uint32 curPhase = GetPhase(events);
                         events.ScheduleEvent(EVENT_PAIN_AND_SUFFERING, 5000+2000, 0, curPhase);
                         events.ScheduleEvent(EVENT_SUMMON_ICE_SPHERE, 5000+7000, 0, curPhase);
-                        events.ScheduleEvent(EVENT_SUMMON_RAGING_SPIRIT, 5000+16000, 0, curPhase);
+                        events.ScheduleEvent(EVENT_SUMMON_RAGING_SPIRIT, 5000+6000, 0, curPhase);
                         events.ScheduleEvent(EVENT_TRANSITION_PHASE_END, 5000+60000, 0, curPhase);
                         DoCast(SPELL_WMO_INTACT);
                         DoScriptText(SAY_REMORSELESSS_WINTER, me);
@@ -460,10 +475,6 @@ class boss_the_lich_king : public CreatureScript
                             summoned->DespawnOrUnsummon();
                         }
                         break;
-                    case NPC_DEFILE:
-                        summoned->CastSpell(summoned, SPELL_DEFILE, true);
-                        summoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        break;
                     case NPC_RAGING_SPIRIT:
                         //if (Unit *victim = summoned->getVictim())
                         //    victim->CastSpell(summoned, SPELL_RAGING_VISUAL, true);
@@ -472,9 +483,15 @@ class boss_the_lich_king : public CreatureScript
                         if (Unit *target = summoned->SelectNearbyTarget())
                             summoned->AI()->AttackStart(target);
                         break;
-                    case NPC_VILE_SPIRIT:
-                        summoned->CastSpell(summoned, SPELL_VILE_SPIRIT_DISTANCE_CHECK, true);
+                    case NPC_DEFILE:
+                    {
+                        Position pos;
+                        summoned->GetPosition(&pos);
+                        pos.m_positionZ += 0.75f;
+                        summoned->SetPosition(pos, true);
+                        summoned->SetInCombatWithZone();
                         break;
+                    }
                     case NPC_TRIGGER:
                         summoned->AI()->AttackStart(me);
                         summoned->SetVisible(false);
@@ -492,10 +509,17 @@ class boss_the_lich_king : public CreatureScript
                         summoned->CastSpell(summoned, SPELL_MENETHIL_VISUAL, true);
                         break;
                     case NPC_VALKYR:
-                        if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 100.0f, true))
-                            summoned->AI()->AttackStart(target);
                         summoned->CastSpell(summoned, SPELL_WINGS_OF_THE_DAMNED, true);
-                        summoned->CastSpell(summoned, SPELL_VALKYR_TARGET_SEARCH, true);
+                        if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 100.0f, true))
+                        {
+                            summoned->AI()->AttackStart(target);
+                            summoned->CastSpell(target, SPELL_VALKYR_TARGET_SEARCH, true);
+                        }
+                        else
+                        {
+                            //There is no target - unsummon valkyr
+                            summoned->DespawnOrUnsummon();
+                        }
                         break;
                     case NPC_DRUDGE_GHOUL:
                         summoned->CastSpell(summoned, SPELL_RAGING_GHOUL_VISUAL, true);
@@ -514,6 +538,14 @@ class boss_the_lich_king : public CreatureScript
             {
                 switch(action)
                 {
+                    case ACTION_CANCEL_ALL_TRANSITION_EVENTS:
+                    {
+                        events.CancelEvent(EVENT_PAIN_AND_SUFFERING);
+                        events.CancelEvent(EVENT_SUMMON_ICE_SPHERE);
+                        events.CancelEvent(EVENT_SUMMON_RAGING_SPIRIT);
+                        events.CancelEvent(EVENT_TRANSITION_PHASE_END);
+                        break;
+                    }
                     case ACTION_PHASESWITCH_1:
                     {
                         uint32 nextPhase = PHASE_2_TRANSITION;
@@ -541,13 +573,13 @@ class boss_the_lich_king : public CreatureScript
                         else
                         {
                             events.SetPhase(PHASE_5);
-                            events.ScheduleEvent(EVENT_SUMMON_VILE_SPIRITS, 25000, 0, PHASE_5);
-                            events.ScheduleEvent(EVENT_SOUL_REAPER, 17000, 0, PHASE_5);
-                            events.ScheduleEvent(EVENT_DEFILE, 15000, 0, PHASE_5);
-                            events.ScheduleEvent(EVENT_HARVEST_SOUL, 60000, 0, PHASE_5);
+                            events.ScheduleEvent(EVENT_SUMMON_VILE_SPIRITS, 15000, 0, PHASE_5);
+                            events.ScheduleEvent(EVENT_SOUL_REAPER, 35000, 0, PHASE_5);
+                            events.ScheduleEvent(EVENT_DEFILE, 32000, 0, PHASE_5);
+                            events.ScheduleEvent(EVENT_HARVEST_SOUL, 8000, 0, PHASE_5);
                         }
                         me->SetReactState(REACT_AGGRESSIVE);
-                        me->RemoveAurasDueToSpell(SPELL_PAIN_AND_SUFFERING);
+                        me->RemoveAurasDueToSpell(RAID_MODE<uint32>(SPELL_PAIN_AND_SUFFERING_10N, SPELL_PAIN_AND_SUFFERING_25N, SPELL_PAIN_AND_SUFFERING_10H, SPELL_PAIN_AND_SUFFERING_25H));
                         DoZoneInCombat(me);
                         SetCombatMovement(true);
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_OOC_NOT_ATTACKABLE);
@@ -674,7 +706,12 @@ class boss_the_lich_king : public CreatureScript
                             {
                                 case EVENT_PAIN_AND_SUFFERING:
                                 {
-                                    DoCast(me, SPELL_PAIN_AND_SUFFERING);
+                                    if (Player *randomPlayer = SelectRandomPlayerInTheMap(me->GetMap()))
+                                    {
+                                        me->SetFacingToObject(randomPlayer);
+                                        DoCast(randomPlayer, RAID_MODE<uint32>(SPELL_PAIN_AND_SUFFERING_10N, SPELL_PAIN_AND_SUFFERING_25N, SPELL_PAIN_AND_SUFFERING_10H, SPELL_PAIN_AND_SUFFERING_25H), true);
+                                    }
+                                    events.ScheduleEvent(EVENT_PAIN_AND_SUFFERING, 1500, 0, PHASE_2_TRANSITION);
                                     break;
                                 }
                                 case EVENT_SUMMON_RAGING_SPIRIT:
@@ -753,7 +790,12 @@ class boss_the_lich_king : public CreatureScript
                             {
                                 case EVENT_PAIN_AND_SUFFERING:
                                 {
-                                    DoCast(me, SPELL_PAIN_AND_SUFFERING);
+                                    if (Player *randomPlayer = SelectRandomPlayerInTheMap(me->GetMap()))
+                                    {
+                                        me->SetFacingToObject(randomPlayer);
+                                        DoCast(randomPlayer, RAID_MODE<uint32>(SPELL_PAIN_AND_SUFFERING_10N, SPELL_PAIN_AND_SUFFERING_25N, SPELL_PAIN_AND_SUFFERING_10H, SPELL_PAIN_AND_SUFFERING_25H), true);
+                                    }
+                                    events.ScheduleEvent(EVENT_PAIN_AND_SUFFERING, 1500, 0, PHASE_4_TRANSITION);
                                     break;
                                 }
                                 case EVENT_SUMMON_RAGING_SPIRIT:
@@ -1268,6 +1310,13 @@ class npc_tirion_icc : public CreatureScript
 
 class npc_valkyr_icc : public CreatureScript
 {
+enum eEvents
+{
+    EVENT_MOVE_TO_PLATFORM_EDGE = 1,
+    EVENT_SIPHON_LIFE,
+    EVENT_CHECK_AT_PLATFORM_EDGE
+};
+static const float Z_FLY;
     public:
         npc_valkyr_icc() : CreatureScript("npc_valkyr_icc") { }
 
@@ -1280,9 +1329,13 @@ class npc_valkyr_icc : public CreatureScript
 
             void Reset()
             {
+                float speedRate = me->GetSpeedRate(MOVE_RUN);
+                me->SetSpeed(MOVE_FLIGHT, speedRate);
+                me->SetSpeed(MOVE_RUN, speedRate);
+                m_moveUpdatePeriod = 100;
+                events.Reset();
                 me->SetFlying(true);
                 bCanCast = false;
-                m_uiLifeSiphonTimer = 3000;
 
                 if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == POINT_MOTION_TYPE)
                     me->GetMotionMaster()->MovementExpired();
@@ -1293,14 +1346,56 @@ class npc_valkyr_icc : public CreatureScript
                 if(!HealthAbovePct(50) && IsHeroic() && !bCanCast)
                 {
                     vehicle->RemoveAllPassengers();
+                    me->RemoveAllAuras();
+                    me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                     me->GetMotionMaster()->MovePoint(POINT_VALKYR_ZET, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 10);
+                    events.Reset();
                 }
             }
 
-            void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply)
+            void SpellHit(Unit *attacker, const SpellEntry *spellEntry)
             {
-                if(apply)
-                    me->GetMotionMaster()->MovePoint(POINT_PLATFORM_END, MovePos[4]);
+                if (spellEntry && spellEntry->Id == SPELL_VALKYR_GRAB_PLAYER)
+                {
+                    float x, y, z;
+                    me->GetPosition(x, y, z);
+                    me->SetPosition(x, y, Z_FLY, 0.0f, true);
+
+                    me->SetReactState(REACT_PASSIVE);
+                    me->AttackStop();
+                    SetCombatMovement(false);
+                    me->SetInCombatWithZone();
+                    
+                    me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_TAUNT, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_CHARM, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_FEAR, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_ROOT, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_PACIFY, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_SILENCE, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_TRANSFORM, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_SCALE, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_DISARM, true);
+                    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_TRANSFORM, true);
+                    me->ApplySpellImmune(0, IMMUNITY_ID, 49560, true); //Set immune to DK's Death grip
+                    //The Val'kyrs always choose the closest edge of the platform).
+                    if (Creature *pEdgeStalker = me->FindNearestCreature(NPC_PLATFORM_DESTRUCTIBLE_EDGE_STALKER, 1000.0f, true))
+                    {
+                        Position edgePos;
+                        me->GetPosition(&m_pos);
+                        m_pos.m_positionZ = Z_FLY;
+                        pEdgeStalker->GetPosition(&edgePos);
+                        m_angle = m_pos.GetAngle(&edgePos);
+                        me->SetFacingToObject(pEdgeStalker);
+                        events.ScheduleEvent(EVENT_MOVE_TO_PLATFORM_EDGE, 1000);
+                        events.ScheduleEvent(EVENT_CHECK_AT_PLATFORM_EDGE, 1000);
+                    }
+                    else
+                    {
+                        me->DespawnOrUnsummon();
+                    }
+                    //me->GetMotionMaster()->MovePoint(POINT_PLATFORM_END, MovePos[4]);
+                }
             }
 
             void MovementInform(uint32 type, uint32 id)
@@ -1317,35 +1412,86 @@ class npc_valkyr_icc : public CreatureScript
                     {
                         DoCast(me, SPELL_VALKYR_EJECT_PASSENGER);
                         //Fly 15 feet upward, then despawn
-                        float x,y,z;
-                        me->GetPosition(x, y, z);
-                        me->GetMotionMaster()->MovePoint(POINT_VALKYR_END, x, y, z+15);
+                        me->GetPosition(&m_pos);
+                        m_pos.m_positionZ = 1055.0f;
+                        me->GetMotionMaster()->MovePoint(POINT_VALKYR_END, m_pos);
                         break;
                     }
                     case POINT_VALKYR_END:
+                    {
                         me->DespawnOrUnsummon();
                         break;
+                    }
                     case POINT_VALKYR_ZET:
+                    {
+                        events.ScheduleEvent(EVENT_SIPHON_LIFE, 3000);
                         bCanCast = true;
                         break;
+                    }
+                    case POINT_VALKYR_CONTINUE_FLYING:
+                    {
+                        me->SetPosition(m_pos);
+                        events.ScheduleEvent(EVENT_MOVE_TO_PLATFORM_EDGE, m_moveUpdatePeriod);
+                        break;
+                    }
                 }
             }
 
             void UpdateAI(const uint32 uiDiff)
             {
-                if (!UpdateVictim() || !bCanCast)
+                //if (!UpdateVictim() || !bCanCast)
+                //    return;
+                if (!me->isAlive() || me->HasUnitState(UNIT_STAT_CASTING))
                     return;
-
-                if (m_uiLifeSiphonTimer < uiDiff)
+                events.Update(uiDiff);
+                while (uint32 eventId = events.ExecuteEvent())
                 {
-                    DoCastVictim(SPELL_LIFE_SIPHON);
-                    m_uiLifeSiphonTimer = 3000;
-                } else m_uiLifeSiphonTimer -= uiDiff;
+                    switch (eventId)
+                    {
+                        case EVENT_CHECK_AT_PLATFORM_EDGE:
+                        {
+                            if (me->GetDistance2d(MovePos[1].m_positionX, MovePos[1].m_positionY) > 55.0f)
+                            {
+                                events.Reset();
+                                DoCast(me, SPELL_VALKYR_EJECT_PASSENGER);
+                                //Fly 15 feet upward, then despawn
+                                me->GetPosition(&m_pos);
+                                m_pos.m_positionZ = 1055.0f;
+                                me->GetMotionMaster()->MovePoint(POINT_VALKYR_END, m_pos);
+                            }
+                            else
+                                events.ScheduleEvent(EVENT_CHECK_AT_PLATFORM_EDGE, 1000);
+                        }
+                        case EVENT_MOVE_TO_PLATFORM_EDGE:
+                        {
+                            me->GetPosition(&m_pos);
+                            if (!me->HasAuraType(SPELL_AURA_MOD_STUN))
+                            {
+                                float flySpeed = me->GetSpeed(MOVE_RUN) * m_moveUpdatePeriod / 10000;
+                                m_pos.m_positionX += flySpeed * cosf(m_angle);
+                                m_pos.m_positionY += flySpeed * sinf(m_angle);
+                                m_pos.m_positionZ = Z_FLY;
+                            }
+                            me->SetFacing(m_angle);
+                            me->GetMotionMaster()->Clear();
+                            me->GetMotionMaster()->MovePoint(POINT_VALKYR_CONTINUE_FLYING, m_pos);
+                            me->SetPosition(m_pos);
+                            break;
+                        }
+                        case EVENT_SIPHON_LIFE:
+                        {
+                            DoCastVictim(SPELL_LIFE_SIPHON);
+                            events.ScheduleEvent(EVENT_SIPHON_LIFE, 3000);
+                        }
+                    }
+                }
             }
         private:
-            uint32 m_uiLifeSiphonTimer;
             bool bCanCast;
-
+            EventMap events;
+            Position m_pos;
+            float m_angle;
+            uint32 m_moveUpdatePeriod;
             Vehicle* vehicle;
         };
 
@@ -1354,14 +1500,22 @@ class npc_valkyr_icc : public CreatureScript
             return new npc_valkyr_iccAI(creature);
         }
 };
+const float npc_valkyr_icc::Z_FLY = 1045.0f;
 
 class npc_vile_spirit_icc : public CreatureScript
 {
-    enum eEvents
-    {
-        EVENT_BECOME_ACTIVE = 1
-    };
+enum eEvents
+{
+    EVENT_BECOME_ACTIVE = 1,
+    EVENT_DESPAWN,
+    EVENT_MOVE_RANDOM
+};
+enum ePoints
+{
+    POINT_MOVE_NEAR_RANDOM = 1
+};
 public:
+    static const float Z_VILE_SPIRIT;
     npc_vile_spirit_icc() : CreatureScript("npc_vile_spirit_icc") { }
 
     struct npc_vile_spirit_iccAI : public ScriptedAI
@@ -1371,20 +1525,90 @@ public:
         void Reset()
         {
             events.ScheduleEvent(EVENT_BECOME_ACTIVE, 15000);
+            //If they don't reach that player within around 30 seconds, they will despawn harmlessly.
+            events.ScheduleEvent(EVENT_DESPAWN, 45000);
             SetCombatMovement(false);
+            me->SetReactState(REACT_PASSIVE);
+            me->SetFlying(true);
+            float x, y, z;
+            me->GetPosition(x, y, z);
+            me->SetPosition(x, y, npc_vile_spirit_icc::Z_VILE_SPIRIT, true);
+            Position randomPos;
+            float dist = 1.0f * rand_norm() * 10.0f;
+            me->GetRandomNearPosition(randomPos, dist);
+            randomPos.m_positionZ = Z_VILE_SPIRIT;
+            me->GetMotionMaster()->MovePoint(POINT_MOVE_NEAR_RANDOM, randomPos);
+            m_bActive = false;
+        }
+
+        void MovementInform(uint32 type, uint32 id)
+        {
+            if (type != POINT_MOTION_TYPE)
+                return;
+            if (id == POINT_MOVE_NEAR_RANDOM)
+            {
+                me->GetMotionMaster()->MovementExpired();
+                if (!m_bActive)
+                    events.ScheduleEvent(EVENT_MOVE_RANDOM, 2000);
+            }
+        }
+
+        void DoAction(const int32 action)
+        {
+            switch(action)
+            {
+                case ACTION_DESPAWN:
+                {
+                    me->RemoveAura(SPELL_VILE_SPIRIT_DISTANCE_CHECK);
+                    events.ScheduleEvent(EVENT_DESPAWN, 1000);
+                    me->SetReactState(REACT_PASSIVE);
+                    SetCombatMovement(false);
+                    break;
+                }
+            }
         }
 
         void UpdateAI(const uint32 uiDiff)
         {
+            events.Update(uiDiff);
             while (uint32 eventId = events.ExecuteEvent())
             {
                 switch (eventId)
                 {
+                    case EVENT_MOVE_RANDOM:
+                    {
+                        Position randomPos;
+                        float dist = 1.0f * rand_norm() * 10.0f;
+                        me->GetRandomNearPosition(randomPos, dist);
+                        randomPos.m_positionZ = Z_VILE_SPIRIT;
+                        me->GetMotionMaster()->MovePoint(POINT_MOVE_NEAR_RANDOM, randomPos);
+                        break;
+                    }
                     case EVENT_BECOME_ACTIVE:
                     {
-                        DoCast(me, SPELL_VILE_SPIRIT_ACTIVE);
-                        DoCast(me, SPELL_VILE_SPIRIT_TARGET_SEARCH);
+                        events.CancelEvent(EVENT_MOVE_RANDOM);
+                        m_bActive = true;
                         SetCombatMovement(true);
+                        me->SetReactState(REACT_AGGRESSIVE);
+                        me->GetMotionMaster()->MovementExpired();
+                        DoCast(me, SPELL_VILE_SPIRIT_ACTIVE, true);
+                        //DoCast(me, SPELL_VILE_SPIRIT_TARGET_SEARCH, true);
+                        DoCast(me, SPELL_VILE_SPIRIT_DISTANCE_CHECK, true);
+                        //Try to select random player on the platform 10 times.
+                        Player *player = NULL;
+                        uint8 count = 0;
+                        do
+                        {
+                            player = SelectRandomPlayerInTheMap(me->GetMap());
+                        }
+                        while (player->GetDistance(me) > 100.f && (++count) < 10);
+                        AttackStart(player);
+                        break;
+                    }
+                    case EVENT_DESPAWN:
+                    {
+                        me->DespawnOrUnsummon();
+                        break;
                     }
                     default:
                         break;
@@ -1393,6 +1617,7 @@ public:
         }
     private:
         EventMap events;
+        bool m_bActive;
     };
 
     CreatureAI* GetAI(Creature* creature) const
@@ -1400,16 +1625,107 @@ public:
         return new npc_vile_spirit_iccAI(creature);
     }
 };
+const float npc_vile_spirit_icc::Z_VILE_SPIRIT = 1050.0f;
 
-class spell_lich_king_pain_and_suffering : public SpellScriptLoader
+//class spell_lich_king_pain_and_suffering : public SpellScriptLoader
+//{
+//    public:
+//        spell_lich_king_pain_and_suffering() : SpellScriptLoader("spell_lich_king_pain_and_suffering") { } //74115
+//
+//        class spell_lich_king_pain_and_suffering_AuraScript : public AuraScript
+//        {
+//            PrepareAuraScript(spell_lich_king_pain_and_suffering_AuraScript)
+//
+//            class AnyAlivePetOrPlayerInObjectFrontalConeCheck
+//            {
+//                public:
+//                    AnyAlivePetOrPlayerInObjectFrontalConeCheck(WorldObject const* obj) : i_obj(obj) {}
+//                    bool operator()(Unit* u)
+//                    {
+//                        if (u->GetTypeId() != TYPEID_PLAYER)
+//                            return false;
+//                        if (!u->isTargetableForAttack())
+//                            return false;
+//                        if (!u->isAlive())
+//                            return false;
+//                        Position myPos, uPos;
+//                        i_obj->GetPosition(&myPos);
+//                        u->GetPosition(&uPos);
+//                        float orientation = i_obj->GetOrientation();
+//                        float angle = myPos.GetAngle(&uPos);
+//                        float coneAngle = M_PI / 180 * 1.0f;
+//                        angle = MapManager::NormalizeOrientation(orientation - angle);
+//                        if ((0.0f <= angle) && (angle <= coneAngle / 2) ||
+//                            ((2 * M_PI - coneAngle / 2) <= angle) && (angle <= (2 * M_PI)))
+//                            return true;
+//                        return false;
+//                    }
+//                private:
+//                    WorldObject const* i_obj;
+//            };
+//            void OnPeriodic(AuraEffect const*aurEff)
+//            {
+//                PreventDefaultAction();
+//                Unit *caster = GetCaster();
+//                if (!caster || !caster->isAlive() || caster->HasUnitState(UNIT_STAT_CASTING))
+//                    return;
+//                AnyAlivePetOrPlayerInObjectFrontalConeCheck checker(caster);
+//                std::list<Unit *> targets;
+//                Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck> searcher(caster, targets, checker);
+//
+//                TypeContainerVisitor<Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
+//                TypeContainerVisitor<Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
+//
+//                CellPair p(Trinity::ComputeCellPair(caster->GetPositionX(), caster->GetPositionY()));
+//                Cell cell(p);
+//                cell.data.Part.reserved = ALL_DISTRICT;
+//                cell.SetNoCreate();
+//
+//                cell.Visit(p, world_unit_searcher, *GetTarget()->GetMap(), *GetTarget(), 100.0f);
+//                cell.Visit(p, grid_unit_searcher, *GetTarget()->GetMap(), *GetTarget(), 100.0f);
+//
+//                for (std::list<Unit*>::iterator it = targets.begin(); it != targets.end(); ++it)
+//                    caster->CastSpell((*it), SPELL_PAIN_AND_SUFFERING_DAMAGE, true);
+//                //Next time try to target somebody else
+//                if (Player *randomTarget = SelectRandomPlayerInTheMap(caster->GetMap()))
+//                    caster->SetFacingToObject(randomTarget);
+//            }
+//
+//
+//            void Register()
+//            {
+//                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_pain_and_suffering_AuraScript::OnPeriodic, EFFECT_2, SPELL_AURA_PERIODIC_TRIGGER_SPELL); //74117
+//            }
+//        };
+//
+//        AuraScript* GetAuraScript() const
+//        {
+//            return new spell_lich_king_pain_and_suffering_AuraScript();
+//        }
+//};
+
+class spell_lich_king_pain_and_suffering_effect : public SpellScriptLoader
 {
     public:
-        spell_lich_king_pain_and_suffering() : SpellScriptLoader("spell_lich_king_pain_and_suffering") { } //70338
+        spell_lich_king_pain_and_suffering_effect() : SpellScriptLoader("spell_lich_king_pain_and_suffering_effect") { }
 
-        class spell_lich_king_pain_and_suffering_AuraScript : public AuraScript
+
+        class spell_lich_king_pain_and_suffering_effect_SpellScript : public SpellScript
         {
-            PrepareAuraScript(spell_lich_king_pain_and_suffering_AuraScript)
+            PrepareSpellScript(spell_lich_king_pain_and_suffering_effect_SpellScript);
 
+            //void HandleScript(SpellEffIndex effIndex)
+            //{
+            //    Unit *caster = GetCaster();
+            //    if (!caster || !caster->isAlive())
+            //    {
+            //        PreventHitDefaultEffect(effIndex);
+            //        return;
+            //    }
+            //    //Next time try to target random player
+            //    if (Player *randomTarget = SelectRandomPlayerInTheMap(caster->GetMap()))
+            //        caster->SetFacingToObject(randomTarget);
+            //}
             class AnyAlivePetOrPlayerInObjectFrontalConeCheck
             {
                 public:
@@ -1417,55 +1733,47 @@ class spell_lich_king_pain_and_suffering : public SpellScriptLoader
                     bool operator()(Unit* u)
                     {
                         if (u->GetTypeId() != TYPEID_PLAYER)
-                            return false;
-                        if (!u->isTargetableForAttack())
-                            return false;
-                        if (!u->isAlive())
-                            return false;
-                        float angle = MapManager::NormalizeOrientation(i_obj->GetAngle(u));
-                        if ((0.0f <= angle) && (angle <= (M_PI / 8)) ||
-                            ((2.0f * M_PI - M_PI / 8) <= angle) && (angle <= (2.0f * M_PI)))
                             return true;
-                        return false;
+                        if (!u->isTargetableForAttack())
+                            return true;
+                        if (!u->isAlive())
+                            return true;
+                        Position myPos, uPos;
+                        i_obj->GetPosition(&myPos);
+                        u->GetPosition(&uPos);
+                        float orientation = i_obj->GetOrientation();
+                        float angle = myPos.GetAngle(&uPos);
+                        float coneAngle = M_PI / 180 * 15.0f;
+                        angle = MapManager::NormalizeOrientation(orientation - angle);
+                        if ((0.0f <= angle) && (angle <= coneAngle / 2) ||
+                            ((2 * M_PI - coneAngle / 2) <= angle) && (angle <= (2 * M_PI)))
+                            return false;
+                        return true;
                     }
                 private:
                     WorldObject const* i_obj;
             };
-            void OnPeriodic(AuraEffect const*aurEff)
+
+            void FilterTargets(std::list<Unit*>& unitList)
             {
-                PreventDefaultAction();
-                if (!GetCaster() || !GetCaster()->isAlive() || GetCaster()->HasUnitState(UNIT_STAT_CASTING))
+                Unit *caster = GetCaster();
+                if (!caster || !caster->isAlive())
                     return;
-                if (Player *randomTarget = SelectRandomPlayerInTheMap(GetCaster()->GetMap()))
-                    GetCaster()->SetFacingToObject(randomTarget);
-                AnyAlivePetOrPlayerInObjectFrontalConeCheck checker(GetCaster());
-                std::list<Unit *> targets;
-                Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck> searcher(GetCaster(), targets, checker);
-
-                TypeContainerVisitor<Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
-                TypeContainerVisitor<Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
-
-                CellPair p(Trinity::ComputeCellPair(GetCaster()->GetPositionX(), GetCaster()->GetPositionY()));
-                Cell cell(p);
-                cell.data.Part.reserved = ALL_DISTRICT;
-                cell.SetNoCreate();
-
-                cell.Visit(p, world_unit_searcher, *GetTarget()->GetMap(), *GetTarget(), 100.0f);
-                cell.Visit(p, grid_unit_searcher, *GetTarget()->GetMap(), *GetTarget(), 100.0f);
-
-                for (std::list<Unit*>::iterator it = targets.begin(); it != targets.end(); ++it)
-                    GetCaster()->CastSpell((*it), SPELL_PAIN_AND_SUFFERING_DAMAGE, true);
+                unitList.remove_if(AnyAlivePetOrPlayerInObjectFrontalConeCheck(caster)); 
             }
 
             void Register()
             {
-                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_pain_and_suffering_AuraScript::OnPeriodic, EFFECT_2, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+                OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_pain_and_suffering_effect_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_TARGET_ENEMY);
+                OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_pain_and_suffering_effect_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_AREA_PATH);
+                OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_pain_and_suffering_effect_SpellScript::FilterTargets, EFFECT_2, TARGET_UNIT_AREA_PATH);
+                //OnEffect += SpellEffectFn(spell_lich_king_pain_and_suffering_effect_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
             }
         };
 
-        AuraScript* GetAuraScript() const
+        SpellScript* GetSpellScript() const
         {
-            return new spell_lich_king_pain_and_suffering_AuraScript();
+            return new spell_lich_king_pain_and_suffering_effect_SpellScript();
         }
 };
 
@@ -1612,6 +1920,87 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
         }
 };
 
+//class spell_lich_king_defile : public SpellScriptLoader
+//{
+//    public:
+//        spell_lich_king_defile() : SpellScriptLoader("spell_lich_king_defile") { } 
+//
+//        class spell_lich_king_defile_SpellScript : public SpellScript
+//        {
+//            PrepareSpellScript(spell_lich_king_defile_SpellScript)
+//
+//            bool Load()
+//            {
+//                m_hitCount = 0;
+//                m_radius = 8.0f;
+//                return true;
+//            }
+//
+//            void FilterTargets(std::list<Unit*>& unitList)
+//            {
+//                LeaveOnlyPlayers(unitList);
+//                Unit *caster = GetCaster();
+//                for (std::list<Unit*>::iterator it = unitList.begin(); it != unitList.end(); )
+//                {
+//                    if ((*it)->GetDistance2d(caster) > m_radius)
+//                        unitList.erase(it++);
+//                    else
+//                        ++it;                        
+//                }
+//                if (!unitList.empty())
+//                    ++m_hitCount;
+//            }
+//
+//            void HandleDamage(SpellEffIndex effIndex)
+//            {
+//                //PreventHitDefaultEffect(effIndex);
+//                
+//                Unit *caster = GetCaster();
+//                if (!(caster && caster->isAlive()) && caster->GetAI())
+//                    return;
+//                Map *pMap = caster->GetMap();
+//                //Radius increases by 10% per hit on heroic and by 5% if it's normal
+//                m_radius = 8.0f + m_hitCount;
+//                uint32 triggeredSpellId = SPELL_DEFILE_DAMAGE;
+//                int32 triggeredSpellBaseDamage = 3000;
+//                if (SpellEntry const* defileDamage = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_DAMAGE), caster))
+//                {
+//                    triggeredSpellId = defileDamage->Id;
+//                    triggeredSpellBaseDamage = (int32)(defileDamage->EffectBasePoints[EFFECT_0] * (1.0f + (pMap->IsHeroic() ? 0.1f : 0.05f) * m_hitCount));
+//                }
+//                int hitDamage = (int32)(GetSpellInfo()->EffectBasePoints[EFFECT_0] * (1.0f + (pMap->IsHeroic() ? 0.1f : 0.05f) * m_hitCount));
+//                SetHitDamage(hitDamage);
+//
+//                if (SpellEntry const* defileIncrease = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_INCREASE), caster))
+//                {
+//                    caster->CastSpell(caster, defileIncrease->Id, true);
+//                    if (Aura *defileIncreaseAura = caster->GetAura(defileIncrease->Id))
+//                        m_hitCount = defileIncreaseAura->GetStackAmount();
+//                }
+//            }
+//
+//            void HandleDefileIncrease(SpellEffIndex effIndex)
+//            {
+//                PreventHitDefaultEffect(effIndex);
+//            }
+//
+//            void Register()
+//            {
+//                OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_defile_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_AREA_ENEMY_SRC);
+//                OnEffect += SpellEffectFn(spell_lich_king_defile_SpellScript::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+//                OnEffect += SpellEffectFn(spell_lich_king_defile_SpellScript::HandleDefileIncrease, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
+//            }
+//        private:
+//            uint32 m_hitCount;
+//            float m_radius;
+//        };
+//
+//        SpellScript* GetSpellScript() const
+//        {
+//            return new spell_lich_king_defile_SpellScript();
+//        }
+//};
+
 class spell_lich_king_defile : public SpellScriptLoader
 {
     public:
@@ -1623,24 +2012,76 @@ class spell_lich_king_defile : public SpellScriptLoader
 
             void OnPeriodic(AuraEffect const* aurEff)
             {
-                //PreventDefaultAction();
-                if (!(GetTarget() && GetTarget()->isAlive() && GetCaster() && GetCaster()->isAlive()))
+                PreventDefaultAction();
+                Unit *caster = GetCaster();
+                if (!(caster && caster->isAlive()) && caster->GetAI())
                     return;
-                SpellEntry const* defileIncrease = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_INCREASE_DEFILE), GetCaster());
-                if (defileIncrease)
-                    GetCaster()->CastSpell(GetCaster(), defileIncrease->Id, true);
-                //m_stackAmount = GetStackAmount();
-                //GetCaster()->DealDamage(GetTarget(), (uint32)aurEff->GetBaseAmount() * m_stackAmount, 0, SPELL_DIRECT_DAMAGE, SPELL_SCHOOL_MASK_SHADOW, aurEff->GetSpellProto(), true);
-                //if (GetTarget() && GetTarget()->isAlive() && GetCaster() && GetCaster()->isAlive())
-                //    GetCaster()->CastSpell(GetTarget(), SPELL_NECROTIC_PLAGUE_EFFECT, true);
+                Map *pMap = caster->GetMap();
+                //Radius increases by 10% per hit on heroic and by 5% if it's normal
+                m_radius = 8.0f + m_hitCount;
+                //Find targest
+                std::list<Unit *> targets;
+                Trinity::AnyUnfriendlyVisibleUnitInObjectRangeCheck checker(caster, caster, m_radius); 
+
+                Trinity::UnitListSearcher<Trinity::AnyUnfriendlyVisibleUnitInObjectRangeCheck> searcher(caster, targets, checker);
+
+                TypeContainerVisitor<Trinity::UnitListSearcher<Trinity::AnyUnfriendlyVisibleUnitInObjectRangeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
+                TypeContainerVisitor<Trinity::UnitListSearcher<Trinity::AnyUnfriendlyVisibleUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
+
+                CellPair p(Trinity::ComputeCellPair(caster->GetPositionX(), caster->GetPositionY()));
+                Cell cell(p);
+                cell.data.Part.reserved = ALL_DISTRICT;
+                cell.SetNoCreate();
+
+                cell.Visit(p, world_unit_searcher, *pMap, *caster, 100.0f);
+                cell.Visit(p, grid_unit_searcher, *pMap, *caster, 100.0f);
+
+                if (targets.empty())
+                    return;
+                uint32 triggeredSpellId = SPELL_DEFILE_DAMAGE;
+                int32 triggeredSpellBaseDamage = 3000;
+                if (SpellEntry const* defileDamage = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_DAMAGE), caster))
+                {
+                    triggeredSpellId = defileDamage->Id;
+                    triggeredSpellBaseDamage = (int32)(defileDamage->EffectBasePoints[EFFECT_0] * (1.0f + (pMap->IsHeroic() ? 0.1f : 0.05f) * m_hitCount));
+                }
+
+                bool increaseRadius = false;
+                uint64 ownerGuid = (caster->GetOwner() ? caster->GetOwner()->GetGUID() : 0);
+                Unit *curVictim = NULL;
+                for (std::list<Unit*>::iterator it = targets.begin(); it != targets.end(); ++it)
+                {
+                    curVictim = *it;
+                    if (curVictim->GetGUID() == ownerGuid)
+                        continue;
+                    if (curVictim->GetTypeId() != TYPEID_PLAYER)
+                        continue;
+                    if (curVictim->GetDistance2d(caster) > m_radius)
+                        continue;
+                    caster->CastCustomSpell(triggeredSpellId, SPELLVALUE_BASE_POINT0, triggeredSpellBaseDamage, curVictim, true, NULL, NULL, caster->GetGUID());
+                    increaseRadius = true;
+                }
+                if (!increaseRadius)
+                    return;
+                if (SpellEntry const* defileIncrease = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_INCREASE), caster))
+                {
+                    caster->CastSpell(caster, defileIncrease->Id, true);
+                    if (Aura *defileIncreaseAura = caster->GetAura(defileIncrease->Id))
+                        m_hitCount = defileIncreaseAura->GetStackAmount();
+                    else
+                        ++m_hitCount;
+                }
             }
 
             void Register()
             {
-                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_defile_AuraScript::OnPeriodic, EFFECT_1, SPELL_AURA_DUMMY);
+                m_hitCount = 0;
+                m_radius = 0.0f;
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_defile_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             }
         private:
-            uint8 m_stackAmount;
+            uint32 m_hitCount;
+            float m_radius;
         };
 
         AuraScript* GetAuraScript() const
@@ -1733,6 +2174,90 @@ class spell_lich_king_valkyr_summon : public SpellScriptLoader
         }
 };
 
+class spell_lich_king_vile_spirit_summon : public SpellScriptLoader
+{
+    public:
+        spell_lich_king_vile_spirit_summon() : SpellScriptLoader("spell_lich_king_vile_spirit_summon") { }
+
+
+        class spell_lich_king_vile_spirit_summon_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_lich_king_vile_spirit_summon_AuraScript);
+
+            void OnPeriodic(AuraEffect const*aurEff)
+            {
+                PreventDefaultAction();
+                Unit *caster = GetCaster();
+                if (!caster || !caster->isAlive())
+                    return;
+                InstanceScript *instance = caster->GetInstanceScript();
+                if (instance)
+                {
+                    uint32 spawnMod = caster->GetMap()->GetSpawnMode();
+                    uint32 maxSummoned;
+                    if (spawnMod == 1 || spawnMod == 3)
+                        maxSummoned = 10;
+                    else
+                        maxSummoned = 8;
+                    if (aurEff->GetTickNumber() >= maxSummoned)
+                        return;
+                }
+                Position pos;
+                caster->GetRandomNearPosition(pos, 13.0f);
+                pos.m_positionZ = npc_vile_spirit_icc::Z_VILE_SPIRIT;
+                uint32 triggeredSpell = aurEff->GetSpellProto()->EffectTriggerSpell[aurEff->GetEffIndex()];
+                caster->CastSpell(pos.m_positionX, pos.m_positionY, pos.m_positionZ, triggeredSpell, true);
+            }
+
+            void Register()
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_vile_spirit_summon_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_vile_spirit_summon_AuraScript::OnPeriodic, EFFECT_1, SPELL_AURA_LINKED);
+            }
+        };
+
+        AuraScript* GetAuraScript() const
+        {
+            return new spell_lich_king_vile_spirit_summon_AuraScript();
+        }
+};
+
+class spell_lich_king_vile_spirit_summon_visual : public SpellScriptLoader
+{
+    public:
+        spell_lich_king_vile_spirit_summon_visual() : SpellScriptLoader("spell_lich_king_vile_spirit_summon_visual") { }
+
+
+        class spell_lich_king_vile_spirit_summon_visual_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_lich_king_vile_spirit_summon_visual_AuraScript);
+
+            void OnPeriodic(AuraEffect const*aurEff)
+            {
+                PreventDefaultAction();
+                Unit *caster = GetCaster();
+                if (!caster || !caster->isAlive())
+                    return;
+                Position pos;
+                caster->GetRandomNearPosition(pos, 13.0f);
+                pos.m_positionZ = npc_vile_spirit_icc::Z_VILE_SPIRIT;
+                uint32 triggeredSpell = aurEff->GetSpellProto()->EffectTriggerSpell[aurEff->GetEffIndex()];
+                caster->CastSpell(pos.m_positionX, pos.m_positionY, pos.m_positionZ, triggeredSpell, true);
+            }
+
+            void Register()
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_vile_spirit_summon_visual_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+            }
+        };
+
+        AuraScript* GetAuraScript() const
+        {
+            return new spell_lich_king_vile_spirit_summon_visual_AuraScript();
+        }
+};
+
+
 class spell_lich_king_winter : public SpellScriptLoader
 {
     public:
@@ -1747,6 +2272,8 @@ class spell_lich_king_winter : public SpellScriptLoader
             {
                 if (Unit* caster = GetCaster())
                 {
+                    if (UnitAI *pBossAI = caster->GetAI())
+                        pBossAI->DoAction(ACTION_CANCEL_ALL_TRANSITION_EVENTS);
                     caster->CastSpell(caster, SPELL_QUAKE, true);
                     DoScriptText(SAY_BROKEN_ARENA, caster);
                 }
@@ -1819,6 +2346,7 @@ class spell_vile_spirit_distance_check : public SpellScriptLoader
 
                     if (InstanceScript* instance = caster->GetInstanceScript())
                         instance->SetData(DATA_NECK_DEEP_ACHIEVEMENT, FAIL);
+                    caster->GetAI()->DoAction(ACTION_DESPAWN);
                 }
             }
 
@@ -1913,11 +2441,14 @@ class spell_valkyr_carry_can_cast : public SpellScriptLoader
 
             void HandleScript(SpellEffIndex /*effIndex*/)
             {
-                if (!(GetHitUnit() && GetHitUnit()->isAlive() && GetCaster()))
+                Unit *caster = GetCaster(), *target = GetHitUnit();
+                if (!(target && target->isAlive() && caster))
                     return;
 
-                if (GetHitUnit()->GetTypeId() == TYPEID_PLAYER)
-                    GetHitUnit()->CastSpell(GetCaster(), SPELL_VALKYR_MOVE_PLAYER, true);
+                if (target->GetTypeId() == TYPEID_PLAYER)
+                {
+                    target->CastSpell(caster, SPELL_VALKYR_GRAB_PLAYER, true);
+                }
             }
 
             void Register()
@@ -1944,18 +2475,25 @@ class spell_valkyr_target_search : public SpellScriptLoader
 
             void HandleScript(SpellEffIndex /*effIndex*/)
             {
-                if (!(GetHitUnit() && GetHitUnit()->isAlive() && GetCaster()))
+                Unit *target = GetHitUnit(), *caster = GetCaster();
+                if (!(target && target->isAlive() && caster))
                     return;
 
-                if (GetHitUnit()->GetTypeId() == TYPEID_PLAYER)
+                if (target->GetTypeId() == TYPEID_PLAYER)
                 {
-                    GetHitUnit()->CastSpell(GetCaster(), SPELL_VALKYR_CHARGE, true);
-                    GetHitUnit()->CastSpell(GetCaster(), SPELL_VALKYR_CARRY_CAN_CAST, true);
+                    caster->CastSpell(target, SPELL_VALKYR_CHARGE, true);
+                    caster->CastSpell(target, SPELL_VALKYR_CARRY_CAN_CAST, true);
                 }
+            }
+
+            void FilterTargets(std::list<Unit*>& unitList)
+            {
+                LeaveOnlyPlayers(unitList);
             }
 
             void Register()
             {
+                OnUnitTargetSelect += SpellUnitTargetFn(spell_valkyr_target_search_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_AREA_ENEMY_SRC);
                 OnEffect += SpellEffectFn(spell_valkyr_target_search_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
@@ -2221,6 +2759,8 @@ public:
         void Reset()
         {
             events.ScheduleEvent(EVENT_MOVE_FORWARD, 2000);
+            SetCombatMovement(false);
+            me->SetReactState(REACT_PASSIVE);
         }
 
         void SetGUID(const uint64& guid, int32 type = 0)
@@ -2289,6 +2829,67 @@ public:
     }
 };
 
+class npc_defile_icc : public CreatureScript
+{
+
+public:
+    npc_defile_icc() : CreatureScript("npc_defile_icc") { }
+
+    struct npc_defile_iccAI : public Scripted_NoMovementAI
+    {
+        npc_defile_iccAI(Creature* creature) : Scripted_NoMovementAI(creature), alreadyReset(false), m_hitNumber(0)
+        {
+        }
+
+        void JustRespawned()
+        {
+            me->SetInCombatWithZone();
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        //void UpdateDefileAura()
+        //{
+        //    ++m_hitNumber;
+        //    m_radiusMod = (int32)(((float)m_hitNumber / 60) * 0.9f + 0.1f) * 10000 * 2 / 3;
+        //    if (SpellEntry const* defileAuraSpellEntry = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE), me))
+        //        me->CastCustomSpell(defileAuraSpellEntry->Id, SPELLVALUE_RADIUS_MOD, m_radiusMod, me, true, NULL, NULL, me->GetGUID()); 
+        //}
+
+        void Reset()
+        {
+            if (!alreadyReset)
+            {
+                if (SpellEntry const* defileAuraSpellEntry = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE), me))
+                    DoCast(me, defileAuraSpellEntry->Id, true);
+                //UpdateDefileAura();
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                alreadyReset = true;
+            }
+        }
+
+        //void SpellHitTarget(Unit* target, SpellEntry const* spell)
+        //{
+        //    if (spell->Id == SPELL_DEFILE_DAMAGE)
+        //    {
+        //        AttackStart(target);
+        //        if (SpellEntry const* defileIncrease = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_INCREASE), me))
+        //            DoCast(me, defileIncrease->Id, true);
+        //        UpdateDefileAura();
+        //    }
+        //}
+        //Disallow melee
+        void UpdateAI(const uint32 uiDiff) {}
+    private:
+        bool alreadyReset;
+        int32 m_hitNumber, m_radiusMod;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_defile_iccAI(creature);
+    }
+};
+
 void AddSC_boss_lichking()
 {
     new boss_the_lich_king();
@@ -2298,12 +2899,16 @@ void AddSC_boss_lichking()
     new npc_shambling_horror_icc();
     new npc_raging_spirit_icc();
     new npc_ice_sphere_icc();
+    new npc_defile_icc();
     new spell_lich_king_necrotic_plague();
     new spell_lich_king_infection();
     new spell_lich_king_valkyr_summon();
+    new spell_lich_king_vile_spirit_summon();
+    new spell_lich_king_vile_spirit_summon_visual();
     new spell_lich_king_winter();
     new spell_vile_spirit_distance_check();
-    new spell_lich_king_pain_and_suffering();
+    //new spell_lich_king_pain_and_suffering();
+    new spell_lich_king_pain_and_suffering_effect();
     new spell_ice_burst_distance_check();
     new spell_lich_king_quake();
     new spell_lich_king_play_movie();

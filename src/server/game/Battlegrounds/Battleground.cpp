@@ -1034,7 +1034,6 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
             if (!group->RemoveMember(guid))                // group was disbanded
             {
                 SetBgRaid(team, NULL);
-                delete group;
             }
         }
         DecreaseInvitedCount(team);
@@ -1204,6 +1203,7 @@ void Battleground::AddOrSetPlayerToCorrectBgGroup(Player *player, uint32 team)
         group = new Group;
         SetBgRaid(team, group);
         group->Create(player);
+        sObjectMgr->AddGroup(group);
     }
     else                                            // raid already exist
     {

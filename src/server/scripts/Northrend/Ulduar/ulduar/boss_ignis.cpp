@@ -335,7 +335,7 @@ public:
             Brittled = false;
         }
 
-        void DamageTaken(Unit* /*attacker*/, int &damage)
+        void DamageTaken(Unit* /*attacker*/, uint32 &damage)
         {
             if (me->HasAura(SPELL_BRITTLE) && damage >= 5000)
             {

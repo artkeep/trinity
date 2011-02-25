@@ -1063,7 +1063,7 @@ bool OutdoorPvPWG::UpdateCreatureInfo(Creature *creature)
             pMap = creature->GetMap();
             if (isWarTime())
             {
-                /* Uncomment if want to enable ressurect for both factions at graveyard
+                /* Uncomment if want to disable ressurect for both factions at the same time at fortress graveyard
                 if (creature->GetAreaId() == 4575) // Select Fortress Spirit
                 {
                     FortressSpirit = creature;
@@ -1162,6 +1162,9 @@ bool OutdoorPvPWG::UpdateGameObjectInfo(GameObject *go) const
         attFaction = 35;
         defFaction = 35;
     }
+
+    if (!go || !go->GetGOInfo())
+       return true;
 
     switch(go->GetGOInfo()->displayId)
     {

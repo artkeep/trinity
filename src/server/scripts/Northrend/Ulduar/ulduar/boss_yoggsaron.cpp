@@ -54,7 +54,7 @@ enum
 };
 
 
-void AddSC_boss_yogg_saron()
+void AddSC_boss_yoggsaron()
 {
 
 }

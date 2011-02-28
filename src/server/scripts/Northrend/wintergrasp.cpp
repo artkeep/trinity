@@ -408,9 +408,30 @@ public:
     };
 };
 
+class go_wg_veh_teleporter : public GameObjectScript
+{
+public:
+    go_wg_veh_teleporter() : GameObjectScript("go_wg_veh_teleporter") { }
+
+    bool OnGossipHello(Player *pPlayer, GameObject * pGO)
+    {
+        if (GameObject* trigger = pGO->FindNearestGameObject(190375, 500)) // Wintergrasp Fortress Gate
+            if (Vehicle * veh = pPlayer->GetVehicle())
+            {
+                Position triggerPos;
+                trigger->GetPosition(&triggerPos);
+                triggerPos.m_positionX -= 30;
+                veh->Relocate(triggerPos);
+            }
+        
+        return true;
+    }
+};
+
 void AddSC_wintergrasp()
 {
     new npc_demolisher_engineerer();
     new npc_wg_ally_battle_mage();
     new npc_wg_horde_battle_mage();
+    new go_wg_veh_teleporter();
 }

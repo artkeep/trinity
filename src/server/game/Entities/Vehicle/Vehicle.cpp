@@ -27,7 +27,8 @@
 #include "CreatureAI.h"
 #include "ZoneScript.h"
 
-Vehicle::Vehicle(Unit *unit, VehicleEntry const *vehInfo) : me(unit), m_vehicleInfo(vehInfo), m_usableSeatNum(0), m_bonusHP(0)
+Vehicle::Vehicle(Unit *unit, VehicleEntry const *vehInfo, uint32 creatureEntry)
+: me(unit), m_vehicleInfo(vehInfo), m_usableSeatNum(0), m_bonusHP(0), m_creatureEntry(creatureEntry)
 {
     for (uint32 i = 0; i < MAX_VEHICLE_SEATS; ++i)
     {
@@ -67,6 +68,8 @@ Vehicle::Vehicle(Unit *unit, VehicleEntry const *vehInfo) : me(unit), m_vehicleI
     me->ApplySpellImmune(0, IMMUNITY_ID, 53601, true);
     me->ApplySpellImmune(0, IMMUNITY_ID, 53551, true);
     me->ApplySpellImmune(0, IMMUNITY_ID, 17, true);
+
+    InitMovementInfoForBase();
 }
 
 Vehicle::~Vehicle()
@@ -123,9 +126,11 @@ void Vehicle::Install()
         sScriptMgr->OnInstall(this);
 }
 
-void Vehicle::InstallAllAccessories(uint32 entry)
+void Vehicle::InstallAllAccessories()
 {
-    VehicleAccessoryList const* mVehicleList = sObjectMgr->GetVehicleAccessoryList(entry);
+    me->RemoveAurasByType(SPELL_AURA_CONTROL_VEHICLE);  // We might have aura's saved in the DB with now invalid casters - remove
+
+    VehicleAccessoryList const* mVehicleList = sObjectMgr->GetVehicleAccessoryList(m_creatureEntry);
     if (!mVehicleList)
         return;
 
@@ -171,7 +176,7 @@ void Vehicle::Reset()
     }
     else
     {
-        InstallAllAccessories(me->GetEntry());
+        InstallAllAccessories();
         if (m_usableSeatNum)
             me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
     }
@@ -269,7 +274,7 @@ void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool minion, uint8 typ
                     passenger->ToCreature()->AI()->EnterEvadeMode();
                     return;
                 }
-                else if (passenger->ToTempSummon()->GetSummonType() == TEMPSUMMON_MANUAL_DESPAWN)
+                else if (passenger->HasUnitTypeMask(UNIT_MASK_ACCESSORY) && passenger->ToTempSummon()->GetSummonType() == TEMPSUMMON_MANUAL_DESPAWN)
                 {
                     passenger->ExitVehicle();
                     passenger->ToTempSummon()->DespawnOrUnsummon();
@@ -286,7 +291,14 @@ void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool minion, uint8 typ
         if (minion)
             accessory->AddUnitTypeMask(UNIT_MASK_ACCESSORY);
 
-        accessory->EnterVehicle(this, seatId);
+
+        if (!me->HandleSpellClick(accessory, seatId))
+        {
+            sLog->outErrorDb("Vehicle entry %u in vehicle_accessory does not have a valid record in npc_spellclick_spells! Calling default EnterVehicle()",
+                m_creatureEntry);
+            accessory->EnterVehicle(this, seatId);
+        }
+
         // This is not good, we have to send update twice
         accessory->SendMovementFlagUpdate();
 
@@ -362,6 +374,7 @@ bool Vehicle::AddPassenger(Unit *unit, int8 seatId)
         if (!me->SetCharmedBy(unit, CHARM_TYPE_VEHICLE))
             ASSERT(false);
 
+        // hack: should be done by aura system
         if (VehicleScalingInfo const *scalingInfo = sObjectMgr->GetVehicleScalingInfo(m_vehicleInfo->m_ID))
         {
             Player *plr = unit->ToPlayer();
@@ -379,8 +392,10 @@ bool Vehicle::AddPassenger(Unit *unit, int8 seatId)
 
     if (me->IsInWorld())
     {
-        // In some cases we send SMSG_SPLINE_MOVE_ROOT here (for creatures)
-        unit->SendMonsterMoveTransport(me);
+        unit->SendClearTarget();                                // SMSG_BREAK_TARGET
+        unit->SetControlled(true, UNIT_STAT_ROOT);              // SMSG_FORCE_ROOT - In some cases we send SMSG_SPLINE_MOVE_ROOT here (for creatures)
+                                                                // also adds MOVEMENTFLAG_ROOT
+        unit->SendMonsterMoveTransport(me);                     // SMSG_MONSTER_MOVE_TRANSPORT
 
         if (me->GetTypeId() == TYPEID_UNIT)
         {
@@ -482,29 +497,25 @@ void Vehicle::Dismiss()
 {
     sLog->outDebug(LOG_FILTER_VEHICLES, "Vehicle::Dismiss %u", me->GetEntry());
     Uninstall();
-    me->SendObjectDeSpawnAnim(me->GetGUID());
+    me->DestroyForNearbyPlayers();
     me->CombatStop();
     me->AddObjectToRemoveList();
 }
 
-uint16 Vehicle::GetExtraMovementFlagsForBase() const
+void Vehicle::InitMovementInfoForBase()
 {
-    uint16 movementMask = MOVEMENTFLAG2_NONE;
     uint32 vehicleFlags = GetVehicleInfo()->m_flags;
 
     if (vehicleFlags & VEHICLE_FLAG_NO_STRAFE)
-        movementMask |= MOVEMENTFLAG2_NO_STRAFE;
+        me->AddExtraUnitMovementFlag(MOVEMENTFLAG2_NO_STRAFE);
     if (vehicleFlags & VEHICLE_FLAG_NO_JUMPING)
-        movementMask |= MOVEMENTFLAG2_NO_JUMPING;
+        me->AddExtraUnitMovementFlag(MOVEMENTFLAG2_NO_JUMPING);
     if (vehicleFlags & VEHICLE_FLAG_FULLSPEEDTURNING)
-        movementMask |= MOVEMENTFLAG2_FULL_SPEED_TURNING;
+        me->AddExtraUnitMovementFlag(MOVEMENTFLAG2_FULL_SPEED_TURNING);
     if (vehicleFlags & VEHICLE_FLAG_ALLOW_PITCHING)
-        movementMask |= MOVEMENTFLAG2_ALWAYS_ALLOW_PITCHING;
+        me->AddExtraUnitMovementFlag( MOVEMENTFLAG2_ALWAYS_ALLOW_PITCHING);
     if (vehicleFlags & VEHICLE_FLAG_FULLSPEEDPITCHING)
-        movementMask |= MOVEMENTFLAG2_FULL_SPEED_PITCHING;
-
-    sLog->outDebug(LOG_FILTER_VEHICLES, "Vehicle::GetExtraMovementFlagsForBase() returned %u", movementMask);
-    return movementMask;
+        me->AddExtraUnitMovementFlag(MOVEMENTFLAG2_FULL_SPEED_PITCHING);
 }
 
 VehicleSeatEntry const* Vehicle::GetSeatForPassenger(Unit* passenger)
@@ -525,4 +536,41 @@ SeatMap::iterator Vehicle::GetSeatIteratorForPassenger(Unit* passenger)
             return itr;
 
     return m_Seats.end();
+}
+
+uint8 Vehicle::GetAvailableSeatCount() const
+{
+    uint8 ret = 0;
+    SeatMap::const_iterator itr;
+    for (itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
+        if (!itr->second.passenger && (itr->second.seatInfo->CanEnterOrExit() || itr->second.seatInfo->IsUsableByOverride()))
+            ++ret;
+
+    return ret;
+}
+
+void Vehicle::Relocate(Position pos)
+{
+    sLog->outDebug(LOG_FILTER_VEHICLES, "Vehicle::Relocate %u", me->GetEntry());
+
+    std::set<Unit*> vehiclePlayers;
+    for (int8 i = 0; i < 8; i++)
+        vehiclePlayers.insert(GetPassenger(i));
+
+    // passengers should be removed or they will have movement stuck
+    RemoveAllPassengers();
+
+    for (std::set<Unit*>::const_iterator itr = vehiclePlayers.begin(); itr != vehiclePlayers.end(); ++itr)
+    {
+        if (Unit* plr = (*itr))
+        {
+            // relocate/setposition doesn't work for player
+            plr->NearTeleportTo(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation());
+            //plr->TeleportTo(pPlayer->GetMapId(), triggerPos.GetPositionX(), triggerPos.GetPositionY(), triggerPos.GetPositionZ(), triggerPos.GetOrientation(), TELE_TO_NOT_LEAVE_COMBAT);
+        }
+    }
+
+    me->SetPosition(pos, true);
+    // problems, and impossible to do delayed enter
+    //pPlayer->EnterVehicle(veh);
 }

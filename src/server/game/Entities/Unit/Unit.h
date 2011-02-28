@@ -721,7 +721,7 @@ enum SplineFlags
     SPLINEFLAG_UNKNOWN22      = 0x00200000,
     SPLINEFLAG_UNKNOWN23      = 0x00400000,
     SPLINEFLAG_TRANSPORT      = 0x00800000,
-    SPLINEFLAG_UNKNOWN25      = 0x01000000,
+    SPLINEFLAG_EXIT_VEHICLE   = 0x01000000,
     SPLINEFLAG_UNKNOWN26      = 0x02000000,
     SPLINEFLAG_UNKNOWN27      = 0x04000000,
     SPLINEFLAG_UNKNOWN28      = 0x08000000,
@@ -1521,6 +1521,7 @@ class Unit : public WorldObject
         void SendMonsterStop(bool on_death = false);
         void SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint32 Time, Player* player = NULL);
         void SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint32 MoveFlags, uint32 time, float speedZ, Player *player = NULL);
+        void SendMonsterMoveExitVehicle(Position const* newPos);
         //void SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint8 type, uint32 MovementFlags, uint32 Time, Player* player = NULL);
         void SendMonsterMoveTransport(Unit *vehicleOwner);
         void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
@@ -2038,7 +2039,7 @@ class Unit : public WorldObject
         Unit *GetMisdirectionTarget() { return m_misdirectionTargetGUID ? GetUnit(*this, m_misdirectionTargetGUID) : NULL; }
 
         bool IsAIEnabled, NeedChangeAI;
-        bool CreateVehicleKit(uint32 id);
+        bool CreateVehicleKit(uint32 id, uint32 creatureEntry);
         void RemoveVehicleKit();
         Vehicle *GetVehicleKit()const { return m_vehicleKit; }
         Vehicle *GetVehicle()   const { return m_vehicle; }
@@ -2056,6 +2057,7 @@ class Unit : public WorldObject
         bool m_ControlledByPlayer;
 
         bool CheckPlayerCondition(Player* pPlayer);
+        bool HandleSpellClick(Unit* clicker, int8 seatId = -1);
         void EnterVehicle(Unit *base, int8 seatId = -1, AuraApplication const * aurApp = NULL) { EnterVehicle(base->GetVehicleKit(), seatId, aurApp); }
         void EnterVehicle(Vehicle *vehicle, int8 seatId = -1, AuraApplication const * aurApp = NULL);
         void ExitVehicle(Position const* exitPosition = NULL);

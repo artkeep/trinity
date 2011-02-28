@@ -755,17 +755,13 @@ class World
         static int32 GetVisibilityNotifyPeriodOnContinents(){ return m_visibility_notify_periodOnContinents; }
         static int32 GetVisibilityNotifyPeriodInInstances() { return m_visibility_notify_periodInInstances;  }
         static int32 GetVisibilityNotifyPeriodInBGArenas()  { return m_visibility_notify_periodInBGArenas;   }
-		
-        //movement anticheat enable flag
-        inline bool GetMvAnticheatEnable()             {return m_MvAnticheatEnable;}
-        inline bool GetMvAnticheatKick()               {return m_MvAnticheatKick;}
-        inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
-        inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
-        inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
-        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
-        inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
-        inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
-        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
+
+        // movement anticheat
+        static bool GetEnableMvAnticheat()       { return m_EnableMvAnticheat;     }
+        static uint32 GetTeleportToPlaneAlarms() { return m_TeleportToPlaneAlarms; }
+        static uint32 GetMistimingDelta()        { return m_MistimingDelta;        }
+        static uint32 GetMistimingAlarms()       { return m_MistimingAlarms;       }
+        // end movement anticheat
 
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
@@ -874,17 +870,12 @@ class World
         static int32 m_visibility_notify_periodOnContinents;
         static int32 m_visibility_notify_periodInInstances;
         static int32 m_visibility_notify_periodInBGArenas;
-		
-       //movement anticheat enable flag
-        bool m_MvAnticheatEnable;
-        bool m_MvAnticheatKick;
-        uint32 m_MvAnticheatAlarmCount;
-        uint32 m_MvAnticheatAlarmPeriod;
-        unsigned char m_MvAntiCheatBan;
-        std::string m_MvAnticheatBanTime;
-        unsigned char m_MvAnticheatGmLevel;
-        bool m_MvAnticheatKill;
-        float m_MvAnticheatMaxXYT;
+
+        // movement anticheat enable flag
+        static bool m_EnableMvAnticheat;
+        static uint32 m_TeleportToPlaneAlarms;
+        static uint32 m_MistimingDelta;
+        static uint32 m_MistimingAlarms;
 
         // CLI command holder to be thread safe
         ACE_Based::LockedQueue<CliCommandHolder*,ACE_Thread_Mutex> cliCmdQueue;

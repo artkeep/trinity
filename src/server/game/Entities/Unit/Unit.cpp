@@ -5620,6 +5620,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                     basepoints0 = CalculatePctN(int32(damage), triggerAmount);
                     break;
                 }
+                // Meteor Fists
+                case 66725:
+                {
+                    target = getVictim();
+                    triggered_spell_id = 66765;
+                    break;
+                }
             }
             break;
         }
@@ -7926,6 +7933,17 @@ bool Unit::HandleAuraProc(Unit * pVictim, uint32 damage, Aura * triggeredByAura,
                     Unit *caster = triggeredByAura->GetCaster();
                     if (!caster || !damage)
                         return false;
+
+                    Aura * dummy = GetAura(28682);
+                    if (dummy && dummy->GetStackAmount() > 9 && (procEx & PROC_EX_CRITICAL_HIT) ){
+                        if(triggeredByAura->GetCharges() > 1){
+                            triggeredByAura->DropCharge(); // drop charge manually
+                            return false;
+                        }else{
+                            RemoveAurasDueToSpell(28682);
+                            return true;
+                        }
+                    }
 
                     //last charge and crit
                     if (triggeredByAura->GetCharges() <= 1 && (procEx & PROC_EX_CRITICAL_HIT))

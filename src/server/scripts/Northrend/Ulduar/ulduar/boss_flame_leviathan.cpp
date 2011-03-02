@@ -15,12 +15,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* ScriptData
-Name: Flame Leviathan
-Author: PrinceCreed
-%Complete: 90
-EndScriptData */
-
 #include "ScriptPCH.h"
 #include "ulduar.h"
 #include "Vehicle.h"
@@ -408,7 +402,7 @@ public:
         void SpellHit(Unit* /*caster*/, const SpellEntry* pSpell)
         {
             if (pSpell->Id == SPELL_START_THE_ENGINE)
-                vehicle->InstallAllAccessories();
+                vehicle->InstallAllAccessories(me->GetEntry());
 
             if (pSpell->Id == SPELL_ELECTROSHOCK)
                 me->InterruptSpell(CURRENT_CHANNELED_SPELL);

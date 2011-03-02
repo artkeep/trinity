@@ -520,4 +520,3 @@ void AddSC_instance_ulduar()
     new instance_ulduar();
     new go_call_tram();
 }
-

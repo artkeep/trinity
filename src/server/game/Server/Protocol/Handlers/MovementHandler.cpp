@@ -428,7 +428,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     check_passed = false;
                 }                   
                 if (vehMover)
-                    vehMover->Die();
                 // Tell the player "Sure, you can fly!"
                 {
                     WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -527,7 +526,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     #endif
                     check_passed = false;
                     if (vehMover)
-                        vehMover->Die();
                     // Tell the player "Sure, you can fly!"
                     {
                         WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -555,7 +553,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                             // don't process new jump packet
                             check_passed = false;
                             if (vehMover)
-                                vehMover->Die();
                             // Tell the player "Sure, you can fly!"
                             {
                                 WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -593,7 +590,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     #endif
                     check_passed = false;
                     if (vehMover)
-                        vehMover->Die();
                     //plMover->FallGround(2);
                 }
 
@@ -605,7 +601,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     #endif
                     check_passed = false;
                     if (vehMover)
-                        vehMover->Die();
                 }
  
                 // Fly hack checks
@@ -620,7 +615,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     #endif
                     check_passed = false;
                     if (vehMover)
-                        vehMover->Die();
                     // Tell the player "Sure, you can fly!"
                     {
                         WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -647,7 +641,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     #endif
                     check_passed = false;
                     if (vehMover)
-                        vehMover->Die();
                     // Tell the player "Sure, you can fly!"
                     {
                         WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -690,7 +683,6 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                             ++(plMover->m_anti_TeleToPlane_Count);
                             check_passed = false;
                             if (vehMover)
-                                vehMover->Die();
                         }
                     }
                 }

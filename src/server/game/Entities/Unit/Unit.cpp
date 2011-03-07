@@ -5159,6 +5159,20 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 case 21063:
                     triggered_spell_id = 21064;
                     break;
+		//Item - Icecrown 25 Normal Caster Weapon Proc
+		case 71845:
+                {
+                    triggered_spell_id = 71843;
+                    target = this;
+                    break;
+                }
+		//Item - Icecrown 25 Heroic Caster Weapon Proc
+		case 71846:
+                {
+                    triggered_spell_id = 71844;
+                    target = this;
+                    break;
+                }
                 // Vampiric Aura (boss spell)
                 case 38196:
                 {
@@ -5223,20 +5237,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 // Sunwell Exalted Caster Neck (??? neck)
                 // cast ??? Light's Wrath if Exalted by Aldor
                 // cast ??? Arcane Bolt if Exalted by Scryers
-					//Item - Icecrown 25 Normal Caster Weapon Proc 
-					case 71845: 
-                    { 
-                        triggered_spell_id = 71843; 
-                        target = this; 
-                        break; 
-                    } 
-					//Item - Icecrown 25 Heroic Caster Weapon Proc 
-					case 71846: 
-					{ 
-						triggered_spell_id = 71844; 
-						target = this; 
-						break; 
-					}
                 case 46569:
                     return false;                           // old unused version
                 // Sunwell Exalted Caster Neck (Shattered Sun Pendant of Acumen neck)
@@ -5617,6 +5617,9 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                     }
                     break;
                 }
+            }
+            break;
+        }
         case SPELLFAMILY_MAGE:
         {
             // Magic Absorption
@@ -6635,23 +6638,25 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 return true;
             }
             // Sacred Shield
-            if (dummySpell->SpellFamilyFlags[1]&0x00080000)
+            if (dummySpell->SpellFamilyFlags[1] & 0x80000)
             {
-                // HoT only if has Infusion of Light talent
-                if ((HasAura(53569) || HasAura(53576) && procFlag & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_POS))
+                if (procFlag & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_POS)
                 {
-                    if (procSpell->SpellFamilyName == SPELLFAMILY_PALADIN
-                        && (procSpell->SpellFamilyFlags[0] & 0x40000000))
+                    if ((procSpell->SpellFamilyName == SPELLFAMILY_PALADIN) && (procSpell->SpellFamilyFlags[0] & 0x40000000))
                     {
-                        basepoints0 = int32(float(damage)/12.0f);
-                        CastCustomSpell(this,66922,&basepoints0,NULL,NULL,true,0,triggeredByAura, pVictim->GetGUID());
+                        basepoints0 = damage / 12;
+
+                        if (basepoints0)
+                            CastCustomSpell(this, 66922, &basepoints0, NULL, NULL, true, 0, triggeredByAura, pVictim->GetGUID());
+
                         return true;
                     }
                     else
                         return false;
                 }
-                else
+                else if (damage > 0)
                     triggered_spell_id = 58597;
+
                 target = this;
                 break;
             }

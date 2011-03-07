@@ -427,7 +427,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     #endif
                     check_passed = false;
                 }                   
-                if (vehMover);
+                //if (vehMover)
+                //    vehMover->Die();
                 // Tell the player "Sure, you can fly!"
                 {
                     WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -525,7 +526,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                         plMover->GetName(), JumpHeight, plMover->m_anti_Last_VSpeed);
                     #endif
                     check_passed = false;
-                    if (vehMover);
+                    //if (vehMover)
+                    //    vehMover->Die();
                     // Tell the player "Sure, you can fly!"
                     {
                         WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -552,7 +554,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                         {
                             // don't process new jump packet
                             check_passed = false;
-                            if (vehMover);
+                            //if (vehMover)
+                            //    vehMover->Die();
                             // Tell the player "Sure, you can fly!"
                             {
                                 WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -589,7 +592,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                         sLog->outError("AC2-%s, teleport exception | cDelta=%f aDelta=%f | cSpeed=%f lSpeed=%f deltaTime=%f", plMover->GetName(), real_delta, allowed_delta, current_speed, plMover->m_anti_Last_HSpeed, time_delta);
                     #endif
                     check_passed = false;
-                    if (vehMover);
+                    //if (vehMover)
+                    //    vehMover->Die();
                     //plMover->FallGround(2);
                 }
 
@@ -600,7 +604,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                     sLog->outError("AC2-%s, mountain exception | tg_z=%f", plMover->GetName(), tg_z);
                     #endif
                     check_passed = false;
-                    if (vehMover);
+                //    if (vehMover)
+                //        vehMover->Die();
                 }
  
                 // Fly hack checks
@@ -614,7 +619,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                         plMover->HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_NOT_STACK), plMover->GetVehicle());
                     #endif
                     check_passed = false;
-                    if (vehMover);
+                    //if (vehMover)
+                    //    vehMover->Die();
                     // Tell the player "Sure, you can fly!"
                     {
                         WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -640,7 +646,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                         plMover->GetName(), movementInfo.flags, plMover->HasAuraType(SPELL_AURA_WATER_WALK));
                     #endif
                     check_passed = false;
-                    if (vehMover);
+                    //if (vehMover)
+                    //    vehMover->Die();
                     // Tell the player "Sure, you can fly!"
                     {
                         WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -682,7 +689,8 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                             #endif
                             ++(plMover->m_anti_TeleToPlane_Count);
                             check_passed = false;
-                            if (vehMover);
+                            //if (vehMover)
+                            //    vehMover->Die();
                         }
                     }
                 }

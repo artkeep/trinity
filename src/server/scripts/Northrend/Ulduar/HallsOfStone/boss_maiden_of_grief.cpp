@@ -114,7 +114,7 @@ public:
                 {
                     if(!me->IsNonMeleeSpellCasted(false))
                     {
-                        if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                        if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             DoCast(pTarget, SPELL_PARTING_SORROW);
 
                         PartingSorrowTimer = 10000 + rand()%7000;
@@ -145,7 +145,7 @@ public:
             {
                 if(!me->IsNonMeleeSpellCasted(false))
                 {
-                    Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 1);
+                    Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 1);
 
                     if (pTarget)
                         DoCast(pTarget, DUNGEON_MODE(SPELL_PILLAR_OF_WOE_N,SPELL_PILLAR_OF_WOE_H));

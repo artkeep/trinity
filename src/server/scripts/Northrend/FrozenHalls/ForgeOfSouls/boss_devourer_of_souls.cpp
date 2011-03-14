@@ -249,7 +249,7 @@ public:
                 switch(eventId)
                 {
                     case EVENT_PHANTOM_BLAST:
-                        if (Unit *pTarget = SelectUnit(SELECT_TARGET_TOPAGGRO, 0))
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_TOPAGGRO, 0))
                             DoCast(pTarget, SPELL_PHANTOM_BLAST);
                         events.ScheduleEvent(EVENT_PHANTOM_BLAST, 5000);
                         break;
@@ -263,12 +263,12 @@ public:
                         events.ScheduleEvent(EVENT_MIRRORED_SOUL, urand(15000,30000));
                         break;
                     case EVENT_WELL_OF_SOULS:
-                        if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             DoCast(pTarget, SPELL_WELL_OF_SOULS);
                         events.ScheduleEvent(EVENT_WELL_OF_SOULS, 20000);
                         break;
                     case EVENT_UNLEASHED_SOULS:
-                        if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             DoCast(pTarget, SPELL_UNLEASHED_SOULS);
                         me->SetDisplayId(DISPLAY_SORROW);
                         DoScriptText(RAND(SAY_FACE_ANGER_UNLEASH_SOUL,SAY_FACE_SORROW_UNLEASH_SOUL,SAY_FACE_DESIRE_UNLEASH_SOUL), me);
@@ -286,7 +286,7 @@ public:
                         DoScriptText(EMOTE_WAILING_SOUL, me);
                         DoCast(me, SPELL_WAILING_SOULS_STARTING);
 
-                        if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                         {
                             me->SetOrientation(me->GetAngle(pTarget));
                             DoCast(me, SPELL_WAILING_SOULS_BEAM);

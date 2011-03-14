@@ -206,7 +206,7 @@ struct mob_naxxramas_trashAI : public ScriptedAI
     void EnterCombat(Unit *who)
     {
         DoAttackerAreaInCombat(who, 100);
-        Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0);
+        Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
         if(target)
             SendAttacker(target);
     }

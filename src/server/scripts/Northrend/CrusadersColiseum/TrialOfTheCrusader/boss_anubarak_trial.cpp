@@ -257,7 +257,7 @@ public:
                         else
                         {
                             scarab->setFaction(me->getFaction());
-                            scarab->AI()->AttackStart(SelectUnit(SELECT_TARGET_RANDOM, 0));
+                            scarab->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM, 0));
                         }
                     }
                     SwarmScarab_Timer = 10000;
@@ -271,7 +271,7 @@ public:
                     for (int i = 0; i < RAID_MODE(1,2,2,4); ++i)
                     {
                         if (Creature* burrower = DoSummon(NPC_BURROWER, spawnPositions[urand(0,5)]))
-                            burrower->AI()->AttackStart(SelectUnit(SELECT_TARGET_RANDOM, 0));
+                            burrower->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM, 0));
                     }
 
                     Burrower_Timer = urand(55000, 65000);
@@ -425,7 +425,7 @@ public:
                         if (scarab->isAlive() && scarab->GetEntry() == NPC_SCARAB)
                         {
                             scarab->setFaction(me->getFaction());
-                            scarab->AI()->AttackStart(SelectUnit(SELECT_TARGET_RANDOM, 0));
+                            scarab->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM, 0));
                         }
                     }
                 }
@@ -489,7 +489,7 @@ public:
                 {
                     do
                     {
-                        uint64 guid = SelectUnit(SELECT_TARGET_RANDOM, 0)->GetGUID();
+                        uint64 guid = SelectTarget(SELECT_TARGET_RANDOM, 0)->GetGUID();
                         bool ok = true;
 
                         for (int i = 0; i < (int)newTargets.size(); ++i)
@@ -733,7 +733,7 @@ public:
             {
                 if (shadowStrikeTimer < diff)
                 {
-                    DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), 66134);
+                    DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), 66134);
                     shadowStrikeTimer = 30000;
                 } else shadowStrikeTimer -= diff;
             }

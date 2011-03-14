@@ -503,7 +503,7 @@ struct boss_valkyr_twinAI : public ScriptedAI
 
     void DoVortex()
     {
-        Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0);
+        Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
         if (target)
         {
             if (isLight)

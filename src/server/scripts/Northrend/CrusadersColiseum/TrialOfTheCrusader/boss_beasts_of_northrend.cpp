@@ -624,7 +624,7 @@ public:
                     if (isMobile)
                         DoCast(me->getVictim(), RAID_MODE(ACID_SPEW_10N, ACID_SPEW_25N, ACID_SPEW_10H, ACID_SPEW_25H));
                     else
-                        DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), RAID_MODE(ACID_SPIT_10N, ACID_SPIT_25N, ACID_SPIT_10H, ACID_SPIT_25H));
+                        DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), RAID_MODE(ACID_SPIT_10N, ACID_SPIT_25N, ACID_SPIT_10H, ACID_SPIT_25H));
 
                     events.ScheduleEvent(EVENT_ACID, urand(6000, 8000));
                     break;

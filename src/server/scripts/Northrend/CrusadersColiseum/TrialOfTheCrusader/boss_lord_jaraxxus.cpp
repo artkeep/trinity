@@ -190,13 +190,13 @@ public:
                     break;
 
                 case EVENT_FEL_LIGHTING:
-                    DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), RAID_MODE(FEL_LIGHTING_10N, FEL_LIGHTING_25N, FEL_LIGHTING_10H, FEL_LIGHTING_25H));
+                    DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), RAID_MODE(FEL_LIGHTING_10N, FEL_LIGHTING_25N, FEL_LIGHTING_10H, FEL_LIGHTING_25H));
                     events.RepeatEvent(FelLighting_Timer);
                     break;
 
                 case EVENT_INICIRATE_FLESH:
                     DoScriptText(SAY_INICIRATE, me);
-                    if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                     {
                         DoCast(target, RAID_MODE(INICIRATE_10N, INICIRATE_25N, INICIRATE_10H, INICIRATE_25H));
                         DoScriptText(SAY_INICIRATE_EMOTE, me, target);
@@ -205,7 +205,7 @@ public:
                     break;
 
                 case EVENT_LEGION_FLAME:
-                    DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), RAID_MODE(LEGION_FLAME_10N, LEGION_FLAME_25N, LEGION_FLAME_10H, LEGION_FLAME_25H));
+                    DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), RAID_MODE(LEGION_FLAME_10N, LEGION_FLAME_25N, LEGION_FLAME_10H, LEGION_FLAME_25H));
                     events.RepeatEvent(LegionFlame_Timer);
                     break;
 
@@ -222,7 +222,7 @@ public:
                     break;
 
                 case EVENT_TOUCH_OF_JARAXXUS:
-                    DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), TOUCH);
+                    DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), TOUCH);
                     events.RepeatEvent(Touch_Timer);
                     break;
 
@@ -240,7 +240,7 @@ public:
         {
             DoScriptText(SAY_INFERNUS, me);
             float x = 0, y = 0, z = 0;
-            SelectUnit(SELECT_TARGET_RANDOM, 0)->GetClosePoint(x, y, z, 1, 20);
+            SelectTarget(SELECT_TARGET_RANDOM, 0)->GetClosePoint(x, y, z, 1, 20);
             if (x && y && z)
                 me->CastSpell(x, y, z, RAID_MODE(ERRUPTION_10N, ERRUPTION_25N, ERRUPTION_10H, ERRUPTION_25H), false);//summon vulcan
         }
@@ -250,7 +250,7 @@ public:
             DoScriptText(SAY_SISTER, me);
             float x = 0, y = 0, z = 0;
 
-            SelectUnit(SELECT_TARGET_RANDOM, 0)->GetClosePoint(x, y, z, 1, 20);
+            SelectTarget(SELECT_TARGET_RANDOM, 0)->GetClosePoint(x, y, z, 1, 20);
             if (x && y && z)
                 me->CastSpell(x, y, z, RAID_MODE(PORTAL_10N, PORTAL_25N, PORTAL_10H, PORTAL_25H), false);//summon portal
         }
@@ -421,13 +421,13 @@ public:
 
             if (channel_Timer < diff)
             {
-                DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), 67047);
+                DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), 67047);
                 channel_Timer = 25000;
             } else channel_Timer -= diff;
 
             if (charge_Timer < diff)
             {
-                DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), 66494);
+                DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), 66494);
                 charge_Timer = 15000;
             } else charge_Timer -= diff;
 
@@ -479,7 +479,7 @@ public:
 
             if (leep_Timer < diff)
             {
-                DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), 66283);
+                DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), 66283);
                 leep_Timer = 25000;
             } else leep_Timer -= diff;
 
@@ -493,7 +493,7 @@ public:
             {
                 if (kiss_Timer < diff)
                 {
-                    DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), RAID_MODE(0, 0, 67077, 67078));
+                    DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0), RAID_MODE(0, 0, 67077, 67078));
                     kiss_Timer = urand(10000, 20000);
                 } else kiss_Timer -= diff;
             }

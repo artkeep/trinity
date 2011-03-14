@@ -175,7 +175,7 @@ public:
                 if (Rift)
                 {
                     me->AddAura(SPELL_CHARGE_RIFT,Rift);
-                    if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                         Rift->AI()->AttackStart(pTarget);
                     uiChaoticRiftGUID = Rift->GetGUID();
                     DoScriptText(SAY_RIFT , me);
@@ -185,7 +185,7 @@ public:
 
             if (uiSparkTimer <= diff)
             {
-                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 DoCast(pTarget, DUNGEON_MODE(SPELL_SPARK,H_SPELL_SPARK));
                 uiSparkTimer = 5*IN_MILLISECONDS;
             } else uiSparkTimer -= diff;
@@ -252,7 +252,7 @@ public:
             if (uiChaoticEnergyBurstTimer <= diff)
             {
                 Unit* pAnomalus = Unit::GetUnit(*me, pInstance ? pInstance->GetData64(DATA_ANOMALUS) : 0);
-                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 {
                     int dmg=244+rand()%162;
                     if (pAnomalus && pAnomalus->HasAura(SPELL_RIFT_SHIELD))
@@ -266,7 +266,7 @@ public:
             {
                 Creature* Wraith = me->SummonCreature(MOB_CRAZED_MANA_WRAITH, me->GetPositionX()+1, me->GetPositionY()+1, me->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1*IN_MILLISECONDS);
                 if (Wraith)
-                    if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                         Wraith->AI()->AttackStart(pTarget);
                 Unit* Anomalus = Unit::GetUnit(*me, pInstance ? pInstance->GetData64(DATA_ANOMALUS) : 0);
                 if (Anomalus && Anomalus->HasAura(SPELL_RIFT_SHIELD))

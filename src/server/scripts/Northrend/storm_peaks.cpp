@@ -783,7 +783,6 @@ public:
 
                 if (pCaster->IsVehicle())
                 {
-                    me->EnterVehicle(pCaster);
                     me->RemoveAurasDueToSpell(SPELL_ICE_BLOCK);
                 }
             }

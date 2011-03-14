@@ -594,7 +594,7 @@ class ObjectMgr
         typedef std::set<Group *> GroupSet;
         typedef std::vector<Group *> GroupStorage;
 
-        typedef std::vector <Guild *> GuildMap;
+        typedef UNORDERED_MAP<uint32, Guild*> GuildMap;
 
         typedef UNORDERED_MAP<uint32, ArenaTeam*> ArenaTeamMap;
 
@@ -809,10 +809,10 @@ class ObjectMgr
 
         VehicleAccessoryList const* GetVehicleAccessoryList(Vehicle* veh) const
         {
-            if (veh->GetBase()->ToCreature())
+            if (Creature* cre = veh->GetBase()->ToCreature())
             {
                 // Give preference to GUID-based accessories
-                VehicleAccessoryMap::const_iterator itr = m_VehicleAccessoryMap.find(veh->GetBase()->GetGUIDLow());
+                VehicleAccessoryMap::const_iterator itr = m_VehicleAccessoryMap.find(cre->GetDBTableGUIDLow());
                 if (itr != m_VehicleAccessoryMap.end())
                     return &itr->second;
             }

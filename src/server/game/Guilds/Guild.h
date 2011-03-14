@@ -228,11 +228,11 @@ struct GuildBankRightsAndSlots
     GuildBankRightsAndSlots() : rights(0), slots(0) { }
     GuildBankRightsAndSlots(uint8 _rights, uint32 _slots) : rights(_rights), slots(_slots) { }
 
-    inline bool IsEqual(const GuildBankRightsAndSlots& rhs) const { return rights == rhs.rights && slots == rhs.slots; }
+    inline bool IsEqual(GuildBankRightsAndSlots const& rhs) const { return rights == rhs.rights && slots == rhs.slots; }
     void SetGuildMasterValues()
     {
         rights = GUILD_BANK_RIGHT_FULL;
-        slots = GUILD_WITHDRAW_SLOT_UNLIMITED;
+        slots = uint32(GUILD_WITHDRAW_SLOT_UNLIMITED);
     }
 
     uint8  rights;
@@ -387,7 +387,7 @@ private:
     class LogHolder
     {
     public:
-        LogHolder(uint32 guildId, uint32 maxRecords) : m_guildId(guildId), m_maxRecords(maxRecords), m_nextGUID(GUILD_EVENT_LOG_GUID_UNDEFINED) { }
+        LogHolder(uint32 guildId, uint32 maxRecords) : m_guildId(guildId), m_maxRecords(maxRecords), m_nextGUID(uint32(GUILD_EVENT_LOG_GUID_UNDEFINED)) { }
         ~LogHolder();
 
         uint8 GetSize() const { return uint8(m_log.size()); }
@@ -417,7 +417,7 @@ private:
         RankInfo(uint32 guildId, uint8 rankId, const std::string& name, uint32 rights, uint32 money) :
             m_guildId(guildId), m_rankId(rankId), m_name(name), m_rights(rights), m_bankMoneyPerDay(money) { }
 
-        bool LoadFromDB(Field* fields);
+        void LoadFromDB(Field* fields);
         void SaveToDB(SQLTransaction& trans) const;
         void WritePacket(WorldPacket& data) const;
 
@@ -631,10 +631,10 @@ public:
 
     // Load from DB
     bool LoadFromDB(Field* fields);
-    bool LoadRankFromDB(Field* fields);
+    void LoadRankFromDB(Field* fields);
     bool LoadMemberFromDB(Field* fields);
     bool LoadEventLogFromDB(Field* fields);
-    bool LoadBankRightFromDB(Field* fields);
+    void LoadBankRightFromDB(Field* fields);
     bool LoadBankTabFromDB(Field* fields);
     bool LoadBankEventLogFromDB(Field* fields);
     bool LoadBankItemFromDB(Field* fields);

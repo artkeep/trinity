@@ -197,8 +197,8 @@ LanguageDesc const* GetLanguageDescByID(uint32 lang)
 
 bool SpellClickInfo::IsFitToRequirements(Unit const* clicker, Unit const* clickee) const
 {
-    Player const* playerClicker = NULL;
-    if (playerClicker = clicker->ToPlayer())
+    Player const* playerClicker = clicker->ToPlayer();
+    if (playerClicker)
     {
         if (questStart)
         {
@@ -298,8 +298,7 @@ ObjectMgr::~ObjectMgr()
         delete *itr;
 
     for (GuildMap::iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
-        if (*itr)
-            delete *itr;
+        delete itr->second;
 
     for (ArenaTeamMap::iterator itr = mArenaTeamMap.begin(); itr != mArenaTeamMap.end(); ++itr)
         delete itr->second;
@@ -332,9 +331,10 @@ Group* ObjectMgr::GetGroupByStorageId(uint32 storageId) const
 // Guild collection
 Guild* ObjectMgr::GetGuildById(uint32 guildId) const
 {
-    // Make sure given index exists in collection
-    if (guildId < uint32(mGuildMap.size()))
-        return mGuildMap[guildId];
+    GuildMap::const_iterator itr = mGuildMap.find(guildId);
+    if (itr != mGuildMap.end())
+        return itr->second;
+
     return NULL;
 }
 
@@ -344,13 +344,10 @@ Guild* ObjectMgr::GetGuildByName(const std::string& guildname) const
     std::transform(search.begin(), search.end(), search.begin(), ::toupper);
     for (GuildMap::const_iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
     {
-        if (*itr)
-        {
-            std::string gname = (*itr)->GetName();
-            std::transform(gname.begin(), gname.end(), gname.begin(), ::toupper);
-            if (search == gname)
-                return *itr;
-        }
+        std::string gname = itr->second->GetName();
+        std::transform(gname.begin(), gname.end(), gname.begin(), ::toupper);
+        if (search == gname)
+            return itr->second;
     }
     return NULL;
 }
@@ -365,29 +362,20 @@ std::string ObjectMgr::GetGuildNameById(uint32 guildId) const
 Guild* ObjectMgr::GetGuildByLeader(const uint64 &guid) const
 {
     for (GuildMap::const_iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
-        if ((*itr) && (*itr)->GetLeaderGUID() == guid)
-            return *itr;
+        if (itr->second->GetLeaderGUID() == guid)
+            return itr->second;
 
     return NULL;
 }
 
-void ObjectMgr::AddGuild(Guild* pGuild)
+void ObjectMgr::AddGuild(Guild* guild)
 {
-    uint32 guildId = pGuild->GetId();
-    // Allocate space if necessary
-    if (guildId >= uint32(mGuildMap.size()))
-        // Reserve a bit more space than necessary.
-        // 16 is intentional and it will allow creation of next 16 guilds happen
-        // without reallocation.
-        mGuildMap.resize(guildId + 16);
-    mGuildMap[guildId] = pGuild;
+    mGuildMap[guild->GetId()] = guild;
 }
 
 void ObjectMgr::RemoveGuild(uint32 guildId)
 {
-    // Make sure given index exists
-    if (guildId < uint32(mGuildMap.size()))
-        mGuildMap[guildId] = NULL;
+    mGuildMap.erase(guildId);
 }
 
 // Arena teams collection
@@ -2793,7 +2781,7 @@ void ObjectMgr::LoadVehicleTemplateAccessories()
     }
     while (result->NextRow());
 
-    sLog->outString(">> Loaded %u Vehicle Accessories in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    sLog->outString(">> Loaded %u Vehicle Template Accessories in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
     sLog->outString();
 }
 
@@ -2818,18 +2806,12 @@ void ObjectMgr::LoadVehicleAccessories()
     {
         Field *fields = result->Fetch();
 
-        uint32 uiEntry      = fields[0].GetUInt32();
+        uint32 uiGUID       = fields[0].GetUInt32();
         uint32 uiAccessory  = fields[1].GetUInt32();
         int8   uiSeat       = int8(fields[2].GetInt16());
         bool   bMinion      = fields[3].GetBool();
         uint8  uiSummonType = fields[4].GetUInt8();
         uint32 uiSummonTimer= fields[5].GetUInt32();
-
-        if (!sCreatureStorage.LookupEntry<CreatureInfo>(uiEntry))
-        {
-            sLog->outErrorDb("Table `vehicle_accessory`: creature template entry %u does not exist.", uiEntry);
-            continue;
-        }
 
         if (!sCreatureStorage.LookupEntry<CreatureInfo>(uiAccessory))
         {
@@ -2837,13 +2819,7 @@ void ObjectMgr::LoadVehicleAccessories()
             continue;
         }
 
-        if (mSpellClickInfoMap.find(uiEntry) == mSpellClickInfoMap.end())
-        {
-            sLog->outErrorDb("Table `vehicle_accessory`: creature template entry %u has no data in npc_spellclick_spells", uiEntry);
-            continue;
-        }
-
-        m_VehicleAccessoryMap[uiEntry].push_back(VehicleAccessory(uiAccessory, uiSeat, bMinion, uiSummonType, uiSummonTimer));
+        m_VehicleAccessoryMap[uiGUID].push_back(VehicleAccessory(uiAccessory, uiSeat, bMinion, uiSummonType, uiSummonTimer));
 
         ++count;
     }
@@ -3688,21 +3664,19 @@ void ObjectMgr::LoadGuilds()
         }
         else
         {
-            mGuildMap.resize(m_guildId, NULL);         // Reserve space and initialize storage for loading guilds //TODOLEAK: fix this shit
-
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 Guild* pNewGuild = new Guild();
+
                 if (!pNewGuild->LoadFromDB(fields))
                 {
                     delete pNewGuild;
                     continue;
                 }
                 AddGuild(pNewGuild);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3732,14 +3706,14 @@ void ObjectMgr::LoadGuilds()
         else
         {
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[0].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
-                    pGuild->LoadRankFromDB(fields);                     //TODOLEAK: untangle that shit
+                    pGuild->LoadRankFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3772,11 +3746,12 @@ void ObjectMgr::LoadGuilds()
 
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[0].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
                     pGuild->LoadMemberFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3806,14 +3781,14 @@ void ObjectMgr::LoadGuilds()
         else
         {
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[0].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
                     pGuild->LoadBankRightFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3843,14 +3818,14 @@ void ObjectMgr::LoadGuilds()
         else
         {
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[0].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
                     pGuild->LoadEventLogFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3881,14 +3856,14 @@ void ObjectMgr::LoadGuilds()
         else
         {
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[0].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
                     pGuild->LoadBankEventLogFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3918,14 +3893,14 @@ void ObjectMgr::LoadGuilds()
         else
         {
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[0].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
                     pGuild->LoadBankTabFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3955,14 +3930,14 @@ void ObjectMgr::LoadGuilds()
         else
         {
             uint32 count = 0;
-
             do
             {
-
                 Field* fields = result->Fetch();
                 uint32 guildId = fields[11].GetUInt32();
+
                 if (Guild* pGuild = GetGuildById(guildId))
                     pGuild->LoadBankItemFromDB(fields);
+
                 ++count;
             }
             while (result->NextRow());
@@ -3979,7 +3954,7 @@ void ObjectMgr::LoadGuilds()
 
         for (GuildMap::iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
         {
-            Guild* pGuild = *itr;
+            Guild* pGuild = itr->second;
             if (pGuild)
             {
                 if (!pGuild->Validate())
@@ -6762,7 +6737,7 @@ uint32 ObjectMgr::GenerateAuctionID()
 
 uint64 ObjectMgr::GenerateEquipmentSetGuid()
 {
-    if (m_equipmentSetGuid >= 0xFFFFFFFFFFFFFFFEll)
+    if (m_equipmentSetGuid >= uint64(0xFFFFFFFFFFFFFFFELL))
     {
         sLog->outError("EquipmentSet guid overflow!! Can't continue, shutting down server. ");
         World::StopNow(ERROR_EXIT_CODE);

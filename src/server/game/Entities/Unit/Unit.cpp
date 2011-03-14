@@ -8119,6 +8119,15 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
                             CastSpell(pVictim, 27526, true, castItem, triggeredByAura);
                         return true;
                     }
+					                    // Mark of the Fallen Champion
+                    case 72293:
+                        if(pVictim && pVictim->HasAura(72293) && !pVictim->isAlive())
+                        {
+                            Creature* saurfang = pVictim->FindNearestCreature(37813, 500.0f, true);
+                                if(saurfang && saurfang->isAlive())
+                                   saurfang->CastSpell(saurfang, 72260, true);
+                        }
+                        return true;
                 }
                 break;
             case SPELLFAMILY_MAGE:
@@ -16326,7 +16335,7 @@ uint32 Unit::GetCombatRatingDamageReduction(CombatRating cr, float rate, float c
 
 uint32 Unit::GetModelForForm(ShapeshiftForm form)
 {
-    switch(form)
+    switch (form)
     {
         case FORM_CAT:
             // Based on Hair color
@@ -16495,39 +16504,39 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form)
                 return 21243;
             return 21244;
         default:
-        {
-            uint32 modelid = 0;
-            SpellShapeshiftEntry const* formEntry = sSpellShapeshiftStore.LookupEntry(form);
-            if (formEntry && formEntry->modelID_A)
-            {
-                // Take the alliance modelid as default
-                if (GetTypeId() != TYPEID_PLAYER)
-                    return formEntry->modelID_A;
-                else
-                {
-                    if (Player::TeamForRace(getRace()) == ALLIANCE)
-                        modelid = formEntry->modelID_A;
-                    else
-                        modelid = formEntry->modelID_H;
+            break;
+    }
 
-                    // If the player is horde but there are no values for the horde modelid - take the alliance modelid
-                    if (!modelid && Player::TeamForRace(getRace()) == HORDE)
-                        modelid = formEntry->modelID_A;
-                }
-            }
-            return modelid;
+    uint32 modelid = 0;
+    SpellShapeshiftEntry const* formEntry = sSpellShapeshiftStore.LookupEntry(form);
+    if (formEntry && formEntry->modelID_A)
+    {
+        // Take the alliance modelid as default
+        if (GetTypeId() != TYPEID_PLAYER)
+            return formEntry->modelID_A;
+        else
+        {
+            if (Player::TeamForRace(getRace()) == ALLIANCE)
+                modelid = formEntry->modelID_A;
+            else
+                modelid = formEntry->modelID_H;
+
+            // If the player is horde but there are no values for the horde modelid - take the alliance modelid
+            if (!modelid && Player::TeamForRace(getRace()) == HORDE)
+                modelid = formEntry->modelID_A;
         }
     }
-    return 0;
+
+    return modelid;
 }
 
 uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
 {
-    switch(getRace())
+    switch (getRace())
     {
         case RACE_ORC:
         {
-            switch(totemType)
+            switch (totemType)
             {
                 case SUMMON_TYPE_TOTEM_FIRE:    //fire
                     return 30758;
@@ -16542,7 +16551,7 @@ uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
         }
         case RACE_DWARF:
         {
-            switch(totemType)
+            switch (totemType)
             {
                 case SUMMON_TYPE_TOTEM_FIRE:    //fire
                     return 30754;
@@ -16557,7 +16566,7 @@ uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
         }
         case RACE_TROLL:
         {
-            switch(totemType)
+            switch (totemType)
             {
                 case SUMMON_TYPE_TOTEM_FIRE:    //fire
                     return 30762;
@@ -16572,7 +16581,7 @@ uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
         }
         case RACE_TAUREN:
         {
-            switch(totemType)
+            switch (totemType)
             {
                 case SUMMON_TYPE_TOTEM_FIRE:    //fire
                     return 4589;
@@ -16587,7 +16596,7 @@ uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
         }
         case RACE_DRAENEI:
         {
-            switch(totemType)
+            switch (totemType)
             {
                 case SUMMON_TYPE_TOTEM_FIRE:    //fire
                     return 19074;

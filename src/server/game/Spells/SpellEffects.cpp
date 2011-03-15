@@ -3098,8 +3098,19 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                     float radius = GetSpellRadiusForHostile(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[effIndex]));
 
                     uint32 amount = damage > 0 ? damage : 1;
-                    if (m_spellInfo->Id == 18662) // Curse of Doom
-                        amount = 1;
+
+                    // temporary hack to fix wrong amount of summons created by spells
+                    switch (m_spellInfo->Id)
+                    {
+                        case 4073:  // Mechanical Dragonling
+                        case 12749: // Mithril Mechanical Dragonling
+                        case 18662: // Curse of Doom
+                        case 19804: // Arcanite Dragonling
+                            amount = 1;
+                            break;
+                        default:
+                            break;
+                    }
 
                     for (uint32 count = 0; count < amount; ++count)
                     {

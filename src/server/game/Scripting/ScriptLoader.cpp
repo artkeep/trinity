@@ -1259,7 +1259,8 @@ void AddBattlegroundScripts()
 
 #ifdef SCRIPTS
 /* This is where custom scripts' loading functions should be declared. */
-
+void AddSC_npc_lottery();
+void AddSC_npcs_mini_boss();
 #endif
 
 void AddCustomScripts()
@@ -1271,6 +1272,8 @@ void AddCustomScripts()
     // Custom
     AddSC_npc_mount();		
     //Hunter Pet Vendor
-    AddSC_npc_hunterpetvendor();	
+    AddSC_npc_hunterpetvendor();
+    AddSC_npc_lottery();
+    AddSC_npcs_mini_boss();	
 #endif
 }

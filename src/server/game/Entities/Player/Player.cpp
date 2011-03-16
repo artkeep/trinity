@@ -12027,6 +12027,7 @@ Item* Player::StoreNewItem(ItemPosCountVec const& dest, uint32 item, bool update
             stmt->setUInt32(0, GetGUIDLow());
             stmt->setUInt32(1, pItem->GetEntry());
             stmt->setUInt32(2, 0);
+            stmt->setUInt32(3, GetMap()->GetId());
             ExtraDatabase.Execute(stmt);
         }
 
@@ -12522,6 +12523,17 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
                 RemoveAurasDueToSpell(proto->Spells[i].SpellId);
 
         ItemRemovedQuestCheck(pItem->GetEntry(), pItem->GetCount());
+
+        // Item Logging & Stats
+        if (pItem->GetProto()->Quality >= ITEM_QUALITY_EPIC && (pItem->GetProto()->ItemLevel >= 200 || (pItem->GetProto()->Class == ITEM_CLASS_MISC && pItem->GetProto()->ItemLevel >= 80)))
+        {
+            PreparedStatement* stmt = ExtraDatabase.GetPreparedStatement(EXTRA_ADD_ITEMSTAT);
+            stmt->setUInt32(0, GetGUIDLow());
+            stmt->setUInt32(1, pItem->GetEntry());
+            stmt->setUInt32(2, 1);
+            stmt->setUInt32(3, GetMap()->GetId());
+            ExtraDatabase.Execute(stmt);
+        }
 
         if (bag == INVENTORY_SLOT_BAG_0)
         {

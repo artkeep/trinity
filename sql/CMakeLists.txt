@@ -15,6 +15,7 @@ if( WITH_SQL )
       scripts
       base
       create
+      anticheat
     DESTINATION
       shared/trinity/sql
   )

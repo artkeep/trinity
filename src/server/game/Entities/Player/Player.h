@@ -1044,6 +1044,18 @@ private:
     uint32 _xp;
 };
 
+struct AnticheatData
+{
+    uint32 lastOpcode;
+    MovementInfo lastMovementInfo;
+    bool disableACCheck;
+    uint32 disableACCheckTimer;
+    uint32 total_reports;
+    uint32 type_reports[5];
+    uint32 average;
+    uint64 creation_time;
+};
+
 class Player : public Unit, public GridObject<Player>
 {
     friend class WorldSession;
@@ -1067,6 +1079,8 @@ class Player : public Unit, public GridObject<Player>
         //bool CanFly() const { return HasUnitMovementFlag(MOVEMENTFLAG_CAN_FLY); }
         bool CanFly() const { return m_CanFly;  }
         void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
+
+        AnticheatData anticheatData;
 
         void CleanupsBeforeDelete(bool finalCleanup = true);
 

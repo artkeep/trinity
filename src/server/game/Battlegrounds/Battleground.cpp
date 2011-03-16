@@ -685,6 +685,15 @@ void Battleground::EndBattleground(uint32 winner)
     SetStatus(STATUS_WAIT_LEAVE);
     //we must set it this way, because end time is sent in packet!
     m_EndTime = TIME_TO_AUTOREMOVE;
+    // Battleground Stats & Logging
+    // Log Only Level 80 Battlegrounds
+    if (isBattleground() && GetMinLevel() == 80)
+    {
+        PreparedStatement* stmt = ExtraDatabase.GetPreparedStatement(EXTRA_ADD_BGSTAT);
+        stmt->setUInt32(0, GetTypeID(true));
+        stmt->setUInt32(1, GetWinner());
+        ExtraDatabase.Execute(stmt);
+    }
 
     // arena rating calculation
     if (isArena() && isRated())

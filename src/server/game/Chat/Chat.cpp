@@ -732,6 +732,18 @@ bool ChatHandler::ExecuteCommandInTable(ChatCommand *table, const char* text, co
                     sLog->outCommand(m_session->GetAccountId(),"Command: %s [Player: %s (Account: %u) X: %f Y: %f Z: %f Map: %u Selected %s: %s (GUID: %u)]",
                         fullcmd.c_str(),p->GetName(),m_session->GetAccountId(),p->GetPositionX(),p->GetPositionY(),p->GetPositionZ(),p->GetMapId(),
                         GetLogNameForGuid(sel_guid), (p->GetSelectedUnit()) ? p->GetSelectedUnit()->GetName() : "", GUID_LOPART(sel_guid));
+                    // Database Logging
+                    PreparedStatement* stmt = ExtraDatabase.GetPreparedStatement(EXTRA_ADD_GMLOG);
+                    stmt->setString(0, p->GetName());
+                    stmt->setUInt32(1, m_session->GetAccountId());
+                    stmt->setString(2, fullcmd.c_str());
+                    char position[96];
+                    sprintf(position, "X: %f Y: %f Z: %f Map: %u", p->GetPositionX(), p->GetPositionY(), p->GetPositionZ(), p->GetMapId());
+                    stmt->setString(3, position);
+                    char selection[96];
+                    sprintf(selection, "%s: %s (GUID: %u)", GetLogNameForGuid(sel_guid), (p->GetSelectedUnit()) ? p->GetSelectedUnit()->GetName() : "", GUID_LOPART(sel_guid));
+                    stmt->setString(4, selection);
+                    ExtraDatabase.Execute(stmt);
                 }
             }
         }

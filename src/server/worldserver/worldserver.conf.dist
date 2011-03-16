@@ -85,10 +85,12 @@ LogsDir = ""
 #        Default:     "127.0.0.1;3306;trinity;trinity;auth"       - (LoginDatabaseInfo)
 #                     "127.0.0.1;3306;trinity;trinity;world"      - (WorldDatabaseInfo)
 #                     "127.0.0.1;3306;trinity;trinity;characters" - (CharacterDatabaseInfo)
+#                     "127.0.0.1;3306;trinity;trinity;extra"      - (ExtraDatabaseInfo)
 
 LoginDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;auth"
 WorldDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;world"
 CharacterDatabaseInfo = "127.0.0.1;3306;trinity;trinity;characters"
+ExtraDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;extra"
 
 #
 #    LoginDatabase.WorkerThreads

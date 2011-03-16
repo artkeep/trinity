@@ -3855,7 +3855,6 @@ void SpellMgr::LoadSpellCustomAttr()
             count++;
             break;
         case 74396:    // Fingers of Frost visual buff
-            spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
             count++;
             break;

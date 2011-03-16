@@ -7979,6 +7979,19 @@ bool Unit::HandleAuraProc(Unit * pVictim, uint32 damage, Aura * triggeredByAura,
                     this->CastCustomSpell(this, 67545, &bp0, NULL, NULL, true, NULL, triggeredByAura->GetEffect(0), this->GetGUID());
                     return true;
                 }
+                case 44544: // Fingers of Frost
+                {
+                    *handled = true;
+
+                    int32 key = int32(uint32(uint32(triggeredByAura->GetApplyTime()) & uint32(0x7FFFFFFF)));
+
+                    if (Aura * aura = GetAura(74396))
+                        if (aura->GetEffect(EFFECT_0)->GetAmount() == key)
+                            if (aura->DropCharge())
+                                triggeredByAura->Remove();
+
+                    return false;
+                }
             }
             break;
         }
@@ -8634,6 +8647,16 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
         // Deathbringer Saurfang - Blood Beast's Blood Link
         case 72176:
             basepoints0 = 3;
+            break;
+        case 44543: // Fingers of Frost (Rank 1)
+        case 44545: // Fingers of Frost (Rank 2)                  
+            // Frostbite
+            if (AuraEffect * aurEff = GetAuraEffect(SPELL_AURA_ADD_TARGET_TRIGGER, SPELLFAMILY_MAGE, 0, 0x200, 0, GetGUID()))
+            {
+                int chance = triggerAmount - aurEff->GetAmount();
+                if ((chance <= 0) || !roll_chance_i(chance))
+                    return false;               
+            }
             break;
         case 15337: // Improved Spirit Tap (Rank 1)
         case 15338: // Improved Spirit Tap (Rank 2)

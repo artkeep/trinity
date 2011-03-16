@@ -1628,6 +1628,27 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
             break;
         default:
             break;
+        case SPELLFAMILY_MAGE:
+        {
+            switch (m_spellInfo->Id)
+            {
+                case 199998: // Frostbite Helper (SERVERSIDE)
+                {
+                    // Fingers of Frost & Frostbite
+                    AuraEffect * aurEffA = m_caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_MAGE, 2947, EFFECT_0);
+                    AuraEffect * aurEffB = m_caster->GetAuraEffect(SPELL_AURA_ADD_TARGET_TRIGGER, SPELLFAMILY_MAGE, 0, 0x200, 0, m_caster->GetGUID());
+                    if (!aurEffA || !aurEffB)
+                        return;
+                    int32 chance = int32((float)aurEffA->GetAmount() / (float)aurEffB->GetAmount() * 100.0f);
+                    if (roll_chance_i(chance))
+                        m_caster->CastSpell(m_caster, 44544, true);
+                    return;
+                }
+                default:
+                    break;
+            }
+        }
+        break;
     }
 
     //spells triggered by dummy effect should not miss

@@ -14,6 +14,7 @@
  */
 
 #include <ace/Singleton.h>
+#include "Player.h"
 
 enum ReportTypes
 {

@@ -1054,6 +1054,7 @@ struct AnticheatData
     uint32 type_reports[5];
     uint32 average;
     uint64 creation_time;
+    bool reported;
 };
 
 class Player : public Unit, public GridObject<Player>

@@ -58,7 +58,7 @@ class spell_dru_glyph_of_starfire : public SpellScriptLoader
                         Aura* aura = aurEff->GetBase();
 
                         uint32 countMin = aura->GetMaxDuration();
-                        uint32 countMax = 21000;
+                        uint32 countMax = 18000;
                         if (caster->HasAura(DRUID_INCREASED_MOONFIRE_DURATION))
                             countMax += 3000;
                         if (caster->HasAura(DRUID_NATURES_SPLENDOR))

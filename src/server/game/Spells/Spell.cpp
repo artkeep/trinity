@@ -4362,29 +4362,25 @@ void Spell::TakePower()
     if (m_CastItem || m_triggeredByAuraSpell)
         return;
 
-    bool hit = true;
-    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+    if (m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->powerType == POWER_ENERGY)
     {
-        if (m_spellInfo->powerType == POWER_RAGE || m_spellInfo->powerType == POWER_ENERGY)
-            if (uint64 targetGUID = m_targets.getUnitTargetGUID())
-                for (std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
-                    if (ihit->targetGUID == targetGUID)
+        if (uint64 targetGUID = m_targets.getUnitTargetGUID())
+            for (std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+                if (ihit->targetGUID == targetGUID)
+                {
+                    if (ihit->missCondition != SPELL_MISS_NONE)
                     {
-                        if (ihit->missCondition != SPELL_MISS_NONE && ihit->missCondition != SPELL_MISS_MISS/* && ihit->targetGUID != m_caster->GetGUID()*/)
-                            hit = false;
-                        if (ihit->missCondition != SPELL_MISS_NONE)
-                        {
-                            //lower spell cost on fail (by talent aura)
-                            if (Player *modOwner = m_caster->ToPlayer()->GetSpellModOwner())
-                                modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_SPELL_COST_REFUND_ON_FAIL, m_powerCost);
-                        }
-                        break;
+                        //lower spell cost on fail (by talent aura)
+                        if (Player *modOwner = m_caster->ToPlayer()->GetSpellModOwner())
+                            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_SPELL_COST_REFUND_ON_FAIL, m_powerCost);
                     }
+                    break;
+                }
     }
 
     Powers powerType = Powers(m_spellInfo->powerType);
 
-    if (hit && powerType == POWER_RUNE)
+    if (powerType == POWER_RUNE)
     {
         TakeRunePower();
         return;
@@ -4406,10 +4402,7 @@ void Spell::TakePower()
         return;
     }
 
-    if (hit)
-        m_caster->ModifyPower(powerType, -m_powerCost);
-    else
-        m_caster->ModifyPower(powerType, -irand(0, m_powerCost/4));
+    m_caster->ModifyPower(powerType, -m_powerCost);
 
     // Set the five second timer
     if (powerType == POWER_MANA && m_powerCost > 0)

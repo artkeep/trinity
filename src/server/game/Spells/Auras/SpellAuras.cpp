@@ -1455,6 +1455,27 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                         }
                     }
                     break;
+                // Ferocious Inspiration (first time apply)
+                case 34455:
+                case 34459:
+                case 34460:
+                    if (target->GetTypeId() != TYPEID_PLAYER)
+                        break;
+                    if (Pet* pet = target->ToPlayer()->GetPet())
+                    {
+                        uint32 spell_id;
+                        switch(GetId())
+                        {
+                            case 34455: spell_id = 75593; break;
+                            case 34459: spell_id = 75446; break;
+                            case 34460: spell_id = 75447; break;
+                        }
+                        if (apply)
+                            pet->CastSpell(pet, spell_id, true);
+                        else
+                            pet->RemoveAurasDueToSpell(spell_id);
+                    }
+                    break;
             }
             break;
         case SPELLFAMILY_PALADIN:

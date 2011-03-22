@@ -207,7 +207,6 @@ public:
             mergedSides = false;
             phaseTwo = false;
             thirtyPercentReached = false;
-            SetImmuneToDeathGrip();
         }
 
         void EnterCombat(Unit * /*who*/)
@@ -276,7 +275,7 @@ public:
 
         void DoGothikSummon(uint32 entry)
         {
-            if (getDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
+            if (GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
             {
                 switch(entry)
                 {
@@ -440,9 +439,9 @@ public:
                     case EVENT_SUMMON:
                         if (waves[waveCount].entry)
                         {
-                            if ((waves[waveCount].mode == 2) && (getDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL))
+                            if ((waves[waveCount].mode == 2) && (GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL))
                                DoGothikSummon(waves[waveCount].entry);
-                            else if ((waves[waveCount].mode == 0) && (getDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL))
+                            else if ((waves[waveCount].mode == 0) && (GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL))
                                 DoGothikSummon(waves[waveCount].entry);
                             else if (waves[waveCount].mode == 1)
                                 DoGothikSummon(waves[waveCount].entry);
@@ -462,9 +461,9 @@ public:
 
                             if (waves[waveCount].mode == 1)
                                 events.ScheduleEvent(EVENT_SUMMON,waves[waveCount].time);
-                            else if ((waves[waveCount].mode == 2) && (getDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL))
+                            else if ((waves[waveCount].mode == 2) && (GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL))
                                 events.ScheduleEvent(EVENT_SUMMON,waves[waveCount].time);
-                            else if ((waves[waveCount].mode == 0) && (getDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL))
+                            else if ((waves[waveCount].mode == 0) && (GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL))
                                 events.ScheduleEvent(EVENT_SUMMON,waves[waveCount].time);
                             else
                                 events.ScheduleEvent(EVENT_SUMMON, 0);

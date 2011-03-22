@@ -281,6 +281,15 @@ bool Item::Create(uint32 guidlow, uint32 itemid, Player const* owner)
     return true;
 }
 
+// Returns true if Item is a bag AND it is not empty.
+// Returns false if Item is not a bag OR it is an empty bag.
+bool Item::IsNotEmptyBag() const
+{
+    if (Bag const* bag = ToBag())
+        return !bag->IsEmpty();
+    return false;
+}
+
 void Item::UpdateDuration(Player* owner, uint32 diff)
 {
     if (!GetUInt32Value(ITEM_FIELD_DURATION))
@@ -758,7 +767,6 @@ bool Item::CanBeTraded(bool mail, bool trade) const
     return true;
 }
 
-
 bool Item::HasEnchantRequiredSkill(const Player *pPlayer) const
 {
 
@@ -771,7 +779,6 @@ bool Item::HasEnchantRequiredSkill(const Player *pPlayer) const
 
   return true;
 }
-
 
 uint32 Item::GetEnchantRequiredLevel() const
 {

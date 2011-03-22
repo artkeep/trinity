@@ -1,4 +1,4 @@
-﻿-- Halls of Reflection
+-- Halls of Reflection
 -- Creature Templates 
 UPDATE `creature_template` SET `speed_walk`='1.5', `speed_run`='2.0' WHERE `entry` in (36954, 37226);
 UPDATE `creature_template` SET `AIName`='', `Scriptname`='npc_jaina_and_sylvana_HRintro' WHERE `entry` in (37221, 37223);
@@ -178,3 +178,4 @@ VALUES
 ('202337', '668', '2', '65535', '5241.05', '1663.44', '784.295', '0.54', '0', '0', '0', '0', '-604800', '100', '1'),
 ('202336', '668', '2', '65535', '5241.05', '1663.44', '784.295', '0.54', '0', '0', '0', '0', '-604800', '100', '1'),
 ('202079', '668', '3', '1', '5250.96', '1639.36', '784.302', '0', '0', '0', '0', '0', '-604800', '100', '1');
+UPDATE `creature_template` SET `gossip_menu_id` = 11031 WHERE `entry` = 37223;

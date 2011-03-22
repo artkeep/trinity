@@ -120,6 +120,7 @@ public:
         void Reset()
         {
             _Reset();
+            me->ResetLootMode();
             VaporsCount = 0;
             HardMode = true;
             Dodged = true;

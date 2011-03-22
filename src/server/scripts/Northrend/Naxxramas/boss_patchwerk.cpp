@@ -76,7 +76,6 @@ public:
             _Reset();
             if (instance)
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_MAKE_QUICK_WERK_OF_HIM_STARTING_EVENT);
-            SetImmuneToDeathGrip();
         }
 
         void KilledUnit(Unit* /*Victim*/)

@@ -42,10 +42,19 @@ UPDATE `creature_template` SET `ScriptName` = 'boss_prince_taldaram_icc' WHERE `
 -- Fix Blood Prince Council immunities
 UPDATE `creature_template` SET `mechanic_immune_mask`=650854399 WHERE `entry` IN (37970, 37972, 37973, 38401, 38784, 38785, 38399, 38769, 38770, 38400, 38771, 38772);
 
--- Blood Prince Council UPDATE
+-- Blood Prince Council update
 UPDATE `creature_template` SET `ScriptName` = 'npc_shock_vortex' WHERE `entry` = 38422;
 DELETE FROM `creature` WHERE `id` = 38557;
 UPDATE `creature_template` SET `ScriptName` = 'npc_kinetic_bomb_target' WHERE `entry` = 38458;
+UPDATE `creature_template` SET `lootid`='37970' WHERE `entry`=37973;
+UPDATE `creature_template` SET `lootid`='37970' WHERE `entry`=37972;
+UPDATE `creature_template` SET `lootid`='38401' WHERE `entry`=38400;
+UPDATE `creature_template` SET `lootid`='38401' WHERE `entry`=38399;
+UPDATE `creature_template` SET `lootid`='38784' WHERE `entry`=38771;
+UPDATE `creature_template` SET `lootid`='38784' WHERE `entry`=38769;
+UPDATE `creature_template` SET `lootid`='38785' WHERE `entry`=38772;
+UPDATE `creature_template` SET `lootid`='38785' WHERE `entry`=38770;
+UPDATE `creature_template` SET `dynamicflags`='9' WHERE `entry` IN (37973, 37972, 38400, 38399, 38771, 38769, 38772, 38770);
 
 -- Blood Queen Lana'thel 
 UPDATE `creature_template` SET `ScriptName` = 'boss_blood_queen_lana_thel' WHERE `entry` = 37955;
@@ -208,7 +217,7 @@ INSERT INTO `achievement_criteria_data` (`criteria_id`,`type`,`value1`,`value2`,
 (13133,12,1,0, ''), -- Sindragosa kills (Icecrown 25 player)
 (13134,12,2,0, ''), -- Sindragosa kills (Heroic Icecrown 10 player)
 (13135,12,3,0, ''); -- Sindragosa kills (Heroic Icecrown 25 player)
-DELETE FROM `areatrigger_scripts` WHERE `entry`=5604;
+DELETE FROM `areatrigger_scripts` WHERE `entry` IN (5604,5698,5649);
 INSERT INTO `areatrigger_scripts` (`entry`,`ScriptName`) VALUES
 (5604,'at_sindragosa_lair'),
 (5698, 'at_icc_saurfang_portal'),
@@ -268,8 +277,6 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 (72529,'spell_sindragosa_collision_filter'),
 (72530,'spell_sindragosa_collision_filter'),
 (70117,'spell_sindragosa_collision_filter');
-DELETE FROM `spell_script_names` WHERE `spell_id` = 70122;
-INSERT INTO `spell_script_names` VALUES (70122, 'spell_sindragosa_icy_grip');
 
 -- Teleports
 DELETE FROM `npc_text` WHERE `id` BETWEEN 800000 AND 800006;
@@ -343,13 +350,26 @@ UPDATE `creature_template` SET `modelid1` = 11686 WHERE `entry` IN (36633, 39305
 -- Make Invisible Stalker really invisible
 UPDATE `creature_template` SET `modelid1` = 11686 WHERE `entry` = 15214;
 -- Add Frostmourne platform
-INSERT INTO `gameobject` VALUES (512171,202161,631,15,1,  495.708,-2523.75,1045.95,  3.14159, 7.7568, 0,0,0,604800,100,1);
+REPLACE INTO `gameobject` VALUES (512171,202161,631,15,1,  495.708,-2523.75,1045.95,  3.14159, 7.7568, 0,0,0,604800,100,1);
 UPDATE `creature` SET `id` = 36823, `modelid` = 0, `curhealth` = 0, `spawntimesecs` = '604800' WHERE `guid` = 86812;
 UPDATE `creature` SET `id` = 36824, `modelid` = 0, `curhealth` = 0, `spawntimesecs` = '604800' WHERE `guid` = 86813;
 UPDATE `creature_template` SET `ScriptName` = 'npc_terenas_fighter_icc' WHERE `entry` = 36823;
 UPDATE `creature_template` SET `ScriptName` = 'npc_spirit_warden_icc' WHERE `entry` = 36824;
 UPDATE `creature_template` SET `dmg_multiplier` = 52 WHERE `entry` = 36824; -- Spirit Warden
 UPDATE `creature_template` SET `dmg_multiplier` = 35 WHERE `entry` = 36823; -- Terenas Menethil
+-- Achievement criteria for The Lich King
+-- Bane of the Fallen King (10 player heroic) 
+-- Realm First! Fall of the Lich King (25 player heroic) 
+-- The Frozen Throne (10 player) 
+-- The Frozen Throne (25 player) 
+-- The Light of Dawn (25 player heroic)
+DELETE FROM `achievement_criteria_data` where `criteria_id` IN (12825,12818,12764,12909,12826);
+INSERT INTO `achievement_criteria_data` (`criteria_id`, `type`, `value1`, `value2`, `ScriptName`) VALUES
+(12825, 12, 2, 0, ''),
+(12818, 12, 3, 0, ''),
+(12764, 12, 0, 0, ''),
+(12909, 12, 1, 0, ''),
+(12826, 12, 3, 0, '');
 
 -- Blood Prince entries FROM TrinityCore
 DELETE FROM `creature_template` WHERE `entry` IN (37970, 37972, 37973, 38401, 38784, 38785, 38399, 38769, 38770, 38400, 38771, 38772);

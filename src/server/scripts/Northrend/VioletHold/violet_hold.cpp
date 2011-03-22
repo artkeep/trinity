@@ -414,9 +414,6 @@ public:
 
 };
 
-
-
-
 class mob_azure_saboteur : public CreatureScript
 {
 public:
@@ -539,7 +536,6 @@ public:
     };
 
 };
-
 
 class npc_teleportation_portal_vh : public CreatureScript
 {

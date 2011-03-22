@@ -67,7 +67,6 @@ public:
         void Reset()
         {
             _Reset();
-            SetImmuneToDeathGrip();
         }
 
         void AttackGluth(Creature *pWho)

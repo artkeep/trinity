@@ -255,7 +255,7 @@ struct boss_valkyr_twinAI : public ScriptedAI
         events.ScheduleEvent(EVENT_SOURGE, Sourge_Timer);
         events.ScheduleEvent(EVENT_SPIKE, Spike_Timer);
 
-        if (getDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || getDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
+        if (GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
             events.ScheduleEvent(EVENT_TOUCH, Touch_Timer);
     }
 
@@ -569,7 +569,7 @@ struct boss_valkyr_twinAI : public ScriptedAI
             }
         }
 
-        if (getDifficulty() == 2 || getDifficulty() == 3) //hero only
+        if (GetDifficulty() == 2 || GetDifficulty() == 3) //hero only
         {
             for (int i=0; i<6; ++i)
             {

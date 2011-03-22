@@ -729,7 +729,7 @@ public:
                 } else exposeTimer -= diff;
             }
 
-            if (getDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || getDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
+            if (GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
             {
                 if (shadowStrikeTimer < diff)
                 {

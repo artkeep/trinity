@@ -1,4 +1,4 @@
-﻿DELETE FROM conditions WHERE SourceTypeOrReferenceId = 17 AND SourceEntry IN (28374,54426);
+DELETE FROM conditions WHERE SourceTypeOrReferenceId = 17 AND SourceEntry IN (28374,54426);
 INSERT INTO conditions (SourceTypeOrReferenceId,SourceEntry,ConditionTypeOrReference,ConditionValue1,ConditionValue2) VALUES
 (17,28374,18,1,0),
 (17,28374,18,1,16360),
@@ -45,7 +45,7 @@ VALUES
 
 -- Trash Loot
 DELETE FROM creature_loot_template WHERE entry IN (15974,15975,15976,15977,15978,15979,15980,15981);
-DELETE FROM creature_loot_template WHERE entry IN (29242,29241,29243,29229,30389,29286,29247,29248);
+DELETE FROM creature_loot_template WHERE entry IN (29242,29241,29243,30389,29286,29247,29248);
 INSERT INTO creature_loot_template (entry,item,ChanceOrQuestChance,lootmode,groupid,mincountOrRef,maxcount)
 VALUES
 -- Dread Creeper
@@ -131,7 +131,7 @@ VALUES
 (29248,15978,2,1,2,-15977,1);
 
 DELETE FROM creature_loot_template WHERE entry IN (16243,16244,16168,16297,16034,16036,16056,16057,16236,16447);
-DELETE FROM creature_loot_template WHERE entry IN (29575,29574,29576,29601,29609,29608,29612,31542,29613,30097);
+DELETE FROM creature_loot_template WHERE entry IN (29575,29574,29576,29601,29609,29613,30097);
 INSERT INTO creature_loot_template (entry,item,ChanceOrQuestChance,lootmode,groupid,mincountOrRef,maxcount)
 VALUES
 -- Plague Slime
@@ -241,7 +241,7 @@ VALUES
 (30097,15978,2,1,2,-15977,1);
 
 DELETE FROM creature_loot_template WHERE entry IN (16017,16018,16020,16021,16022,16024,16025);
-DELETE FROM creature_loot_template WHERE entry IN (29347,29353,29362,29359,29363,29355,29371);
+DELETE FROM creature_loot_template WHERE entry IN (29347,29353,29362,29359,29363,29371);
 INSERT INTO creature_loot_template (entry,item,ChanceOrQuestChance,lootmode,groupid,mincountOrRef,maxcount)
 VALUES
 -- Patchwork Golem
@@ -335,8 +335,8 @@ VALUES
 (29371,15977,3,1,1,-15977,1),
 (29371,15978,2,1,2,-15977,1);
 
-DELETE FROM creature_loot_template WHERE entry IN (16067,16145,16146,16154,16156,16163,16164,16165,16167,16193,16194,16215,16216,30085);
-DELETE FROM creature_loot_template WHERE entry IN (29852,29824,29823,29831,29833,29842,29825,29828,29835,29837,29898,29899,29900,30087);
+DELETE FROM creature_loot_template WHERE entry IN (16067,16145,16146,16154,16163,16164,16165,16167,16193,16194,16215,16216,30085);
+DELETE FROM creature_loot_template WHERE entry IN (29852,29824,29823,29831,29842,29825,29828,29835,29837,29898,29899,29900);
 INSERT INTO creature_loot_template (entry,item,ChanceOrQuestChance,lootmode,groupid,mincountOrRef,maxcount)
 VALUES
 -- Deathcharger Steed
@@ -531,10 +531,10 @@ UPDATE gameobject_loot_template SET item = 40752 WHERE item = 47241 AND entry IN
 UPDATE creature_loot_template SET item = 40753 WHERE item = 47241 AND entry IN (29249,29268,29278,29615,29701,29718,29940,29955,29324,29373,29417,29448,29991,30061);
 UPDATE gameobject_loot_template SET item = 40753 WHERE item = 47241 AND entry IN (25193);
 
-UPDATE creature_template SET lootid = entry WHERE entry IN (29242,29241,29243,29229,30389,29286,29247,29248);
-UPDATE creature_template SET lootid = entry WHERE entry IN (29575,29574,29576,29601,29609,29608,29612,31542,29613,30097);
-UPDATE creature_template SET lootid = entry WHERE entry IN (29347,29353,29362,29359,29363,29355,29371);
-UPDATE creature_template SET lootid = entry WHERE entry IN (29852,29824,29823,29831,29833,29842,29825,29828,29835,29837,29898,29899,29900,30087);
+UPDATE creature_template SET lootid = entry WHERE entry IN (29242,29241,29243,30389,29286,29247,29248);
+UPDATE creature_template SET lootid = entry WHERE entry IN (29575,29574,29576,29601,29609,29608,29613,30097);
+UPDATE creature_template SET lootid = entry WHERE entry IN (29347,29353,29362,29359,29363,29371);
+UPDATE creature_template SET lootid = entry WHERE entry IN (29852,29824,29823,29831,29842,29825,29828,29835,29837,29898,29899,29900);
 
 -- Naxxramas script names fix
 UPDATE `creature_template` SET `ScriptName` = 'mob_gluth_zombie' WHERE `entry` = 16360;

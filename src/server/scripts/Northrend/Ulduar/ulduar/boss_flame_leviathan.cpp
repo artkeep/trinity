@@ -331,9 +331,9 @@ public:
             }
         }
 
-        void InstallAdds(bool apply = true)
+        void InstallAdds(bool bReset = false)
         {
-            if (apply)
+            if (!bReset)
             {
                 std::list<Creature*> lSeats;
                 me->GetCreatureListWithEntryInGrid(lSeats, 33114,17.0f);

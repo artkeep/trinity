@@ -202,7 +202,7 @@ public:
                 } else gateTimer -= diff;
             }
 
-            if (started && (getDifficulty() == 2 || getDifficulty() == 3) && boss_nr == 1)
+            if (started && (GetDifficulty() == 2 || GetDifficulty() == 3) && boss_nr == 1)
             {
                 if (!gormokDefeted)
                 {
@@ -1010,7 +1010,7 @@ public:
 
                         case 2:
                             ++text_nr;
-                            if (pInstance->GetData(DATA_ATTEMPTS) > 1 && (getDifficulty() == 2 || getDifficulty() == 3))
+                            if (pInstance->GetData(DATA_ATTEMPTS) > 1 && (GetDifficulty() == 2 || GetDifficulty() == 3))
                                 me->MonsterYell("Let me hand you the chests as a reward, and let its contents will serve you faithfully in the campaign against Arthas in the heart of the Icecrown Citadel!", 0, 0);
                             break;
                         }
@@ -1168,7 +1168,7 @@ public:
             uint8 rangedps = 0;
 
 
-            if (getDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL || getDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC)
+            if (GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL || GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC)
                 count = 6;
             else
                 count = 10;

@@ -57,7 +57,6 @@ public:
         {
             _Reset();
             uiSlimeStreamTimer = 3*IN_MILLISECONDS;
-            SetImmuneToDeathGrip();
         }
 
         void EnterCombat(Unit *who)

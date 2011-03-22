@@ -205,8 +205,6 @@ public:
             phase = 1;
             heart_exposed = 0;
 
-            vehicle->Reset();
-
             if (instance)
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
         }

@@ -252,7 +252,6 @@ public:
 
 };
 
-
 void AddSC_instance_onyxias_lair()
 {
     new instance_onyxias_lair();

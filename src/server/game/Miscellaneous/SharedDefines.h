@@ -1448,8 +1448,6 @@ enum GameobjectTypes
 
 #define MAX_GAMEOBJECT_TYPE                  36             // sending to client this or greater value can crash client.
 
-#define GAMEOBJECT_FISHINGNODE_ENTRY        35591           // Better to define it somewhere instead of hardcoding everywhere
-
 enum GameObjectFlags
 {
     GO_FLAG_IN_USE          = 0x00000001,                   //disables interaction while animated
@@ -2221,7 +2219,7 @@ enum HolidayIds
     HOLIDAY_PILGRIMS_BOUNTY          = 404,
     HOLIDAY_WOTLK_LAUNCH             = 406,
     HOLIDAY_DAY_OF_DEAD              = 409,
-    HOLIDAY_CALL_TO_ARMS_ISLE_OF_C   = 420
+    HOLIDAY_CALL_TO_ARMS_IC          = 420
 };
 
 // values based at QuestInfo.dbc

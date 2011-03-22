@@ -195,7 +195,6 @@ void BattlegroundDS::Reset()
     m_knockbackCheck = true;
 }
 
-
 bool BattlegroundDS::SetupBattleground()
 {
     // gates

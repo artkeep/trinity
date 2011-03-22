@@ -69,7 +69,6 @@ public:
         void Reset()
         {
             _Reset();
-            SetImmuneToDeathGrip();
         }
 
         void KilledUnit(Unit* /*Victim*/)

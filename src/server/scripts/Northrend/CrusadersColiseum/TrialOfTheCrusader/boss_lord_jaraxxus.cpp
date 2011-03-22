@@ -129,7 +129,7 @@ public:
             events.ScheduleEvent(EVENT_LEGION_FLAME, LegionFlame_Timer);
             events.ScheduleEvent(EVENT_SUMMON_V, Summon_Timer-urand(15000, 20000));
             events.ScheduleEvent(EVENT_SUMMON_P, Summon_Timer-urand(15000, 20000));
-            if (getDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || getDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
+            if (GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
                 events.ScheduleEvent(EVENT_TOUCH_OF_JARAXXUS, Touch_Timer);
 
             if (Aura* aura = me->AddAura(BUFF, me))
@@ -279,7 +279,7 @@ public:
             Summoning_Timer = 8500;
             creature->SetReactState(REACT_PASSIVE);
 
-            if (!getDifficulty() || getDifficulty() == 1)
+            if (!GetDifficulty() || GetDifficulty() == 1)
                 me->SetFlag64(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE|UNIT_FLAG_NOT_SELECTABLE);
         }
 
@@ -301,7 +301,7 @@ public:
                 buff = true;
             }
 
-            if (summon && (!getDifficulty() || getDifficulty() == 1)) //normal 10man and normal 25man
+            if (summon && (!GetDifficulty() || GetDifficulty() == 1)) //normal 10man and normal 25man
             {
                 me->ForcedDespawn(1500);
                 return;
@@ -311,7 +311,7 @@ public:
             {
                 summon = true;
                 Summoning_Timer = 8500;
-                if (getDifficulty() == 2 || getDifficulty() == 3)
+                if (GetDifficulty() == 2 || GetDifficulty() == 3)
                     DoCast(me, 67103);
             } else Summoning_Timer -= diff;
         }
@@ -340,7 +340,7 @@ public:
             count = 0;
             creature->SetReactState(REACT_PASSIVE);
 
-            if (!getDifficulty() || getDifficulty() == 1)
+            if (!GetDifficulty() || GetDifficulty() == 1)
                 me->SetFlag64(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE|UNIT_FLAG_NOT_SELECTABLE);
         }
 
@@ -356,7 +356,7 @@ public:
             if (!ObjectAccessor::GetCreatureOrPetOrVehicle((*me), me->GetInstanceScript()->GetData64(BOSS_JARAXXUS)))
                 return;
 
-            if (summon && (!getDifficulty() || getDifficulty() == 1)) //normal 10man and normal 25man)
+            if (summon && (!GetDifficulty() || GetDifficulty() == 1)) //normal 10man and normal 25man)
             {
                 me->ForcedDespawn(1500);
                 return;
@@ -489,7 +489,7 @@ public:
                 whirl_Timer = 20000;
             } else whirl_Timer -= diff;
 
-            if (getDifficulty() == 2 || getDifficulty() == 3)
+            if (GetDifficulty() == 2 || GetDifficulty() == 3)
             {
                 if (kiss_Timer < diff)
                 {

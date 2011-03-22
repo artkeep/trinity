@@ -118,8 +118,6 @@ public:
 
             CanTheHundredClub = true;
             CheckFrostResistTimer = 5000;
-
-            SetImmuneToDeathGrip();
         }
 
         void EnterCombat(Unit * /*who*/)

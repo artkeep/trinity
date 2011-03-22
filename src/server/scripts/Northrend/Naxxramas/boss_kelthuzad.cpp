@@ -327,8 +327,6 @@ public:
             Phase = 0;
             nAbomination = 0;
             nWeaver = 0;
-
-            SetImmuneToDeathGrip();
         }
 
         void KilledUnit(Unit* /*victim*/)
@@ -441,7 +439,7 @@ public:
                             events.ScheduleEvent(EVENT_DETONATE, urand(30000,40000));
                             events.ScheduleEvent(EVENT_FISSURE, urand(10000,30000));
                             events.ScheduleEvent(EVENT_BLAST, urand(60000,120000));
-                            if (getDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
+                            if (GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
                                 events.ScheduleEvent(EVENT_CHAIN, urand(30000,60000));
                             Phase = 2;
                             break;

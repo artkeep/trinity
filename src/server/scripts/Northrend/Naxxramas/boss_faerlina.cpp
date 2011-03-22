@@ -92,7 +92,6 @@ public:
             _Reset();
             doDelayFrenzy = false;
             bAchievement = true;
-            SetImmuneToDeathGrip();
         }
 
         void MoveInLineOfSight(Unit *who)
@@ -214,7 +213,7 @@ public:
 
         void Reset()
         {
-            if (getDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
+            if (GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
             {
                 me->ApplySpellImmune(0, IMMUNITY_MECHANIC, SPELL_EFFECT_BIND, true);
                 me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_CHARM, true);
@@ -239,7 +238,7 @@ public:
 
         void JustDied(Unit * /*killer*/)
         {
-            if (pInstance && getDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
+            if (pInstance && GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
             {
                 if (Creature *pFaerlina = pInstance->instance->GetCreature(pInstance->GetData64(DATA_FAERLINA)))
                 {

@@ -1,4 +1,4 @@
-﻿UPDATE `gameobject_template` SET `flags` = 4 WHERE `entry` IN (190586,193996);
+UPDATE `gameobject_template` SET `flags` = 4 WHERE `entry` IN (190586,193996);
 UPDATE `gameobject` SET `spawnMask` = 1 WHERE `id` = 190586;
 DELETE FROM `gameobject` WHERE `id` = '193996';
 INSERT INTO `gameobject` (`id`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) 

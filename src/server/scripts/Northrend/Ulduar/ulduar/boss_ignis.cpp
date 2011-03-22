@@ -226,9 +226,7 @@ public:
                     case EVENT_GRAB_POT:
                         if (Unit* SlagPotTarget = Unit::GetUnit(*me, SlagPotGUID))
                         {
-
-                            SlagPotTarget->_EnterVehicle(vehicle, 0);
-
+                            SlagPotTarget->EnterVehicle(me, 0);
                             events.ScheduleEvent(EVENT_CHANGE_POT, 1000);
                         }
                         break;
@@ -337,8 +335,7 @@ public:
             Brittled = false;
         }
 
-        void DamageTaken(Unit* /*attacker*/, uint32 &damage)
-
+        void DamageTaken(Unit* /*attacker*/, int &damage)
         {
             if (me->HasAura(SPELL_BRITTLE) && damage >= 5000)
             {

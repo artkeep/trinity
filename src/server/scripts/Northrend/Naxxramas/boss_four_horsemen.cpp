@@ -141,7 +141,6 @@ public:
             encounterActionReset = false;
             doDelayPunish = false;
             _Reset();
-            SetImmuneToDeathGrip();
         }
 
         void EnterEvadeMode()

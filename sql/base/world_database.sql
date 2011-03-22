@@ -18380,6 +18380,11 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 11180, 0x10,   3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Winter's Chill (Rank 1)
 ( 11185, 0x00,   3, 0x00000080, 0x00000000, 0x00000000, 0x00050000, 0x00000000,   0,   0,   0), -- Improved Blizzard (Rank 1)
 ( 11255, 0x00,   3, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Improved Counterspell (Rank 1)
+( 11213, 0x00,   3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Arcane Concentration (Rank 1)
+( 12574, 0x00,   3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Arcane Concentration (Rank 2)
+( 12575, 0x00,   3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Arcane Concentration (Rank 3)
+( 12576, 0x00,   3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Arcane Concentration (Rank 4)
+( 12577, 0x00,   3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Arcane Concentration (Rank 5)
 ( 12169, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000040,   0,   0,   0), -- Shield Block
 ( 12289, 0x00,   4, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Improved Hamstring (Rank 1)
 ( 12298, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000070,   0,   0,   0), -- Shield Specialization (Rank 1)
@@ -27806,7 +27811,7 @@ CREATE TABLE `vehicle_accessory` (
   `seat_id` TINYINT(1) SIGNED NOT NULL DEFAULT 0,
   `minion` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
   `description` TEXT NOT NULL,
-  PRIMARY KEY (`entry`, `seat_id`)
+  PRIMARY KEY (`accessory_entry`, `seat_id`)
 )
 COLLATE=utf8_general_ci
 ENGINE=MyISAM

@@ -55,7 +55,6 @@ public:
         void Reset()
         {
             _Reset();
-            SetImmuneToDeathGrip();
         }
 
         void EnterCombat(Unit * /*who*/)
@@ -93,7 +92,7 @@ public:
                         events.ScheduleEvent(EVENT_DOOM, events.GetTimer() < 5*60000 ? 30000 : 15000);
                         break;
                     case EVENT_BERSERK:
-                        if(getDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
+                        if(GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
                         {
                             if(!me->HasAura(SPELL_BERSERK))
                                 DoCast(me,SPELL_BERSERK,true);

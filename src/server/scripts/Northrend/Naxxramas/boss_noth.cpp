@@ -85,7 +85,6 @@ public:
             me->SetReactState(REACT_AGGRESSIVE);
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             _Reset();
-            SetImmuneToDeathGrip();
         }
 
         void EnterCombat(Unit * /*who*/)
@@ -109,7 +108,7 @@ public:
                 events.ScheduleEvent(EVENT_BALCONY, 110000);
                 events.ScheduleEvent(EVENT_CURSE, 10000+rand()%15000);
                 events.ScheduleEvent(EVENT_WARRIOR, 30000);
-                if (getDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
+                if (GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
                     events.ScheduleEvent(EVENT_BLINK, 20000 + rand()%20000);
             }
         }

@@ -502,6 +502,7 @@ m_caster(Caster), m_spellValue(new SpellValue(m_spellInfo))
     m_preCastSpell = 0;
     m_triggeredByAuraSpell  = NULL;
     m_spellAura = NULL;
+    m_magnetingAura = NULL;
 
     //Auto Shot & Shoot (wand)
     m_autoRepeat = IsAutoRepeatRangedSpell(m_spellInfo);
@@ -1338,6 +1339,14 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             if (unitTarget->ToCreature()->IsAIEnabled)
                 unitTarget->ToCreature()->AI()->AttackStart(m_caster);
         }
+    }
+
+    // Drop charge of magnet auras on hit
+    if (m_magnetingAura)
+    {
+        if (!m_magnetingAura->IsRemoved() && m_magnetingAura->GetCharges()>0)
+            m_magnetingAura->DropCharge();
+        m_magnetingAura = NULL;
     }
 
     if (missInfo != SPELL_MISS_EVADE && m_caster && !m_caster->IsFriendlyTo(unit) && !IsPositiveSpell(m_spellInfo->Id))
@@ -5463,7 +5472,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                             InstanceSave* m_castersave = m_caster->ToPlayer()->GetInstanceSave(mapId, true);
                             if (targetsave->GetInstanceId() != m_castersave->GetInstanceId()) 
                                 return SPELL_FAILED_TARGET_LOCKED_TO_RAID_INSTANCE;
-                        }
+                        } 
                     InstanceTemplate const* instance = ObjectMgr::GetInstanceTemplate(mapId);
                     if (!instance)
                         return SPELL_FAILED_TARGET_NOT_IN_INSTANCE;
@@ -6628,6 +6637,8 @@ bool Spell::CheckTargetCreatureType(Unit* target) const
         spellCreatureTargetMask =  0;
 
     // Polymorph and Grounding Totem
+    if (!target)
+        return false;
     if (target->GetEntry() == 5925 && m_spellInfo->SpellFamilyName == SPELLFAMILY_MAGE && (m_spellInfo->SpellFamilyFlags[0] & 0x1000000) && m_spellInfo->EffectApplyAuraName[0] == SPELL_AURA_MOD_CONFUSE)
         return true;
 

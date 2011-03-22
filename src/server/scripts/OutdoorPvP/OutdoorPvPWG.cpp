@@ -73,6 +73,8 @@ bool OutdoorPvPWG::SetupOutdoorPvP()
     }
 
     //load worlstates
+    m_30MinAnnouncementIsAlreadyShown = false;
+    m_10MinAnnouncementIsAlreadyShown = false;
     m_wartime  = sWorld->getWorldState(WORLDSTATE_WINTERGRASP_WARTIME) ? true : false;
     m_timer    = uint32(sWorld->getWorldState(WORLDSTATE_WINTERGRASP_TIMER));
     m_defender = TeamId(sWorld->getWorldState(WORLDSTATE_WINTERGRASP_DEFENDERS) ? true : false);
@@ -1437,15 +1439,30 @@ void OutdoorPvPWG::UpdateClock()
         UpdateClockDigit(timer, 1, 10);
     else
         UpdateClockDigit(timer, 0, 10);
-
+    
     //Announce in all world, comment it if you don't like/need it
     // Announce 30 minutes left
-    if ((m_timer>1800000) && (m_timer<1802000) && (m_wartime==false))
-        sWorld->SendWorldText(LANG_BG_WG_WORLD_ANNOUNCE_30);
-
-    // Announce 10 minutes left
-    if ((m_timer>600000) && (m_timer<602000) && (m_wartime==false))
-        sWorld->SendWorldText(LANG_BG_WG_WORLD_ANNOUNCE_10);
+    if (m_wartime==false)
+    {
+        if (1800000 < m_timer && m_timer < 1802000)
+        {
+            if (!m_30MinAnnouncementIsAlreadyShown)
+            {
+                sWorld->SendWorldText(LANG_BG_WG_WORLD_ANNOUNCE_30);
+                m_10MinAnnouncementIsAlreadyShown = false;
+            }
+            m_30MinAnnouncementIsAlreadyShown = true;
+        }
+        else if (600000 < m_timer && m_timer < 602000)
+        {
+            if (!m_10MinAnnouncementIsAlreadyShown)
+            {
+                sWorld->SendWorldText(LANG_BG_WG_WORLD_ANNOUNCE_10);
+                m_30MinAnnouncementIsAlreadyShown = false;
+            }
+            m_10MinAnnouncementIsAlreadyShown = true;
+        }
+    }
 }
 
 bool OutdoorPvPWG::Update(uint32 diff)

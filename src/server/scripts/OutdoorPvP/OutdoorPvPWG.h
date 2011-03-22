@@ -286,6 +286,8 @@ class OutdoorPvPWG : public OutdoorPvP
         TeamPairMap m_creEntryPair, m_goDisplayPair;
         QuestGiverPositionMap m_qgPosMap;
 
+        bool m_30MinAnnouncementIsAlreadyShown;
+        bool m_10MinAnnouncementIsAlreadyShown;
         bool m_wartime;
         bool m_changeDefender;
         uint32 m_clock[2];

@@ -1498,6 +1498,22 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                     else
                         target->RemoveAurasDueToSpell(64364, GetCasterGUID());
                     break;
+                case 31869:
+                    // Prevent exploiting with Sanctified Retribuion
+                    // there still remains a visual bug, i can't fix him :(
+                    if (!apply)
+                        target->RemoveAurasDueToSpell(63531, GetCasterGUID());
+                    break;
+            }
+            if (GetSpellSpecific(GetSpellProto()) == SPELL_SPECIFIC_AURA)
+            {
+                // Sanctified Retribution
+                if (GetCasterGUID() == target->GetGUID() && target->HasAura(31869))
+                {
+                    target->RemoveAurasDueToSpell(63531);
+                    if (apply)
+                        target->CastSpell(target, 63531, true);
+                }
             }
             break;
         case SPELLFAMILY_DEATHKNIGHT:

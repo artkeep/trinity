@@ -6777,19 +6777,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
 
                     break;
                 }
-                // Glyph of Divinity
-                case 54939:
-                {
-                    // Lookup base amount mana restore
-                    for (uint8 i=0; i<MAX_SPELL_EFFECTS; i++)
-                        if (procSpell->Effect[i] == SPELL_EFFECT_ENERGIZE)
-                        {
-                            int32 mana = SpellMgr::CalculateSpellEffectAmount(procSpell, i);
-                            CastCustomSpell(this, 54986, 0, &mana, 0, true, castItem, triggeredByAura);
-                            break;
-                        }
-                    return true;
-                }
                 // Glyph of Flash of Light
                 case 54936:
                 {
@@ -7830,6 +7817,22 @@ bool Unit::HandleAuraProc(Unit * pVictim, uint32 damage, Aura * triggeredByAura,
                     CastSpell(pVictim, 68055, true);
                     return true;
                 }
+            }
+            // Glyph of Divinity
+            else if (dummySpell->Id == 54939)
+            {
+                // Check if we are the target and prevent mana gain
+                if (triggeredByAura->GetCasterGUID() == pVictim->GetGUID())
+                    return false;
+                // Lookup base amount mana restore
+                for (uint8 i=0; i<MAX_SPELL_EFFECTS; i++)
+                    if (procSpell->Effect[i] == SPELL_EFFECT_ENERGIZE)
+                    {
+                        // multiply by 2 because CalculateSpellEffectAmount takes dbc values
+                        int32 mana = SpellMgr::CalculateSpellEffectAmount(procSpell, i) * 2;
+                        CastCustomSpell(this, 54986, 0, &mana, NULL, true);
+                    }
+                return true;
             }
             break;
         }

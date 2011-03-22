@@ -1441,6 +1441,23 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
         case SPELLFAMILY_HUNTER:
             switch(GetId())
             {
+                case 19506: // Trueshot Aura
+                    // to prevent a bug when you can apply one more aura with same effect
+                    if (apply && GetCasterGUID() == target->GetGUID())
+                    {
+                        // Search all other raid wide auras with same effect and remove them from our target
+                        Unit::AuraEffectList const& tAura = target->GetAuraEffectsByType(SPELL_AURA_MOD_ATTACK_POWER_PCT);
+                        for (Unit::AuraEffectList::const_iterator i = tAura.begin(); i != tAura.end(); ++i)
+                        {
+                            if ((*i)->GetSpellProto()->AttributesEx7 & SPELL_ATTR7_UNK28 &&
+                                (*i)->GetCasterGUID() != target->GetGUID())
+                            {
+                                target->RemoveAurasDueToSpell((*i)->GetId(),(*i)->GetCasterGUID());
+                                break;
+                            }
+                        }
+                    }
+                    break;
                 case 19574: // Bestial Wrath
                     // The Beast Within cast on owner if talent present
                     if (Unit* owner = target->GetOwner())

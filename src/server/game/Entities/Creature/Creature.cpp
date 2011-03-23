@@ -416,6 +416,9 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data)
         ApplySpellImmune(0, IMMUNITY_EFFECT,SPELL_EFFECT_ATTACK_ME, true);
     }
 
+    if (GetCreatureType() == CREATURE_TYPE_UNDEAD)
+        ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_FEAR, true);
+
     // TODO: In fact monster move flags should be set - not movement flags.
     if (cInfo->InhabitType & INHABIT_AIR)
         AddUnitMovementFlag(MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_FLYING);

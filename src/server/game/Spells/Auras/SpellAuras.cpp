@@ -1369,6 +1369,14 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                 // Remove Vanish on stealth remove
                 if (GetId() == 1784)
                     target->RemoveAurasWithFamily(SPELLFAMILY_ROGUE, 0x0000800, 0, 0, target->GetGUID());
+                // Remove Savage Combat triggered aura at poisons remove
+                else if (GetSpellProto()->SpellFamilyFlags[1] & 0x80000 &&
+                    caster && (caster->HasAura(51682) || caster->HasAura(58413)))
+                {
+                    // this is just temp solution and has some problems
+                    target->RemoveAurasDueToSpell(58683, GetCasterGUID());
+                    target->RemoveAurasDueToSpell(58684, GetCasterGUID());
+                }
                 break;
             case SPELLFAMILY_PALADIN:
                 // Remove the immunity shield marker on Forbearance removal if AW marker is not present

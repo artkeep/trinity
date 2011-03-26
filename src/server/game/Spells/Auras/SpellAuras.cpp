@@ -1505,16 +1505,6 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                         target->RemoveAurasDueToSpell(64364, GetCasterGUID());
                     break;
             }
-            if (GetSpellSpecific(GetSpellProto()) == SPELL_SPECIFIC_AURA)
-            {
-                // Sanctified Retribution
-                if (GetCasterGUID() == target->GetGUID() && target->HasAura(31869))
-                {
-                    target->RemoveAurasDueToSpell(63531);
-                    if (apply)
-                        target->CastSpell(target, 63531, true);
-                }
-            }
             break;
         case SPELLFAMILY_DEATHKNIGHT:
             if (GetSpellSpecific(GetSpellProto()) == SPELL_SPECIFIC_PRESENCE)

@@ -573,7 +573,7 @@ void Aura::UpdateTargetMap(Unit * caster, bool apply)
                     for (Unit::AuraApplicationMap::iterator iter = itr->first->GetAppliedAuras().begin(); iter != itr->first->GetAppliedAuras().end(); ++iter)
                     {
                         Aura const * aura = iter->second->GetBase();
-                        if (!sSpellMgr->CanAurasStack(this, aura, aura->GetCasterGUID() != GetCasterGUID()))
+                        if (aura->GetCasterGUID() != GetCasterGUID() && !sSpellMgr->CanAurasStack(this, aura, false))
                         {
                             caster->RemoveAurasDueToSpell(aura->GetId(), aura->GetCasterGUID());
                             break;

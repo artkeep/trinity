@@ -6388,6 +6388,17 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                     triggered_spell_id = 32747;
                     break;
                 }
+                // Tricks of the trade
+                case 57934:
+                {
+                    triggered_spell_id = 57933;             // Tricks of the Trade, increased damage buff
+                    target = GetMisdirectionTarget();
+                    if (!target)
+                        return false;;
+
+                    CastSpell(this, 59628, true);           // Tricks of the Trade (caster timer)
+                    break;
+                }
             }
             // Cut to the Chase
             if (dummySpell->SpellIconID == 2909)

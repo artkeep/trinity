@@ -1,0 +1,11 @@
+DELETE FROM `spell_ranks` WHERE `first_spell_id` = 75593;
+INSERT INTO `spell_ranks` VALUES
+(75593,75593,1),
+(75593,75446,2),
+(75593,75447,3);
+
+DELETE FROM `spell_pet_auras` WHERE `spell` IN (34455,34459,34460);
+INSERT INTO `spell_pet_auras` VALUES
+(34455,0,0,75593),
+(34459,0,0,75446),
+(34460,0,0,75447);

@@ -1930,29 +1930,6 @@ void Pet::CastPetAuras(bool current)
         else
             CastPetAura(pa);
     }
-
-    // Ferocious Inspiration
-    // applying/removing talent triggered aura here - yes, this a horrible hack
-    if (owner && owner->getClass() == CLASS_HUNTER)
-    {
-        // remove previous aura at first
-        RemoveAurasDueToSpell(75593);
-        RemoveAurasDueToSpell(75446);
-        RemoveAurasDueToSpell(75447);
-
-        // check if hunter has this talent and apply triggered aura
-        if (AuraEffect * aurEff = owner->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_HUNTER, 2232, EFFECT_0))
-        {
-            uint32 spell_id;
-            switch(aurEff->GetId())
-            {
-                case 34455: spell_id = 75593; break;
-                case 34459: spell_id = 75446; break;
-                case 34460: spell_id = 75447; break;
-            }
-            CastSpell(this, spell_id, true);
-        }
-    }
 }
 
 void Pet::CastPetAura(PetAura const* aura)

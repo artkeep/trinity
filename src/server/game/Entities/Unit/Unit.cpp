@@ -7802,6 +7802,17 @@ bool Unit::HandleAuraProc(Unit * pVictim, uint32 damage, Aura * triggeredByAura,
                     *handled = true;
                     break;
                 }
+                // Vigilance - original proc picking wrong target
+                case 50720:
+                {
+                    *handled = true;
+                    if (Unit * caster = triggeredByAura->GetCaster())
+                    {
+                        CastSpell(caster, 50725, true);
+                        return true;
+                    }
+                    return false;
+                }
             }
             break;
         case SPELLFAMILY_PALADIN:

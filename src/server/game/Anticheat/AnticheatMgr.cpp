@@ -42,7 +42,6 @@ void AnticheatMgr::DeletePlayerReport(Player* player)
     while (result->NextRow());
 
     ExtraDatabase.PExecute("DELETE FROM anticheat_reports WHERE guid IN (%s)",guids.c_str());
-
 }
 
 void AnticheatMgr::BuildReport(Player* player,uint8 reportType)
@@ -65,10 +64,10 @@ void AnticheatMgr::BuildReport(Player* player,uint8 reportType)
     ExtraDatabase.PExecute("UPDATE anticheat_reports SET %s=%u, total_reports=%u, average=%u WHERE guid=%u",report_type.c_str(),player->anticheatData.type_reports[reportType],player->anticheatData.total_reports,player->anticheatData.average,player->GetGUIDLow());
 
     // Cheaters Logging
-    if (player->anticheatData.reported == false && player->anticheatData.average < 600 && player->anticheatData.total_reports > 300)
+    if (player->anticheatData.reported == false && player->anticheatData.average < 600 && player->anticheatData.total_reports > 200)
     {
         player->anticheatData.reported = true;
-        ExtraDatabase.PExecute("INSERT IGNORE INTO anticheat_log (guid, name, total_reports) VALUES (%u, '%s', '%u');", player->GetGUIDLow(), player->GetName());
+        ExtraDatabase.PExecute("INSERT IGNORE INTO anticheat_log (guid, name) VALUES (%u, '%s');", player->GetGUIDLow(), player->GetName());
     }
     
     if (player->anticheatData.total_reports > sWorld->getIntConfig(CONFIG_ANTICHEAT_REPORTS_INGAME_NOTIFICATION))
@@ -122,7 +121,7 @@ void AnticheatMgr::WalkOnWaterHackDetection(Player* player, MovementInfo movemen
         player->HasAuraType(SPELL_AURA_WATER_WALK))
         return;
 
-    //sLog->outError("Walk on Water Player LowGuid %u",player->GetGUIDLow());
+    sLog->outError("Walk on Water Player LowGuid %u",player->GetGUIDLow());
     BuildReport(player,WALK_WATER_HACK_REPORT);
 
 }
@@ -137,7 +136,7 @@ void AnticheatMgr::FlyHackDetection(Player* player, MovementInfo movementInfo)
         player->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))
         return;
     
-    //sLog->outError("FlyHack Player LowGuid %u",player->GetGUIDLow());
+    sLog->outError("FlyHack Player LowGuid %u",player->GetGUIDLow());
     BuildReport(player,FLY_HACK_REPORT);
 }
 

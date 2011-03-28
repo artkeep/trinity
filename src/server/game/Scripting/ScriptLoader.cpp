@@ -493,7 +493,7 @@ void AddSC_boss_valithria();
 void AddSC_boss_lichking();
 void AddSC_boss_sindragosa();
 void AddSC_boss_rotface();
-void AddSC_boss_rat_des_blutes();
+void AddSC_boss_blood_prince_council();
 void AddSC_boss_professor_putricide();
 void AddSC_boss_lord_marrowgar();
 void AddSC_boss_lady_deathwhisper();
@@ -1208,7 +1208,7 @@ void AddNorthrendScripts()
     AddSC_boss_lichking();
     AddSC_boss_sindragosa();
     AddSC_boss_rotface();
-    AddSC_boss_rat_des_blutes();
+    AddSC_boss_blood_prince_council();
     AddSC_boss_professor_putricide();
     AddSC_boss_lord_marrowgar();
     AddSC_boss_lady_deathwhisper();

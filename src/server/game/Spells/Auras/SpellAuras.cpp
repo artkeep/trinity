@@ -1087,6 +1087,17 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                     // in official maybe there is only one icon?
                     if (target->HasAura(58039)) // Glyph of Blurred Speed
                         target->CastSpell(target, 61922, true); // Sprint (waterwalk)
+                // Savage Combat triggered at poisons apply
+                if (GetSpellProto()->SpellFamilyFlags[1] & 0x80000 && caster)
+                {
+                    if (AuraEffect * auraEff = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_ROGUE, 1959, 0))
+                    {
+                        uint32 spellId = auraEff->GetSpellProto()->EffectTriggerSpell[0];
+                        target->RemoveAurasDueToSpell(spellId);
+                        if (Aura * newAura = target->AddAura(spellId, caster))
+                            newAura->SetDuration(GetDuration());
+                    }
+                }
                 break;
             case SPELLFAMILY_DEATHKNIGHT:
                 if (!caster)

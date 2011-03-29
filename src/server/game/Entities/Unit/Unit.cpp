@@ -11368,6 +11368,14 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) con
                 return true;
     }
 
+    if (GetTypeId() == TYPEID_PLAYER)
+    {
+        if (spellInfo->Effect[index] == SPELL_EFFECT_ATTACK_ME)
+            return true;
+        if (spellInfo->EffectApplyAuraName[index] == SPELL_AURA_MOD_TAUNT)
+            return true;
+    }
+
     return false;
 }
 

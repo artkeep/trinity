@@ -1094,7 +1094,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                     {
                         uint32 spellId = auraEff->GetSpellProto()->EffectTriggerSpell[0];
                         target->RemoveAurasDueToSpell(spellId);
-                        if (Aura * newAura = target->AddAura(spellId, caster))
+                        if (Aura * newAura = caster->AddAura(spellId, target))
                             newAura->SetDuration(GetDuration());
                     }
                 }

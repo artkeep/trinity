@@ -4186,6 +4186,14 @@ void SpellMgr::LoadSpellCustomAttr()
                     spellInfo->SpellFamilyFlags[0] |= 0x40;
                 count++;
                 break;
+            case SPELLFAMILY_PRIEST:
+                // Twin Disciplines should affect at Prayer of Mending
+                if (spellInfo->SpellIconID == 2292)
+                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
+                else
+                    break;
+                count++;
+                break;
         }
     }
 

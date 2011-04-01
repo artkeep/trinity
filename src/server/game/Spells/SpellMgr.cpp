@@ -4190,6 +4190,9 @@ void SpellMgr::LoadSpellCustomAttr()
                 // Twin Disciplines should affect at Prayer of Mending
                 if (spellInfo->SpellIconID == 2292)
                     spellInfo->EffectSpellClassMask[0][1] |= 0x20;
+                // Spiritual Healing should affect at Prayer of Mending
+                else if (spellInfo->SpellIconID == 46)
+                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
                 else
                     break;
                 count++;

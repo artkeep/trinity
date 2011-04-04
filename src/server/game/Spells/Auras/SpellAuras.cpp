@@ -567,7 +567,7 @@ void Aura::UpdateTargetMap(Unit * caster, bool apply)
                     }
                 }
                 // Prevent exploiting with doubling auras
-                else
+                else if (caster)
                 {
                     // check if not stacking aura already on target and remove not own aura
                     for (Unit::AuraApplicationMap::iterator iter = itr->first->GetAppliedAuras().begin(); iter != itr->first->GetAppliedAuras().end(); ++iter)

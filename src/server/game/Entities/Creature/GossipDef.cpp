@@ -403,7 +403,7 @@ void PlayerMenu::SendQuestGiverQuestDetails(Quest const *pQuest, uint64 npcGUID,
         }
 
         data << uint32(pQuest->GetRewOrReqMoney());
-        data << uint32(pQuest->XPValue(pSession->GetPlayer())*sWorld->getRate(RATE_XP_QUEST));
+        data << uint32(pQuest->XPValue(pSession->GetPlayer())*sWorld->getRate(RATE_XP_QUEST)*pSession->GetPlayer()->quest_xp_rate);
     }
 
     // rewarded honor points. Multiply with 10 to satisfy client
@@ -647,7 +647,7 @@ void PlayerMenu::SendQuestGiverOfferReward(Quest const* pQuest, uint64 npcGUID, 
     }
 
     data << uint32(pQuest->GetRewOrReqMoney());
-    data << uint32(pQuest->XPValue(pSession->GetPlayer())*sWorld->getRate(RATE_XP_QUEST));
+    data << uint32(pQuest->XPValue(pSession->GetPlayer())*sWorld->getRate(RATE_XP_QUEST)*pSession->GetPlayer()->quest_xp_rate);
 
     // rewarded honor points. Multiply with 10 to satisfy client
     data << 10 * Trinity::Honor::hk_honor_at_level(pSession->GetPlayer()->getLevel(), pQuest->GetRewHonorMultiplier());

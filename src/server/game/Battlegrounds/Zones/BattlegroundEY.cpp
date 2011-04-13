@@ -109,7 +109,7 @@ void BattlegroundEY::Update(uint32 diff)
                 Player * plr = sObjectMgr->GetPlayer(itr->first);
                 if (!plr || !plr->IsInWorld())
                     continue;
-                if (plr->GetPositionZ() < 1250)
+                if (plr->GetPositionZ() < 1249)
                 {
                     if (plr->GetTeam() == HORDE)
                         plr->TeleportTo(566, 1807.73f, 1539.41f, 1267.63f, plr->GetOrientation(), 0);

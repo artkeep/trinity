@@ -1525,7 +1525,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                         value = value + (apply ? -mod : mod);
                         auraEff->ChangeAmount(value);
                     }
-                break;
+                //break;
             }
             break;
         case SPELLFAMILY_ROGUE:

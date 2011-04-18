@@ -6028,7 +6028,7 @@ void AuraEffect::HandleAuraDummy(AuraApplication const * aurApp, uint8 mode, boo
                     break;
                 case SPELLFAMILY_HUNTER:
                     // Misdirection
-                    if (GetId() == 35079)
+                    if (GetId() == 34477)
                         target->SetReducedThreatPercent(0, 0);
                     break;
                 case SPELLFAMILY_DEATHKNIGHT:

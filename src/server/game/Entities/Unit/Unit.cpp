@@ -6520,12 +6520,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 }
                 break;
             }
-            // Misdirection
-            if(dummySpell->Id == 34477)
-            {
-                triggered_spell_id = 35079;
-                target = this;
-            }
             // Glyph of Mend Pet
             if(dummySpell->Id == 57870)
             {

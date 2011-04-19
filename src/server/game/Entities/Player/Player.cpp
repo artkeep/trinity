@@ -5492,14 +5492,8 @@ void Player::RepopAtGraveyard()
 
 bool Player::CanJoinConstantChannelInZone(ChatChannelsEntry const* channel, AreaTableEntry const* zone)
 {
-    if (channel->flags & CHANNEL_DBC_FLAG_ZONE_DEP)
-    {
-        if (zone->flags & AREA_FLAG_ARENA_INSTANCE)
-            return false;
-
-        if ((channel->flags & CHANNEL_DBC_FLAG_CITY_ONLY) && !(zone->flags & AREA_FLAG_CAPITAL))
-            return false;
-    }
+    if (channel->flags & (CHANNEL_DBC_FLAG_CITY_ONLY) && !(zone->flags & AREA_FLAG_CAPITAL))
+        return false;
 
     return true;
 }
@@ -5547,9 +5541,6 @@ void Player::UpdateLocalChannels(uint32 newZone)
     {
         if (ChatChannelsEntry const* channel = sChatChannelsStore.LookupEntry(i))
         {
-            if (!(channel->flags & CHANNEL_DBC_FLAG_ZONE_DEP))
-                continue;                                    // Not zone dependent, don't handle it here
-
             if ((channel->flags & CHANNEL_DBC_FLAG_GUILD_REQ) && GetGuildId())
                 continue;                                    // Should not join to these channels automatically
 
@@ -5570,7 +5561,7 @@ void Player::UpdateLocalChannels(uint32 newZone)
 
             if (CanJoinConstantChannelInZone(channel, current_zone))
             {
-                if (!(channel->flags & CHANNEL_DBC_FLAG_GLOBAL))
+                if (channel->flags & CHANNEL_DBC_FLAG_ZONE_NAME)
                 {
                     if (channel->flags & CHANNEL_DBC_FLAG_CITY_ONLY && usedChannel)
                         continue;                            // Already on the channel, as city channel names are not changing
@@ -5578,7 +5569,7 @@ void Player::UpdateLocalChannels(uint32 newZone)
                     char new_channel_name_buf[100];
                     char const* currentNameExt;
 
-                    if (channel->flags & CHANNEL_DBC_FLAG_CITY_ONLY)
+                    if (channel->flags & CHANNEL_DBC_FLAG_CITY_NAME)
                         currentNameExt = sObjectMgr->GetTrinityStringForDBCLocale(LANG_CHANNEL_CITY);
                     else
                         currentNameExt = current_zone_name.c_str();

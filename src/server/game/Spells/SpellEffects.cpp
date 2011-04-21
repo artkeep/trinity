@@ -6056,7 +6056,7 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
     if (!target)
         return;
 
-    float angle = target->GetAngle(m_caster) - target->GetOrientation();
+    float angle = target->GetRelativeAngle(m_caster);
     Position pos;
 
     target->GetContactPoint(m_caster, pos.m_positionX, pos.m_positionY, pos.m_positionZ);

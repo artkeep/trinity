@@ -3,6 +3,8 @@ INSERT INTO `spell_group` VALUES
 (2011,49016), -- Hysteria
 (2012,57933), -- Tricks of the Trade
 -- 12880
+-- 57514
+-- 57518
 (2013,12292), -- Death Wish
 (2014,12042), -- Arcane Power
 -- 48391

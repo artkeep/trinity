@@ -3637,7 +3637,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 18756:
             // now aura will be applied correctly
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
-            count++;
+            ++count;
             break;
         // Bind
         case 3286:
@@ -3649,7 +3649,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 45524:
             // this will fix self-damage caused by Glyph of Chains of Ice
             spellInfo->EffectImplicitTargetA[2] = TARGET_UNIT_TARGET_ENEMY;
-            count++;
+            ++count;
             break;
         // Heroism
         case 32182:
@@ -3660,7 +3660,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 59921:
             // Icy Clutch shouldn't be applied at caster when login
             spellInfo->AttributesEx4 |= SPELL_ATTR4_CANT_PROC_FROM_SELFCAST;
-            count++;
+            ++count;
             break;
         // Blazing Harpoon
         case 61588:
@@ -3676,7 +3676,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 44440:
         case 44441:
             spellInfo->CasterAuraStateNot = AURA_STATE_NONE;
-            count++;
+            ++count;
             break;
         // Heart of the Crusader
         case 20335:
@@ -3699,7 +3699,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 24135:                             // Wyvern Sting (rank 3)
             // something wrong and it applied as positive buff
             mSpellCustomAttr[i] |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
-            count++;
+            ++count;
             break;
         case 26029: // dark glare
         case 37433: // spout
@@ -3735,7 +3735,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 63944:                             // Renewed Hope hack
             spellInfo->EffectApplyAuraName[0] = 87;
             spellInfo->EffectMiscValue[0] = 127;
-            count++;
+            ++count;
             break;
         case 27820:                             // Mana Detonation
         //case 28062: case 39090:                 // Positive/Negative Charge
@@ -3846,7 +3846,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 53257: // Cobra Strikes
             spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
-            count++;
+            ++count;
             break;
         case 44544:    // Fingers of Frost
             spellInfo->EffectSpellClassMask[0] = flag96(685904631, 1151048, 0);
@@ -3906,7 +3906,7 @@ void SpellMgr::LoadSpellCustomAttr()
             break;
         case 55689: // Glyph of Shadow (to prevent glyph aura loss)
             spellInfo->AttributesEx2 |= SPELL_ATTR2_NOT_NEED_SHAPESHIFT;
-            count++;
+            ++count;
             break;
         case 30421:     // Nether Portal - Perseverence
             spellInfo->EffectBasePoints[2] += 30000;
@@ -3965,11 +3965,11 @@ void SpellMgr::LoadSpellCustomAttr()
             break;
         case 42650: // Army of the Dead - now we can interrupt this
             spellInfo->InterruptFlags = SPELL_INTERRUPT_FLAG_INTERRUPT;
-            count++;
+            ++count;
             break;
         case 61851: // Killing Spree - should remove snares from caster
             spellInfo->AttributesEx |= SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY;
-            count++;
+            ++count;
             break;
         case 64321: // Potent Pheromones
             // spell should dispel area aura, but doesn't have the attribute
@@ -4012,7 +4012,7 @@ void SpellMgr::LoadSpellCustomAttr()
         case 8145: // Tremor Totem (instant pulse)
         case 6474: // Earthbind Totem (instant pulse)
             spellInfo->AttributesEx5 |= SPELL_ATTR5_START_PERIODIC_AT_APPLY;
-            count++;
+            ++count;
             break;
         case 53241: // Marked for Death (Rank 1)
         case 53243: // Marked for Death (Rank 2)
@@ -4193,7 +4193,7 @@ void SpellMgr::LoadSpellCustomAttr()
                 }
                 else
                     break;
-                count++;
+                ++count;
                 break;
             case SPELLFAMILY_HUNTER:
                 // Monstrous Bite target fix
@@ -4202,7 +4202,7 @@ void SpellMgr::LoadSpellCustomAttr()
                     spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_CASTER;
                 else
                     break;
-                count++;
+                ++count;
                 break;
             case SPELLFAMILY_DRUID:
                 // Starfall Target Selection
@@ -4247,7 +4247,7 @@ void SpellMgr::LoadSpellCustomAttr()
                     spellInfo->EffectSpellClassMask[0][1] |= 0x20;
                 else
                     break;
-                count++;
+                ++count;
                 break;
         }
     }

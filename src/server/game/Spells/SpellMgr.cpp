@@ -3636,6 +3636,11 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
             ++count;
             break;
+        case 45524: // Chains of Ice
+            // this will fix self-damage caused by Glyph of Chains of Ice
+            spellInfo->EffectImplicitTargetA[2] = TARGET_UNIT_TARGET_ENEMY;
+            ++count;
+            break;
         case 32182: // Heroism
             spellInfo->excludeCasterAuraSpell = 57723; // Exhaustion
             ++count;

@@ -3658,6 +3658,10 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->excludeCasterAuraSpell = 57724; // Sated
             ++count;
             break;
+        case 44440: case 44441: // Fiery Payback hack
+            spellInfo->CasterAuraStateNot = AURA_STATE_NONE;
+            ++count;
+            break;
         case 20335: // Heart of the Crusader
         case 20336:
         case 20337:

@@ -3631,35 +3631,15 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENEMY_SRC;
             ++count;
             break;
-        // Improved Succubus
-        case 18754:
-        case 18755:
-        case 18756:
-            // now aura will be applied correctly
-            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
-            ++count;
-            break;
         // Bind
         case 3286:
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
             spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
             ++count;
             break;
-        // Chains of Ice
-        case 45524:
-            // this will fix self-damage caused by Glyph of Chains of Ice
-            spellInfo->EffectImplicitTargetA[2] = TARGET_UNIT_TARGET_ENEMY;
-            ++count;
-            break;
         // Heroism
         case 32182:
             spellInfo->excludeCasterAuraSpell = 57723; // Exhaustion
-            ++count;
-            break;
-        // Frost Fever
-        case 59921:
-            // Icy Clutch shouldn't be applied at caster when login
-            spellInfo->AttributesEx4 |= SPELL_ATTR4_CANT_PROC_FROM_SELFCAST;
             ++count;
             break;
         // Blazing Harpoon
@@ -3670,12 +3650,6 @@ void SpellMgr::LoadSpellCustomAttr()
         // Bloodlust
         case 2825:
             spellInfo->excludeCasterAuraSpell = 57724; // Sated
-            ++count;
-            break;
-        // Fiery Payback hack
-        case 44440:
-        case 44441:
-            spellInfo->CasterAuraStateNot = AURA_STATE_NONE;
             ++count;
             break;
         // Heart of the Crusader
@@ -3692,13 +3666,6 @@ void SpellMgr::LoadSpellCustomAttr()
             // was 46, but effect is aura effect
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_NEARBY_ENTRY;
             spellInfo->EffectImplicitTargetB[0] = TARGET_DST_NEARBY_ENTRY;
-            ++count;
-            break;
-        case 24131:                             // Wyvern Sting (rank 1)
-        case 24134:                             // Wyvern Sting (rank 2)
-        case 24135:                             // Wyvern Sting (rank 3)
-            // something wrong and it applied as positive buff
-            mSpellCustomAttr[i] |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
             ++count;
             break;
         case 26029: // dark glare
@@ -3730,11 +3697,6 @@ void SpellMgr::LoadSpellCustomAttr()
             // Target entry seems to be wrong for this spell :/
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_PARTY_CASTER;
             spellInfo->EffectRadiusIndex[0] = 45;
-            ++count;
-            break;
-        case 63944:                             // Renewed Hope hack
-            spellInfo->EffectApplyAuraName[0] = 87;
-            spellInfo->EffectMiscValue[0] = 127;
             ++count;
             break;
         case 27820:                             // Mana Detonation
@@ -3843,11 +3805,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->procCharges = 2;
             ++count;
             break;
-        case 53257: // Cobra Strikes
-            spellInfo->procCharges = 2;
-            spellInfo->StackAmount = 0;
-            ++count;
-            break;
         case 44544:    // Fingers of Frost
             spellInfo->EffectSpellClassMask[0] = flag96(685904631, 1151048, 0);
             ++count;
@@ -3902,10 +3859,6 @@ void SpellMgr::LoadSpellCustomAttr()
             break;
         case 48422:
             spellInfo->Stances = 1 << (FORM_TREE - 1);
-            ++count;
-            break;
-        case 55689: // Glyph of Shadow (to prevent glyph aura loss)
-            spellInfo->AttributesEx2 |= SPELL_ATTR2_NOT_NEED_SHAPESHIFT;
             ++count;
             break;
         case 30421:     // Nether Portal - Perseverence

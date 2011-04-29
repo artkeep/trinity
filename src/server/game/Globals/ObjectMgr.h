@@ -36,27 +36,44 @@
 #include "ObjectAccessor.h"
 #include "ObjectDefines.h"
 #include <ace/Singleton.h>
-#include "SQLStorage.h"
 #include "Vehicle.h"
 #include <string>
 #include <map>
 #include <limits>
 #include "ConditionMgr.h"
+#include <functional>
 
-extern SQLStorage sCreatureStorage;
-extern SQLStorage sCreatureDataAddonStorage;
-extern SQLStorage sCreatureInfoAddonStorage;
-extern SQLStorage sCreatureModelStorage;
-extern SQLStorage sEquipmentStorage;
-extern SQLStorage sGOStorage;
-extern SQLStorage sPageTextStore;
-extern SQLStorage sItemStorage;
-extern SQLStorage sInstanceTemplate;
 
 class Group;
 class Guild;
 class ArenaTeam;
 class Item;
+
+// GCC have alternative #pragma pack(N) syntax and old gcc version not support pack(push,N), also any gcc version not support it at some platform
+#if defined(__GNUC__)
+#pragma pack(1)
+#else
+#pragma pack(push,1)
+#endif
+
+struct PageText
+{
+    std::string Text;
+    uint16 NextPage;
+};
+
+// GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
+#if defined(__GNUC__)
+#pragma pack()
+#else
+#pragma pack(pop)
+#endif
+
+// Benchmarked: Faster than UNORDERED_MAP (insert/find)
+typedef std::map<uint32, PageText> PageTextContainer;
+
+// Benchmarked: Faster than std::map (insert/find)
+typedef UNORDERED_MAP<uint16, InstanceTemplate> InstanceTemplateContainer;
 
 struct GameTele
 {
@@ -620,11 +637,12 @@ class ObjectMgr
         Player* GetPlayer(uint64 guid) const { return ObjectAccessor::FindPlayer(guid); }
         Player* GetPlayerByLowGUID(uint32 lowguid) const;
 
-        static GameObjectInfo const *GetGameObjectInfo(uint32 id) { return sGOStorage.LookupEntry<GameObjectInfo>(id); }
+        GameObjectTemplate const* GetGameObjectTemplate(uint32 entry);
+        GameObjectTemplateContainer const* GetGameObjectTemplates() { return &GameObjectTemplateStore; }
         int LoadReferenceVendor(int32 vendor, int32 item_id, std::set<uint32> *skip_vendors);
 
-        void LoadGameobjectInfo();
-        void AddGameobjectInfo(GameObjectInfo *goinfo);
+        void LoadGameObjectTemplate();
+        void AddGameobjectInfo(GameObjectTemplate *goinfo);
 
         Group * GetGroupByGUID(uint32 guid) const;
         void AddGroup(Group* group) { mGroupSet.insert(group); }
@@ -651,23 +669,17 @@ class ObjectMgr
         ArenaTeamMap::iterator GetArenaTeamMapBegin() { return mArenaTeamMap.begin(); }
         ArenaTeamMap::iterator GetArenaTeamMapEnd()   { return mArenaTeamMap.end(); }
 
-        static CreatureInfo const *GetCreatureTemplate(uint32 id) { return sCreatureStorage.LookupEntry<CreatureInfo>(id); }
-        CreatureModelInfo const *GetCreatureModelInfo(uint32 modelid);
-        CreatureModelInfo const* GetCreatureModelRandomGender(uint32 display_id);
-        uint32 ChooseDisplayId(uint32 team, const CreatureInfo *cinfo, const CreatureData *data = NULL);
-        static void ChooseCreatureFlags(const CreatureInfo *cinfo, uint32& npcflag, uint32& unit_flags, uint32& dynamicflags, const CreatureData *data = NULL);
+        CreatureTemplate const* GetCreatureTemplate(uint32 entry);
+        CreatureTemplateContainer const* GetCreatureTemplates() { return &CreatureTemplateStore; }
+        CreatureModelInfo const* GetCreatureModelInfo(uint32 modelId);
+        CreatureModelInfo const* GetCreatureModelRandomGender(uint32 &displayID);
+        uint32 ChooseDisplayId(uint32 team, const CreatureTemplate *cinfo, const CreatureData *data = NULL);
+        static void ChooseCreatureFlags(const CreatureTemplate *cinfo, uint32& npcflag, uint32& unit_flags, uint32& dynamicflags, const CreatureData *data = NULL);
         EquipmentInfo const *GetEquipmentInfo(uint32 entry);
-        static CreatureDataAddon const *GetCreatureAddon(uint32 lowguid)
-        {
-            return sCreatureDataAddonStorage.LookupEntry<CreatureDataAddon>(lowguid);
-        }
-
-        static CreatureDataAddon const *GetCreatureTemplateAddon(uint32 entry)
-        {
-            return sCreatureInfoAddonStorage.LookupEntry<CreatureDataAddon>(entry);
-        }
-
-        static ItemPrototype const* GetItemPrototype(uint32 id) { return sItemStorage.LookupEntry<ItemPrototype>(id); }
+        CreatureAddon const *GetCreatureAddon(uint32 lowguid);
+        CreatureAddon const *GetCreatureTemplateAddon(uint32 entry);
+        ItemTemplate const* GetItemTemplate(uint32 entry);
+        ItemTemplateContainer const* GetItemTemplateStore() { return &ItemTemplateStore; }
 
         ItemSetNameEntry const* GetItemSetNameEntry(uint32 itemId)
         {
@@ -677,10 +689,7 @@ class ObjectMgr
             return NULL;
         }
 
-        static InstanceTemplate const* GetInstanceTemplate(uint32 map)
-        {
-            return sInstanceTemplate.LookupEntry<InstanceTemplate>(map);
-        }
+        InstanceTemplate const* GetInstanceTemplate(uint32 mapID);
 
         PetLevelInfo const* GetPetLevelInfo(uint32 creature_id, uint8 level) const;
 
@@ -907,7 +916,8 @@ class ObjectMgr
         void LoadCreatureClassLevelStats();
         void LoadCreatureLocales();
         void LoadCreatureTemplates();
-        void CheckCreatureTemplate(CreatureInfo const* cInfo);
+        void LoadCreatureTemplateAddons();
+        void CheckCreatureTemplate(CreatureTemplate const* cInfo);
         void LoadCreatures();
         void LoadLinkedRespawn();
         bool SetCreatureLinkedRespawn(uint32 guid, uint32 linkedGuid);
@@ -918,7 +928,7 @@ class ObjectMgr
         void LoadGameObjectLocales();
         void LoadGameobjects();
         void LoadGameobjectRespawnTimes();
-        void LoadItemPrototypes();
+        void LoadItemTemplates();
         void LoadItemLocales();
         void LoadItemSetNames();
         void LoadItemSetNameLocales();
@@ -944,6 +954,7 @@ class ObjectMgr
         void LoadGameObjectForQuests();
 
         void LoadPageTexts();
+        PageText const* GetPageText(uint32 pageEntry);
 
         void LoadPlayerInfo();
         void LoadPetLevelInfo();
@@ -1344,11 +1355,12 @@ class ObjectMgr
 
         LocaleConstant DBCLocaleIndex;
 
+        PageTextContainer PageTextStore;
+        InstanceTemplateContainer InstanceTemplateStore;
+
     private:
         void LoadScripts(ScriptsType type);
         void CheckScripts(ScriptsType type, std::set<int32>& ids);
-        uint32 LoadCreatureAddons(SQLStorage& creatureaddons, char const* entryName);
-        void ConvertCreatureAddonAuras(CreatureDataAddon* addon, char const* table, char const* guidEntryStr);
         void LoadQuestRelationsHelper(QuestRelations& map, std::string table, bool starter, bool go);
         void PlayerCreateInfoAddItemHelper(uint32 race_, uint32 class_, uint32 itemId, int32 count);
 
@@ -1363,6 +1375,7 @@ class ObjectMgr
         PlayerClassInfo playerClassInfo[MAX_CLASSES];
 
         void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
+
         PlayerInfo playerInfo[MAX_RACES][MAX_CLASSES];
 
         typedef std::vector<uint32> PlayerXPperLevel;       // [level]
@@ -1383,10 +1396,18 @@ class ObjectMgr
 
         MapObjectGuids mMapObjectGuids;
         CreatureDataMap mCreatureDataMap;
+        CreatureTemplateContainer CreatureTemplateStore;
+        CreatureModelContainer CreatureModelStore;
+        CreatureAddonContainer CreatureAddonStore;
+        CreatureAddonContainer CreatureTemplateAddonStore;
+        EquipmentInfoContainer EquipmentInfoStore;
         LinkedRespawnMap mLinkedRespawnMap;
         CreatureLocaleMap mCreatureLocaleMap;
         GameObjectDataMap mGameObjectDataMap;
         GameObjectLocaleMap mGameObjectLocaleMap;
+        GameObjectTemplateContainer GameObjectTemplateStore;
+
+        ItemTemplateContainer ItemTemplateStore;
         ItemLocaleMap mItemLocaleMap;
         ItemSetNameLocaleMap mItemSetNameLocaleMap;
         QuestLocaleMap mQuestLocaleMap;

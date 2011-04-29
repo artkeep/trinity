@@ -585,7 +585,7 @@ void Object::_BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask 
                 {
                     if (GetTypeId() == TYPEID_UNIT)
                     {
-                        const CreatureInfo* cinfo = this->ToCreature()->GetCreatureInfo();
+                        const CreatureTemplate* cinfo = this->ToCreature()->GetCreatureInfo();
                         if (cinfo->flags_extra & CREATURE_FLAG_EXTRA_TRIGGER)
                         {
                             if (target->isGameMaster())
@@ -2294,7 +2294,7 @@ GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float 
     if (!IsInWorld())
         return NULL;
 
-    GameObjectInfo const* goinfo = ObjectMgr::GetGameObjectInfo(entry);
+    GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectTemplate(entry);
     if (!goinfo)
     {
         sLog->outErrorDb("Gameobject template %u not found in database!", entry);

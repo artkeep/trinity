@@ -1286,7 +1286,7 @@ void World::SetInitialWorldSettings()
     sObjectMgr->LoadPageTexts();
 
     sLog->outString("Loading Game Object Templates...");         // must be after LoadPageTexts
-    sObjectMgr->LoadGameobjectInfo();
+    sObjectMgr->LoadGameObjectTemplate();
 
     sLog->outString("Loading Spell Rank Data...");
     sSpellMgr->LoadSpellRanks();
@@ -1328,7 +1328,7 @@ void World::SetInitialWorldSettings()
     sDisableMgr->LoadDisables();                                 // must be before loading quests and items
 
     sLog->outString("Loading Items...");                         // must be after LoadRandomEnchantmentsTable and LoadPageTexts
-    sObjectMgr->LoadItemPrototypes();
+    sObjectMgr->LoadItemTemplates();
 
     sLog->outString("Loading Item set names...");                // must be after LoadItemPrototypes
     sObjectMgr->LoadItemSetNames();
@@ -1341,6 +1341,9 @@ void World::SetInitialWorldSettings()
 
     sLog->outString("Loading Creature templates...");
     sObjectMgr->LoadCreatureTemplates();
+
+    sLog->outString("Loading Creature template addons...");
+    sObjectMgr->LoadCreatureTemplateAddons();
 
     sLog->outString("Loading Vehicle scaling information...");
     sObjectMgr->LoadVehicleScaling();

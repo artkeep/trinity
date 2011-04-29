@@ -702,13 +702,13 @@ void Spell::SpellDamageSchoolDmg(SpellEffIndex effIndex)
                         Item *item = m_caster->ToPlayer()->GetWeaponForAttack(RANGED_ATTACK);
                         if (item)
                         {
-                            float dmg_min = item->GetProto()->Damage->DamageMin;
-                            float dmg_max = item->GetProto()->Damage->DamageMax;
+                            float dmg_min = item->GetTemplate()->Damage->DamageMin;
+                            float dmg_max = item->GetTemplate()->Damage->DamageMax;
                             if (dmg_max == 0.0f && dmg_min > dmg_max)
                                 damage += int32(dmg_min);
                             else
                                 damage += irand(int32(dmg_min), int32(dmg_max));
-                            damage += int32(m_caster->ToPlayer()->GetAmmoDPS()*item->GetProto()->Delay*0.001f);
+                            damage += int32(m_caster->ToPlayer()->GetAmmoDPS()*item->GetTemplate()->Delay*0.001f);
                         }
                     }
                 }
@@ -2397,7 +2397,7 @@ void Spell::DoCreateItem(uint32 /*i*/, uint32 itemtype)
     Player* player = (Player*)unitTarget;
 
     uint32 newitemid = itemtype;
-    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(newitemid);
+    ItemTemplate const *pProto = sObjectMgr->GetItemTemplate(newitemid);
     if (!pProto)
     {
         player->SendEquipError(EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL);
@@ -2478,7 +2478,7 @@ void Spell::DoCreateItem(uint32 /*i*/, uint32 itemtype)
         }
 
         // set the "Crafted by ..." property of the item
-        if (pItem->GetProto()->Class != ITEM_CLASS_CONSUMABLE && pItem->GetProto()->Class != ITEM_CLASS_QUEST && newitemid != 6265 && newitemid != 6948)
+        if (pItem->GetTemplate()->Class != ITEM_CLASS_CONSUMABLE && pItem->GetTemplate()->Class != ITEM_CLASS_QUEST && newitemid != 6265 && newitemid != 6948)
             pItem->SetUInt32Value(ITEM_FIELD_CREATOR, player->GetGUIDLow());
 
         // send info to the client
@@ -2793,7 +2793,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
     // Get lockId
     if (gameObjTarget)
     {
-        GameObjectInfo const* goInfo = gameObjTarget->GetGOInfo();
+        GameObjectTemplate const* goInfo = gameObjTarget->GetGOInfo();
         // Arathi Basin banner opening !
         if ((goInfo->type == GAMEOBJECT_TYPE_BUTTON && goInfo->button.noDamageImmune) ||
             (goInfo->type == GAMEOBJECT_TYPE_GOOBER && goInfo->goober.losOK))
@@ -2831,7 +2831,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
     }
     else if (itemTarget)
     {
-        lockId = itemTarget->GetProto()->LockID;
+        lockId = itemTarget->GetTemplate()->LockID;
         guid = itemTarget->GetGUID();
     }
     else
@@ -3498,7 +3498,7 @@ void Spell::EffectEnchantItemPerm(SpellEffIndex effIndex)
     else
     {
         // do not increase skill if vellum used
-        if (!(m_CastItem && m_CastItem->GetProto()->Flags & ITEM_PROTO_FLAG_TRIGGERED_CAST))
+        if (!(m_CastItem && m_CastItem->GetTemplate()->Flags & ITEM_PROTO_FLAG_TRIGGERED_CAST))
             p_caster->UpdateCraftSkill(m_spellInfo->Id);
 
         uint32 enchant_id = m_spellInfo->EffectMiscValue[effIndex];
@@ -3518,7 +3518,7 @@ void Spell::EffectEnchantItemPerm(SpellEffIndex effIndex)
         {
             sLog->outCommand(p_caster->GetSession()->GetAccountId(),"GM %s (Account: %u) enchanting(perm): %s (Entry: %d) for player: %s (Account: %u)",
                 p_caster->GetName(),p_caster->GetSession()->GetAccountId(),
-                itemTarget->GetProto()->Name1,itemTarget->GetEntry(),
+                itemTarget->GetTemplate()->Name1,itemTarget->GetEntry(),
                 item_owner->GetName(),item_owner->GetSession()->GetAccountId());
         }
 
@@ -3579,7 +3579,7 @@ void Spell::EffectEnchantItemPrismatic(SpellEffIndex effIndex)
     {
         sLog->outCommand(p_caster->GetSession()->GetAccountId(),"GM %s (Account: %u) enchanting(perm): %s (Entry: %d) for player: %s (Account: %u)",
             p_caster->GetName(),p_caster->GetSession()->GetAccountId(),
-            itemTarget->GetProto()->Name1,itemTarget->GetEntry(),
+            itemTarget->GetTemplate()->Name1,itemTarget->GetEntry(),
             item_owner->GetName(),item_owner->GetSession()->GetAccountId());
     }
 
@@ -3709,7 +3709,7 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
     {
         sLog->outCommand(p_caster->GetSession()->GetAccountId(),"GM %s (Account: %u) enchanting(temp): %s (Entry: %d) for player: %s (Account: %u)",
             p_caster->GetName(), p_caster->GetSession()->GetAccountId(),
-            itemTarget->GetProto()->Name1, itemTarget->GetEntry(),
+            itemTarget->GetTemplate()->Name1, itemTarget->GetEntry(),
             item_owner->GetName(), item_owner->GetSession()->GetAccountId());
     }
 
@@ -4007,7 +4007,7 @@ void Spell::SpellDamageWeaponDmg(SpellEffIndex effIndex)
                 // 50% more damage with daggers
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
                     if (Item* item = m_caster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                        if (item->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
+                        if (item->GetTemplate()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
                             totalDamagePercentMod *= 1.5f;
             }
             // Mutilate (for each hand)
@@ -5695,7 +5695,7 @@ void Spell::EffectDisEnchant(SpellEffIndex /*effIndex*/)
         return;
 
     Player* p_caster = (Player*)m_caster;
-    if (!itemTarget || !itemTarget->GetProto()->DisenchantID)
+    if (!itemTarget || !itemTarget->GetTemplate()->DisenchantID)
         return;
 
     p_caster->UpdateCraftSkill(m_spellInfo->Id);
@@ -5738,7 +5738,7 @@ void Spell::EffectFeedPet(SpellEffIndex effIndex)
     if (!pet->isAlive())
         return;
 
-    int32 benefit = pet->GetCurrentFoodBenefitLevel(foodItem->GetProto()->ItemLevel);
+    int32 benefit = pet->GetCurrentFoodBenefitLevel(foodItem->GetTemplate()->ItemLevel);
     if (benefit <= 0)
         return;
 
@@ -6342,7 +6342,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
 {
     uint32 name_id = m_spellInfo->EffectMiscValue[effIndex];
 
-    GameObjectInfo const* goinfo = ObjectMgr::GetGameObjectInfo(name_id);
+    GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectTemplate(name_id);
 
     if (!goinfo)
     {
@@ -6486,7 +6486,7 @@ void Spell::EffectProspecting(SpellEffIndex /*effIndex*/)
         return;
 
     Player* p_caster = (Player*)m_caster;
-    if (!itemTarget || !(itemTarget->GetProto()->Flags & ITEM_PROTO_FLAG_PROSPECTABLE))
+    if (!itemTarget || !(itemTarget->GetTemplate()->Flags & ITEM_PROTO_FLAG_PROSPECTABLE))
         return;
 
     if (itemTarget->GetCount() < 5)
@@ -6495,7 +6495,7 @@ void Spell::EffectProspecting(SpellEffIndex /*effIndex*/)
     if (sWorld->getBoolConfig(CONFIG_SKILL_PROSPECTING))
     {
         uint32 SkillValue = p_caster->GetPureSkillValue(SKILL_JEWELCRAFTING);
-        uint32 reqSkillValue = itemTarget->GetProto()->RequiredSkillRank;
+        uint32 reqSkillValue = itemTarget->GetTemplate()->RequiredSkillRank;
         p_caster->UpdateGatherSkill(SKILL_JEWELCRAFTING, SkillValue, reqSkillValue);
     }
 
@@ -6508,7 +6508,7 @@ void Spell::EffectMilling(SpellEffIndex /*effIndex*/)
         return;
 
     Player* p_caster = (Player*)m_caster;
-    if (!itemTarget || !(itemTarget->GetProto()->Flags & ITEM_PROTO_FLAG_MILLABLE))
+    if (!itemTarget || !(itemTarget->GetTemplate()->Flags & ITEM_PROTO_FLAG_MILLABLE))
         return;
 
     if (itemTarget->GetCount() < 5)
@@ -6517,7 +6517,7 @@ void Spell::EffectMilling(SpellEffIndex /*effIndex*/)
     if (sWorld->getBoolConfig(CONFIG_SKILL_MILLING))
     {
         uint32 SkillValue = p_caster->GetPureSkillValue(SKILL_INSCRIPTION);
-        uint32 reqSkillValue = itemTarget->GetProto()->RequiredSkillRank;
+        uint32 reqSkillValue = itemTarget->GetTemplate()->RequiredSkillRank;
         p_caster->UpdateGatherSkill(SKILL_INSCRIPTION, SkillValue, reqSkillValue);
     }
 
@@ -6894,7 +6894,7 @@ void Spell::SummonGuardian(uint32 i, uint32 entry, SummonPropertiesEntry const *
 
     // level of pet summoned using engineering item based at engineering skill level
     if (m_CastItem && caster->GetTypeId() == TYPEID_PLAYER)
-        if (ItemPrototype const *proto = m_CastItem->GetProto())
+        if (ItemTemplate const *proto = m_CastItem->GetTemplate())
             if (proto->RequiredSkill == SKILL_ENGINERING)
                 if (uint16 skill202 = caster->ToPlayer()->GetSkillValue(SKILL_ENGINERING))
                     level = skill202/5;
@@ -7121,7 +7121,7 @@ void Spell::EffectRechargeManaGem(SpellEffIndex /*effIndex*/)
 
     uint32 item_id = m_spellInfo->EffectItemType[0];
 
-    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(item_id);
+    ItemTemplate const *pProto = sObjectMgr->GetItemTemplate(item_id);
     if (!pProto)
     {
         player->SendEquipError(EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL);

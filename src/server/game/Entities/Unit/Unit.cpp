@@ -7978,17 +7978,18 @@ bool Unit::HandleAuraProc(Unit * pVictim, uint32 damage, Aura * triggeredByAura,
                     if (!caster || !damage)
                         return false;
 
+                    if (Aura * aura = GetAura(28682))
+                        if (aura->GetStackAmount() == 10)
+                        {
+                            RemoveAurasDueToSpell(11129);
+                            return false;
+                        }
+
                     //last charge and crit
                     if (triggeredByAura->GetCharges() <= 1 && (procEx & PROC_EX_CRITICAL_HIT))
-                    {
-                        RemoveAurasDueToSpell(28682);       //-> remove Combustion auras
                         return true;                        // charge counting (will removed)
-                    }
 
-                    // This function can be called twice during one spell hit (Area of Effect spells)
-                    // Make sure 28682 wasn't already removed by previous call
-                    if (HasAura(28682))
-                        this->CastSpell(this, 28682, true);
+                    CastSpell(this, 28682, true);
 
                     return false; // ordinary chrages will be removed during crit chance computations.
                 }

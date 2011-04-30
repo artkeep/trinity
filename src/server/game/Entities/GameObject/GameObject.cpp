@@ -451,6 +451,10 @@ void GameObject::Update(uint32 diff)
                         if (goInfo->trap.spellId)
                             CastSpell(ok, goInfo->trap.spellId);
 
+                        // Player traps should activate PvP mode
+                        if (owner && owner->GetTypeId() == TYPEID_PLAYER)
+                            owner->CombatStart(ok, false);
+
                         m_cooldownTime = time(NULL) + (goInfo->trap.cooldown ? goInfo->trap.cooldown : uint32(4));   // template or 4 seconds
 
                         if (goInfo->trap.type == 1)

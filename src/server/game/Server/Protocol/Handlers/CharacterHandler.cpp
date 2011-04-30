@@ -1673,7 +1673,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
                     if (requiredRaces & RACEMASK_ALLIANCE)
                     {
                         quests << uint32(qinfo->GetQuestId());
-                        quests << ", ";
+                        quests << ",";
                     }
                 }
                 else // if (team == BG_TEAM_HORDE)
@@ -1681,7 +1681,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
                     if (requiredRaces & RACEMASK_HORDE)
                     {
                         quests << uint32(qinfo->GetQuestId());
-                        quests << ", ";
+                        quests << ",";
                     }
                 }
             }

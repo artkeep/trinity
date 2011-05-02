@@ -101,29 +101,14 @@ public:
 
         pPlayer->ADD_GOSSIP_ITEM(0, "Expedition Base Camp", GOSSIP_SENDER_MAIN, BASE_CAMP);
         //pPlayer->ADD_GOSSIP_ITEM(0, "Formation Grounds", GOSSIP_SENDER_MAIN, GROUNDS);
-        if (pInstance->GetBossState(BOSS_LEVIATHAN) == DONE || pPlayer->isGameMaster())
-        {
-            pPlayer->ADD_GOSSIP_ITEM(0, "Colossal Forge", GOSSIP_SENDER_MAIN, FORGE);
-            if (pInstance->GetBossState(BOSS_XT002) == DONE || pPlayer->isGameMaster())
-            {
-                pPlayer->ADD_GOSSIP_ITEM(0, "Scrapyard", GOSSIP_SENDER_MAIN, SCRAPYARD);
-                pPlayer->ADD_GOSSIP_ITEM(0, "Antechamber of Ulduar", GOSSIP_SENDER_MAIN, ANTECHAMBER);
-                if (pInstance->GetBossState(BOSS_KOLOGARN) == DONE || pPlayer->isGameMaster())
-                {
-                    pPlayer->ADD_GOSSIP_ITEM(0, "Shattered Walkway", GOSSIP_SENDER_MAIN, WALKWAY);
-                    if (pInstance->GetBossState(BOSS_AURIAYA) == DONE || pPlayer->isGameMaster())
-                    {
-                        pPlayer->ADD_GOSSIP_ITEM(0, "Conservatory of Life", GOSSIP_SENDER_MAIN, CONSERVATORY);
-                        if (pInstance->GetBossState(BOSS_MIMIRON) == FAIL || pInstance->GetBossState(BOSS_MIMIRON) == DONE || pPlayer->isGameMaster())
-                        {
-                            pPlayer->ADD_GOSSIP_ITEM(0, "Spark of Imagination", GOSSIP_SENDER_MAIN, SPARK_IMAGINATION);
-                            if (pInstance->GetBossState(BOSS_VEZAX) == DONE || pPlayer->isGameMaster())
-                                pPlayer->ADD_GOSSIP_ITEM(0, "Descent into Madness", GOSSIP_SENDER_MAIN, DESCENT_MADNESS);
-                        }
-                    }
-                }
-            }
-        }
+        //if (pInstance->GetBossState(BOSS_LEVIATHAN) == DONE || pPlayer->isGameMaster())
+        pPlayer->ADD_GOSSIP_ITEM(0, "Colossal Forge", GOSSIP_SENDER_MAIN, FORGE);
+        pPlayer->ADD_GOSSIP_ITEM(0, "Scrapyard", GOSSIP_SENDER_MAIN, SCRAPYARD);
+        pPlayer->ADD_GOSSIP_ITEM(0, "Antechamber of Ulduar", GOSSIP_SENDER_MAIN, ANTECHAMBER);
+        pPlayer->ADD_GOSSIP_ITEM(0, "Shattered Walkway", GOSSIP_SENDER_MAIN, WALKWAY);
+        pPlayer->ADD_GOSSIP_ITEM(0, "Conservatory of Life", GOSSIP_SENDER_MAIN, CONSERVATORY);
+        pPlayer->ADD_GOSSIP_ITEM(0, "Spark of Imagination", GOSSIP_SENDER_MAIN, SPARK_IMAGINATION);
+        pPlayer->ADD_GOSSIP_ITEM(0, "Descent into Madness", GOSSIP_SENDER_MAIN, DESCENT_MADNESS);
         pPlayer->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, pGO->GetGUID());
         return true;
     }

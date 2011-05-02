@@ -111,7 +111,6 @@ enum Yells
 #define ACHIEV_TIMED_START_EVENT                21027
 #define ACHIEVEMENT_HEARTBREAKER                RAID_MODE(3058, 3059)
 #define ACHIEVEMENT_NERF_ENG                    RAID_MODE(2931, 2932)
-
 /************************************************
 -----------------SPAWN LOCATIONS-----------------
 ************************************************/
@@ -204,6 +203,8 @@ public:
 
             phase = 1;
             heart_exposed = 0;
+
+            vehicle->Reset();
 
             if (instance)
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
@@ -631,7 +632,6 @@ public:
 
 };
 
-
 /*-------------------------------------------------------
  *
  *        XM-024 PUMMELLER
@@ -698,7 +698,6 @@ public:
 
 };
 
-
 /*-------------------------------------------------------
  *
  *        XE-321 BOOMBOT
@@ -744,7 +743,6 @@ public:
 
 };
 
-
 /*-------------------------------------------------------
  *
  *        VOID ZONE
@@ -787,7 +785,6 @@ public:
     };
 
 };
-
 
 /*-------------------------------------------------------
  *

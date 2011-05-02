@@ -23,7 +23,6 @@ EndScriptData */
 
 #include "ScriptPCH.h"
 #include "ulduar.h"
-#include "SpellAuraEffects.h"
 
 enum Yells
 {
@@ -226,7 +225,7 @@ public:
                     case EVENT_GRAB_POT:
                         if (Unit* SlagPotTarget = Unit::GetUnit(*me, SlagPotGUID))
                         {
-                            SlagPotTarget->EnterVehicle(me, 0);
+                            SlagPotTarget->_EnterVehicle(vehicle, 0);
                             events.ScheduleEvent(EVENT_CHANGE_POT, 1000);
                         }
                         break;
@@ -335,7 +334,7 @@ public:
             Brittled = false;
         }
 
-        void DamageTaken(Unit* /*attacker*/, int &damage)
+        void DamageTaken(Unit* /*attacker*/, uint32 &damage)
         {
             if (me->HasAura(SPELL_BRITTLE) && damage >= 5000)
             {

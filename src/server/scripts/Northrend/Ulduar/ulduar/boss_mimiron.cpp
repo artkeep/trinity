@@ -219,7 +219,7 @@ public:
         uint32 EnrageTimer;
         uint32 FlameTimer;
         uint32 uiBotTimer;
-        bool checkBotAlive;
+        bool CheckBotAlive;
         bool Enraged;
 
         Phases phase;
@@ -237,7 +237,7 @@ public:
                 instance->SetData(DATA_MIMIRON_ELEVATOR, GO_STATE_ACTIVE);
                 instance->SetBossState(BOSS_MIMIRON, FAIL);
                 
-                for (uint8 data = DATA_LEVIATHAN_MK_II; data <= DATA_AERIAL_UNIT; ++data)
+                for (uint8 data = DATA_VX_001; data <= DATA_AERIAL_UNIT; ++data)
                 {
                     if (Creature *pCreature = me->GetCreature(*me, instance->GetData64(data)))
                     {
@@ -254,7 +254,7 @@ public:
             uiPhase_timer = -1;
             uiBotTimer = 0;
             MimironHardMode = false;
-            checkBotAlive = true;
+            CheckBotAlive = true;
             Enraged = false;
             DespawnCreatures(34362, 100);
         }
@@ -330,7 +330,7 @@ public:
             }
                 
             // All sections need to die within 10 seconds, else they respawn
-            if (checkBotAlive)
+            if (CheckBotAlive)
                 uiBotTimer = 0;
             else
             {
@@ -344,7 +344,7 @@ public:
                     if (Creature *pAerialUnit = me->GetCreature(*me, instance->GetData64(DATA_AERIAL_UNIT)))
                         pAerialUnit->AI()->DoAction(DO_AERIAL_ASSEMBLED);
 
-                    checkBotAlive = true;
+                    CheckBotAlive = true;
                 }
                 else
                 {
@@ -359,7 +359,7 @@ public:
                                             pVX_001->DisappearAndDie();
                                             pAerialUnit->DisappearAndDie();
                                             me->Kill(me, false);
-                                            checkBotAlive = true;
+                                            CheckBotAlive = true;
                                         }
                 }
             }
@@ -381,7 +381,7 @@ public:
                             if (instance)
                             {
                                 if (Creature *pLeviathan = me->GetCreature(*me, instance->GetData64(DATA_LEVIATHAN_MK_II)))
-                                    me->EnterVehicle(pLeviathan, 4);
+                                    me->_EnterVehicle(pLeviathan->GetVehicleKit(), 4);
                             }
                             JumpToNextStep(2000);
                             break;
@@ -455,7 +455,7 @@ public:
                             if (instance)
                             {
                                 if (Creature *pVX_001 = me->GetCreature(*me, instance->GetData64(DATA_VX_001)))
-                                    me->EnterVehicle(pVX_001, 0);
+                                    me->_EnterVehicle(pVX_001->GetVehicleKit(), 0);
                             }
                             JumpToNextStep(3500);
                             break;
@@ -561,8 +561,8 @@ public:
                                     {
                                         pLeviathan->GetMotionMaster()->MoveTargetedHome();
                                         pVX_001->SetStandState(UNIT_STAND_STATE_STAND);
-                                        pVX_001->EnterVehicle(pLeviathan, 7);
-                                        me->EnterVehicle(pVX_001, 1);
+                                        pVX_001->_EnterVehicle(pLeviathan->GetVehicleKit(), 7);
+                                        me->_EnterVehicle(pVX_001->GetVehicleKit(), 1);
                                     }
                             }
                             JumpToNextStep(8000);
@@ -574,7 +574,7 @@ public:
                                     {
                                         DoScriptText(SAY_V07TRON_ACTIVATE, me);
                                         pAerialUnit->SetFlying(false);
-                                        pAerialUnit->EnterVehicle(pVX_001, 3);
+                                        pAerialUnit->_EnterVehicle(pVX_001->GetVehicleKit(), 3);
                                     }
                             JumpToNextStep(10000);
                             break;
@@ -623,7 +623,7 @@ public:
                     JumpToNextStep(1000);
                     break;
                 case DO_ACTIVATE_DEATH_TIMER:
-                    checkBotAlive = false;
+                    CheckBotAlive = false;
                     break;
                 case DO_ACTIVATE_HARD_MODE:
                     MimironHardMode = true;
@@ -632,7 +632,7 @@ public:
             }
         }
         
-        void DespawnCreatures(uint32 entry, float distance, bool discs = false)
+        void DespawnCreatures(uint32 entry, float distance)
         {
             std::list<Creature*> m_pCreatures;
             GetCreatureListWithEntryInGrid(m_pCreatures, me, entry, distance);
@@ -643,7 +643,6 @@ public:
             for(std::list<Creature*>::iterator iter = m_pCreatures.begin(); iter != m_pCreatures.end(); ++iter)
                 (*iter)->DespawnOrUnsummon();
         }
-        
     };
 
 };
@@ -685,16 +684,8 @@ public:
             me->RemoveAllAuras();
             phase = PHASE_NULL;
             events.SetPhase(PHASE_NULL);
-        }
-        
-        void JustReachedHome()
-        {
-            if (Creature *turret = CAST_CRE(me->GetVehicleKit()->GetPassenger(3)))
-            {
-                turret->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-                turret->SetReactState(REACT_PASSIVE);
-                turret->AI()->EnterEvadeMode();
-            }
+            if (vehicle->HasEmptySeat(3))
+                vehicle->Reset();
         }
 
         void KilledUnit(Unit *who)
@@ -725,7 +716,7 @@ public:
                     phase = PHASE_NULL;
                     if (Creature *pMimiron = me->GetCreature(*me, instance->GetData64(DATA_MIMIRON)))
                         pMimiron->AI()->DoAction(DO_ACTIVATE_VX001);
-                    if (Creature *turret = CAST_CRE(me->GetVehicleKit()->GetPassenger(3)))
+                    if (Creature *turret = CAST_CRE(vehicle->GetPassenger(3)))
                         turret->Kill(turret, false);
                     me->SetSpeed(MOVE_RUN, 1.5f, true);
                     me->GetMotionMaster()->MovePoint(0, 2790.11f, 2595.83f, 364.32f);
@@ -756,7 +747,7 @@ public:
                 events.ScheduleEvent(EVENT_FLAME_SUPPRESSANT, 60000, 0, PHASE_LEVIATHAN_SOLO);
             }
             
-            if (Creature *turret = CAST_CRE(me->GetVehicleKit()->GetPassenger(3)))
+            if (Creature *turret = CAST_CRE(vehicle->GetPassenger(3)))
             {
                 turret->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                 turret->SetReactState(REACT_AGGRESSIVE);
@@ -871,6 +862,8 @@ public:
         {
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
+            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+            me->SetReactState(REACT_PASSIVE);
             uiNapalmShell = urand(4000, 8000);
         }
 
@@ -1111,11 +1104,11 @@ public:
                             break;
                         case EVENT_ROCKET_STRIKE:
                             if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                                if (Creature *missile = CAST_CRE(me->GetVehicleKit()->GetPassenger(5)))
+                                if (Creature *missile = CAST_CRE(vehicle->GetPassenger(5)))
                                     missile->CastSpell(pTarget, SPELL_ROCKET_STRIKE, true);
                             if (phase == PHASE_VX001_ASSEMBLED)
                                 if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                                    if (Creature *missile = CAST_CRE(me->GetVehicleKit()->GetPassenger(6)))
+                                    if (Creature *missile = CAST_CRE(vehicle->GetPassenger(6)))
                                         missile->CastSpell(pTarget, SPELL_ROCKET_STRIKE, true);
                             events.RescheduleEvent(EVENT_ROCKET_STRIKE, urand(20000, 25000));
                             break;

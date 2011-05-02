@@ -329,6 +329,7 @@ void AddSC_wailing_caverns();                //Wailing caverns
 void AddSC_instance_wailing_caverns();
 void AddSC_zulfarrak();                     //Zul'Farrak generic
 void AddSC_instance_zulfarrak();            //Zul'Farrak instance script
+void AddSC_npc_pusillin();                  //Dire Maul Pusillin
 
 void AddSC_ashenvale();
 void AddSC_azshara();
@@ -377,7 +378,8 @@ void AddSC_boss_black_knight();
 void AddSC_boss_grand_champions();
 void AddSC_instance_trial_of_the_champion();
 void AddSC_trial_of_the_champion();
-void AddSC_boss_beasts_of_northrend();   //Trial of the Crusader
+
+void AddSC_boss_northrend_beasts()   //Trial of the Crusader
 void AddSC_boss_lord_jaraxxus();
 void AddSC_boss_faction_champions();
 void AddSC_boss_twins_valkyr();
@@ -427,6 +429,7 @@ void AddSC_boss_krystallus();
 void AddSC_boss_sjonnir();
 void AddSC_instance_halls_of_stone();
 void AddSC_halls_of_stone();
+
 void AddSC_boss_algalon();		         //Ulduar Ulduar
 void AddSC_boss_assembly_of_iron();
 void AddSC_boss_auriaya();
@@ -440,9 +443,9 @@ void AddSC_boss_mimiron();
 void AddSC_boss_razorscale();
 void AddSC_boss_thorim();
 void AddSC_boss_xt002();
-void AddSC_boss_general_vezax();
 void AddSC_ulduar_teleporter();
 void AddSC_instance_ulduar();
+
 void AddSC_boss_keleseth();              //Utgarde Keep
 void AddSC_boss_skarvald_dalronn();
 void AddSC_boss_ingvar_the_plunderer();
@@ -957,6 +960,7 @@ void AddKalimdorScripts()
     AddSC_instance_wailing_caverns();
     AddSC_zulfarrak();                      //Zul'Farrak generic
     AddSC_instance_zulfarrak();             //Zul'Farrak instance script
+    AddSC_npc_pusillin();                   //Dire maul npc Pusillin
 
     AddSC_ashenvale();
     AddSC_azshara();
@@ -1090,7 +1094,7 @@ void AddNorthrendScripts()
     AddSC_boss_grand_champions();
     AddSC_instance_trial_of_the_champion();
     AddSC_trial_of_the_champion();
-    AddSC_boss_beasts_of_northrend();   //Trial of the Crusader
+    AddSC_boss_northrend_beasts();   //Trial of the Crusader
     AddSC_boss_lord_jaraxxus();
     AddSC_boss_faction_champions();
     AddSC_boss_twins_valkyr();
@@ -1143,6 +1147,7 @@ void AddNorthrendScripts()
     AddSC_boss_sjonnir();
     AddSC_instance_halls_of_stone();
     AddSC_halls_of_stone();
+
     AddSC_boss_algalon();		         //Ulduar Ulduar
     AddSC_boss_assembly_of_iron();
     AddSC_boss_auriaya();
@@ -1158,6 +1163,7 @@ void AddNorthrendScripts()
     AddSC_boss_xt002();
     AddSC_ulduar_teleporter();
     AddSC_instance_ulduar();
+
     AddSC_boss_keleseth();              //Utgarde Keep
     AddSC_boss_skarvald_dalronn();
     AddSC_boss_ingvar_the_plunderer();

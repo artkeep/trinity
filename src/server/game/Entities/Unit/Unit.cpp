@@ -1651,6 +1651,10 @@ void Unit::CalcAbsorbResist(Unit *pVictim, SpellSchoolMask schoolMask, DamageEff
             if ((*j)->GetMiscValue() & schoolMask)
                 AddPctN(damageResisted, -(*j)->GetAmount());
 
+        // Chaos Bolt should not be resisted
+        if (spellInfo && spellInfo->SpellIconID == 3178)
+            damageResisted = 0;
+
         dmgInfo.ResistDamage(uint32(damageResisted));
     }
 
@@ -2249,7 +2253,7 @@ void Unit::SendMeleeAttackStop(Unit* victim)
     sLog->outDetail("%s %u stopped attacking %s %u", (GetTypeId() == TYPEID_PLAYER ? "player" : "creature"), GetGUIDLow(), (victim->GetTypeId() == TYPEID_PLAYER ? "player" : "creature"),victim->GetGUIDLow());
 }
 
-bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const * /*spellProto*/, WeaponAttackType attackType)
+bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const * spellProto, WeaponAttackType attackType)
 {
     if (pVictim->HasInArc(M_PI,this) || pVictim->HasAuraType(SPELL_AURA_IGNORE_HIT_DIRECTION))
     {
@@ -2257,6 +2261,9 @@ bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const * /*spellProto*/, Weap
         if (pVictim->GetTypeId() == TYPEID_UNIT &&
            pVictim->ToCreature()->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NO_BLOCK)
                 return false;
+
+        if (spellProto->Attributes & SPELL_ATTR0_IMPOSSIBLE_DODGE_PARRY_BLOCK)
+            return false;
 
         float blockChance = pVictim->GetUnitBlockChance();
         blockChance += (int32(GetWeaponSkillValue(attackType)) - int32(pVictim->GetMaxSkillValueForLevel()))*0.04f;
@@ -3702,6 +3709,16 @@ void Unit::RemoveAurasDueToSpellByDispel(uint32 spellId, uint64 casterGUID, Unit
                         caster->CastSpell(caster, triggeredSpellId, true);
                 }
             }
+            // Wyvern Sting
+            if (aura->GetSpellProto()->SpellFamilyName == SPELLFAMILY_HUNTER && (aura->GetSpellProto()->SpellFamilyFlags[1] & 0x1000))
+            {
+                Unit * caster = aura->GetCaster();
+                if (caster && !(dispeller->GetTypeId() == TYPEID_UNIT && dispeller->ToCreature()->isTotem()))
+                    // Noxious Stings
+                    if (AuraEffect * auraEff = caster->GetAuraEffect(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS, SPELLFAMILY_HUNTER, 3521, 1))
+                        if (Aura * newAura = caster->AddAura(aura->GetId(), dispeller))
+                            newAura->SetDuration(aura->GetDuration() / 100 * auraEff->GetAmount());
+            }
             return;
         }
         else
@@ -5059,6 +5076,15 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                     triggered_spell_id = 26654;
                     break;
                 }
+                //Wrecking Crew
+                case 46867:
+                {
+                    if (!procSpell)
+                        return false;
+
+                    triggered_spell_id = 57518;
+                    break;
+                }
                 // Unstable Power
                 case 24658:
                 {
@@ -6150,7 +6176,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                     // Dispel Magic shares spellfamilyflag with abolish disease
                     if (procSpell->SpellIconID != 74)
                         return false;
-                    if (!target || !target->IsFriendlyTo(this))
+                    if (!target || !target->IsFriendlyTo(this) || target->GetTypeId() != TYPEID_PLAYER)
                         return false;
 
                     basepoints0 = int32(target->CountPctFromMaxHealth(triggerAmount));
@@ -8733,8 +8759,8 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
 
             target->CastSpell(target,trigger_spell_id,true,castItem,triggeredByAura);
 
-            if (cooldown && GetTypeId() == TYPEID_PLAYER)
-                this->ToPlayer()->AddSpellCooldown(trigger_spell_id,0,time(NULL) + cooldown);
+            if (cooldown && target->GetTypeId() == TYPEID_PLAYER)
+                target->ToPlayer()->AddSpellCooldown(trigger_spell_id,0,time(NULL) + cooldown);
             return true;
         }
         // Cast positive spell on enemy target

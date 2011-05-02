@@ -1340,8 +1340,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
 
     if (missInfo != SPELL_MISS_EVADE && m_caster && !m_caster->IsFriendlyTo(unit) && !IsPositiveSpell(m_spellInfo->Id))
     {
-        if (!m_caster->HasUnitTypeMask(TYPEMASK_OBJECT))
-            m_caster->CombatStart(unit, !(m_spellInfo->AttributesEx3 & SPELL_ATTR3_NO_INITIAL_AGGRO));
+        m_caster->CombatStart(unit, !(m_spellInfo->AttributesEx3 & SPELL_ATTR3_NO_INITIAL_AGGRO));
 
         if (m_customAttr & SPELL_ATTR0_CU_AURA_CC)
             if (!unit->IsStandState())

@@ -37,6 +37,7 @@
 #include "AchievementMgr.h"
 #include "AuctionHouseMgr.h"
 #include "ObjectMgr.h"
+#include "ArenaTeamMgr.h"
 #include "TicketMgr.h"
 #include "CreatureEventAIMgr.h"
 #include "SpellMgr.h"
@@ -1507,6 +1508,10 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading Completed Achievements...");
     sAchievementMgr->LoadCompletedAchievements();
 
+    // Delete expired auctions before loading
+    sLog->outString("Deleting expired auctions...");
+    sAuctionMgr->DeleteExpiredAuctionsAtStartup();
+
     ///- Load dynamic data tables from the database
     sLog->outString("Loading Item Auctions...");
     sAuctionMgr->LoadAuctionItems();
@@ -1516,7 +1521,7 @@ void World::SetInitialWorldSettings()
     sObjectMgr->LoadGuilds();
 
     sLog->outString("Loading ArenaTeams...");
-    sObjectMgr->LoadArenaTeams();
+    sArenaTeamMgr->LoadArenaTeams();
 
     sLog->outString("Loading Groups...");
     sObjectMgr->LoadGroups();

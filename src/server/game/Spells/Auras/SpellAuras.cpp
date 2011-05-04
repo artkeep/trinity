@@ -1764,7 +1764,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
             break;
     }
 
-    if (!GetCastItemGUID())
+    if (IsPassiveSpell(GetSpellProto()) && !GetCastItemGUID())
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if (m_effects[i] && m_effects[i]->GetAuraType() == SPELL_AURA_MECHANIC_DURATION_MOD)

@@ -191,6 +191,7 @@ public:
 
         time *= MINUTE * IN_MILLISECONDS;
         pvpWG->setTimer((uint32)time);
+        sWorld->SendWintergraspState(); // Update WG timer at player's bg tab
         handler->PSendSysMessage(LANG_BG_WG_CHANGE_TIMER, secsToTimeString(pvpWG->GetTimer(), true).c_str());
 
         return true;

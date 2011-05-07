@@ -49,12 +49,9 @@ class instance_archavon : public InstanceMapScript
             {
                 if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
                 {
-                    if (OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197))
-                    {
-                       bool alliance = pvpWG->getDefenderTeam() == TEAM_ALLIANCE;
-                       if ((alliance && m_player->GetTeam() == HORDE) || (!alliance && m_player->GetTeam() == ALLIANCE))
-                           m_player->CastSpell(m_player, SPELL_TELEPORT_FORTRESS, true);
-                    }
+                    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+                    if (pvpWG && !m_player->isGameMaster() && m_player->GetTeamId() != pvpWG->getDefenderTeam())
+                        m_player->CastSpell(m_player, SPELL_TELEPORT_FORTRESS, true);
                 }
             }
 

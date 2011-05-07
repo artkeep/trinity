@@ -24,6 +24,7 @@ set(scripts_STAT_SRCS
   Commands/cs_event.cpp
   Commands/cs_gobject.cpp
   Commands/cs_honor.cpp
+  Commands/cs_wg.cpp
   Commands/cs_wp.cpp
   Commands/cs_titles.cpp
   Commands/cs_quest.cpp

@@ -17,6 +17,8 @@
 
 #include "ScriptPCH.h"
 #include "vault_of_archavon.h"
+#include "OutdoorPvPMgr.h"
+#include "OutdoorPvPWG.h"
 
 /* Vault of Archavon encounters:
 1 - Archavon the Stone Watcher event
@@ -41,6 +43,19 @@ class instance_archavon : public InstanceMapScript
             {
                 EmalonGUID = 0;
                 ToravonGUID = 0;
+            }
+
+            void OnPlayerEnter(Player *m_player)
+            {
+                if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
+                {
+                    if (OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197))
+                    {
+                       bool alliance = pvpWG->getDefenderTeam() == TEAM_ALLIANCE;
+                       if ((alliance && m_player->GetTeam() == HORDE) || (!alliance && m_player->GetTeam() == ALLIANCE))
+                           m_player->CastSpell(m_player, SPELL_TELEPORT_FORTRESS, true);
+                    }
+                }
             }
 
             void OnCreatureCreate(Creature* creature)

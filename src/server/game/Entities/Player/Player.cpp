@@ -9071,6 +9071,13 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                                                             // 8 Arena season id
     data << uint32(0xF3D) << uint32(sWorld->getIntConfig(CONFIG_ARENA_SEASON_ID));
 
+    // May be send timer to start Wintergrasp
+    if (sWorld->GetWintergrapsState() == 1)
+        data << uint32(0x1102) << sWorld->GetWintergrapsTimer();
+    else
+        data << uint32(0xEC5) << sWorld->GetWintergrapsTimer();
+    // ---
+
     if (mapid == 530)                                       // Outland
     {
         data << uint32(0x9bf) << uint32(0x0);               // 7

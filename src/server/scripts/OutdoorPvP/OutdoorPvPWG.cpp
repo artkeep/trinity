@@ -588,10 +588,10 @@ void OutdoorPvPWG::ProcessEvent(GameObject *obj, uint32 eventId)
                     }
                     break;
                 case BUILDING_TOWER:
-                     --m_towerDamagedCount[state->GetTeam()];
-                     ++m_towerDestroyedCount[state->GetTeam()];
-                     if (state->GetTeam() == getAttackerTeam())
-                     {
+                    --m_towerDamagedCount[state->GetTeam()];
+                    ++m_towerDestroyedCount[state->GetTeam()];
+                    if (state->GetTeam() == getAttackerTeam())
+                    {
                         TeamCastSpell(getAttackerTeam(), -SPELL_TOWER_CONTROL);
                         TeamCastSpell(getDefenderTeam(), -SPELL_TOWER_CONTROL);
                         uint8 attStack = 3 - m_towerDestroyedCount[getAttackerTeam()];
@@ -1432,7 +1432,6 @@ void OutdoorPvPWG::UpdateClockDigit(uint32 &timer, uint32 digit, uint32 mod)
     {
         m_clock[digit] = value;
         SendUpdateWorldState(ClockWorldState[digit], uint32(timer + time(NULL)));
-        sWorld->SetWintergrapsTimer(uint32(timer + time(NULL)), digit);
     }
 }
 
@@ -1630,7 +1629,7 @@ void OutdoorPvPWG::StartBattle()
             CountDef++;
             plr->RemoveAurasByType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED);
             plr->RemoveAurasByType(SPELL_AURA_FLY);
-            plr->CastSpell(plr, 45472, true); //prevent die if fall
+            plr->CastSpell(plr, 45472, true); // prevent die if fall
             plr->PlayDirectSound(OutdoorPvP_WG_SOUND_START_BATTLE); // START Battle
         }
     }
@@ -1645,7 +1644,7 @@ void OutdoorPvPWG::StartBattle()
             CountAtk++;
             plr->RemoveAurasByType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED);
             plr->RemoveAurasByType(SPELL_AURA_FLY);
-            plr->CastSpell(plr, 45472, true); //prevent die if fall
+            plr->CastSpell(plr, 45472, true); // prevent die if fall
             plr->PlayDirectSound(OutdoorPvP_WG_SOUND_START_BATTLE); // START Battle
         }
     }
@@ -1721,7 +1720,7 @@ void OutdoorPvPWG::EndBattle()
         (*itr)->PlayDirectSound(TeamIDsound); // SoundOnEndWin
     }
     for (PlayerSet::iterator itr = m_players[getAttackerTeam()].begin(); itr != m_players[getAttackerTeam()].end(); ++itr)
-        (*itr)->PlayDirectSound(OutdoorPvP_WG_SOUND_NEAR_VICTORY) ; // SoundOnEndLoose
+        (*itr)->PlayDirectSound(OutdoorPvP_WG_SOUND_NEAR_VICTORY); // SoundOnEndLoose
     for (uint8 team = 0; team < 2; ++team)
     {
         // destroyed all vehicles
@@ -1817,13 +1816,10 @@ void OutdoorPvPWG::EndBattle()
                     else
                         marks = 1;
                 }
-                else
+                else if (plr->HasAura(SPELL_LIEUTENANT) || plr->HasAura(SPELL_CORPORAL))
                 {
-                    if (plr->HasAura(SPELL_LIEUTENANT) || plr->HasAura(SPELL_CORPORAL))
-                    {
-                        marks = 1;
-                        honor = baseHonor;
-                    }
+                    marks = 1;
+                    honor = baseHonor;
                 }
                 plr->RewardHonor(NULL, 1, honor);
                 RewardMarkOfHonor(plr, marks);
@@ -1845,13 +1841,10 @@ void OutdoorPvPWG::EndBattle()
                         plr->CastSpell(plr, SPELL_DESTROYED_TOWER, true);
                 }
             }
-            if (team == getDefenderTeam())
+            if (team == getDefenderTeam() && (plr->HasAura(SPELL_LIEUTENANT) || plr->HasAura(SPELL_CORPORAL)))
             {
-                if (plr->HasAura(SPELL_LIEUTENANT) || plr->HasAura(SPELL_CORPORAL))
-                {
-                    plr->AreaExploredOrEventHappens(A_VICTORY_IN_WG);
-                    plr->AreaExploredOrEventHappens(H_VICTORY_IN_WG);
-                }
+                plr->AreaExploredOrEventHappens(A_VICTORY_IN_WG);
+                plr->AreaExploredOrEventHappens(H_VICTORY_IN_WG);
             }
             plr->RemoveAurasDueToSpell(SPELL_RECRUIT);
             plr->RemoveAurasDueToSpell(SPELL_CORPORAL);

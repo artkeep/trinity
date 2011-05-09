@@ -11171,7 +11171,6 @@ InventoryResult Player::CanStoreItems(Item** pItems, int count) const
         if (pItem->IsBindedNotWith(this))
             return EQUIP_ERR_DONT_OWN_THAT_ITEM;
 
-        Bag *pBag;
         ItemTemplate const *pBagProto;
 
         // item is 'one item only'
@@ -11222,11 +11221,11 @@ InventoryResult Player::CanStoreItems(Item** pItems, int count) const
 
             for (int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; ++t)
             {
-                if (pBag = GetBagByPos(t))
+                if (Bag* bag = GetBagByPos(t))
                 {
-                    if (ItemCanGoIntoBag(pItem->GetTemplate(), pBag->GetTemplate()))
+                    if (ItemCanGoIntoBag(pItem->GetTemplate(), bag->GetTemplate()))
                     {
-                        for (uint32 j = 0; j < pBag->GetBagSize(); j++)
+                        for (uint32 j = 0; j < bag->GetBagSize(); j++)
                         {
                             pItem2 = GetItemByPos(t, j);
                             if( pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_bags[t-INVENTORY_SLOT_BAG_START][j] + pItem->GetCount() <= pProto->GetMaxStackSize())
@@ -11279,15 +11278,15 @@ InventoryResult Player::CanStoreItems(Item** pItems, int count) const
 
             for (int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; ++t)
             {
-                if (pBag = GetBagByPos(t))
+                if (Bag* bag = GetBagByPos(t))
                 {
-                    pBagProto = pBag->GetTemplate();
+                    pBagProto = bag->GetTemplate();
 
                     // not plain container check
                     if (pBagProto && (pBagProto->Class != ITEM_CLASS_CONTAINER || pBagProto->SubClass != ITEM_SUBCLASS_CONTAINER) &&
                         ItemCanGoIntoBag(pProto, pBagProto))
                     {
-                        for (uint32 j = 0; j < pBag->GetBagSize(); j++)
+                        for (uint32 j = 0; j < bag->GetBagSize(); j++)
                         {
                             if (inv_bags[t-INVENTORY_SLOT_BAG_START][j] == 0)
                             {
@@ -11318,15 +11317,15 @@ InventoryResult Player::CanStoreItems(Item** pItems, int count) const
         // search free slot in bags
         for (int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; ++t)
         {
-            if (pBag = GetBagByPos(t))
+            if (Bag* bag = GetBagByPos(t))
             {
-                pBagProto = pBag->GetTemplate();
+                pBagProto = bag->GetTemplate();
 
                 // special bag already checked
                 if (pBagProto && (pBagProto->Class != ITEM_CLASS_CONTAINER || pBagProto->SubClass != ITEM_SUBCLASS_CONTAINER))
                     continue;
 
-                for (uint32 j = 0; j < pBag->GetBagSize(); j++)
+                for (uint32 j = 0; j < bag->GetBagSize(); j++)
                 {
                     if (inv_bags[t-INVENTORY_SLOT_BAG_START][j] == 0)
                     {

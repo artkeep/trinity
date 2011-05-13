@@ -1853,7 +1853,7 @@ class Player : public Unit, public GridObject<Player>
         float GetSpellCritFromIntellect();
         float OCTRegenHPPerSpirit();
         float OCTRegenMPPerSpirit();
-        float GetRatingMultiplier(CombatRating cr) const;
+        float GetRatingCoefficient(CombatRating cr) const;
         float GetRatingBonusValue(CombatRating cr) const;
         uint32 GetBaseSpellPowerBonus() { return m_baseSpellPower; }
         int32 GetSpellPenetrationItemMod() const { return m_spellPenetrationItemMod; }
@@ -2812,7 +2812,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
             if (mod->op == SPELLMOD_CASTING_TIME && basevalue >= T(10000) && mod->value <= -100)
                 continue;
 
-            totalmul += CalculatePctN(1.0f, mod->value);
+            AddPctN(totalmul, mod->value);
         }
 
         DropModCharge(mod, spell);

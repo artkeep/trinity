@@ -1,7 +1,0 @@
-DELETE FROM `spell_proc_event` WHERE `entry` IN (66799,66814,66815,66816,66817);
-INSERT INTO `spell_proc_event` (`entry`,`SpellFamilyName`,`SpellFamilyMask0`) VALUES
-(66799,15,0x00400000),
-(66814,15,0x00400000),
-(66815,15,0x00400000),
-(66816,15,0x00400000),
-(66817,15,0x00400000);

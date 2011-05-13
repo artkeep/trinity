@@ -8003,15 +8003,8 @@ void ObjectMgr::LoadFishingBaseSkillLevel()
     sLog->outString();
 }
 
-bool ObjectMgr::CheckDeclinedNames(std::wstring w_ownname, DeclinedName const& names)
+bool ObjectMgr::CheckDeclinedNames(std::wstring mainpart, DeclinedName const& names)
 {
-    // get main part of the name
-    std::wstring mainpart = GetMainPartOfName(w_ownname, 0);
-    // prepare flags
-    bool x = true;
-    bool y = true;
-
-    // check declined names
     for (uint8 i =0; i < MAX_DECLINED_NAME_CASES; ++i)
     {
         std::wstring wname;
@@ -8019,12 +8012,9 @@ bool ObjectMgr::CheckDeclinedNames(std::wstring w_ownname, DeclinedName const& n
             return false;
 
         if (mainpart != GetMainPartOfName(wname, i+1))
-            x = false;
- 
-        if (w_ownname != wname)
-            y = false;
+            return false;
     }
-    return (x||y);
+    return true;
 }
 
 uint32 ObjectMgr::GetAreaTriggerScriptId(uint32 trigger_id)

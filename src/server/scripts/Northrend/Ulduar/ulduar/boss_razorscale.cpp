@@ -17,7 +17,10 @@
 
 //TODO: Harpoon chain from 62505 should not get removed when other chain is applied
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "ScriptedGossip.h"
+#include "SpellScript.h"
 #include "ulduar.h"
 
 enum Says
@@ -295,8 +298,8 @@ class go_razorscale_harpoon : public GameObjectScript
         bool OnGossipHello(Player* /*player*/, GameObject* go)
         {
             InstanceScript* instance = go->GetInstanceScript();
-            if (Creature* razorscale = ObjectAccessor::GetCreature(*go, instance ? instance->GetData64(TYPE_RAZORSCALE) : 0))
-                go->SetFlag(GAMEOBJECT_FLAGS,  GO_FLAG_UNK1);
+            if (ObjectAccessor::GetCreature(*go, instance ? instance->GetData64(TYPE_RAZORSCALE) : 0))
+                go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNK1);
             return false;
         }
 };
@@ -755,8 +758,6 @@ class npc_mole_machine_trigger : public CreatureScript
                 if (!GobSummoned && SummonGobTimer <= Diff)
                 {
                     DoCast(SPELL_SUMMON_MOLE_MACHINE);
-                    if (GameObject* molemachine = me->FindNearestGameObject(GO_MOLE_MACHINE, 1))
-                        molemachine->SetGoState(GO_STATE_ACTIVE);
                     GobSummoned = true;
                 }
                 else

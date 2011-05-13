@@ -981,7 +981,10 @@ void Aura::HandleAuraSpecificMods(AuraApplication const * aurApp, Unit * caster,
                         int32 heal = GetEffect(EFFECT_0)->GetAmount();
                         caster->CastCustomSpell(target, 64801, &heal, NULL, NULL, true, NULL, GetEffect(EFFECT_0));
                     }
-                } 
+                }
+                // Cat Form, Bear Form, Dire Bear Form - exploit fix
+                else if (GetSpellProto()->SpellFamilyFlags[0] & 0xC0000000)
+                    target->RemoveAurasDueToSpell(64904); // Hymn of Hope
                 break;
             case SPELLFAMILY_MAGE:
                 if (!caster)

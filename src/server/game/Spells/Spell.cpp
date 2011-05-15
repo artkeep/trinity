@@ -2116,13 +2116,10 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                     pushType = PUSH_CHAIN;
                     break;
                 case TARGET_UNIT_TARGET_ALLY:
-                    AddUnitTarget(target, i);
-                    break;
                 case TARGET_UNIT_TARGET_RAID:
                 case TARGET_UNIT_TARGET_PARTY:
                 case TARGET_UNIT_TARGET_PUPPET:
-                    if (IsValidSingleTargetSpell(target))
-                        AddUnitTarget(target, i);
+                    AddUnitTarget(target, i);
                     break;
                 case TARGET_UNIT_PARTY_TARGET:
                 case TARGET_UNIT_CLASS_TARGET:

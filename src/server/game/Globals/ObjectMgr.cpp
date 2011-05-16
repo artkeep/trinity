@@ -6254,7 +6254,7 @@ AreaTrigger const* ObjectMgr::GetMapEntranceTrigger(uint32 Map) const
         if (itr->second.target_mapId == Map)
         {
             AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(itr->first);
-            if (atEntry)
+            if (atEntry && !(Map == 90 && itr->first == 523))
                 return &itr->second;
         }
     }

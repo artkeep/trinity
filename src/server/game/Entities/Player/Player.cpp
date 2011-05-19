@@ -2991,8 +2991,6 @@ void Player::GiveLevel(uint8 level)
     if (level == getLevel())
         return;
 
-    sScriptMgr->OnPlayerLevelChanged(this, level);
-
     PlayerLevelInfo info;
     sObjectMgr->GetPlayerLevelInfo(getRace(), getClass(), level, &info);
 
@@ -3068,6 +3066,8 @@ void Player::GiveLevel(uint8 level)
     }
 
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
+
+    sScriptMgr->OnPlayerLevelChanged(this);
 }
 
 void Player::InitTalentForLevel()

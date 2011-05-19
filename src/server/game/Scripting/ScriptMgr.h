@@ -662,7 +662,7 @@ class PlayerScript : public ScriptObject
         virtual void OnPlayerKilledByCreature(Creature* /*killer*/, Player* /*killed*/) { }
 
         // Called when a player's level changes (right before the level is applied)
-        virtual void OnLevelChanged(Player* /*player*/, uint8 /*newLevel*/) { }
+        virtual void OnLevelChanged(Player* /*player*/) { }
 
         // Called when a player's free talent points change (right before the change is applied)
         virtual void OnFreeTalentPointsChanged(Player* /*player*/, uint32 /*points*/) { }
@@ -931,7 +931,7 @@ class ScriptMgr
         void OnPVPKill(Player *killer, Player *killed);
         void OnCreatureKill(Player *killer, Creature *killed);
         void OnPlayerKilledByCreature(Creature *killer, Player *killed);
-        void OnPlayerLevelChanged(Player *player, uint8 newLevel);
+        void OnPlayerLevelChanged(Player *player);
         void OnPlayerFreeTalentPointsChanged(Player *player, uint32 newPoints);
         void OnPlayerTalentsReset(Player *player, bool no_cost);
         void OnPlayerMoneyChanged(Player *player, int32& amount);

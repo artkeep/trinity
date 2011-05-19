@@ -2534,8 +2534,6 @@ bool ChatHandler::HandleResetLevelCommand(const char * args)
         ? sWorld->getIntConfig(CONFIG_START_PLAYER_LEVEL)
         : sWorld->getIntConfig(CONFIG_START_HEROIC_PLAYER_LEVEL);
 
-    sScriptMgr->OnPlayerLevelChanged(target, start_level);
-
     target->_ApplyAllLevelScaleItemMods(false);
     target->SetLevel(start_level);
     target->InitRunes();
@@ -2550,6 +2548,8 @@ bool ChatHandler::HandleResetLevelCommand(const char * args)
     // reset level for pet
     if (Pet* pet = target->GetPet())
         pet->SynchronizeLevelWithOwner();
+
+    sScriptMgr->OnPlayerLevelChanged(target);
 
     return true;
 }

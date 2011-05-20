@@ -6251,6 +6251,14 @@ AreaTrigger const* ObjectMgr::GetMapEntranceTrigger(uint32 Map) const
     {
         if (itr->second.target_mapId == Map)
         {
+            // due to incorrectly selection of map entrance
+            switch (Map)
+            {
+                case 70: if (itr->first == 902) continue; break; // Uldaman
+                case 90: if (itr->first == 523) continue; break; // Gnomeregan
+                default: break;
+            }
+
             AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(itr->first);
             if (atEntry)
                 return &itr->second;

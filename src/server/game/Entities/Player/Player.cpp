@@ -1825,8 +1825,7 @@ void Player::setDeathState(DeathState s)
         clearResurrectRequestData();
 
         // remove form before other mods to prevent incorrect stats calculation
-        //if (IsInDisallowedMountForm)
-        //    RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+        RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
 
         //FIXME: is pet dismissed at dying or releasing spirit? if second, add setDeathState(DEAD) to HandleRepopRequestOpcode and define pet unsummon here with (s == DEAD)
         RemovePet(NULL, PET_SAVE_NOT_IN_SLOT, true);
@@ -1852,8 +1851,14 @@ void Player::setDeathState(DeathState s)
         SetUInt32Value(PLAYER_SELF_RES_SPELL, ressSpellId);
 
     if (isAlive() && !cur)
+    {
         //clear aura case after resurrection by another way (spells will be applied before next death)
         SetUInt32Value(PLAYER_SELF_RES_SPELL, 0);
+
+        // restore default warrior stance
+        if (getClass() == CLASS_WARRIOR)
+            CastSpell(this, 2457, true);
+    }
 }
 
 bool Player::BuildEnumData(QueryResult result, WorldPacket* data)
@@ -17226,6 +17231,9 @@ void Player::_LoadAuras(PreparedQueryResult result, uint32 timediff)
         }
         while (result->NextRow());
     }
+
+    if (getClass() == CLASS_WARRIOR && !HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+        CastSpell(this, 2457, true);
 }
 
 void Player::_LoadGlyphAuras()

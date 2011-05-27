@@ -4098,7 +4098,7 @@ void Unit::RemoveArenaAuras(bool onleave)
         Aura const * aura = aurApp->GetBase();
         if (!(aura->GetSpellProto()->AttributesEx4 & SPELL_ATTR4_UNK21) // don't remove stances, shadowform, pally/hunter auras
             && !aura->IsPassive()                               // don't remove passive auras
-            && (!(aura->GetSpellProto()->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY) || !(aura->GetSpellProto()->Attributes & SPELL_ATTR0_UNK8))   // not unaffected by invulnerability auras or not having that unknown flag (that seemed the most probable)
+            && (!(aura->GetSpellProto()->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY))   // not unaffected by invulnerability auras or not having that unknown flag (that seemed the most probable)
             && (aurApp->IsPositive() ^ onleave))                   // remove positive buffs on enter, negative buffs on leave
             RemoveAura(iter);
         else
@@ -5810,14 +5810,16 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             {
                 // Glyph of Polymorph
                 case 56375:
+                {
                     target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE, 0, target->GetAura(32409)); // SW:D shall not be removed.
                     target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE_PERCENT);
                     target->RemoveAurasByType(SPELL_AURA_PERIODIC_LEECH);
                     return true;
+                }
                 // Glyph of Icy Veins
                 case 56374:
                 {
-                    RemoveAurasByType(SPELL_AURA_MOD_MELEE_HASTE, 0, 0, true, false);
+                    RemoveAurasByType(SPELL_AURA_HASTE_SPELLS, 0, 0, true, false);
                     RemoveAurasByType(SPELL_AURA_MOD_DECREASE_SPEED);
                     return true;
                 }
@@ -16980,12 +16982,11 @@ void Unit::_EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* a
         // drop flag at invisible in bg
         if (Battleground *bg = plr->GetBattleground())
             bg->EventPlayerDroppedFlag(plr);
-    }
 
-    if (Player* thisPlr = this->ToPlayer())
-    {
         WorldPacket data(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
-        thisPlr->GetSession()->SendPacket(&data);
+        plr->GetSession()->SendPacket(&data);
+
+        plr->UnsummonPetTemporaryIfAny();
     }
 
     ASSERT(!m_vehicle);
@@ -17058,6 +17059,9 @@ void Unit::_ExitVehicle(Position const* exitPosition)
 
     SendMonsterMoveExitVehicle(&pos);
     Relocate(&pos);
+
+    if (Player* plr = ToPlayer())
+        plr->ResummonPetTemporaryUnSummonedIfAny();
 
     WorldPacket data2;
     BuildHeartBeatMsg(&data2);

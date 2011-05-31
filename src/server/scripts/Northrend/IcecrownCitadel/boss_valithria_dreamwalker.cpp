@@ -307,6 +307,9 @@ class boss_valithria_dreamwalker : public CreatureScript
                 me->SetHealth(_spawnHealth);
                 me->SetReactState(REACT_PASSIVE);
                 me->LoadCreaturesAddon(true);
+                // immune to percent heals
+                me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_OBS_MOD_HEALTH, true);
+                me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_HEAL_PCT, true);
                 _instance->SendEncounterUnit(ENCOUNTER_FRAME_REMOVE, me);
                 _missedPortals = 0;
                 _under25PercentTalkDone = false;
@@ -535,6 +538,9 @@ class npc_green_dragon_combat_trigger : public CreatureScript
 
             void UpdateAI(uint32 const /*diff*/)
             {
+                if (!me->isInCombat())
+                    return;
+
                 std::list<HostileReference*> const& threatList = me->getThreatManager().getThreatList();
                 if (threatList.empty())
                 {

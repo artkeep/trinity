@@ -429,7 +429,7 @@ uint32 CalculatePowerCost(SpellEntry const * spellInfo, Unit const * caster, Spe
     return powerCost;
 }
 
-Unit* GetTriggeredSpellCaster(SpellEntry const * spellInfo, Unit * caster, Unit * target)
+bool IsSpellRequiringFocusedTarget(SpellEntry const * spellInfo)
 {
     for (uint8 i = 0 ; i < MAX_SPELL_EFFECTS; ++i)
     {
@@ -439,8 +439,15 @@ Unit* GetTriggeredSpellCaster(SpellEntry const * spellInfo, Unit * caster, Unit 
             || SpellTargetType[spellInfo->EffectImplicitTargetB[i]] == TARGET_TYPE_CHANNEL
             || SpellTargetType[spellInfo->EffectImplicitTargetA[i]] == TARGET_TYPE_DEST_TARGET
             || SpellTargetType[spellInfo->EffectImplicitTargetB[i]] == TARGET_TYPE_DEST_TARGET)
-            return caster;
+            return true;
     }
+    return false;
+}
+
+Unit* GetTriggeredSpellCaster(SpellEntry const * spellInfo, Unit * caster, Unit * target)
+{
+    if (IsSpellRequiringFocusedTarget(spellInfo))
+        return caster;
     return target;
 }
 
@@ -3154,8 +3161,6 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     return true;
 }
 
-//-----------TRINITY-------------
-
 bool SpellMgr::CanAurasStack(Aura const *aura1, Aura const *aura2, bool sameCaster) const
 {
     SpellEntry const *spellInfo_1 = aura1->GetSpellProto();
@@ -4215,7 +4220,8 @@ void SpellMgr::LoadSpellCustomAttr()
             ++count;
             break;
         case 71266: // Swarming Shadows
-            spellInfo->AreaGroupId = 0;
+        case 72890: // Swarming Shadows
+            spellInfo->AreaGroupId = 0; // originally, these require area 4522, which is... outside of Icecrown Citadel
             ++count;
             break;
         case 70588: // Suppression
@@ -4295,6 +4301,14 @@ void SpellMgr::LoadSpellCustomAttr()
             case SPELLFAMILY_ROGUE:
                 if (spellInfo->SpellFamilyFlags[1] & 0x1 || spellInfo->SpellFamilyFlags[0] & 0x40000)
                     spellInfo->AttributesEx4 |= SPELL_ATTR4_CANT_PROC_FROM_SELFCAST;
+                else
+                    break;
+                ++count;
+                break;
+            case SPELLFAMILY_PALADIN:
+                // Seals of the Pure should affect Seal of Righteousness
+                if (spellInfo->SpellIconID == 25 && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
+                    spellInfo->EffectSpellClassMask[0][1] |= 0x20000000;
                 else
                     break;
                 ++count;

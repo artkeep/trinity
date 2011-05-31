@@ -1089,9 +1089,9 @@ void ScriptMgr::OnPlayerKilledByCreature(Creature *killer, Player *killed)
     FOREACH_SCRIPT(PlayerScript)->OnPlayerKilledByCreature(killer, killed);
 }
 
-void ScriptMgr::OnPlayerLevelChanged(Player *player)
+void ScriptMgr::OnPlayerLevelChanged(Player *player, uint8 newLevel)
 {
-    FOREACH_SCRIPT(PlayerScript)->OnLevelChanged(player);
+    FOREACH_SCRIPT(PlayerScript)->OnLevelChanged(player, newLevel);
 }
 
 void ScriptMgr::OnPlayerFreeTalentPointsChanged(Player *player, uint32 points)

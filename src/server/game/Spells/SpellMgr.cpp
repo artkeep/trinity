@@ -4309,6 +4309,12 @@ void SpellMgr::LoadSpellCustomAttr()
                 // Seals of the Pure should affect Seal of Righteousness
                 if (spellInfo->SpellIconID == 25 && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
                     spellInfo->EffectSpellClassMask[0][1] |= 0x20000000;
+                // Sanctified Retribution talent fix
+                else if (spellInfo->SpellFamilyFlags[2] & 0x20 && spellInfo->SpellIconID == 555)
+                {
+                    spellInfo->Effect[1] = 0;
+                    spellInfo->Effect[2] = 0;
+                }
                 else
                     break;
                 ++count;

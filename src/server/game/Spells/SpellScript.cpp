@@ -64,7 +64,7 @@ uint8 _SpellScript::EffectHook::GetAffectedEffectsMask(SpellEntry const* spellEn
     uint8 mask = 0;
     if ((effIndex == EFFECT_ALL) || (effIndex == EFFECT_FIRST_FOUND))
     {
-        for(uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if ((effIndex == EFFECT_FIRST_FOUND) && mask)
                 return mask;
@@ -213,7 +213,7 @@ void SpellScript::UnitTargetHandler::Call(SpellScript* spellScript, std::list<Un
     (spellScript->*pUnitTargetHandlerScript)(unitTargets);
 }
 
-bool SpellScript::_Validate(SpellEntry const * entry)
+bool SpellScript::_Validate(SpellEntry const* entry)
 {
     for (std::list<EffectHandler>::iterator itr = OnEffect.begin(); itr != OnEffect.end();  ++itr)
         if (!(*itr).GetAffectedEffectsMask(entry))
@@ -467,7 +467,7 @@ void SpellScript::SetCustomCastResultMessage(SpellCustomErrors result)
     m_spell->m_customError = result;
 }
 
-bool AuraScript::_Validate(SpellEntry const * entry)
+bool AuraScript::_Validate(SpellEntry const* entry)
 {
     for (std::list<CheckAreaTargetHandler>::iterator itr = DoCheckAreaTarget.begin(); itr != DoCheckAreaTarget.end();  ++itr)
         if (!HasAreaAuraEffect(entry))
@@ -533,7 +533,7 @@ AuraScript::CheckAreaTargetHandler::CheckAreaTargetHandler(AuraCheckAreaTargetFn
     pHandlerScript = _pHandlerScript;
 }
 
-bool AuraScript::CheckAreaTargetHandler::Call(AuraScript* auraScript, Unit * _target)
+bool AuraScript::CheckAreaTargetHandler::Call(AuraScript* auraScript, Unit* _target)
 {
     return (auraScript->*pHandlerScript)(_target);
 }
@@ -615,7 +615,7 @@ AuraScript::EffectApplyHandler::EffectApplyHandler(AuraEffectApplicationModeFnTy
     mode = _mode;
 }
 
-void AuraScript::EffectApplyHandler::Call(AuraScript* auraScript, AuraEffect const * _aurEff, AuraEffectHandleModes _mode)
+void AuraScript::EffectApplyHandler::Call(AuraScript* auraScript, AuraEffect const* _aurEff, AuraEffectHandleModes _mode)
 {
     if (_mode & mode)
         (auraScript->*pEffectHandlerScript)(_aurEff, _mode);
@@ -778,6 +778,11 @@ void AuraScript::SetMaxDuration(int32 duration)
     m_aura->SetMaxDuration(duration);
 }
 
+int32 AuraScript::CalcMaxDuration() const
+{
+    return m_aura->CalcMaxDuration();
+}
+
 bool AuraScript::IsExpired() const
 {
     return m_aura->IsExpired();
@@ -798,9 +803,19 @@ void AuraScript::SetCharges(uint8 charges)
     m_aura->SetCharges(charges);
 }
 
-bool AuraScript::DropCharge()
+uint8 AuraScript::CalcMaxCharges() const
 {
-    return m_aura->DropCharge();
+    return m_aura->CalcMaxCharges();
+}
+
+bool AuraScript::ModCharges(int8 num, AuraRemoveMode removeMode /*= AURA_REMOVE_BY_DEFAULT*/)
+{
+    return m_aura->ModCharges(num, removeMode);
+}
+
+bool AuraScript::DropCharge(AuraRemoveMode removeMode)
+{
+    return m_aura->DropCharge(removeMode);
 }
 
 uint8 AuraScript::GetStackAmount() const
@@ -813,7 +828,7 @@ void AuraScript::SetStackAmount(uint8 num)
     m_aura->SetStackAmount(num);
 }
 
-void AuraScript::ModStackAmount(int32 num, AuraRemoveMode removeMode)
+bool AuraScript::ModStackAmount(int32 num, AuraRemoveMode removeMode)
 {
     return m_aura->ModStackAmount(num, removeMode);
 }

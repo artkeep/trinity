@@ -130,7 +130,7 @@ public:
             me->LoadEquipment(0, true);
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/)
         {
             events.ScheduleEvent(EVENT_ICY_TOUCH, 1000, GCD_CAST);
             events.ScheduleEvent(EVENT_PLAGUE_STRIKE, 3000, GCD_CAST);
@@ -633,12 +633,15 @@ public:
                 {
                     if (Unit *charmer = caster->GetCharmer())
                     {
-                        charmer->RemoveAurasDueToSpell(EFFECT_STOLEN_HORSE);
-                        caster->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
-                        caster->setFaction(35);
-                        DoCast(caster, CALL_DARK_RIDER, true);
-                        if (Creature* Dark_Rider = me->FindNearestCreature(28654, 15))
-                            CAST_AI(npc_dark_rider_of_acherus::npc_dark_rider_of_acherusAI, Dark_Rider->AI())->InitDespawnHorse(caster);
+                        if (charmer->HasAura(EFFECT_STOLEN_HORSE))
+                        {
+                            charmer->RemoveAurasDueToSpell(EFFECT_STOLEN_HORSE);
+                            caster->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+                            caster->setFaction(35);
+                            DoCast(caster, CALL_DARK_RIDER, true);
+                            if (Creature* Dark_Rider = me->FindNearestCreature(28654, 15))
+                                CAST_AI(npc_dark_rider_of_acherus::npc_dark_rider_of_acherusAI, Dark_Rider->AI())->InitDespawnHorse(caster);
+                        }
                     }
                 }
             }
@@ -691,7 +694,7 @@ public:
     {
         npc_ros_dark_riderAI(Creature *c) : ScriptedAI(c) {}
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/)
         {
             me->ExitVehicle();
         }
@@ -707,7 +710,7 @@ public:
                 me->EnterVehicle(deathcharger);
         }
 
-        void JustDied(Unit *killer)
+        void JustDied(Unit* killer)
         {
             Creature* deathcharger = me->FindNearestCreature(28782, 30);
             if (!deathcharger) return;
@@ -899,7 +902,7 @@ public:
             }
         }
 
-        void PassengerBoarded(Unit * /*who*/, int8 /*seatId*/, bool apply)
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool apply)
         {
             if (!apply)
                 if (Creature *miner = Unit::GetCreature(*me, minerGUID))

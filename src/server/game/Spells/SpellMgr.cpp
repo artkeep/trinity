@@ -4117,6 +4117,14 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AuraInterruptFlags = AURA_INTERRUPT_FLAG_HITBYSPELL | AURA_INTERRUPT_FLAG_TAKE_DAMAGE;
             ++count;
             break;
+        // VAULT OF ARCHAVON SPELLS
+        //
+        case 58963: // Crushing Leap
+        case 60895: // Crushing Leap (heroic)
+            // don't have better idea for now
+            spellInfo->rangeIndex = 134;
+            ++count;
+            break;
         // ULDUAR SPELLS
         //
         case 63342: // Focused Eyebeam Summon Trigger (Kologarn)

@@ -22,9 +22,9 @@
 
 //Spells Archavon
 #define SPELL_ROCK_SHARDS        58678
-#define SPELL_CRUSHING_LEAP      RAID_MODE(58960, 60894)//Instant (10-80yr range) -- Leaps at an enemy, inflicting 8000 Physical damage, knocking all nearby enemies away, and creating a cloud of choking debris.
-#define SPELL_STOMP              RAID_MODE(58663, 60880)
-#define SPELL_IMPALE             RAID_MODE(58666, 60882) //Lifts an enemy off the ground with a spiked fist, inflicting 47125 to 52875 Physical damage and 9425 to 10575 additional damage each second for 8 sec.
+#define SPELL_CRUSHING_LEAP      RAID_MODE(58960, 60894) // Instant (10-80yr range) -- Leaps at an enemy, inflicting 8000 Physical damage, knocking all nearby enemies away, and creating a cloud of choking debris.
+#define SPELL_STOMP              RAID_MODE(58663, 60880) // Forcing cast of Impale
+#define SPELL_IMPALE             RAID_MODE(58666, 60882) // Lifts an enemy off the ground with a spiked fist, inflicting 47125 to 52875 Physical damage and 9425 to 10575 additional damage each second for 8 sec.
 #define SPELL_BERSERK            47008
 //Spells Archavon Warders
 #define SPELL_ROCK_SHOWER        RAID_MODE(60919, 60923)
@@ -41,15 +41,29 @@ enum Events
 {
     // Archavon
     EVENT_ROCK_SHARDS       = 1,    // 15s cd
-    EVENT_CHOKING_CLOUD     = 2,    // 30s cd
+    EVENT_CRUSHING_LEAP     = 2,    // 30s cd
     EVENT_STOMP             = 3,    // 45s cd
     EVENT_IMPALE            = 4,
     EVENT_BERSERK           = 5,    // 300s cd
 
-    //mob
+    // mob
     EVENT_ROCK_SHOWER       = 6,    // set = 20s cd, unkown cd
     EVENT_SHIELD_CRUSH      = 7,    // set = 30s cd
     EVENT_WHIRL             = 8,    // set= 10s cd
+};
+
+// predicate function to select player between given distances
+struct InRangePlayerSelector : public std::unary_function<Unit*, bool>
+{
+    InRangePlayerSelector(Creature* me, float minRange, float maxRange) : _me(me), _minRange(minRange), _maxRange(maxRange) {}
+
+    bool operator()(Unit const* target) const
+    {
+        return (target->GetTypeId() == TYPEID_PLAYER && target->IsInRange(_me, _minRange, _maxRange) && target->IsWithinLOSInMap(_me));
+    }
+ 
+    Creature* _me;
+    float _minRange, _maxRange;
 };
 
 class boss_archavon : public CreatureScript
@@ -66,7 +80,7 @@ class boss_archavon : public CreatureScript
             void EnterCombat(Unit* /*who*/)
             {
                 events.ScheduleEvent(EVENT_ROCK_SHARDS, 15000);
-                events.ScheduleEvent(EVENT_CHOKING_CLOUD, 30000);
+                events.ScheduleEvent(EVENT_CRUSHING_LEAP, 30000);
                 events.ScheduleEvent(EVENT_STOMP, 45000);
                 events.ScheduleEvent(EVENT_BERSERK, 300000);
 
@@ -93,10 +107,10 @@ class boss_archavon : public CreatureScript
                                 DoCast(target, SPELL_ROCK_SHARDS);
                             events.ScheduleEvent(EVENT_ROCK_SHARDS, 15000);
                             break;
-                        case EVENT_CHOKING_CLOUD:
-                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                                DoCast(target, SPELL_CRUSHING_LEAP, true); //10y~80y, ignore range
-                            events.ScheduleEvent(EVENT_CHOKING_CLOUD, 30000);
+                        case EVENT_CRUSHING_LEAP:
+                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, InRangePlayerSelector(me, 10, 80)))
+                                DoCast(target, SPELL_CRUSHING_LEAP, true);
+                            events.ScheduleEvent(EVENT_CRUSHING_LEAP, 30000);
                             break;
                         case EVENT_STOMP:
                             DoCastVictim(SPELL_STOMP);

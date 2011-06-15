@@ -852,11 +852,7 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
         case SPELL_EFFECT_ENERGIZE_PCT:
             return true;
 
-        // always negative effects
-        case SPELL_EFFECT_SCHOOL_DAMAGE:
-            return false;
-
-        // non-positive aura use
+            // non-positive aura use
         case SPELL_EFFECT_APPLY_AURA:
         case SPELL_EFFECT_APPLY_AREA_AURA_FRIEND:
         {

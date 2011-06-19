@@ -6135,6 +6135,10 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
         caster->SpellHitResult(target, GetSpellProto(), false) != SPELL_MISS_NONE)
         return;
 
+    // Hack for Consecration to enter in combat and PvP mode
+    if (GetSpellProto()->Effect[GetEffIndex()] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
+        caster->CombatStart(target);
+
     // some auras remove at specific health level or more
     if (GetAuraType() == SPELL_AURA_PERIODIC_DAMAGE)
     {

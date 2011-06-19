@@ -3846,7 +3846,8 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit 
                         aura->SetIsSingleTarget(true);
                         caster->GetSingleCastAuras().push_back(aura);
                     }
-                    newAura->SetLoadedState(dur, dur, stealCharge ? 1 : aura->GetCharges(), 1, recalculateMask, &damage[0]);
+                    // FIXME: using aura->GetMaxDuration() maybe not blizzlike but it fixes stealing of spells like Innervate
+                    newAura->SetLoadedState(aura->GetMaxDuration(), dur, stealCharge ? 1 : aura->GetCharges(), 1, recalculateMask, &damage[0]);
                     newAura->ApplyForTargets();
                 }
             }
@@ -10698,6 +10699,11 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             if (spellProto->SpellFamilyFlags[0] & 0x2)
                 if (AuraEffect* aurEff = GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT, 2721, 0))
                     AddPctN(DoneTotalMod, aurEff->GetAmount());
+
+            // Sigil of the Vengeful Heart
+           if (spellProto->SpellFamilyFlags[0] & 0x2000)
+               if (AuraEffect* aurEff = GetAuraEffect(64962, EFFECT_1))
+                   AddPctN(DoneTotal, aurEff->GetAmount());
 
             // Glacier Rot
             if (spellProto->SpellFamilyFlags[0] & 0x2 || spellProto->SpellFamilyFlags[1] & 0x6)

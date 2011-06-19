@@ -1102,6 +1102,15 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         break;
                 }
                 break;
+            case SPELLFAMILY_HUNTER:
+                // Animal Handler
+                if (GetId() == 68361)
+                {
+                    if (Unit* owner = target->GetOwner())
+                        if (AuraEffect* auraEff = owner->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2234, 1))
+                            GetEffect(0)->SetAmount(auraEff->GetAmount());
+                }
+                break;
             case SPELLFAMILY_WARLOCK:
                 switch(GetId())
                 {

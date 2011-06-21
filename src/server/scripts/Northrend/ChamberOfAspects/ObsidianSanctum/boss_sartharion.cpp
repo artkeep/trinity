@@ -231,7 +231,7 @@ class PyrobuffetTargetSelector
 
         bool operator()(Unit* unit)
         {
-            return unit->FindNearestCreature(NPC_SAFE_AREA, 30);
+            return unit->FindNearestCreature(NPC_SAFE_AREA, 25);
         }
 };
 

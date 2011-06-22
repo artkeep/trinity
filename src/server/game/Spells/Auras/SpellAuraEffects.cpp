@@ -694,6 +694,9 @@ int32 AuraEffect::CalculateAmount(Unit * caster)
                 // Bonus from Glyph of Lightwell
                 if (AuraEffect* modHealing = caster->GetAuraEffect(55673, 0))
                     AddPctN(amount, modHealing->GetAmount());
+                // Bonus from talent Spiritual Healing
+                if (AuraEffect* modHealing = caster->GetAuraEffect(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_PRIEST, 46, 1))
+                    AddPctN(amount, modHealing->GetAmount());
             }
             break;
         case SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN:
@@ -1395,7 +1398,7 @@ void AuraEffect::PeriodicTick(AuraApplication * aurApp, Unit * caster) const
             // Set trigger flag
             uint32 procAttacker = PROC_FLAG_DONE_PERIODIC;
             uint32 procVictim   = PROC_FLAG_TAKEN_PERIODIC;
-            uint32 procEx = PROC_EX_NORMAL_HIT | PROC_EX_INTERNAL_DOT;
+            uint32 procEx = (crit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT) | PROC_EX_INTERNAL_DOT;
             damage = (damage <= absorb+resist) ? 0 : (damage-absorb-resist);
             if (damage)
                 procVictim|=PROC_FLAG_TAKEN_DAMAGE;
@@ -1481,7 +1484,7 @@ void AuraEffect::PeriodicTick(AuraApplication * aurApp, Unit * caster) const
             // Set trigger flag
             uint32 procAttacker = PROC_FLAG_DONE_PERIODIC;
             uint32 procVictim   = PROC_FLAG_TAKEN_PERIODIC;
-            uint32 procEx = PROC_EX_NORMAL_HIT | PROC_EX_INTERNAL_DOT;
+            uint32 procEx = (crit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT) | PROC_EX_INTERNAL_DOT;
             damage = (damage <= absorb+resist) ? 0 : (damage-absorb-resist);
             if (damage)
                 procVictim|=PROC_FLAG_TAKEN_DAMAGE;
@@ -1638,7 +1641,7 @@ void AuraEffect::PeriodicTick(AuraApplication * aurApp, Unit * caster) const
 
             uint32 procAttacker = PROC_FLAG_DONE_PERIODIC;
             uint32 procVictim   = PROC_FLAG_TAKEN_PERIODIC;
-            uint32 procEx = PROC_EX_NORMAL_HIT | PROC_EX_INTERNAL_HOT;
+            uint32 procEx = (crit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT) | PROC_EX_INTERNAL_HOT;
             // ignore item heals
             if (!haveCastItem)
                 caster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, damage, BASE_ATTACK, GetSpellProto());
@@ -3142,6 +3145,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const * aurApp, uint8 m
 
         // remove other shapeshift before applying a new one
         target->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT, 0, GetBase());
+        target->RemoveAurasDueToSpell(64904); // Hymn of Hope exploit fix
 
         // stop handling the effect if it was removed by linked event
         if (aurApp->GetRemoveMode())
@@ -3600,14 +3604,17 @@ void AuraEffect::HandleAuraCloneCaster(AuraApplication const * aurApp, uint8 mod
     if (apply)
     {
         Unit * caster = GetCaster();
-        if (!caster)
+        if (!caster || caster == target)
             return;
-        // Set display id (probably for portrait?)
+        // What must be cloned? at least display and scale
         target->SetDisplayId(caster->GetDisplayId());
+        target->SetCreatorGUID(caster->GetGUID());
+        //target->SetFloatValue(OBJECT_FIELD_SCALE_X, caster->GetFloatValue(OBJECT_FIELD_SCALE_X)); // we need retail info about how scaling is handled (aura maybe?)
         target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
     }
     else
     {
+        target->SetCreatorGUID(0);
         target->SetDisplayId(target->GetNativeDisplayId());
         target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
     }
@@ -4581,11 +4588,12 @@ void AuraEffect::HandleModStateImmunityMask(AuraApplication const * aurApp, uint
     // TODO: figure out a better place to put this...
     // Patch 3.0.3 Bladestorm now breaks all snares and roots on the warrior when activated.
     // however not all mechanic specified in immunity
-    if (apply && GetId() == 46924)
+    if (GetId() == 46924)
     {
         immunity_list.pop_back(); // delete Disarm
-        target->RemoveAurasByType(SPELL_AURA_MOD_ROOT);
-        target->RemoveAurasByType(SPELL_AURA_MOD_DECREASE_SPEED);
+        immunity_list.push_back(SPELL_AURA_MOD_PACIFY_SILENCE);
+        target->ApplySpellImmune(GetId(), IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, apply);
+        target->ApplySpellImmune(GetId(), IMMUNITY_MECHANIC, MECHANIC_SNARE, apply); 
     }
 
     if (apply && GetSpellProto()->AttributesEx & SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY)
@@ -4686,9 +4694,8 @@ void AuraEffect::HandleAuraModStateImmunity(AuraApplication const * aurApp, uint
     Unit * target = aurApp->GetTarget();
 
     if ((apply) && GetSpellProto()->AttributesEx & SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY)
-    {
-        target->RemoveAurasByType(AuraType(GetMiscValue()), NULL , GetBase());
-    }
+        target->RemoveAurasByType(AuraType(GetMiscValue()), 0 , GetBase());
+
     // stop handling the effect if it was removed by linked event
     if (apply && aurApp->GetRemoveMode())
         return;
@@ -5724,8 +5731,17 @@ void AuraEffect::HandleModDamagePercentDone(AuraApplication const * aurApp, uint
     if (!target)
         return;
 
+    // we should add only physical mods here
+    if (!(GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL))
+        return;
+
     if (target->HasItemFitToSpellRequirements(GetSpellProto()))
+    {
         aurApp->GetTarget()->ApplyModSignedFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT, GetAmount()/100.0f, apply);
+        aurApp->GetTarget()->UpdateDamagePhysical(BASE_ATTACK);
+        aurApp->GetTarget()->UpdateDamagePhysical(OFF_ATTACK);
+        aurApp->GetTarget()->UpdateDamagePhysical(RANGED_ATTACK);
+    }
 }
 
 void AuraEffect::HandleModOffhandDamagePercent(AuraApplication const * aurApp, uint8 mode, bool apply) const

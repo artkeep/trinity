@@ -17,7 +17,7 @@
 
 #ifndef DEF_ICECROWN_CITADEL_H
 #define DEF_ICECROWN_CITADEL_H
-#define WEEKLY_NPCS   7
+#define WEEKLY_NPCS   9
 
 #define ICCScriptName "instance_icecrown_citadel"
 
@@ -92,6 +92,12 @@ enum eAchievementCriteria
     CRITERIA_ONCE_BITTEN_TWICE_SHY_25N  = 13012,
     CRITERIA_ONCE_BITTEN_TWICE_SHY_10V  = 13011,
     CRITERIA_ONCE_BITTEN_TWICE_SHY_25V  = 13013,
+
+    // Valithria Dreamwalker 
+    CRITERIA_PORTAL_JOCKEY_10N          = 12978,
+    CRITERIA_PORTAL_JOCKEY_10H          = 12979,
+    CRITERIA_PORTAL_JOCKEY_25N          = 12971,
+    CRITERIA_PORTAL_JOCKEY_25H          = 12980,
 };
 
 enum eCommonActions
@@ -249,6 +255,8 @@ enum eCreatures
      NPC_INFILTRATOR_MINCHAR                     = 38471,
      NPC_KOR_KRON_LIEUTENANT                     = 38491,
      NPC_SKYBREAKER_LIEUTENANT                   = 38492,
+     NPC_ROTTING_FROST_GIANT_10                  = 38490,
+     NPC_ROTTING_FROST_GIANT_25                  = 38494,
      NPC_ALCHEMIST_ADRIANNA                      = 38501,
      NPC_ALRIN_THE_AGILE                         = 38551,
      NPC_INFILTRATOR_MINCHAR_BQ                  = 38558,

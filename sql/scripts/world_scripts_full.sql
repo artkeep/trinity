@@ -363,6 +363,7 @@ UPDATE `creature_template` SET `ScriptName`='mob_phalanx' WHERE `entry`=9502;
 UPDATE `gameobject_template` SET `ScriptName`='go_shadowforge_brazier' WHERE `entry` IN (174744,174745);
 
 /* BLACKROCK SPIRE */
+UPDATE `instance_template` SET `script`='instance_blackrock_spire' WHERE `map`=229;
 /* BLACKROCK SPIRE Lower bosses */
 UPDATE `creature_template` SET `ScriptName`='boss_highlord_omokk' WHERE `entry`=9196;
 UPDATE `creature_template` SET `ScriptName`='boss_shadow_hunter_voshgajin' WHERE `entry`=9236;
@@ -408,6 +409,8 @@ UPDATE `creature_template` SET `ScriptName`='npc_fallen_hero_of_horde' WHERE `en
 /* BLOODMYST ISLE */
 UPDATE `creature_template` SET `ScriptName`='mob_webbed_creature' WHERE `entry`=17680;
 UPDATE `creature_template` SET `ScriptName`='npc_captured_sunhawk_agent' WHERE `entry`=17824;
+UPDATE `creature_template` SET `ScriptName`='npc_princess_stillpine' WHERE `entry`=17682;
+UPDATE `gameobject_template` SET `ScriptName`='go_princess_stillpines_cage' WHERE `entry`=181928;
 
 /* BOREAN TUNDRA */
 UPDATE `creature_template` SET `ScriptName`='npc_fizzcrank_fullthrottle' WHERE `entry`=25590;
@@ -589,11 +592,9 @@ UPDATE `creature_template` SET `ScriptName`='npc_aged_dying_ancient_kodo' WHERE 
 UPDATE `gameobject_template` SET `ScriptName`='go_iruxos' WHERE `entry`=176581;
 UPDATE `creature_template` SET `ScriptName`='npc_dalinda' WHERE `entry`=5644;
 
-
 /* DIRE MAUL */
 
 /* DUN MOROGH */
-UPDATE `creature_template` SET `ScriptName`='npc_narm_faulk' WHERE `entry`=6177;
 
 /* DUROTAR */
 UPDATE `creature_template` SET `ScriptName`='npc_lazy_peon' WHERE `entry`=10556;
@@ -616,6 +617,7 @@ UPDATE `creature_template` SET `ScriptName`='npc_private_hendel' WHERE `entry`=4
 UPDATE `creature_template` SET `ScriptName`='npc_zelfrax' WHERE `entry`=23864;
 UPDATE `creature_template` SET `ScriptName`='npc_stinky' WHERE `entry`=4880;
 UPDATE `creature_template` SET `ScriptName`='npc_theramore_guard' WHERE `entry`=4979;
+
 /* EASTERN PLAGUELANDS */
 UPDATE `creature_template` SET `ScriptName`='mobs_ghoul_flayer' WHERE `entry` IN (8530,8531,8532);
 UPDATE `creature_template` SET `ScriptName`='npc_augustus_the_touched' WHERE `entry`=12384;
@@ -623,7 +625,6 @@ UPDATE `creature_template` SET `ScriptName`='npc_darrowshire_spirit' WHERE `entr
 UPDATE `creature_template` SET `ScriptName`='npc_tirion_fordring' WHERE `entry`=1855;
 
 /* ELWYNN FOREST */
-UPDATE `creature_template` SET `ScriptName`='npc_henze_faulk' WHERE `entry`=6172;
 
 /* EVERSONG WOODS */
 UPDATE `creature_template` SET `ScriptName`='npc_prospector_anvilward' WHERE `entry`=15420;
@@ -840,7 +841,6 @@ UPDATE `creature_template` SET `ScriptName`='npc_arete' WHERE `entry`=29344;
 UPDATE `creature_template` SET `ScriptName`='npc_dame_evniki_kapsalis' WHERE `entry`=34885;
 UPDATE `creature_template` SET `ScriptName`='npc_squire_david' WHERE `entry`=33447;
 UPDATE `creature_template` SET `ScriptName`='npc_argent_valiant' WHERE `entry`=33448;
-UPDATE `creature_template` SET `ScriptName`='npc_argent_tournament_post' WHERE `entry`=35473;
 UPDATE `creature_template` SET `ScriptName`='npc_alorah_and_grimmin' WHERE `entry` IN (36101,36102);
 UPDATE `creature_template` SET `ScriptName`='npc_guardian_pavilion' WHERE `entry` IN (33543,33643);
 
@@ -1010,6 +1010,8 @@ UPDATE `creature_template` SET `ScriptName`='npc_lantresor_of_the_blade' WHERE `
 UPDATE `creature_template` SET `ScriptName`='npc_creditmarker_visit_with_ancestors' WHERE `entry` IN (18840,18841,18842,18843);
 UPDATE `creature_template` SET `ScriptName`='mob_sparrowhawk' WHERE `entry`=22979;
 UPDATE `creature_template` SET `ScriptName`='npc_maghar_captive' WHERE `entry`=18210;
+UPDATE `creature_template` SET `ScriptName`='npc_corki' WHERE `entry` IN (18445,20812,18369);
+UPDATE `gameobject_template` SET `ScriptName`='go_corkis_prison' WHERE `entry` IN (182349,182350,182521);
 
 /* NAXXRAMAS */
 UPDATE `instance_template` SET `script`='instance_naxxramas' WHERE `map`=533;
@@ -1777,7 +1779,7 @@ UPDATE `outdoorpvp_template` SET `ScriptName`='outdoorpvp_si' WHERE `TypeId`=5;
 UPDATE `outdoorpvp_template` SET `ScriptName`='outdoorpvp_ep' WHERE `TypeId`=6;
 
 /* ACHIEVEMENTS */
-DELETE FROM `achievement_criteria_data` WHERE `criteria_id` IN (3693,6641,6642,6643,6644,3804,3805,3806,3807,3808,3809,3810,3811,3812,3813,1234,1239,5605,5606,12778,13036,13035,13037,12977,12967,12986,12982,12993,12780,13012,13011,13013,12062,12063,12064,12065,12183,12068,12060,12061,12822,12996,12972,12989,10062,10063,10054,10055,10046,10047,10048,10049,10050,10051,10044,10045) AND `type` IN (0,11);
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` IN (3693,6641,6642,6643,6644,3804,3805,3806,3807,3808,3809,3810,3811,3812,3813,1234,1239,5605,5606,12778,13036,13035,13037,12977,12967,12986,12982,12993,12780,13012,13011,13013,12062,12063,12064,12065,12183,12068,12060,12061,12822,12996,12972,12989,10062,10063,10054,10055,10046,10047,10048,10049,10050,10051,10044,10045,6446,7625,7628) AND `type` IN (0,11);
 INSERT INTO `achievement_criteria_data` (`criteria_id`,`type`,`value1`,`value2`,`ScriptName`) VALUES
 (3693,11,0,0, 'achievement_storm_glory'),
 (6641,11,0,0, 'achievement_school_of_hard_knocks'),
@@ -1834,8 +1836,9 @@ INSERT INTO `achievement_criteria_data` (`criteria_id`,`type`,`value1`,`value2`,
 (10050,11,0,0, 'achievement_three_car_garage_siege'),
 (10051,11,0,0, 'achievement_three_car_garage_demolisher'),
 (10062,11,0,0, 'achievement_quick_shave'),
-(10063,11,0,0, 'achievement_quick_shave');
-
+(10063,11,0,0, 'achievement_quick_shave'),
+(7625,11,0,0, 'achievement_bg_sa_artillery'),
+(7628,11,0,0, 'achievement_bg_sa_artillery');
 /* SPELLS */
 INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 -- generic
@@ -1879,6 +1882,19 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 61177, 'spell_gen_profession_research'),
 ( 61288, 'spell_gen_profession_research'),
 ( 61756, 'spell_gen_profession_research'),
+( 45785, 'spell_generic_clone'),
+( 49889, 'spell_generic_clone'),
+( 50218, 'spell_generic_clone'),
+( 51719, 'spell_generic_clone'),
+( 57528, 'spell_generic_clone'),
+( 69828, 'spell_generic_clone'),
+( 41055, 'spell_generic_clone_weapon'),
+( 63416, 'spell_generic_clone_weapon'),
+( 69891, 'spell_generic_clone_weapon'),
+( 45206, 'spell_generic_clone_weapon'),
+( 69892, 'spell_generic_clone_weapon'),
+( 57593, 'spell_generic_clone_weapon'),
+( 52408, 'spell_gen_seaforium_blast'),
 -- instances
 -- Black Temple
 ( 41475, 'spell_boss_lady_malande_shield'),
@@ -1997,6 +2013,14 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 72455, 'spell_putricide_gaseous_bloat'),
 ( 72832, 'spell_putricide_gaseous_bloat'),
 ( 72833, 'spell_putricide_gaseous_bloat'),
+( 70447, 'spell_putricide_ooze_channel'),
+( 72836, 'spell_putricide_ooze_channel'),
+( 72837, 'spell_putricide_ooze_channel'),
+( 72838, 'spell_putricide_ooze_channel'),
+( 70672, 'spell_putricide_ooze_channel'),
+( 72455, 'spell_putricide_ooze_channel'),
+( 72832, 'spell_putricide_ooze_channel'),
+( 72833, 'spell_putricide_ooze_channel'),
 ( 70459, 'spell_putricide_ooze_eruption_searcher'),
 ( 71255, 'spell_putricide_choking_gas_bomb'),
 ( 70920, 'spell_putricide_unbound_plague'),
@@ -2033,6 +2057,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 72784, 'spell_taldaram_ball_of_inferno_flame'),
 ( 72080, 'spell_valanar_kinetic_bomb'),
 ( 72087, 'spell_valanar_kinetic_bomb_knockback'),
+( 72054, 'spell_valanar_kinetic_bomb_absorb'),
 ( 73001, 'spell_blood_council_shadow_prison'),
 ( 72999, 'spell_blood_council_shadow_prison_damage'),
 ( 70877, 'spell_blood_queen_frenzied_bloodthirst'),
@@ -2086,6 +2111,9 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 67630, 'spell_gen_leeching_swarm'),
 ( 68646, 'spell_gen_leeching_swarm'),
 ( 68647, 'spell_gen_leeching_swarm'),
+-- Trial of the Champion
+( 66862, 'spell_eadric_radiance'),
+( 67681, 'spell_eadric_radiance'),
 -- Ulduar
 ( 63308, 'spell_razorscale_devouring_flame'),
 ( 62717, 'spell_ignis_slag_pot'),
@@ -2102,6 +2130,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 62166, 'spell_ulduar_stone_grip_cast_target'),
 ( 63981, 'spell_ulduar_stone_grip_cast_target'),
 ( 64702, 'spell_ulduar_squeezed_lifeless'),
+( 63027, 'spell_ulduar_proximity_mines'),
 -- Eye Of Eternity
 ( 56105, 'spell_malygos_vortex_dummy'),
 ( 55873, 'spell_malygos_vortex_visual'),
@@ -2124,6 +2153,7 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 ( 52308, 'spell_q12683_take_sputum_sample'),
 ( 55804, 'spell_q12937_relief_for_the_fallen'),
 ( 54798, 'spell_q12851_going_bearback'),
+(  8593, 'spell_symbol_of_life_dummy'),
 -- item
 ( 23074, 'spell_item_arcanite_dragonling'),
 (  8063, 'spell_item_deviate_fish'),

@@ -33,7 +33,7 @@ public:
 
     struct instance_azjol_nerub_InstanceScript : public InstanceScript
     {
-        instance_azjol_nerub_InstanceScript(Map* pMap) : InstanceScript(pMap) {Initialize();};
+        instance_azjol_nerub_InstanceScript(Map* pMap) : InstanceScript(pMap) {}
 
         uint64 uiKrikthir;
         uint64 uiHadronox;
@@ -89,7 +89,7 @@ public:
                 case 192395:
                     uiKrikthirDoor = go->GetGUID();
                     if (auiEncounter[0] == DONE)
-                        HandleGameObject(NULL,true,go);
+                        HandleGameObject(0,true,go);
                     break;
                 case 192396:
                     uiAnubarakDoor[0] = go->GetGUID();

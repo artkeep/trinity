@@ -63,7 +63,7 @@ public:
 
     struct instance_blackfathom_deeps_InstanceMapScript : public InstanceScript
     {
-        instance_blackfathom_deeps_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {Initialize();};
+        instance_blackfathom_deeps_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {}
 
         uint64 m_uiTwilightLordKelrisGUID;
         uint64 m_uiShrine1GUID;
@@ -135,7 +135,7 @@ public:
                     break;
                 case GO_AKU_MAI_DOOR:
                     if (m_auiEncounter[2] == DONE)
-                        HandleGameObject(NULL,true,go);
+                        HandleGameObject(0,true,go);
                     m_uiMainDoorGUID = go->GetGUID();
                     break;
             }

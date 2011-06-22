@@ -98,15 +98,14 @@ World::World()
     m_allowMovement = true;
     m_ShutdownMask = 0;
     m_ShutdownTimer = 0;
-    m_gameTime=time(NULL);
-    m_startTime=m_gameTime;
+    m_gameTime = time(NULL);
+    m_startTime = m_gameTime;
     m_maxActiveSessionCount = 0;
     m_maxQueuedSessionCount = 0;
     m_PlayerCount = 0;
     m_MaxPlayerCount = 0;
     m_NextDailyQuestReset = 0;
     m_NextWeeklyQuestReset = 0;
-    m_scheduledScripts = 0;
 
     m_defaultDbcLocale = LOCALE_enUS;
     m_availableDbcLocaleMask = 0;
@@ -1322,7 +1321,9 @@ void World::SetInitialWorldSettings()
     LoginDatabase.PExecute("UPDATE realmlist SET icon = %u, timezone = %u WHERE id = '%d'", server_type, realm_zone, realmID);
 
     ///- Remove the bones (they should not exist in DB though) and old corpses after a restart
-    CharacterDatabase.PExecute("DELETE FROM corpse WHERE corpse_type = '0' OR time < (UNIX_TIMESTAMP()-'%u')", 3 * DAY);
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_OLD_CORPSES);
+    stmt->setUInt32(0, 3 * DAY);
+    CharacterDatabase.Execute(stmt);
 
     ///- Load the DBC files
     sLog->outString("Initialize data stores...");
@@ -1645,10 +1646,10 @@ void World::SetInitialWorldSettings()
     sObjectMgr->LoadFactionChangeReputations();
 
     sLog->outString("Loading GM tickets...");
-    sTicketMgr->LoadGMTickets();
+    sTicketMgr->LoadTickets();
 
     sLog->outString("Loading GM surveys...");
-    sTicketMgr->LoadGMSurveys();
+    sTicketMgr->LoadSurveys();
 
     sLog->outString("Loading client addons...");
     sAddonMgr->LoadFromDB();
@@ -1711,8 +1712,6 @@ void World::SetInitialWorldSettings()
     LoginDatabase.PExecute("INSERT INTO uptime (realmid, starttime, startstring, uptime, revision) VALUES('%u', " UI64FMTD ", '%s', 0, '%s')",
         realmID, uint64(m_startTime), isoDate, _FULLVERSION);
 
-    m_timers[WUPDATE_OBJECTS].SetInterval(IN_MILLISECONDS/2);
-    m_timers[WUPDATE_SESSIONS].SetInterval(0);
     m_timers[WUPDATE_WEATHERS].SetInterval(1*IN_MILLISECONDS);
     m_timers[WUPDATE_AUCTIONS].SetInterval(MINUTE*IN_MILLISECONDS);
     m_timers[WUPDATE_UPTIME].SetInterval(m_int_configs[CONFIG_UPTIME_UPDATE]*MINUTE*IN_MILLISECONDS);
@@ -2003,7 +2002,7 @@ void World::Update(uint32 diff)
 
     /// <li> Handle all other objects
     ///- Update objects when the timer has passed (maps, transport, creatures,...)
-    sMapMgr->Update(diff);                // As interval = 0
+    sMapMgr->Update(diff);
 
     if (sWorld->getBoolConfig(CONFIG_AUTOBROADCAST))
     {
@@ -2201,7 +2200,7 @@ void World::SendGMText(int32 string_id, ...)
         if (!itr->second || !itr->second->GetPlayer() || !itr->second->GetPlayer()->IsInWorld())
             continue;
 
-        if (itr->second->GetSecurity() < SEC_MODERATOR)
+        if (itr->second->GetSecurity() < SEC_GAMEMASTER)
             continue;
 
         wt_do(itr->second->GetPlayer());
@@ -2651,19 +2650,30 @@ void World::SendAutoBroadcast()
 
 void World::UpdateRealmCharCount(uint32 accountId)
 {
-    m_realmCharCallback.SetParam(accountId);
-    m_realmCharCallback.SetFutureResult(CharacterDatabase.AsyncPQuery("SELECT COUNT(guid) FROM characters WHERE account = '%u'", accountId));
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_GET_CHARACTER_COUNT);
+    stmt->setUInt32(0, accountId);
+    PreparedQueryResultFuture result = CharacterDatabase.AsyncQuery(stmt);
+    m_realmCharCallbacks.insert(result);
 }
 
-void World::_UpdateRealmCharCount(QueryResult resultCharCount, uint32 accountId)
+void World::_UpdateRealmCharCount(PreparedQueryResult resultCharCount)
 {
     if (resultCharCount)
     {
         Field *fields = resultCharCount->Fetch();
-        uint32 charCount = fields[0].GetUInt32();
+        uint32 accountId = fields[0].GetUInt32();
+        uint32 charCount = fields[1].GetUInt32();
 
-        LoginDatabase.PExecute("DELETE FROM realmcharacters WHERE acctid= '%d' AND realmid = '%d'", accountId, realmID);
-        LoginDatabase.PExecute("INSERT INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)", charCount, accountId, realmID);
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_DEL_REALMCHARACTERS);
+        stmt->setUInt32(0, accountId);
+        stmt->setUInt32(1, realmID);
+        LoginDatabase.Execute(stmt);
+
+        stmt = LoginDatabase.GetPreparedStatement(LOGIN_ADD_REALMCHARACTERS);
+        stmt->setUInt32(0, charCount);
+        stmt->setUInt32(1, accountId);
+        stmt->setUInt32(2, realmID);
+        LoginDatabase.Execute(stmt);
     }
 }
 
@@ -2882,14 +2892,21 @@ uint64 World::getWorldState(uint32 index) const
 
 void World::ProcessQueryCallbacks()
 {
-    QueryResult result;
+    PreparedQueryResult result;
 
-    if (m_realmCharCallback.IsReady())
+    while (!m_realmCharCallbacks.is_empty())
     {
-        uint32 param = m_realmCharCallback.GetParam();
-        m_realmCharCallback.GetResult(result);
-        _UpdateRealmCharCount(result, param);
-        m_realmCharCallback.FreeResult();
+        ACE_Future<PreparedQueryResult> lResult;
+        ACE_Time_Value timeout = ACE_Time_Value::zero;
+        if (m_realmCharCallbacks.next_readable(lResult, &timeout) != 1)
+            break;
+
+        if (lResult.ready())
+        {
+            lResult.get(result);
+            _UpdateRealmCharCount(result);
+            lResult.cancel();
+        }
     }
 }
 

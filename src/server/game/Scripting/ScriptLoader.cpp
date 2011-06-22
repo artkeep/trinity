@@ -115,7 +115,6 @@ void AddSC_boss_pyroguard_emberseer();
 void AddSC_boss_gyth();
 void AddSC_boss_rend_blackhand();
 void AddSC_instance_blackrock_spire();
-void AddSC_blackrock_spire();
 void AddSC_boss_razorgore();                 //Blackwing lair
 void AddSC_boss_vael();
 void AddSC_boss_broodlord();
@@ -245,10 +244,8 @@ void AddSC_arathi_highlands();
 void AddSC_blasted_lands();
 void AddSC_boss_kruul();
 void AddSC_burning_steppes();
-void AddSC_dun_morogh();
 void AddSC_duskwood();
 void AddSC_eastern_plaguelands();
-void AddSC_elwynn_forest();
 void AddSC_eversong_woods();
 void AddSC_ghostlands();
 void AddSC_hinterlands();
@@ -444,6 +441,7 @@ void AddSC_boss_razorscale();
 void AddSC_boss_thorim();
 void AddSC_boss_xt002();
 void AddSC_ulduar_teleporter();
+void AddSC_boss_mimiron();
 void AddSC_instance_ulduar();
 
 void AddSC_boss_keleseth();              //Utgarde Keep
@@ -742,7 +740,6 @@ void AddEasternKingdomsScripts()
     AddSC_boss_gyth();
     AddSC_boss_rend_blackhand();
     AddSC_instance_blackrock_spire();
-    AddSC_blackrock_spire();
     AddSC_boss_razorgore();                 //Blackwing lair
     AddSC_boss_vael();
     AddSC_boss_broodlord();
@@ -872,10 +869,8 @@ void AddEasternKingdomsScripts()
     AddSC_blasted_lands();
     AddSC_boss_kruul();
     AddSC_burning_steppes();
-    AddSC_dun_morogh();
     AddSC_duskwood();
     AddSC_eastern_plaguelands();
-    AddSC_elwynn_forest();
     AddSC_eversong_woods();
     AddSC_ghostlands();
     AddSC_hinterlands();
@@ -1162,6 +1157,7 @@ void AddNorthrendScripts()
     AddSC_boss_thorim();
     AddSC_boss_xt002();
     AddSC_ulduar_teleporter();
+    AddSC_boss_mimiron();
     AddSC_instance_ulduar();
 
     AddSC_boss_keleseth();              //Utgarde Keep

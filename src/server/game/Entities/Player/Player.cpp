@@ -427,9 +427,16 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
 KillRewarder::KillRewarder(Player* killer, Unit* victim, bool isBattleGround) :
     // 1. Initialize internal variables to default values.
     _killer(killer), _victim(victim), _isBattleGround(isBattleGround),
-    _isPvP(victim->isCharmedOwnedByPlayerOrPlayer()), _group(killer->GetGroup()), _groupRate(1.0f),
+    _isPvP(false), _group(killer->GetGroup()), _groupRate(1.0f),
     _maxLevel(0), _maxNotGrayMember(NULL), _count(0), _sumLevel(0), _isFullXP(false), _xp(0)
 {
+    // mark the credit as pvp if victim is player
+    if (victim->GetTypeId() == TYPEID_PLAYER)
+        _isPvP = true;
+    // or if its owned by player and its not a vehicle
+    else if (IS_PLAYER_GUID(victim->GetCharmerOrOwnerGUID()))
+        _isPvP = !victim->IsVehicle();
+
     _InitGroupData();
 }
 
@@ -1879,7 +1886,7 @@ void Player::setDeathState(DeathState s)
     }
 }
 
-bool Player::BuildEnumData(QueryResult result, WorldPacket * p_data)
+bool Player::BuildEnumData(QueryResult result, WorldPacket* data)
 {
     //             0               1                2                3                 4                  5                       6                        7
     //    "SELECT characters.guid, characters.name, characters.race, characters.class, characters.gender, characters.playerBytes, characters.playerBytes2, characters.level, "
@@ -1891,124 +1898,122 @@ bool Player::BuildEnumData(QueryResult result, WorldPacket * p_data)
     Field *fields = result->Fetch();
 
     uint32 guid = fields[0].GetUInt32();
-    uint8 pRace = fields[2].GetUInt8();
-    uint8 pClass = fields[3].GetUInt8();
-    uint8 Gender = fields[4].GetUInt8();
+    uint8 plrRace = fields[2].GetUInt8();
+    uint8 plrClass = fields[3].GetUInt8();
+    uint8 gender = fields[4].GetUInt8();
 
-    PlayerInfo const *info = sObjectMgr->GetPlayerInfo(pRace, pClass);
+    PlayerInfo const *info = sObjectMgr->GetPlayerInfo(plrRace, plrClass);
     if (!info)
     {
         sLog->outError("Player %u has incorrect race/class pair. Don't build enum.", guid);
         return false;
     }
-    else if (!IsValidGender(Gender))
+    else if (!IsValidGender(gender))
     {
-        sLog->outError("Player (%u) has incorrect gender (%hu), don't build enum.", guid, Gender);
+        sLog->outError("Player (%u) has incorrect gender (%hu), don't build enum.", guid, gender);
         return false;
     }
 
-    *p_data << uint64(MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
-    *p_data << fields[1].GetString();                       // name
-    *p_data << uint8(pRace);                                // race
-    *p_data << uint8(pClass);                               // class
-    *p_data << uint8(Gender);                               // gender
+    *data << uint64(MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
+    *data << fields[1].GetString();                         // name
+    *data << uint8(plrRace);                                // race
+    *data << uint8(plrClass);                               // class
+    *data << uint8(gender);                                 // gender
 
     uint32 playerBytes = fields[5].GetUInt32();
-    *p_data << uint8(playerBytes);                          // skin
-    *p_data << uint8(playerBytes >> 8);                     // face
-    *p_data << uint8(playerBytes >> 16);                    // hair style
-    *p_data << uint8(playerBytes >> 24);                    // hair color
+    *data << uint8(playerBytes);                            // skin
+    *data << uint8(playerBytes >> 8);                       // face
+    *data << uint8(playerBytes >> 16);                      // hair style
+    *data << uint8(playerBytes >> 24);                      // hair color
 
     uint32 playerBytes2 = fields[6].GetUInt32();
-    *p_data << uint8(playerBytes2 & 0xFF);                  // facial hair
+    *data << uint8(playerBytes2 & 0xFF);                    // facial hair
 
-    *p_data << uint8(fields[7].GetUInt8());                 // level
-    *p_data << uint32(fields[8].GetUInt32());               // zone
-    *p_data << uint32(fields[9].GetUInt32());               // map
+    *data << uint8(fields[7].GetUInt8());                   // level
+    *data << uint32(fields[8].GetUInt32());                 // zone
+    *data << uint32(fields[9].GetUInt32());                 // map
 
-    *p_data << fields[10].GetFloat();                       // x
-    *p_data << fields[11].GetFloat();                       // y
-    *p_data << fields[12].GetFloat();                       // z
+    *data << fields[10].GetFloat();                         // x
+    *data << fields[11].GetFloat();                         // y
+    *data << fields[12].GetFloat();                         // z
 
-    *p_data << uint32(fields[13].GetUInt32());              // guild id
+    *data << uint32(fields[13].GetUInt32());                // guild id
 
-    uint32 char_flags = 0;
+    uint32 charFlags = 0;
     uint32 playerFlags = fields[14].GetUInt32();
     uint32 atLoginFlags = fields[15].GetUInt32();
     if (playerFlags & PLAYER_FLAGS_HIDE_HELM)
-        char_flags |= CHARACTER_FLAG_HIDE_HELM;
+        charFlags |= CHARACTER_FLAG_HIDE_HELM;
     if (playerFlags & PLAYER_FLAGS_HIDE_CLOAK)
-        char_flags |= CHARACTER_FLAG_HIDE_CLOAK;
+        charFlags |= CHARACTER_FLAG_HIDE_CLOAK;
     if (playerFlags & PLAYER_FLAGS_GHOST)
-        char_flags |= CHARACTER_FLAG_GHOST;
+        charFlags |= CHARACTER_FLAG_GHOST;
     if (atLoginFlags & AT_LOGIN_RENAME)
-        char_flags |= CHARACTER_FLAG_RENAME;
+        charFlags |= CHARACTER_FLAG_RENAME;
     if (fields[20].GetUInt32())
-        char_flags |= CHARACTER_FLAG_LOCKED_BY_BILLING;
+        charFlags |= CHARACTER_FLAG_LOCKED_BY_BILLING;
     if (sWorld->getBoolConfig(CONFIG_DECLINED_NAMES_USED))
     {
         if (!fields[21].GetString().empty())
-            char_flags |= CHARACTER_FLAG_DECLINED;
+            charFlags |= CHARACTER_FLAG_DECLINED;
     }
     else
-        char_flags |= CHARACTER_FLAG_DECLINED;
+        charFlags |= CHARACTER_FLAG_DECLINED;
 
-    *p_data << uint32(char_flags);                          // character flags
+    *data << uint32(charFlags);                             // character flags
 
     // character customize flags
     if (atLoginFlags & AT_LOGIN_CUSTOMIZE)
-        *p_data << uint32(CHAR_CUSTOMIZE_FLAG_CUSTOMIZE);
+        *data << uint32(CHAR_CUSTOMIZE_FLAG_CUSTOMIZE);
     else if (atLoginFlags & AT_LOGIN_CHANGE_FACTION)
-        *p_data << uint32(CHAR_CUSTOMIZE_FLAG_FACTION);
+        *data << uint32(CHAR_CUSTOMIZE_FLAG_FACTION);
     else if (atLoginFlags & AT_LOGIN_CHANGE_RACE)
-        *p_data << uint32(CHAR_CUSTOMIZE_FLAG_RACE);
+        *data << uint32(CHAR_CUSTOMIZE_FLAG_RACE);
     else
-        *p_data << uint32(CHAR_CUSTOMIZE_FLAG_NONE);
+        *data << uint32(CHAR_CUSTOMIZE_FLAG_NONE);
 
     // First login
-    *p_data << uint8(atLoginFlags & AT_LOGIN_FIRST ? 1 : 0);
+    *data << uint8(atLoginFlags & AT_LOGIN_FIRST ? 1 : 0);
 
     // Pets info
+    uint32 petDisplayId = 0;
+    uint32 petLevel = 0;
+    uint32 petFamily = 0;
+
+    // show pet at selection character in character list only for non-ghost character
+    if (result && !(playerFlags & PLAYER_FLAGS_GHOST) && (plrClass == CLASS_WARLOCK || plrClass == CLASS_HUNTER || plrClass == CLASS_DEATH_KNIGHT))
     {
-        uint32 petDisplayId = 0;
-        uint32 petLevel   = 0;
-        uint32 petFamily  = 0;
-
-        // show pet at selection character in character list only for non-ghost character
-        if (result && !(playerFlags & PLAYER_FLAGS_GHOST) && (pClass == CLASS_WARLOCK || pClass == CLASS_HUNTER || pClass == CLASS_DEATH_KNIGHT))
+        uint32 entry = fields[16].GetUInt32();
+        CreatureInfo const* creatureInfo = ObjectMgr::GetCreatureTemplate(entry);
+        if (creatureInfo)
         {
-            uint32 entry = fields[16].GetUInt32();
-            CreatureInfo const* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(entry);
-            if (cInfo)
-            {
-                petDisplayId = fields[17].GetUInt32();
-                petLevel     = fields[18].GetUInt16();
-                petFamily    = cInfo->family;
-            }
+            petDisplayId = fields[17].GetUInt32();
+            petLevel = fields[18].GetUInt16();
+            petFamily = creatureInfo->family;
         }
-
-        *p_data << uint32(petDisplayId);
-        *p_data << uint32(petLevel);
-        *p_data << uint32(petFamily);
     }
 
-    Tokens data(fields[19].GetString(), ' ');
-    for (uint8 slot = 0; slot < EQUIPMENT_SLOT_END; ++slot)
+    *data << uint32(petDisplayId);
+    *data << uint32(petLevel);
+    *data << uint32(petFamily);
+
+    Tokens equipment(fields[19].GetString(), ' ');
+    for (uint8 slot = 0; slot < INVENTORY_SLOT_BAG_END; ++slot)
     {
-        uint32 visualbase = slot * 2;
-        uint32 item_id = GetUInt32ValueFromArray(data, visualbase);
-        const ItemPrototype * proto = ObjectMgr::GetItemPrototype(item_id);
+        uint32 visualBase = slot * 2;
+        uint32 itemId = GetUInt32ValueFromArray(equipment, visualBase);
+        ItemPrototype const* proto = ObjectMgr::GetItemPrototype(itemId);
         if (!proto)
         {
-            *p_data << uint32(0);
-            *p_data << uint8(0);
-            *p_data << uint32(0);
+            *data << uint32(0);
+            *data << uint8(0);
+            *data << uint32(0);
             continue;
         }
 
         SpellItemEnchantmentEntry const *enchant = NULL;
 
-        uint32 enchants = GetUInt32ValueFromArray(data, visualbase + 1);
+        uint32 enchants = GetUInt32ValueFromArray(equipment, visualBase + 1);
         for (uint8 enchantSlot = PERM_ENCHANTMENT_SLOT; enchantSlot <= TEMP_ENCHANTMENT_SLOT; ++enchantSlot)
         {
             // values stored in 2 uint16
@@ -2021,23 +2026,10 @@ bool Player::BuildEnumData(QueryResult result, WorldPacket * p_data)
                 break;
         }
 
-        *p_data << uint32(proto->DisplayInfoID);
-        *p_data << uint8(proto->InventoryType);
-        *p_data << uint32(enchant ? enchant->aura_id : 0);
+        *data << uint32(proto->DisplayInfoID);
+        *data << uint8(proto->InventoryType);
+        *data << uint32(enchant ? enchant->aura_id : 0);
     }
-
-    *p_data << uint32(0);                                   // bag 1 display id
-    *p_data << uint8(0);                                    // bag 1 inventory type
-    *p_data << uint32(0);                                   // enchant?
-    *p_data << uint32(0);                                   // bag 2 display id
-    *p_data << uint8(0);                                    // bag 2 inventory type
-    *p_data << uint32(0);                                   // enchant?
-    *p_data << uint32(0);                                   // bag 3 display id
-    *p_data << uint8(0);                                    // bag 3 inventory type
-    *p_data << uint32(0);                                   // enchant?
-    *p_data << uint32(0);                                   // bag 4 display id
-    *p_data << uint8(0);                                    // bag 4 inventory type
-    *p_data << uint32(0);                                   // enchant?
 
     return true;
 }
@@ -2705,18 +2697,7 @@ void Player::ResetAllPowers()
     }
 }
 
-bool Player::CanInteractWithNPCs(bool alive) const
-{
-    if (alive && !isAlive())
-        return false;
-    if (isInFlight())
-        return false;
-
-    return true;
-}
-
-Creature*
-Player::GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask)
+Creature* Player::GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask)
 {
     // unit checks
     if (!guid)
@@ -2725,43 +2706,46 @@ Player::GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask)
     if (!IsInWorld())
         return NULL;
 
+    if (isInFlight())
+        return NULL;
+
     // exist (we need look pets also for some interaction (quest/etc)
-    Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*this,guid);
-    if (!unit)
+    Creature* creature = ObjectAccessor::GetCreatureOrPetOrVehicle(*this, guid);
+    if (!creature)
         return NULL;
 
-    // player check
-    if (!CanInteractWithNPCs(!unit->isSpiritService()))
-        return NULL;
-
-    // appropriate npc type
-    if (npcflagmask && !unit->HasFlag(UNIT_NPC_FLAGS, npcflagmask))
+    // Deathstate checks
+    if (!isAlive() && !(creature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_GHOST))
         return NULL;
 
     // alive or spirit healer
-    if (!unit->isAlive() && (!unit->isSpiritService() || isAlive()))
+    if (!creature->isAlive() && !(creature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_DEAD_INTERACT))
+        return NULL;
+
+    // appropriate npc type
+    if (npcflagmask && !creature->HasFlag(UNIT_NPC_FLAGS, npcflagmask))
         return NULL;
 
     // not allow interaction under control, but allow with own pets
-    if (unit->GetCharmerGUID())
+    if (creature->GetCharmerGUID())
         return NULL;
 
     // not enemy
-    if (unit->IsHostileTo(this))
+    if (creature->IsHostileTo(this))
         return NULL;
 
     // not unfriendly
-    if (FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(unit->getFaction()))
+    if (FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(creature->getFaction()))
         if (factionTemplate->faction)
             if (FactionEntry const* faction = sFactionStore.LookupEntry(factionTemplate->faction))
                 if (faction->reputationListID >= 0 && GetReputationMgr().GetRank(faction) <= REP_UNFRIENDLY)
                     return NULL;
 
     // not too far
-    if (!unit->IsWithinDistInMap(this,INTERACTION_DISTANCE))
+    if (!creature->IsWithinDistInMap(this, INTERACTION_DISTANCE))
         return NULL;
 
-    return unit;
+    return creature;
 }
 
 GameObject* Player::GetGameObjectIfCanInteractWith(uint64 guid, GameobjectTypes type) const
@@ -4926,7 +4910,9 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             trans->PAppend("DELETE FROM character_action WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_aura WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_gifts WHERE guid = '%u'",guid);
-            trans->PAppend("DELETE FROM character_homebind WHERE guid = '%u'",guid);
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_HOMEBIND);
+            stmt->setUInt32(0, guid);
+            trans->Append(stmt);
             trans->PAppend("DELETE FROM character_instance WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_inventory WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_queststatus WHERE guid = '%u'",guid);
@@ -4934,7 +4920,9 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             trans->PAppend("DELETE FROM character_reputation WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_spell WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_spell_cooldown WHERE guid = '%u'",guid);
-            trans->PAppend("DELETE FROM gm_tickets WHERE playerGuid = '%u'", guid);
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_GM_TICKETS);
+            stmt->setUInt32(0, guid);
+            trans->Append(stmt);
             trans->PAppend("DELETE FROM item_instance WHERE owner_guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_social WHERE guid = '%u' OR friend='%u'",guid,guid);
             trans->PAppend("DELETE FROM mail WHERE receiver = '%u'",guid);
@@ -4949,11 +4937,17 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             trans->PAppend("DELETE FROM character_equipmentsets WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u' OR PlayerGuid2 = '%u'",guid, guid);
             trans->PAppend("DELETE FROM guild_bank_eventlog WHERE PlayerGuid = '%u'",guid);
-            trans->PAppend("DELETE FROM character_battleground_data WHERE guid = '%u'",guid);
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_BGDATA);
+            stmt->setUInt32(0, guid);
+            trans->Append(stmt);
             trans->PAppend("DELETE FROM character_glyphs WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_queststatus_daily WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_talent WHERE guid = '%u'",guid);
             trans->PAppend("DELETE FROM character_skills WHERE guid = '%u'",guid);
+            /* World of Warcraft Armory */
+            trans->PAppend("DELETE FROM armory_character_stats WHERE guid = '%u'",guid);
+            trans->PAppend("DELETE FROM character_feed_log WHERE guid = '%u'",guid);
+            /* World of Warcraft Armory */
 
             CharacterDatabase.CommitTransaction(trans);
             break;
@@ -8123,9 +8117,13 @@ void Player::_ApplyWeaponDependentAuraMods(Item *item,WeaponAttackType attackTyp
     AuraEffectList const& auraDamagePctList = GetAuraEffectsByType(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
     for (AuraEffectList::const_iterator itr = auraDamagePctList.begin(); itr != auraDamagePctList.end(); ++itr)
         if ((apply && item->IsFitToSpellRequirements((*itr)->GetSpellProto())) || HasItemFitToSpellRequirements((*itr)->GetSpellProto(), item))
-            mod += (*itr)->GetAmount();
+            if ((*itr)->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
+                mod += (*itr)->GetAmount();
 
     SetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT, mod/100.0f);
+    UpdateDamagePhysical(BASE_ATTACK);
+    UpdateDamagePhysical(OFF_ATTACK);
+    UpdateDamagePhysical(RANGED_ATTACK);
 }
 
 void Player::_ApplyWeaponDependentAuraCritMod(Item *item, WeaponAttackType attackType, AuraEffect const* aura, bool apply)
@@ -16374,70 +16372,42 @@ void Player::_LoadArenaTeamInfo(PreparedQueryResult result)
 {
     // arenateamid, played_week, played_season, personal_rating
     memset((void*)&m_uint32Values[PLAYER_FIELD_ARENA_TEAM_INFO_1_1], 0, sizeof(uint32) * MAX_ARENA_SLOT * ARENA_TEAM_END);
-    if (!result)
-        return;
 
-    do
+    uint16 personalRatingCache[] = {0, 0, 0};
+
+    if (result)
     {
-        Field* fields = result->Fetch();
-
-        uint32 arenateamid       = fields[0].GetUInt32();
-        uint32 played_week       = fields[1].GetUInt32();
-        uint32 played_season     = fields[2].GetUInt32();
-        uint32 wons_season       = fields[3].GetUInt32();
-
-        ArenaTeam* aTeam = sObjectMgr->GetArenaTeamById(arenateamid);
-        if (!aTeam)
+        do
         {
-            sLog->outError("Player::_LoadArenaTeamInfo: couldn't load arenateam %u", arenateamid);
-            continue;
+            Field* fields = result->Fetch();
+
+            uint32 arenaTeamId = fields[0].GetUInt32();
+
+            ArenaTeam* arenaTeam = sObjectMgr->GetArenaTeamById(arenaTeamId);
+            if (!arenaTeam)
+            {
+                sLog->outError("Player::_LoadArenaTeamInfo: couldn't load arenateam %u", arenaTeamId);
+                continue;
+            }
+
+            uint8 arenaSlot = arenaTeam->GetSlot();
+
+            personalRatingCache[arenaSlot] = fields[4].GetUInt16();
+
+            SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_ID, arenaTeamId);
+            SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_TYPE, arenaTeam->GetType());
+            SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (arenaTeam->GetCaptain() == GetGUID()) ? 0 : 1);
+            SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_WEEK, uint32(fields[1].GetUInt16()));
+            SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_SEASON, uint32(fields[2].GetUInt16()));
+            SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_WINS_SEASON, uint32(fields[3].GetUInt16()));
         }
-
-        uint8  arenaSlot = aTeam->GetSlot();
-
-        SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_ID, arenateamid);
-        SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_TYPE, aTeam->GetType());
-        SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (aTeam->GetCaptain() == GetGUID()) ? 0 : 1);
-        SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_WEEK, played_week);
-        SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_SEASON, played_season);
-        SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_WINS_SEASON, wons_season);
-    }
-    while (result->NextRow());
-}
-
-void Player::_LoadArenaStatsInfo(PreparedQueryResult result)
-{
-    uint8 slot = 0;
-    if (!result)
-    {
-        for (; slot <= 2; ++slot)
-        {
-            CharacterDatabase.PExecute("INSERT INTO character_arena_stats (guid, slot, personal_rating, matchmaker_rating) VALUES (%u, %u, 0, 1500)", GetGUIDLow(), slot);
-            SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, 0);
-        }
-        return;
+        while (result->NextRow());
     }
 
-    do
+    for (uint8 slot = 0; slot <= 2; ++slot)
     {
-        Field* fields = result->Fetch();
-
-        uint32 personalrating = 0;
-        uint32 matchmakerrating = 1500;
-        if (fields[0].GetUInt8() > slot)
-        {
-            CharacterDatabase.PExecute("INSERT INTO character_arena_stats (guid, slot, personal_rating, matchmaker_rating) VALUES (%u, %u, %u, %u)", GetGUIDLow(), slot, personalrating, matchmakerrating);
-            SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, personalrating);
-            slot++;
-            continue;
-        }
-
-        personalrating = fields[1].GetUInt32();
-        matchmakerrating = fields[2].GetUInt32();
-        SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, personalrating);
-        slot++;
+        SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, uint32(personalRatingCache[slot]));
     }
-    while (result->NextRow());
 }
 
 void Player::_LoadEquipmentSets(PreparedQueryResult result)
@@ -16478,8 +16448,8 @@ void Player::_LoadBGData(PreparedQueryResult result)
 
     Field* fields = result->Fetch();
     // Expecting only one row
-    //             0         1      2       3       4       5       6          7           8          9
-    // SELECT instance_id, team, join_x, join_y, join_z, join_o, join_map, taxi_start, taxi_end, mount_spell FROM character_battleground_data WHERE guid = ?
+    //        0           1     2      3      4      5      6          7          8        9
+    // SELECT instanceId, team, joinX, joinY, joinZ, joinO, joinMapId, taxiStart, taxiEnd, mountSpell FROM character_battleground_data WHERE guid = ?
 
     m_bgData.bgInstanceID = fields[0].GetUInt32();
     m_bgData.bgTeam       = fields[1].GetUInt16();
@@ -16520,8 +16490,14 @@ void Player::SetHomebind(WorldLocation const& /*loc*/, uint32 /*area_id*/)
     m_homebindZ = GetPositionZ();
 
     // update sql homebind
-    CharacterDatabase.PExecute("UPDATE character_homebind SET map = '%u', zone = '%u', position_x = '%f', position_y = '%f', position_z = '%f' WHERE guid = '%u'",
-        m_homebindMapId, m_homebindAreaId, m_homebindX, m_homebindY, m_homebindZ, GetGUIDLow());
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SET_PLAYER_HOMEBIND);
+    stmt->setUInt16(0, m_homebindMapId);
+    stmt->setUInt16(1, m_homebindAreaId);
+    stmt->setFloat (2, m_homebindX);
+    stmt->setFloat (3, m_homebindY);
+    stmt->setFloat (4, m_homebindZ);
+    stmt->setUInt32(5, GetGUIDLow());
+    CharacterDatabase.Execute(stmt);
 }
 
 uint32 Player::GetUInt32ValueFromArray(Tokens const& data, uint16 index)
@@ -16590,6 +16566,8 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
         CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid ='%u'", uint32(AT_LOGIN_RENAME),guid);
         return false;
     }
+    // Cleanup old Wowarmory feeds
+    InitWowarmoryFeeds();
 
     // overwrite possible wrong/corrupted guid
     SetUInt64Value(OBJECT_FIELD_GUID, MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
@@ -16686,7 +16664,6 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     _LoadGroup(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADGROUP));
 
     _LoadArenaTeamInfo(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADARENAINFO));
-    _LoadArenaStatsInfo(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADARENASTATS));
 
     SetArenaPoints(fields[39].GetUInt32());
 
@@ -16698,7 +16675,7 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
             continue;
 
         if (ArenaTeam * at = sObjectMgr->GetArenaTeamById(arena_team_id))
-            if (at->HaveMember(GetGUID()))
+            if (at->IsMember(GetGUID()))
                 continue;
 
         // arena team not exist or not member, cleanup fields
@@ -17448,7 +17425,11 @@ void Player::_LoadInventory(PreparedQueryResult result, uint32 timeDiff)
                         ItemPosCountVec dest;
                         err = CanStoreItem(itr->second->GetSlot(), slot, dest, item);
                         if (err == EQUIP_ERR_OK)
+                        { 
                             itr->second->StoreItem(slot, item, true);
+                            //THIS IS A HACK. NEED CORRECT WAY.
+                            AddItemDurations(item);
+                        } 
                     }
                 }
 
@@ -18294,7 +18275,7 @@ bool Player::_LoadHomeBind(PreparedQueryResult result)
     }
 
     bool ok = false;
-    //QueryResult *result = CharacterDatabase.PQuery("SELECT map,zone,position_x,position_y,position_z FROM character_homebind WHERE guid = '%u'", GUID_LOPART(playerGuid));
+    // SELECT mapId, zoneId, posX, posY, posZ FROM character_homebind WHERE guid = ?
     if (result)
     {
         Field* fields = result->Fetch();
@@ -18312,7 +18293,11 @@ bool Player::_LoadHomeBind(PreparedQueryResult result)
             !bindMapEntry->Instanceable() && GetSession()->Expansion() >= bindMapEntry->Expansion())
             ok = true;
         else
-            CharacterDatabase.PExecute("DELETE FROM character_homebind WHERE guid = '%u'", GetGUIDLow());
+        {
+            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_HOMEBIND);
+            stmt->setUInt32(0, GetGUIDLow());
+            CharacterDatabase.Execute(stmt);
+        }
     }
 
     if (!ok)
@@ -18323,8 +18308,14 @@ bool Player::_LoadHomeBind(PreparedQueryResult result)
         m_homebindY = info->positionY;
         m_homebindZ = info->positionZ;
 
-        CharacterDatabase.PExecute("INSERT INTO character_homebind (guid,map,zone,position_x,position_y,position_z) VALUES ('%u', '%u', '%u', '%f', '%f', '%f')",
-            GetGUIDLow(), m_homebindMapId, m_homebindAreaId, m_homebindX, m_homebindY, m_homebindZ);
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_PLAYER_HOMEBIND);
+        stmt->setUInt32(0, GetGUIDLow());
+        stmt->setUInt16(1, m_homebindMapId);
+        stmt->setUInt16(2, m_homebindAreaId);
+        stmt->setFloat (3, m_homebindX);
+        stmt->setFloat (4, m_homebindY);
+        stmt->setFloat (5, m_homebindZ);
+        CharacterDatabase.Execute(stmt);
     }
 
     sLog->outStaticDebug("Setting player home position - mapid: %u, areaid: %u, X: %f, Y: %f, Z: %f",
@@ -18473,23 +18464,29 @@ void Player::SaveToDB()
     ss << ", ";
     ss << uint32(m_activeSpec) << ", '";
     for (uint32 i = 0; i < PLAYER_EXPLORED_ZONES_SIZE; ++i)
-    {
         ss << GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + i) << " ";
-    }
 
+    // cache equipment...
     ss << "', '";
-    for (uint32 i = 0; i < EQUIPMENT_SLOT_END * 2; ++i )
-    {
+    for (uint32 i = 0; i < EQUIPMENT_SLOT_END * 2; ++i)
         ss << GetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + i) << " ";
+
+    // ...and bags for enum opcode
+    for (uint32 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+    {
+        if (Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            ss << item->GetEntry();
+        else
+            ss << "0";
+        ss << " 0 ";
     }
 
     ss << "',";
 
     ss << GetUInt32Value(PLAYER_AMMO_ID) << ", '";
     for (uint32 i = 0; i < KNOWN_TITLES_SIZE*2; ++i)
-    {
         ss << GetUInt32Value(PLAYER__FIELD_KNOWN_TITLES + i) << " ";
-    }
+
     ss << "',";
     ss << uint32(GetByteValue(PLAYER_FIELD_BYTES, 2));
     ss << ")";
@@ -18525,6 +18522,30 @@ void Player::SaveToDB()
         _SaveStats(trans);
 
     CharacterDatabase.CommitTransaction(trans);
+
+    /* World of Warcraft Armory */
+    // Place this code AFTER CharacterDatabase.CommitTransaction(); to avoid some character saving errors.
+    // Wowarmory feeds
+    std::ostringstream sWowarmory;
+    for (WowarmoryFeeds::iterator iter = m_wowarmory_feeds.begin(); iter < m_wowarmory_feeds.end(); ++iter) {
+        sWowarmory << "INSERT IGNORE INTO character_feed_log (guid,type,data,date,counter,difficulty,item_guid,item_quality) VALUES ";
+        //                      guid                    type                        data                    date                            counter                   difficulty                        item_guid                      item_quality
+        sWowarmory << "(" << (*iter).guid << ", " << (*iter).type << ", " << (*iter).data << ", " << uint64((*iter).date) << ", " << (*iter).counter << ", " << uint32((*iter).difficulty) << ", " << (*iter).item_guid << ", " << (*iter).item_quality <<  ");";
+        CharacterDatabase.PExecute(sWowarmory.str().c_str());
+        sWowarmory.str("");
+    }
+    // Clear old saved feeds from storage - they are not required for server core.
+    InitWowarmoryFeeds();
+    // Character stats
+    std::ostringstream ps;
+    time_t t = time(NULL);
+    CharacterDatabase.PExecute("DELETE FROM armory_character_stats WHERE guid = %u", GetGUIDLow());
+    ps << "INSERT INTO armory_character_stats (guid, data, save_date) VALUES (" << GetGUIDLow() << ", '";
+    for (uint16 i = 0; i < m_valuesCount; ++i)
+        ps << GetUInt32Value(i) << " ";
+    ps << "', " << uint64(t) << ");";
+    CharacterDatabase.PExecute(ps.str().c_str());
+    /* World of Warcraft Armory */
 
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
@@ -19897,21 +19918,25 @@ void Player::RemovePetitionsAndSigns(uint64 guid, uint32 type)
 
 void Player::LeaveAllArenaTeams(uint64 guid)
 {
-    QueryResult result = CharacterDatabase.PQuery("SELECT arena_team_member.arenateamid FROM arena_team_member JOIN arena_team ON arena_team_member.arenateamid = arena_team.arenateamid WHERE guid='%u'", GUID_LOPART(guid));
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_LOAD_PLAYER_ARENA_TEAMS);
+    stmt->setUInt32(0, GUID_LOPART(guid));
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
     if (!result)
         return;
 
     do
     {
-        Field *fields = result->Fetch();
-        uint32 at_id = fields[0].GetUInt32();
-        if (at_id != 0)
+        Field* fields = result->Fetch();
+        uint32 arenaTeamId = fields[0].GetUInt32();
+        if (arenaTeamId != 0)
         {
-            ArenaTeam * at = sObjectMgr->GetArenaTeamById(at_id);
-            if (at)
-                at->DelMember(guid);
+            ArenaTeam* arenaTeam = sObjectMgr->GetArenaTeamById(arenaTeamId);
+            if (arenaTeam)
+                arenaTeam->DelMember(guid, true);
         }
-    } while (result->NextRow());
+    }
+    while (result->NextRow());
 }
 
 void Player::SetRestBonus (float rest_bonus_new)
@@ -23088,7 +23113,7 @@ void Player::RemoveGlobalCooldown(SpellEntry const *spellInfo)
 uint32 Player::GetRuneBaseCooldown(uint8 index)
 {
     uint8 rune = GetBaseRune(index);
-    uint32 cooldown = RUNE_COOLDOWN;
+    uint32 cooldown = RUNE_BASE_COOLDOWN;
 
     AuraEffectList const& regenAura = GetAuraEffectsByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
     for (AuraEffectList::const_iterator i = regenAura.begin();i != regenAura.end(); ++i)
@@ -23557,9 +23582,9 @@ void Player::HandleFall(MovementInfo const& movementInfo)
     RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_LANDING); // No fly zone - Parachute
 }
 
-void Player::UpdateAchievementCriteria(AchievementCriteriaTypes type, uint32 miscvalue1/*=0*/, uint32 miscvalue2/*=0*/, Unit *unit/*=NULL*/, uint32 time/*=0*/)
+void Player::UpdateAchievementCriteria(AchievementCriteriaTypes type, uint32 miscValue1 /*= 0*/, uint32 miscValue2 /*= 0*/, Unit* unit /*= NULL*/)
 {
-    GetAchievementMgr().UpdateAchievementCriteria(type, miscvalue1, miscvalue2, unit, time);
+    GetAchievementMgr().UpdateAchievementCriteria(type, miscValue1, miscValue2, unit);
 }
 
 void Player::CompletedAchievement(AchievementEntry const* entry, bool ignoreGMAllowAchievementConfig)
@@ -24188,13 +24213,25 @@ void Player::_SaveEquipmentSets(SQLTransaction& trans)
 
 void Player::_SaveBGData(SQLTransaction& trans)
 {
-    trans->PAppend("DELETE FROM character_battleground_data WHERE guid='%u'", GetGUIDLow());
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_BGDATA);
+    stmt->setUInt32(0, GetGUIDLow());
+    trans->Append(stmt);
     if (m_bgData.bgInstanceID)
     {
         /* guid, bgInstanceID, bgTeam, x, y, z, o, map, taxi[0], taxi[1], mountSpell */
-        trans->PAppend("INSERT INTO character_battleground_data VALUES ('%u', '%u', '%u', '%f', '%f', '%f', '%f', '%u', '%u', '%u', '%u')",
-            GetGUIDLow(), m_bgData.bgInstanceID, m_bgData.bgTeam, m_bgData.joinPos.GetPositionX(), m_bgData.joinPos.GetPositionY(), m_bgData.joinPos.GetPositionZ(),
-            m_bgData.joinPos.GetOrientation(), m_bgData.joinPos.GetMapId(), m_bgData.taxiPath[0], m_bgData.taxiPath[1], m_bgData.mountSpell);
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_PLAYER_BGDATA);
+        stmt->setUInt32(0, GetGUIDLow());
+        stmt->setUInt32(1, m_bgData.bgInstanceID);
+        stmt->setUInt16(2, m_bgData.bgTeam);
+        stmt->setFloat (3, m_bgData.joinPos.GetPositionX());
+        stmt->setFloat (4, m_bgData.joinPos.GetPositionY());
+        stmt->setFloat (5, m_bgData.joinPos.GetPositionZ());
+        stmt->setFloat (6, m_bgData.joinPos.GetOrientation());
+        stmt->setUInt16(7, m_bgData.joinPos.GetMapId());
+        stmt->setUInt16(8, m_bgData.taxiPath[0]);
+        stmt->setUInt16(9, m_bgData.taxiPath[1]);
+        stmt->setUInt16(10,m_bgData.mountSpell);
+        trans->Append(stmt);
     }
 }
 
@@ -24788,31 +24825,42 @@ void Player::_SaveInstanceTimeRestrictions(SQLTransaction& trans)
 }
 
 /** World of Warcraft Armory **/
-void Player::WriteWowArmoryDatabaseLog(uint32 type, uint32 data)
-{
-    uint32 pGuid = GetGUIDLow();
-    sLog->outDetail("WoWArmory: write feed log (guid: %u, type: %u, data: %u", pGuid, type, data);
-    if (type <= 0)	// Unknown type
+void Player::InitWowarmoryFeeds() {
+    // Clear feeds
+    m_wowarmory_feeds.clear();
+}
+
+void Player::CreateWowarmoryFeed(uint32 type, uint32 data, uint32 item_guid, uint32 item_quality) {
+    /*
+        1 - TYPE_ACHIEVEMENT_FEED
+        2 - TYPE_ITEM_FEED
+        3 - TYPE_BOSS_FEED
+    */
+    if (GetGUIDLow() == 0)
     {
-        sLog->outError("WoWArmory: unknown type id: %d, ignore.", type);
+        sLog->outError("[Wowarmory]: player is not initialized, unable to create log entry!");
         return;
     }
-    if (type == 3)	// Do not write same bosses many times - just update counter.
+    if (type <= 0 || type > 3)
     {
-        uint8 Difficulty = GetMap()->GetDifficulty();
-        QueryResult result = CharacterDatabase.PQuery("SELECT counter FROM character_feed_log WHERE guid='%u' AND type=3 AND data='%u' AND difficulty='%u' LIMIT 1", pGuid, data, Difficulty);
-        if (result)
-        {
-            CharacterDatabase.PExecute("UPDATE character_feed_log SET counter=counter+1, date=UNIX_TIMESTAMP(NOW()) WHERE guid='%u' AND type=3 AND data='%u' AND difficulty='%u' LIMIT 1", pGuid, data, Difficulty);
-        }
-        else
-        {
-            CharacterDatabase.PExecute("INSERT INTO character_feed_log (guid, type, data, date, counter, difficulty) VALUES('%u', '%d', '%u', UNIX_TIMESTAMP(NOW()), 1, '%u')", pGuid, type, data, Difficulty);
-        }
+        sLog->outError("[Wowarmory]: unknown feed type: %d, ignore.", type);
+        return;
     }
-    else
+    if (data == 0)
     {
-        CharacterDatabase.PExecute("REPLACE INTO character_feed_log (guid, type, data, date, counter) VALUES('%u', '%d', '%u', UNIX_TIMESTAMP(NOW()), 1)", pGuid, type, data);
+        sLog->outError("[Wowarmory]: empty data (GUID: %u), ignore.", GetGUIDLow());
+        return;
     }
+    WowarmoryFeedEntry feed;
+    feed.guid = GetGUIDLow();
+    feed.type = type;
+    feed.data = data;
+    feed.difficulty = type == 3 ? GetMap()->GetDifficulty() : 0;
+    feed.item_guid  = item_guid;
+    feed.item_quality = item_quality;
+    feed.counter = 0;
+    feed.date = time(NULL);
+    sLog->outDebug(LOG_FILTER_UNITS, "[Wowarmory]: create wowarmory feed (GUID: %u, type: %d, data: %u).", feed.guid, feed.type, feed.data);
+    m_wowarmory_feeds.push_back(feed);
 }
 /** World of Warcraft Armory **/

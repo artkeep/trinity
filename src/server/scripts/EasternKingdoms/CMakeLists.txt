@@ -120,9 +120,8 @@ set(scripts_STAT_SRCS
   EasternKingdoms/BlackrockSpire/boss_rend_blackhand.cpp
   EasternKingdoms/BlackrockSpire/boss_highlord_omokk.cpp
   EasternKingdoms/BlackrockSpire/boss_the_beast.cpp
-  EasternKingdoms/BlackrockSpire/blackrock_spire.cpp
-  EasternKingdoms/BlackrockSpire/instance_blackrock_spire.cpp
   EasternKingdoms/BlackrockSpire/blackrock_spire.h
+  EasternKingdoms/BlackrockSpire/instance_blackrock_spire.cpp
   EasternKingdoms/SunwellPlateau/boss_eredar_twins.cpp
   EasternKingdoms/SunwellPlateau/boss_kiljaeden.cpp
   EasternKingdoms/SunwellPlateau/sunwell_plateau.h
@@ -150,7 +149,6 @@ set(scripts_STAT_SRCS
   EasternKingdoms/ScarletMonastery/boss_arcanist_doan.cpp
   EasternKingdoms/ScarletMonastery/boss_herod.cpp
   EasternKingdoms/ScarletMonastery/boss_scorn.cpp
-  EasternKingdoms/dun_morogh.cpp
   EasternKingdoms/undercity.cpp
   EasternKingdoms/silvermoon_city.cpp
   EasternKingdoms/loch_modan.cpp
@@ -169,7 +167,6 @@ set(scripts_STAT_SRCS
   EasternKingdoms/BlackwingLair/boss_flamegor.cpp
   EasternKingdoms/BlackwingLair/boss_victor_nefarius.cpp
   EasternKingdoms/blasted_lands.cpp
-  EasternKingdoms/elwynn_forest.cpp
   EasternKingdoms/stormwind_city.cpp
   EasternKingdoms/ZulAman/boss_halazzi.cpp
   EasternKingdoms/ZulAman/boss_hexlord.cpp

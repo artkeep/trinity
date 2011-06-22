@@ -1950,8 +1950,7 @@ void ObjectMgr::LoadCreatureRespawnTimes()
 
     uint32 count = 0;
 
-    QueryResult result = CharacterDatabase.Query("SELECT guid,respawntime,instance FROM creature_respawn");
-
+    PreparedQueryResult result = CharacterDatabase.Query(CharacterDatabase.GetPreparedStatement(CHAR_LOAD_CREATURE_RESPAWNS));
     if (!result)
     {
         sLog->outString(">> Loaded 0 creature respawn time.");
@@ -1981,13 +1980,11 @@ void ObjectMgr::LoadGameobjectRespawnTimes()
     uint32 oldMSTime = getMSTime();
 
     // Remove outdated data
-    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_EXPIRED_GO_RESPAWN_TIMES);
-    CharacterDatabase.DirectExecute(stmt);
+    CharacterDatabase.DirectExecute(CharacterDatabase.GetPreparedStatement(CHAR_DEL_EXPIRED_GO_RESPAWNS));
 
     uint32 count = 0;
 
-    QueryResult result = CharacterDatabase.Query("SELECT guid,respawntime,instance FROM gameobject_respawn");
-
+    PreparedQueryResult result = CharacterDatabase.Query(CharacterDatabase.GetPreparedStatement(CHAR_LOAD_GO_RESPAWNS));
     if (!result)
     {
         sLog->outString(">> Loaded 0 gameobject respawn times. DB table `gameobject_respawn` is empty!");
@@ -3961,11 +3958,14 @@ void ObjectMgr::LoadArenaTeams()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                     0                      1    2           3    4               5
-    QueryResult result = CharacterDatabase.Query("SELECT arena_team.arenateamid,name,captainguid,type,BackgroundColor,EmblemStyle,"
-    //   6           7           8            9      10    11   12     13    14
-        "EmblemColor,BorderStyle,BorderColor, rating,games,wins,played,wins2,rank "
-        "FROM arena_team LEFT JOIN arena_team_stats ON arena_team.arenateamid = arena_team_stats.arenateamid ORDER BY arena_team.arenateamid ASC");
+    // Clean out the trash before loading anything
+    CharacterDatabase.Execute("DELETE FROM arena_team_member WHERE arenaTeamId NOT IN (SELECT arenaTeamId FROM arena_team)");
+
+
+    //                                                                   0        1         2         3          4              5            6            7           8
+    QueryResult result = CharacterDatabase.Query("SELECT arena_team.arenaTeamId, name, captainGuid, type, backgroundColor, emblemStyle, emblemColor, borderStyle, borderColor,"
+    //                                               9        10        11         12           13       14
+                                                 "rating, weekGames, weekWins, seasonGames, seasonWins, rank FROM arena_team ORDER BY arena_team.arenaTeamId ASC");
 
     if (!result)
     {
@@ -3974,30 +3974,29 @@ void ObjectMgr::LoadArenaTeams()
         return;
     }
 
-    // load arena_team members
-    QueryResult arenaTeamMembersResult = CharacterDatabase.Query(
-    //          0           1           2           3         4             5           6               7    8
-        "SELECT arenateamid,member.guid,played_week,wons_week,played_season,wons_season,name,class "
-        "FROM arena_team_member member LEFT JOIN characters chars on member.guid = chars.guid ORDER BY member.arenateamid ASC");
+    QueryResult result2 = CharacterDatabase.Query(
+    //              0              1           2             3              4                 5          6     7          8                  9
+        "SELECT arenaTeamId, atm.guid, atm.weekGames, atm.weekWins, atm.seasonGames, atm.seasonWins, c.name, class, personalRating, matchMakerRating FROM arena_team_member atm"
+        " INNER JOIN arena_team ate USING (arenaTeamId)"
+        " LEFT JOIN characters AS c ON atm.guid = c.guid"
+        " LEFT JOIN character_arena_stats AS cas ON c.guid = cas.guid AND (cas.slot = 0 AND ate.type = 2 OR cas.slot = 1 AND ate.type = 3 OR cas.slot = 2 AND ate.type = 5)"
+        " ORDER BY atm.arenateamid ASC");
 
     uint32 count = 0;
-
     do
     {
-        //Field *fields = result->Fetch();
+        ArenaTeam* newArenaTeam = new ArenaTeam;
 
-        ++count;
-
-        ArenaTeam *newArenaTeam = new ArenaTeam;
-        if (!newArenaTeam->LoadArenaTeamFromDB(result) ||
-            !newArenaTeam->LoadMembersFromDB(arenaTeamMembersResult))
+        if (!newArenaTeam->LoadArenaTeamFromDB(result) || !newArenaTeam->LoadMembersFromDB(result2))
         {
             newArenaTeam->Disband(NULL);
             delete newArenaTeam;
             continue;
         }
         AddArenaTeam(newArenaTeam);
-    }while (result->NextRow());
+
+        ++count;
+    } while (result->NextRow());
 
     sLog->outString();
     sLog->outString(">> Loaded %u arena team definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
@@ -4185,7 +4184,7 @@ void ObjectMgr::LoadQuests()
     //   142          143
         "StartScript, CompleteScript"
         " FROM quest_template");
-    if (result == NULL)
+    if (!result)
     {
         sLog->outErrorDb(">> Loaded 0 quests definitions. DB table `quest_template` is empty.");
         sLog->outString();
@@ -4905,12 +4904,12 @@ void ObjectMgr::LoadScripts(ScriptsType type)
     if (tableName.empty())
         return;
 
-    if (sWorld->IsScriptScheduled())                          // function don't must be called in time scripts use.
+    if (sScriptMgr->IsScriptScheduled())                    // function cannot be called when scripts are in use.
         return;
 
     sLog->outString("Loading %s...", tableName.c_str());
 
-    scripts->clear();                                        // need for reload support
+    scripts->clear();                                       // need for reload support
 
     bool isSpellScriptTable = (type == SCRIPTS_SPELL);
     char buff[125];
@@ -5646,7 +5645,7 @@ void ObjectMgr::LoadInstanceEncounters()
         {
             case ENCOUNTER_CREDIT_KILL_CREATURE:
             {
-                CreatureInfo const* creatureInfo = GetCreatureInfo(creditEntry);
+                CreatureInfo const* creatureInfo = GetCreatureTemplate(creditEntry);
                 if (!creatureInfo)
                 {
                     sLog->outErrorDb("Table `instance_encounters` has an invalid creature (entry %u) linked to the encounter %u (%s), skipped!", creditEntry, entry, dungeonEncounter->encounterName[0]);
@@ -6669,7 +6668,7 @@ void ObjectMgr::SetHighestGuids()
     if (result)
         m_mailid = (*result)[0].GetUInt32()+1;
 
-    result = CharacterDatabase.Query("SELECT MAX(guid) FROM corpse");
+    result = CharacterDatabase.Query("SELECT MAX(corpseGuid) FROM corpse");
     if (result)
         m_hiCorpseGuid = (*result)[0].GetUInt32()+1;
 
@@ -6681,7 +6680,7 @@ void ObjectMgr::SetHighestGuids()
     if (result)
         m_equipmentSetGuid = (*result)[0].GetUInt64()+1;
 
-    result = CharacterDatabase.Query("SELECT MAX(guildid) FROM guild");
+    result = CharacterDatabase.Query("SELECT MAX(guildId) FROM guild");
     if (result)
         m_guildId = (*result)[0].GetUInt32()+1;
 
@@ -7198,11 +7197,7 @@ void ObjectMgr::LoadCorpses()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                      0           1           2            3         4      5          6         7       8       9     10      11
-    QueryResult result = CharacterDatabase.Query("SELECT position_x, position_y, position_z, orientation, map, displayId, itemCache, bytes1, bytes2, guild, flags, dynFlags"
-    //                                               12       13          14        15       16     17
-                                                 ", time, corpse_type, instance, phaseMask, guid, player FROM corpse WHERE corpse_type <> 0");
-
+    PreparedQueryResult result = CharacterDatabase.Query(CharacterDatabase.GetPreparedStatement(CHAR_LOAD_CORPSES));
     if (!result)
     {
         sLog->outString(">> Loaded 0 corpses. DB table `pet_name_generation` is empty.");
@@ -7211,15 +7206,12 @@ void ObjectMgr::LoadCorpses()
     }
 
     uint32 count = 0;
-
     do
     {
-
         Field *fields = result->Fetch();
-
         uint32 guid = fields[16].GetUInt32();
 
-        Corpse *corpse = new Corpse;
+        Corpse *corpse = new Corpse();
         if (!corpse->LoadFromDB(guid, fields))
         {
             delete corpse;
@@ -7227,7 +7219,6 @@ void ObjectMgr::LoadCorpses()
         }
 
         sObjectAccessor->AddCorpse(corpse);
-
         ++count;
     }
     while (result->NextRow());
@@ -7745,7 +7736,7 @@ void ObjectMgr::SaveCreatureRespawnTime(uint32 loguid, uint32 instance, time_t t
         m_CreatureRespawnTimesMtx.release();
     }
 
-    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_CREATURE_RESPAWN_TIME);
+    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_CREATURE_RESPAWN);
     stmt->setUInt32(0, loguid);
     stmt->setUInt64(1, uint64(t));
     stmt->setUInt32(2, instance);
@@ -7761,7 +7752,7 @@ void ObjectMgr::RemoveCreatureRespawnTime(uint32 loguid, uint32 instance)
         m_CreatureRespawnTimesMtx.release();
     }
 
-    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CREATURE_RESPAWN_TIME);
+    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CREATURE_RESPAWN);
     stmt->setUInt32(0, loguid);
     stmt->setUInt32(1, instance);
     CharacterDatabase.Execute(stmt);
@@ -7793,7 +7784,7 @@ void ObjectMgr::SaveGORespawnTime(uint32 loguid, uint32 instance, time_t t)
         m_GORespawnTimesMtx.release();
     }
 
-    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_GO_RESPAWN_TIME);
+    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_GO_RESPAWN);
     stmt->setUInt32(0, loguid);
     stmt->setUInt64(1, uint64(t));
     stmt->setUInt32(2, instance);
@@ -7809,7 +7800,7 @@ void ObjectMgr::RemoveGORespawnTime(uint32 loguid, uint32 instance)
         m_GORespawnTimesMtx.release();
     }
 
-    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GO_RESPAWN_TIME);
+    PreparedStatement *stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GO_RESPAWN);
     stmt->setUInt32(0, loguid);
     stmt->setUInt32(1, instance);
     CharacterDatabase.Execute(stmt);
@@ -7844,8 +7835,12 @@ void ObjectMgr::DeleteRespawnTimeForInstance(uint32 instance)
         }
         m_CreatureRespawnTimesMtx.release();
     }
-    CharacterDatabase.PExecute("DELETE FROM creature_respawn WHERE instance = '%u'", instance);
-    CharacterDatabase.PExecute("DELETE FROM gameobject_respawn WHERE instance = '%u'", instance);
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CREATURE_RESPAWN_BY_INSTANCE);
+    stmt->setUInt32(0, instance);
+    CharacterDatabase.Execute(stmt);
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GO_RESPAWN_BY_INSTANCE);
+    stmt->setUInt32(0, instance);
+    CharacterDatabase.Execute(stmt);
 }
 
 void ObjectMgr::DeleteGOData(uint32 guid)
@@ -8605,7 +8600,7 @@ void ObjectMgr::LoadMailLevelRewards()
             continue;
         }
 
-        if (!GetCreatureTemplateStore(senderEntry))
+        if (!GetCreatureTemplate(senderEntry))
         {
             sLog->outErrorDb("Table `mail_level_reward` have not existed sender creature entry (%u) for level %u that invalid not include any player races, ignoring.",senderEntry,level);
             continue;
@@ -9181,12 +9176,6 @@ void ObjectMgr::LoadDbScriptStrings()
         sLog->outErrorDb("Table `db_script_string` has unused string id  %u", *itr);
 }
 
-// Functions for scripting access
-uint32 GetAreaTriggerScriptId(uint32 trigger_id)
-{
-    return sObjectMgr->GetAreaTriggerScriptId(trigger_id);
-}
-
 bool LoadTrinityStrings(char const* table, int32 start_value, int32 end_value)
 {
     // MAX_DB_SCRIPT_STRING_ID is max allowed negative value for scripts (scrpts can use only more deep negative values
@@ -9200,34 +9189,9 @@ bool LoadTrinityStrings(char const* table, int32 start_value, int32 end_value)
     return sObjectMgr->LoadTrinityStrings(table, start_value, end_value);
 }
 
-uint32  GetScriptId(const char *name)
+uint32 GetScriptId(const char *name)
 {
     return sObjectMgr->GetScriptId(name);
-}
-
-ObjectMgr::ScriptNameMap & GetScriptNames()
-{
-    return sObjectMgr->GetScriptNames();
-}
-
-GameObjectInfo const *GetGameObjectInfo(uint32 id)
-{
-    return ObjectMgr::GetGameObjectInfo(id);
-}
-
-CreatureInfo const *GetCreatureInfo(uint32 id)
-{
-    return ObjectMgr::GetCreatureTemplate(id);
-}
-
-CreatureInfo const* GetCreatureTemplateStore(uint32 entry)
-{
-    return sCreatureStorage.LookupEntry<CreatureInfo>(entry);
-}
-
-Quest const* GetQuestTemplateStore(uint32 entry)
-{
-    return sObjectMgr->GetQuestTemplate(entry);
 }
 
 CreatureBaseStats const* ObjectMgr::GetCreatureBaseStats(uint8 level, uint8 unitClass)

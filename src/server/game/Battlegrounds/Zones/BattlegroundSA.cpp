@@ -369,7 +369,7 @@ void BattlegroundSA::Update(uint32 diff)
                 RoundScores[1].winner = (Attackers == TEAM_ALLIANCE) ? TEAM_HORDE : TEAM_ALLIANCE;
 
                 if (RoundScores[0].time == RoundScores[1].time)
-                    EndBattleground(NULL);
+                    EndBattleground(0);
                 else if (RoundScores[0].time < RoundScores[1].time)
                     EndBattleground(RoundScores[0].winner == TEAM_ALLIANCE ? ALLIANCE : HORDE);
                 else
@@ -524,44 +524,38 @@ void BattlegroundSA::TeleportPlayers()
     }
 }
 
-void BattlegroundSA::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)
+void BattlegroundSA::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint32 eventType)
 {
     if (!go || !go->GetGOInfo())
         return;
 
-    switch(hitType)
+    if (eventType == go->GetGOInfo()->building.damagedEvent)
     {
-        case BG_OBJECT_DMG_HIT_TYPE_JUST_DAMAGED://under attack
-            SendWarningToAll(LANG_BG_SA_IS_UNDER_ATTACK, go->GetGOInfo()->name);
-            break;
-        case BG_OBJECT_DMG_HIT_TYPE_DAMAGED:
-            break;
-        case BG_OBJECT_DMG_HIT_TYPE_JUST_HIGH_DAMAGED:
-            {
-                uint32 i = GetGateIDFromDestroyEventID(destroyedEvent);
-                GateStatus[i] = BG_SA_GATE_DAMAGED;
-                uint32 uws = GetWorldStateFromGateID(i);
-                if (uws)
-                    UpdateWorldState(uws, GateStatus[i]);
-                break;
-            }
-        case BG_OBJECT_DMG_HIT_TYPE_HIGH_DAMAGED:
-            break;
-        case BG_OBJECT_DMG_HIT_TYPE_JUST_DESTROYED://handled at DestroyGate()
-            if (destroyedEvent == 19837)
-                SendWarningToAll(LANG_BG_SA_CHAMBER_BREACHED);
-            else
-                SendWarningToAll(LANG_BG_SA_WAS_DESTROYED, go->GetGOInfo()->name);
-            break;
+        uint32 i = GetGateIDFromDestroyEventID(eventType);
+        GateStatus[i] = BG_SA_GATE_DAMAGED;
+        uint32 uws = GetWorldStateFromGateID(i);
+        if (uws)
+            UpdateWorldState(uws, GateStatus[i]);
     }
+
+    if (eventType == go->GetGOInfo()->building.destroyedEvent)
+    {
+        if (go->GetGOInfo()->building.destroyedEvent == 19837)
+            SendWarningToAll(LANG_BG_SA_CHAMBER_BREACHED);
+        else
+            SendWarningToAll(LANG_BG_SA_WAS_DESTROYED, go->GetGOInfo()->name);
+    }
+
+    if (eventType == go->GetGOInfo()->building.damageEvent)
+        SendWarningToAll(LANG_BG_SA_IS_UNDER_ATTACK, go->GetGOInfo()->name);
 }
 
 void BattlegroundSA::HandleKillUnit(Creature* unit, Player* killer)
 {
     if (!unit)
         return;
-
-    if (unit->GetEntry() == 28781)  //Demolisher
+    
+    if (unit->GetEntry() == NPC_DEMOLISHER_SA)
         UpdatePlayerScore(killer, SCORE_DESTROYED_DEMOLISHER, 1);
 }
 
@@ -835,7 +829,7 @@ void BattlegroundSA::EventPlayerUsedGO(Player* Source, GameObject* object)
                 }
 
                 if (RoundScores[0].time == RoundScores[1].time)
-                    EndBattleground(NULL);
+                    EndBattleground(0);
                 else if (RoundScores[0].time < RoundScores[1].time)
                     EndBattleground(RoundScores[0].winner == TEAM_ALLIANCE ? ALLIANCE : HORDE);
                 else

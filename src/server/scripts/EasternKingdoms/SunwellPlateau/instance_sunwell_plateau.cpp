@@ -49,7 +49,7 @@ public:
 
     struct instance_sunwell_plateau_InstanceMapScript : public InstanceScript
     {
-        instance_sunwell_plateau_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {Initialize();};
+        instance_sunwell_plateau_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {}
 
         uint32 m_auiEncounter[MAX_ENCOUNTER];
 
@@ -167,13 +167,13 @@ public:
                 case 188524: KalecgosWall[0] = go->GetGUID(); break;
                 case 188075:
                     if (m_auiEncounter[2] == DONE)
-                        HandleGameObject(NULL, true, go);
+                        HandleGameObject(0, true, go);
                     FireBarrier = go->GetGUID();
                     break;
                 case 187990: MurusGate[0]   = go->GetGUID(); break;
                 case 188118:
                     if (m_auiEncounter[4] == DONE)
-                        HandleGameObject(NULL, true, go);
+                        HandleGameObject(0, true, go);
                     MurusGate[1]= go->GetGUID();
                     break;
             }

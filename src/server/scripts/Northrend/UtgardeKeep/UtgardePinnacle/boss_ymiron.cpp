@@ -1,9 +1,5 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- *
- * Copyright (C) 2010 Myth Project <https://mythcore.googlecode.com/hg/mythcore/>
- *
- * Copyright (C) 2010 Lol Project <http://hg.assembla.com/lol_trinity/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,7 +30,6 @@ enum Spells
 {
     SPELL_BANE                                = 48294,
     H_SPELL_BANE                              = 59301,
-    SPELL_BANE_TRIGGERED                      = 59302,
     SPELL_DARK_SLASH                          = 48292,
     SPELL_FETID_ROT                           = 48291,
     H_SPELL_FETID_ROT                         = 59300,
@@ -43,7 +38,7 @@ enum Spells
     H_SPELL_SPIRIT_BURST                      = 59305,
     SPELL_SPIRIT_STRIKE                       = 48423,
     H_SPELL_SPIRIT_STRIKE                     = 59304,
-    SPELL_WITHER                              = 48584,
+    SPELL_ANCESTORS_VENGEANCE                 = 16939,
 
     SPELL_SUMMON_AVENGING_SPIRIT              = 48592,
     SPELL_SUMMON_SPIRIT_FOUNT                 = 48386,
@@ -58,17 +53,16 @@ enum Spells
 //not in db
 enum Yells
 {
-    SAY_AGGRO                               = -1575031,
-    SAY_SUMMON_BJORN                        = -1575032,
-    SAY_SUMMON_HALDOR                       = -1575033,
-    SAY_SUMMON_RANULF                       = -1575034,
-    SAY_SUMMON_TORGYN                       = -1575035,
-    SAY_SLAY_1                              = -1575036,
-    SAY_SLAY_2                              = -1575037,
-    SAY_SLAY_3                              = -1575038,
-    SAY_SLAY_4                              = -1575039,
-    SAY_DEATH                               = -1575040,
-
+    SAY_AGGRO                               = -1575028,
+    SAY_SLAY_1                              = -1575029,
+    SAY_SLAY_2                              = -1575030,
+    SAY_SLAY_3                              = -1575031,
+    SAY_SLAY_4                              = -1575032,
+    SAY_DEATH                               = -1575033,
+    SAY_SUMMON_BJORN                        = -1575034,
+    SAY_SUMMON_HALDOR                       = -1575035,
+    SAY_SUMMON_RANULF                       = -1575036,
+    SAY_SUMMON_TORGYN                       = -1575037
 };
 
 enum Creatures
@@ -84,16 +78,12 @@ enum Creatures
     CREATURE_SPIRIT_FOUNT                   = 27339,
     CREATURE_AVENGING_SPIRIT                = 27386
 };
-enum Achievements
-{
-    ACHIEV_KINGS_BANE                       = 2157
-};
 
 struct ActiveBoatStruct
 {
     uint32 npc;
-    uint32 say;
-    float MoveX,MoveY,MoveZ,SpawnX,SpawnY,SpawnZ,SpawnO;
+    int32 say;
+    float MoveX, MoveY, MoveZ, SpawnX, SpawnY, SpawnZ, SpawnO;
 };
 
 static ActiveBoatStruct ActiveBot[4] =
@@ -116,14 +106,14 @@ public:
 
     struct boss_ymironAI : public ScriptedAI
     {
-        boss_ymironAI(Creature *c) : ScriptedAI(c), summons(c)
+        boss_ymironAI(Creature *c) : ScriptedAI(c)
         {
             pInstance = c->GetInstanceScript();
             for (int i = 0; i < 4; ++i)
                 m_uiActiveOrder[i] = i;
             for (int i = 0; i < 3; ++i)
             {
-                int r = i + (rand()%(4-i));
+                int r = i + (rand() % (4 - i));
                 int temp = m_uiActiveOrder[i];
                 m_uiActiveOrder[i] = m_uiActiveOrder[r];
                 m_uiActiveOrder[r] = temp;
@@ -136,7 +126,6 @@ public:
         bool m_bIsActiveWithHALDOR;
         bool m_bIsActiveWithRANULF;
         bool m_bIsActiveWithTORGYN;
-        bool m_bAchievement;
 
         uint8 m_uiActiveOrder[4];
         uint8 m_uiActivedNumber;
@@ -144,6 +133,7 @@ public:
         uint32 m_uiFetidRot_Timer;
         uint32 m_uiBane_Timer;
         uint32 m_uiDarkSlash_Timer;
+        uint32 m_uiAncestors_Vengeance_Timer;
 
         uint32 m_uiAbility_BJORN_Timer;
         uint32 m_uiAbility_HALDOR_Timer;
@@ -154,29 +144,24 @@ public:
         uint32 m_uiHealthAmountModifier;
         uint32 m_uiHealthAmountMultipler;
 
-        uint32 m_uiCheckSkadiTimer;
-
         uint64 m_uiActivedCreatureGUID;
         uint64 m_uiOrbGUID;
 
-        InstanceScript* pInstance;
-        SummonList summons;
+        InstanceScript *pInstance;
 
         void Reset()
         {
             m_bIsPause = false;
-            m_bIsWalking = false;
-            m_bAchievement = true;
             m_bIsActiveWithBJORN = false;
             m_bIsActiveWithHALDOR = false;
             m_bIsActiveWithRANULF = false;
             m_bIsActiveWithTORGYN = false;
 
-            m_uiFetidRot_Timer            = urand(5*IN_MILLISECONDS,8*IN_MILLISECONDS);
-            m_uiBane_Timer                = urand(20*IN_MILLISECONDS,22*IN_MILLISECONDS);
-            m_uiDarkSlash_Timer           = urand(10*IN_MILLISECONDS,15*IN_MILLISECONDS);
+            m_uiFetidRot_Timer            = urand(8000, 13000);
+            m_uiBane_Timer                = urand(18000, 23000);
+            m_uiDarkSlash_Timer           = urand(28000, 33000);
+            m_uiAncestors_Vengeance_Timer = DUNGEON_MODE(60000, 45000);
             m_uiPause_Timer               = 0;
-            m_uiCheckSkadiTimer           = 10*IN_MILLISECONDS;
 
             m_uiAbility_BJORN_Timer  = 0;
             m_uiAbility_HALDOR_Timer = 0;
@@ -185,18 +170,16 @@ public:
 
             m_uiActivedNumber        = 0;
             m_uiHealthAmountModifier = 1;
-            m_uiHealthAmountMultipler = DUNGEON_MODE(33,20);
+            m_uiHealthAmountMultipler = DUNGEON_MODE(20, 25);
 
             DespawnBoatGhosts(m_uiActivedCreatureGUID);
             DespawnBoatGhosts(m_uiOrbGUID);
-
-            summons.DespawnAll();
 
             if (pInstance)
                 pInstance->SetData(DATA_KING_YMIRON_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* who)
+        void EnterCombat(Unit* /*who*/)
         {
             DoScriptText(SAY_AGGRO, me);
 
@@ -204,32 +187,8 @@ public:
                 pInstance->SetData(DATA_KING_YMIRON_EVENT, IN_PROGRESS);
         }
 
-        void JustSummoned(Creature *summon)
-        {
-            summons.Summon(summon);
-        }
-
         void UpdateAI(const uint32 diff)
-        { 
-            if (m_uiCheckSkadiTimer <= diff)
-            {
-                if (pInstance)
-                {
-                    // try to prevent a possible exploit
-                    if ((pInstance->GetData(DATA_SKADI_THE_RUTHLESS_EVENT) < DONE) && ((!me->IsVisible()) || (me->getFaction() != 35)))
-                    {
-                        me->SetVisible(false);
-                        me->setFaction(35);
-                    }
-                    else if ((pInstance->GetData(DATA_SKADI_THE_RUTHLESS_EVENT) >= DONE) && ((!me->IsVisible()) || (me->getFaction() == 35)))
-                    {
-                        me->RestoreFaction();
-                        me->SetVisible(true);
-                    }
-                }
-                m_uiCheckSkadiTimer = 10*IN_MILLISECONDS;
-            } else m_uiCheckSkadiTimer -= diff;
-
+        {
             if (m_bIsWalking)
             {
                 if (m_uiPause_Timer <= diff)
@@ -240,8 +199,7 @@ public:
                     {
                         m_uiActivedCreatureGUID = pTemp->GetGUID();
                         pTemp->CastSpell(me, SPELL_CHANNEL_SPIRIT_TO_YMIRON, true);
-                        pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                         pTemp->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
                         switch(m_uiActiveOrder[m_uiActivedNumber])
                         {
@@ -254,7 +212,7 @@ public:
 
                     m_bIsPause = true;
                     m_bIsWalking = false;
-                    m_uiPause_Timer = 3*IN_MILLISECONDS;
+                    m_uiPause_Timer = 3000;
                 } else m_uiPause_Timer -= diff;
                 return;
             }
@@ -262,10 +220,10 @@ public:
             {
                 if (m_uiPause_Timer <= diff)
                 {
-                    m_uiAbility_BJORN_Timer = 5*IN_MILLISECONDS;
-                    m_uiAbility_HALDOR_Timer = 5*IN_MILLISECONDS;
-                    m_uiAbility_RANULF_Timer = 5*IN_MILLISECONDS;
-                    m_uiAbility_TORGYN_Timer = 5*IN_MILLISECONDS;
+                    m_uiAbility_BJORN_Timer = 5000;
+                    m_uiAbility_HALDOR_Timer = 5000;
+                    m_uiAbility_RANULF_Timer = 5000;
+                    m_uiAbility_TORGYN_Timer = 5000;
 
                     m_bIsPause = false;
                     m_uiPause_Timer = 0;
@@ -282,45 +240,38 @@ public:
                 // Normal spells ------------------------------------------------------------------------
                 if (m_uiBane_Timer <= diff)
                 {
-                    if(!me->IsNonMeleeSpellCasted(false))
-                    {
-                        DoCast(me, DUNGEON_MODE(SPELL_BANE, H_SPELL_BANE));
-                        m_uiBane_Timer = urand(20*IN_MILLISECONDS,22*IN_MILLISECONDS);
-                    }
+                    DoCast(me, SPELL_BANE);
+                    m_uiBane_Timer = urand(20000, 25000);
                 } else m_uiBane_Timer -= diff;
 
                 if (m_uiFetidRot_Timer <= diff)
                 {
-                    if(!me->IsNonMeleeSpellCasted(false))
-                    {
-                        if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 200, true))
-                            DoCast(pTarget, DUNGEON_MODE(SPELL_FETID_ROT, H_SPELL_FETID_ROT));
-                        m_uiFetidRot_Timer = urand(10*IN_MILLISECONDS,15*IN_MILLISECONDS);
-                    }
+                    DoCast(me->getVictim(), SPELL_FETID_ROT);
+                    m_uiFetidRot_Timer = urand(10000, 15000);
                 } else m_uiFetidRot_Timer -= diff;
 
                 if (m_uiDarkSlash_Timer <= diff)
                 {
-                    if(!me->IsNonMeleeSpellCasted(false))
-                    {
-                        int dmg = int(me->getVictim()->GetHealth()*0.5);
-                        me->CastCustomSpell(me->getVictim(), SPELL_DARK_SLASH, &dmg, 0, 0, false);
-                        m_uiDarkSlash_Timer = urand(15*IN_MILLISECONDS,18*IN_MILLISECONDS);
-                    }
+                    DoCast(me->getVictim(), SPELL_DARK_SLASH);
+                    m_uiDarkSlash_Timer = urand(30000, 35000);
                 } else m_uiDarkSlash_Timer -= diff;
+
+                if (m_uiAncestors_Vengeance_Timer <= diff)
+                {
+                    DoCast(me, SPELL_ANCESTORS_VENGEANCE);
+                    m_uiAncestors_Vengeance_Timer = DUNGEON_MODE(urand(60000, 65000), urand(45000, 50000));
+                } else m_uiAncestors_Vengeance_Timer -= diff;
 
                 // Abilities ------------------------------------------------------------------------------
                 if (m_bIsActiveWithBJORN && m_uiAbility_BJORN_Timer <= diff)
                 {
                     //DoCast(me, SPELL_SUMMON_SPIRIT_FOUNT); // works fine, but using summon has better control
-                    if (Creature* pTemp = me->SummonCreature(CREATURE_SPIRIT_FOUNT, float(385+rand()%10), float(-330+rand()%10), 104.756f, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180*IN_MILLISECONDS))
+                    if (Creature* pTemp = me->SummonCreature(CREATURE_SPIRIT_FOUNT, 385.0f + rand() % 10, -330.0f + rand() % 10, 104.756f, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 180000))
                     {
                         pTemp->SetSpeed(MOVE_RUN, 0.4f);
                         pTemp->CastSpell(pTemp, DUNGEON_MODE(SPELL_SPIRIT_FOUNT, H_SPELL_SPIRIT_FOUNT), true);
-                        pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                         pTemp->SetDisplayId(11686);
-                        pTemp->GetMotionMaster()->MoveChase(me->getVictim());
                         m_uiOrbGUID = pTemp->GetGUID();
                     }
                     m_bIsActiveWithBJORN = false; // only one orb
@@ -328,35 +279,27 @@ public:
 
                 if (m_bIsActiveWithHALDOR && m_uiAbility_HALDOR_Timer <= diff)
                 {
-                    if(!me->IsNonMeleeSpellCasted(false))
-                    {
-                        DoCast(me->getVictim(), DUNGEON_MODE(SPELL_SPIRIT_STRIKE, H_SPELL_SPIRIT_STRIKE));
-                        m_uiAbility_HALDOR_Timer = 5*IN_MILLISECONDS; // overtime
-                    }
+                    DoCast(me->getVictim(), SPELL_SPIRIT_STRIKE);
+                    m_uiAbility_HALDOR_Timer = 5000; // overtime
                 } else m_uiAbility_HALDOR_Timer -= diff;
 
                 if (m_bIsActiveWithRANULF && m_uiAbility_RANULF_Timer <= diff)
                 {
-                    if(!me->IsNonMeleeSpellCasted(false))
-                    {
-                        DoCast(me, DUNGEON_MODE(SPELL_SPIRIT_BURST, H_SPELL_SPIRIT_BURST));
-                        m_uiAbility_RANULF_Timer = 10*IN_MILLISECONDS; // overtime
-                    }
+                    DoCast(me, SPELL_SPIRIT_BURST);
+                    m_uiAbility_RANULF_Timer = 10000; // overtime
                 } else m_uiAbility_RANULF_Timer -= diff;
 
                 if (m_bIsActiveWithTORGYN && m_uiAbility_TORGYN_Timer <= diff)
                 {
-                    float x,y,z;
+                    float x, y, z;
                     x = me->GetPositionX()-5;
                     y = me->GetPositionY()-5;
                     z = me->GetPositionZ();
                     for (uint8 i = 0; i < 4; ++i)
                     {
                         //DoCast(me, SPELL_SUMMON_AVENGING_SPIRIT); // works fine, but using summon has better control
-                        if (Creature* pTemp = me->SummonCreature(CREATURE_AVENGING_SPIRIT, x+rand()%10, y+rand()%10, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30*IN_MILLISECONDS))
+                        if (Creature* pTemp = me->SummonCreature(CREATURE_AVENGING_SPIRIT, x + rand() % 10, y + rand() % 10, z, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000))
                         {
-                            pTemp->CastSpell(pTemp, SPELL_WITHER, true);
-
                             if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             {
                                 pTemp->AddThreat(pTarget, 0.0f);
@@ -364,10 +307,8 @@ public:
                             }
                         }
                     }
-                    m_uiAbility_TORGYN_Timer = 15*IN_MILLISECONDS; // overtime
+                    m_uiAbility_TORGYN_Timer = 15000; // overtime
                 } else m_uiAbility_TORGYN_Timer -= diff;
-
-                DoMeleeAttackIfReady();
 
                 // Health check -----------------------------------------------------------------------------
                 if (me->HealthBelowPct(100 - m_uiHealthAmountMultipler * m_uiHealthAmountModifier))
@@ -390,19 +331,21 @@ public:
                     m_bIsActiveWithRANULF = false;
                     m_bIsActiveWithTORGYN = false;
 
-                    m_uiBane_Timer                = urand(20*IN_MILLISECONDS,22*IN_MILLISECONDS);
-                    m_uiFetidRot_Timer            += 3*IN_MILLISECONDS;
-                    m_uiDarkSlash_Timer           += 3*IN_MILLISECONDS;
+                    m_uiBane_Timer                += 8000;
+                    m_uiFetidRot_Timer            += 8000;
+                    m_uiDarkSlash_Timer           += 8000;
+                    m_uiAncestors_Vengeance_Timer += 8000;
 
                     m_uiActivedNumber = m_uiOrder;
                     m_bIsWalking = true;
-                    m_uiPause_Timer = 3*IN_MILLISECONDS;
+                    m_uiPause_Timer = 2000;
                     return;
                 }
+                DoMeleeAttackIfReady();
             }
         }
 
-        void JustDied(Unit* killer)
+        void JustDied(Unit* /*killer*/)
         {
             DoScriptText(SAY_DEATH, me);
 
@@ -410,28 +353,18 @@ public:
             DespawnBoatGhosts(m_uiOrbGUID);
 
             if (pInstance)
-            {
-                if (IsHeroic() && m_bAchievement)
-                    pInstance->DoCompleteAchievement(ACHIEV_KINGS_BANE);
                 pInstance->SetData(DATA_KING_YMIRON_EVENT, DONE);
-            }
         }
 
-        void KilledUnit(Unit *victim)
+        void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(RAND(SAY_SLAY_1,SAY_SLAY_2,SAY_SLAY_3,SAY_SLAY_4), me);
-        }
-
-        void SpellHitTarget(Unit *pTarget, const SpellEntry *spell) 
-        {
-            if (spell->Id == SPELL_BANE_TRIGGERED)
-                m_bAchievement = false;
+            DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2, SAY_SLAY_3, SAY_SLAY_4), me);
         }
 
         void DespawnBoatGhosts(uint64& m_uiCreatureGUID)
         {
             if (m_uiCreatureGUID)
-                if (Creature* pTemp = (Creature*)Unit::GetUnit(*me, m_uiCreatureGUID))
+                if (Creature* pTemp = Unit::GetCreature(*me, m_uiCreatureGUID))
                     pTemp->DisappearAndDie();
 
             m_uiCreatureGUID = 0;

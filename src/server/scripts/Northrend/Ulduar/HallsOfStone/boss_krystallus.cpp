@@ -1,21 +1,28 @@
-/* 
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+/*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * Script Author: LordVanMartin
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+/* Script Data Start
+SDName: Boss krystallus
+SDAuthor: LordVanMartin
+SD%Complete:
+SDComment:
+SDCategory:
+Script Data End */
+
 #include "ScriptPCH.h"
 #include "halls_of_stone.h"
 
@@ -25,7 +32,6 @@ enum Spells
     H_SPELL_BOULDER_TOSS                           = 59742,
     SPELL_GROUND_SPIKE                             = 59750,
     SPELL_GROUND_SLAM                              = 50827,
-    SPELL_GROUND_SLAM_TRIGGERED                    = 50833,
     SPELL_SHATTER                                  = 50810,
     H_SPELL_SHATTER                                = 61546,
     SPELL_SHATTER_EFFECT                           = 50811,
@@ -58,19 +64,12 @@ public:
         boss_krystallusAI(Creature *c) : ScriptedAI(c)
         {
             pInstance = c->GetInstanceScript();
-
-            //temporary to let ground slam effect not be interrupted
-            SpellEntry *TempSpell;
-            TempSpell = GET_SPELL(SPELL_GROUND_SLAM_TRIGGERED);
-            if (TempSpell)
-            { 
-                TempSpell->InterruptFlags = 0;
-            }
         }
 
         uint32 uiBoulderTossTimer;
         uint32 uiGroundSpikeTimer;
         uint32 uiGroundSlamTimer;
+        uint32 uiShatterTimer;
         uint32 uiStompTimer;
 
         bool bIsSlam;
@@ -82,14 +81,14 @@ public:
             bIsSlam = false;
 
             uiBoulderTossTimer = 3000 + rand()%6000;
-            uiGroundSpikeTimer = 6000 + rand()%5000;
-            uiGroundSlamTimer = 20000 + rand()%3000;
-            uiStompTimer = 15000 + rand()%5000;
+            uiGroundSpikeTimer = 9000 + rand()%5000;
+            uiGroundSlamTimer = 15000 + rand()%3000;
+            uiStompTimer = 20000 + rand()%9000;
+            uiShatterTimer = 0;
 
             if (pInstance)
                 pInstance->SetData(DATA_KRYSTALLUS_EVENT, NOT_STARTED);
         }
-
         void EnterCombat(Unit* /*who*/)
         {
             DoScriptText(SAY_AGGRO, me);
@@ -104,57 +103,43 @@ public:
             if (!UpdateVictim())
                 return;
 
+            if (uiBoulderTossTimer <= diff)
+            {
+                if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                    DoCast(pTarget, SPELL_BOULDER_TOSS);
+                uiBoulderTossTimer = 9000 + rand()%6000;
+            } else uiBoulderTossTimer -= diff;
+
+            if (uiGroundSpikeTimer <= diff)
+            {
+                if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                    DoCast(pTarget, SPELL_GROUND_SPIKE);
+                uiGroundSpikeTimer = 12000 + rand()%5000;
+            } else uiGroundSpikeTimer -= diff;
+
+            if (uiStompTimer <= diff)
+            {
+                DoCast(me, SPELL_STOMP);
+                uiStompTimer = 20000 + rand()%9000;
+            } else uiStompTimer -= diff;
+
+            if (uiGroundSlamTimer <= diff)
+            {
+                DoCast(me, SPELL_GROUND_SLAM);
+                bIsSlam = true;
+                uiShatterTimer = 10000;
+                uiGroundSlamTimer = 15000 + rand()%3000;
+            } else uiGroundSlamTimer -= diff;
+
             if (bIsSlam)
             {
-                if (uiGroundSlamTimer <= diff)
+                if (uiShatterTimer <= diff)
                 {
-                    uiGroundSlamTimer = 15000 + rand()%5000;
                     DoCast(me, DUNGEON_MODE(SPELL_SHATTER, H_SPELL_SHATTER));
-                } 
-                else uiGroundSlamTimer -= diff;
+                } else uiShatterTimer -= diff;
             }
-            else
-            {
-                if (IsHeroic())
-                {
-                    if (uiGroundSpikeTimer <= diff)
-                    {
-                        if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                            DoCast(pTarget, SPELL_GROUND_SPIKE);
-                        uiGroundSpikeTimer = 7000 + rand()%5000;
-                    } 
-                    else uiGroundSpikeTimer -= diff;
-                }
 
-                if (uiBoulderTossTimer <= diff)
-                {
-                    if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                        DoCast(pTarget, SPELL_BOULDER_TOSS);
-                    uiBoulderTossTimer = 9000 + rand()%6000;
-                } 
-                else uiBoulderTossTimer -= diff;
-
-                if (uiStompTimer <= diff)
-                {
-                    DoCast(me, SPELL_STOMP);
-                    uiStompTimer = 12000 + rand()%6000;
-                } 
-                else uiStompTimer -= diff;
-
-                if (uiGroundSlamTimer <= diff)
-                {
-                    me->GetMotionMaster()->Clear();
-                    me->GetMotionMaster()->MoveIdle();
-
-                    bIsSlam = true;
-                    uiGroundSlamTimer = 10000;
-
-                    DoCast(me, SPELL_GROUND_SLAM, true); //TODO: let cast not be interrupted
-                } 
-                else uiGroundSlamTimer -= diff;
-
-                DoMeleeAttackIfReady();
-            }
+            DoMeleeAttackIfReady();
         }
 
         void JustDied(Unit* /*killer*/)
@@ -165,7 +150,7 @@ public:
                 pInstance->SetData(DATA_KRYSTALLUS_EVENT, DONE);
         }
 
-        void KilledUnit(Unit * victim)
+        void KilledUnit(Unit* victim)
         {
             if (victim == me)
                 return;
@@ -200,7 +185,6 @@ public:
     };
 
 };
-
 
 void AddSC_boss_krystallus()
 {

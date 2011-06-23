@@ -1,9 +1,5 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- *
- * Copyright (C) 2010 Myth Project <https://mythcore.googlecode.com/hg/mythcore/>
- *
- * Copyright (C) 2010 Lol Project <http://hg.assembla.com/lol_trinity/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -93,14 +89,14 @@ public:
         void AttackStart(Unit* /*who*/) {}
         void MoveInLineOfSight(Unit* /*who*/) {}
 
-        void JustDied(Unit *killer)
+        void JustDied(Unit* killer)
         {
             if (killer->GetGUID() != me->GetGUID())
                 ShatterFrostTomb = true;
 
             if (FrostTombGUID)
             {
-                Unit* FrostTomb = Unit::GetUnit((*me),FrostTombGUID);
+                Unit* FrostTomb = Unit::GetUnit((*me), FrostTombGUID);
                 if (FrostTomb)
                     FrostTomb->RemoveAurasDueToSpell(SPELL_FROST_TOMB);
             }
@@ -108,7 +104,7 @@ public:
 
         void UpdateAI(const uint32 /*diff*/)
         {
-            Unit* temp = Unit::GetUnit((*me),FrostTombGUID);
+            Unit* temp = Unit::GetUnit((*me), FrostTombGUID);
             if ((temp && temp->isAlive() && !temp->HasAura(SPELL_FROST_TOMB)) || !temp)
                 me->DealDamage(me, me->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
         }
@@ -156,7 +152,7 @@ public:
                 pInstance->SetData(DATA_PRINCEKELESETH_EVENT, NOT_STARTED);
         }
 
-        void KilledUnit(Unit * victim)
+        void KilledUnit(Unit* victim)
         {
             if (victim == me)
                 return;
@@ -286,11 +282,11 @@ public:
         void Reset()
         {
             Respawn_Time = 12000;
-            Decrepify_Timer = urand(10000,20000);
+            Decrepify_Timer = urand(10000, 20000);
             isDead = false;
         }
 
-        void EnterCombat(Unit * /*who*/){}
+        void EnterCombat(Unit* /*who*/){}
         void DamageTaken(Unit *done_by, uint32 &damage)
         {
             if (done_by->GetGUID() == me->GetGUID())
@@ -365,9 +361,6 @@ public:
     };
 
 };
-
-
-
 
 void AddSC_boss_keleseth()
 {

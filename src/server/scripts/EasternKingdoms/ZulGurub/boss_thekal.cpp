@@ -103,7 +103,7 @@ class boss_thekal : public CreatureScript
                 WasDead = false;
             }
 
-            void EnterCombat(Unit * /*who*/)
+            void EnterCombat(Unit* /*who*/)
             {
                 DoScriptText(SAY_AGGRO, me);
             }
@@ -207,7 +207,7 @@ class boss_thekal : public CreatureScript
                             me->SetStandState(UNIT_STAND_STATE_STAND);
                             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                             me->SetFullHealth();
-                            const CreatureInfo *cinfo = me->GetCreatureInfo();
+                            const CreatureTemplate *cinfo = me->GetCreatureInfo();
                             me->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg +((cinfo->mindmg/100) * 40)));
                             me->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg +((cinfo->maxdmg/100) * 40)));
                             me->UpdateDamagePhysical(BASE_ATTACK);
@@ -225,7 +225,7 @@ class boss_thekal : public CreatureScript
                     {
                         if (Charge_Timer <= diff)
                         {
-                            if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM,0))
+                            if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             {
                                 DoCast(pTarget, SPELL_CHARGE);
                                 DoResetThreat();
@@ -315,7 +315,7 @@ class mob_zealot_lorkhan : public CreatureScript
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
 
-            void EnterCombat(Unit * /*who*/)
+            void EnterCombat(Unit* /*who*/)
             {
             }
 
@@ -349,7 +349,7 @@ class mob_zealot_lorkhan : public CreatureScript
                         if (!pThekal || !pZath)
                             return;
 
-                        switch (urand(0,1))
+                        switch (urand(0, 1))
                         {
                             case 0:
                                 if (me->IsWithinMeleeRange(pThekal))
@@ -477,7 +477,7 @@ class mob_zealot_zath : public CreatureScript
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
 
-            void EnterCombat(Unit * /*who*/)
+            void EnterCombat(Unit* /*who*/)
             {
             }
 
@@ -506,7 +506,7 @@ class mob_zealot_zath : public CreatureScript
                     DoCast(me->getVictim(), SPELL_GOUGE);
 
                     if (DoGetThreat(me->getVictim()))
-                        DoModifyThreatPercent(me->getVictim(),-100);
+                        DoModifyThreatPercent(me->getVictim(), -100);
 
                     Gouge_Timer = 17000+rand()%10000;
                 } else Gouge_Timer -= diff;

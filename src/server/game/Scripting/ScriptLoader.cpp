@@ -70,9 +70,7 @@ void AddSC_wp_commandscript();
 #ifdef SCRIPTS
 //world
 void AddSC_areatrigger_scripts();
-void AddSC_boss_emeriss();
-void AddSC_boss_taerar();
-void AddSC_boss_ysondre();
+void AddSC_emerald_dragons();
 void AddSC_generic_creature();
 void AddSC_go_scripts();
 void AddSC_guards();
@@ -128,6 +126,7 @@ void AddSC_boss_mr_smite();
 void AddSC_deadmines();                      //Deadmines
 void AddSC_instance_deadmines();
 void AddSC_gnomeregan();                     //Gnomeregan
+void AddSC_operation_gnomeregan();           //Operation Gnomeregan
 void AddSC_instance_gnomeregan();
 void AddSC_boss_attumen();                   //Karazhan
 void AddSC_boss_curator();
@@ -306,6 +305,7 @@ void AddSC_boss_amnennar_the_coldbringer();  //Razorfen Downs
 void AddSC_razorfen_downs();
 void AddSC_instance_razorfen_downs();
 void AddSC_razorfen_kraul();                 //Razorfen Kraul
+void AddSC_instance_razorfen_kraul();
 void AddSC_boss_kurinnaxx();                 //Ruins of ahn'qiraj
 void AddSC_boss_rajaxx();
 void AddSC_boss_moam();
@@ -376,11 +376,11 @@ void AddSC_boss_grand_champions();
 void AddSC_instance_trial_of_the_champion();
 void AddSC_trial_of_the_champion();
 
-void AddSC_boss_northrend_beasts()   //Trial of the Crusader
-void AddSC_boss_lord_jaraxxus();
+void AddSC_boss_anubarak_trial();        //Trial of the Crusader
 void AddSC_boss_faction_champions();
-void AddSC_boss_twins_valkyr();
-void AddSC_boss_anubarak_trial();
+void AddSC_boss_jaraxxus();
+void AddSC_boss_northrend_beasts();
+void AddSC_boss_twin_valkyr();
 void AddSC_trial_of_the_crusader();
 void AddSC_instance_trial_of_the_crusader();
 
@@ -400,7 +400,6 @@ void AddSC_boss_heigan();
 void AddSC_boss_gothik();
 void AddSC_boss_thaddius();
 void AddSC_instance_naxxramas();
-void AddSC_mob_naxxramas_trash();
 void AddSC_boss_magus_telestra();        //The Nexus Nexus
 void AddSC_boss_anomalus();
 void AddSC_boss_ormorok();
@@ -427,21 +426,18 @@ void AddSC_boss_sjonnir();
 void AddSC_instance_halls_of_stone();
 void AddSC_halls_of_stone();
 
-void AddSC_boss_algalon();		         //Ulduar Ulduar
-void AddSC_boss_assembly_of_iron();
-void AddSC_boss_auriaya();
+void AddSC_boss_auriaya();               //Ulduar Ulduar
 void AddSC_boss_flame_leviathan();
-void AddSC_boss_freya();
-void AddSC_boss_general_vezax();
-void AddSC_boss_hodir();
 void AddSC_boss_ignis();
-void AddSC_boss_kologarn();
-void AddSC_boss_mimiron();
 void AddSC_boss_razorscale();
-void AddSC_boss_thorim();
 void AddSC_boss_xt002();
+void AddSC_boss_kologarn();
+void AddSC_boss_assembly_of_iron();
+void AddSC_boss_general_vezax();
 void AddSC_ulduar_teleporter();
 void AddSC_boss_mimiron();
+void AddSC_boss_hodir();
+void AddSC_boss_freya();
 void AddSC_instance_ulduar();
 
 void AddSC_boss_keleseth();              //Utgarde Keep
@@ -488,19 +484,20 @@ void AddSC_boss_falric();
 void AddSC_boss_marwyn();
 void AddSC_boss_lich_king_hr();
 
-void AddSC_instance_icecrown_citadel();    // Icecrown Citadel
-void AddSC_icecrown_citadel();
-void AddSC_boss_valithria();
+void AddSC_boss_lord_marrowgar();       // Icecrown Citadel
+void AddSC_boss_lady_deathwhisper();
+void AddSC_boss_deathbringer_saurfang();
+void AddSC_boss_festergut();
+void AddSC_boss_rotface();
+void AddSC_boss_professor_putricide();
+void AddSC_boss_blood_prince_council();
+void AddSC_boss_blood_queen_lana_thel();
+void AddSC_boss_valithria_dreamwalker();
 void AddSC_boss_lichking();
 void AddSC_boss_sindragosa();
-void AddSC_boss_rotface();
-void AddSC_boss_blood_prince_council();
-void AddSC_boss_professor_putricide();
-void AddSC_boss_lord_marrowgar();
-void AddSC_boss_lady_deathwhisper();
-void AddSC_boss_festergut();
-void AddSC_boss_deathbringer_saurfang();
-void AddSC_boss_blood_queen_lana_thel();
+void AddSC_icecrown_citadel_teleport();
+void AddSC_instance_icecrown_citadel();
+void AddSC_icecrown_citadel();
 
 void AddSC_boss_baltharus();	//RubySanctum
 void AddSC_boss_halion();
@@ -690,9 +687,7 @@ void AddWorldScripts()
 {
 #ifdef SCRIPTS
     AddSC_areatrigger_scripts();
-    AddSC_boss_emeriss();
-    AddSC_boss_taerar();
-    AddSC_boss_ysondre();
+    AddSC_emerald_dragons();
     AddSC_generic_creature();
     AddSC_go_scripts();
     AddSC_guards();
@@ -753,6 +748,7 @@ void AddEasternKingdomsScripts()
     AddSC_deadmines();                      //Deadmines
     AddSC_instance_deadmines();
     AddSC_gnomeregan();                     //Gnomeregan
+    AddSC_operation_gnomeregan();           //Operation Gnomeregan
     AddSC_instance_gnomeregan();
     AddSC_boss_attumen();                   //Karazhan
     AddSC_boss_curator();
@@ -935,6 +931,7 @@ void AddKalimdorScripts()
     AddSC_razorfen_downs();
     AddSC_instance_razorfen_downs();
     AddSC_razorfen_kraul();                 //Razorfen Kraul
+    AddSC_instance_razorfen_kraul();
     AddSC_boss_kurinnaxx();                 //Ruins of ahn'qiraj
     AddSC_boss_rajaxx();
     AddSC_boss_moam();
@@ -1089,13 +1086,15 @@ void AddNorthrendScripts()
     AddSC_boss_grand_champions();
     AddSC_instance_trial_of_the_champion();
     AddSC_trial_of_the_champion();
-    AddSC_boss_northrend_beasts();   //Trial of the Crusader
-    AddSC_boss_lord_jaraxxus();
+
+    AddSC_boss_anubarak_trial();        //Trial of the Crusader
     AddSC_boss_faction_champions();
-    AddSC_boss_twins_valkyr();
-    AddSC_boss_anubarak_trial();
+    AddSC_boss_jaraxxus();
     AddSC_trial_of_the_crusader();
+    AddSC_boss_twin_valkyr();
+    AddSC_boss_northrend_beasts();
     AddSC_instance_trial_of_the_crusader();
+
     AddSC_boss_krik_thir();             //Azjol-Nerub Azjol-Nerub
     AddSC_boss_hadronox();
     AddSC_boss_anub_arak();
@@ -1116,7 +1115,6 @@ void AddNorthrendScripts()
     AddSC_boss_gothik();
     AddSC_boss_thaddius();
     AddSC_instance_naxxramas();
-    AddSC_mob_naxxramas_trash();
     AddSC_boss_magus_telestra();        //The Nexus Nexus
     AddSC_boss_anomalus();
     AddSC_boss_ormorok();
@@ -1143,21 +1141,18 @@ void AddNorthrendScripts()
     AddSC_instance_halls_of_stone();
     AddSC_halls_of_stone();
 
-    AddSC_boss_algalon();		         //Ulduar Ulduar
-    AddSC_boss_assembly_of_iron();
-    AddSC_boss_auriaya();
+    AddSC_boss_auriaya();               //Ulduar Ulduar
     AddSC_boss_flame_leviathan();
-    AddSC_boss_freya();
-    AddSC_boss_general_vezax();
-    AddSC_boss_hodir();
     AddSC_boss_ignis();
-    AddSC_boss_kologarn();
-    AddSC_boss_mimiron();
     AddSC_boss_razorscale();
-    AddSC_boss_thorim();
     AddSC_boss_xt002();
+    AddSC_boss_general_vezax();
+    AddSC_boss_assembly_of_iron();
+    AddSC_boss_kologarn();
     AddSC_ulduar_teleporter();
     AddSC_boss_mimiron();
+    AddSC_boss_hodir();
+    AddSC_boss_freya();
     AddSC_instance_ulduar();
 
     AddSC_boss_keleseth();              //Utgarde Keep
@@ -1204,19 +1199,20 @@ void AddNorthrendScripts()
     AddSC_boss_marwyn();
     AddSC_boss_lich_king_hr();
 
-    AddSC_instance_icecrown_citadel();    // Icecrown Citadel
-    AddSC_icecrown_citadel();
-    AddSC_boss_valithria();
+    AddSC_boss_lord_marrowgar();        // Icecrown Citadel
+    AddSC_boss_lady_deathwhisper();
+    AddSC_boss_deathbringer_saurfang();
+    AddSC_boss_festergut();
+    AddSC_boss_rotface();
+    AddSC_boss_professor_putricide();
+    AddSC_boss_blood_prince_council();
+    AddSC_boss_blood_queen_lana_thel();
+    AddSC_boss_valithria_dreamwalker();
     AddSC_boss_lichking();
     AddSC_boss_sindragosa();
-    AddSC_boss_rotface();
-    AddSC_boss_blood_prince_council();
-    AddSC_boss_professor_putricide();
-    AddSC_boss_lord_marrowgar();
-    AddSC_boss_lady_deathwhisper();
-    AddSC_boss_festergut();
-    AddSC_boss_deathbringer_saurfang();
-    AddSC_boss_blood_queen_lana_thel();
+    AddSC_icecrown_citadel_teleport();
+    AddSC_instance_icecrown_citadel();
+    AddSC_icecrown_citadel();
 
     AddSC_boss_baltharus();	//RubySanctum
     AddSC_boss_halion();
@@ -1260,7 +1256,6 @@ void AddBattlegroundScripts()
 
 #ifdef SCRIPTS
 /* This is where custom scripts' loading functions should be declared. */
-void AddSC_npc_lottery();
 void AddSC_npcs_mini_boss();
 #endif
 
@@ -1274,7 +1269,6 @@ void AddCustomScripts()
     AddSC_npc_mount();		
     //Hunter Pet Vendor
     AddSC_npc_hunterpetvendor();
-    AddSC_npc_lottery();
     AddSC_npcs_mini_boss();	
 #endif
 }

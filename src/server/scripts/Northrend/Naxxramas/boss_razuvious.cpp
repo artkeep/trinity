@@ -32,14 +32,14 @@
 //8860 death - An honorable... death...
 //8947 - Aggro Mixed? - ?
 
-#define SOUND_AGGRO     RAND(8852,8853,8854)
-#define SOUND_SLAY      RAND(8861,8863)
-#define SOUND_COMMND    RAND(8855,8856,8858,8859,8861)
+#define SOUND_AGGRO     RAND(8852, 8853, 8854)
+#define SOUND_SLAY      RAND(8861, 8863)
+#define SOUND_COMMND    RAND(8855, 8856, 8858, 8859, 8861)
 #define SOUND_DEATH     8860
 #define SOUND_AGGROMIX  8847
 
 #define SPELL_UNBALANCING_STRIKE    26613
-#define SPELL_DISRUPTING_SHOUT      RAID_MODE(29107,55543)
+#define SPELL_DISRUPTING_SHOUT      RAID_MODE(29107, 55543)
 #define SPELL_JAGGED_KNIFE          55550
 #define SPELL_HOPELESS              29125
 
@@ -66,11 +66,6 @@ public:
     {
         boss_razuviousAI(Creature *c) : BossAI(c, BOSS_RAZUVIOUS) {}
 
-        void Reset()
-        {
-            _Reset();
-        }
-
         void KilledUnit(Unit* /*victim*/)
         {
             if (!(rand()%3))
@@ -91,18 +86,9 @@ public:
             _JustDied();
             DoPlaySoundToSet(me, SOUND_DEATH);
             me->CastSpell(me, SPELL_HOPELESS, true); // TODO: this may affect other creatures
-
-            std::list<Creature*> lList;
-            me->GetCreatureListWithEntryInGrid(lList , 29912, 200);
-
-            if (!lList.size())
-                return;
-
-            for (std::list<Creature*>::const_iterator i = lList.begin(); i != lList.end(); ++i)
-                (*i)->DealDamage((*i),(*i)->GetHealth());
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
             DoPlaySoundToSet(me, SOUND_AGGRO);
@@ -148,7 +134,6 @@ public:
     };
 
 };
-
 
 void AddSC_boss_razuvious()
 {

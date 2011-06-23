@@ -17,12 +17,13 @@
  */
 
 #include "Common.h"
-#include "DatabaseEnv.h"
-#include "SQLStorage.h"
-#include "Log.h"
 #include "TicketMgr.h"
+#include "DatabaseEnv.h"
+#include "Log.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "Chat.h"
+#include "World.h"
 
 inline float GetAge(uint64 t) { return float(time(NULL) - t) / DAY; }
 
@@ -99,7 +100,7 @@ void GmTicket::SaveToDB(SQLTransaction& trans) const
     CharacterDatabase.ExecuteOrAppend(trans, stmt);
 }
 
-void GmTicket::DeleteFromDB(SQLTransaction& trans)
+void GmTicket::DeleteFromDB()
 {
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GM_TICKET);
     stmt->setUInt32(0, _id);
@@ -195,7 +196,9 @@ void GmTicket::TeleportTo(Player* player) const
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Ticket manager
-TicketMgr::TicketMgr() : _lastTicketId(0), _lastSurveyId(0), _openTicketCount(0), _lastChange(time(NULL)), _status(true) { }
+TicketMgr::TicketMgr() : _status(true), _lastTicketId(0), _lastSurveyId(0), _openTicketCount(0), _lastChange(time(NULL)) { }
+
+void TicketMgr::Initialize() { SetStatus(sWorld->getBoolConfig(CONFIG_ALLOW_TICKETS)); }
 
 void TicketMgr::LoadTickets()
 {
@@ -283,8 +286,7 @@ void TicketMgr::RemoveTicket(uint32 ticketId)
 {
     if (GmTicket* ticket = GetTicket(ticketId))
     {
-        SQLTransaction trans = SQLTransaction(NULL);
-        ticket->DeleteFromDB(trans);
+        ticket->DeleteFromDB();
         _ticketList.erase(ticketId);
     }
 }

@@ -1,9 +1,5 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- *
- * Copyright (C) 2010 Myth Project <https://mythcore.googlecode.com/hg/mythcore/>
- *
- * Copyright (C) 2010 Lol Project <http://hg.assembla.com/lol_trinity/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +14,6 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 
 #include "ScriptPCH.h"
 #include "ahnkahet.h"
@@ -117,7 +112,7 @@ public:
             switch(go->GetEntry())
             {
                 case 193564:     Prince_TaldaramPlatform = go->GetGUID();
-                    if (m_auiEncounter[1] == DONE) HandleGameObject(0,true,go); break;
+                    if (m_auiEncounter[1] == DONE) HandleGameObject(0, true, go); break;
                 case 193093:     Prince_TaldaramSpheres[0] = go->GetGUID();
                     if (spheres[0] == IN_PROGRESS)
                     {
@@ -135,7 +130,7 @@ public:
                     else go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNK1);
                     break;
                 case 192236:    Prince_TaldaramGate = go->GetGUID(); // Web gate past Prince Taldaram
-                    if (m_auiEncounter[1] == DONE)HandleGameObject(0,true,go);break;
+                    if (m_auiEncounter[1] == DONE)HandleGameObject(0, true, go);break;
             }
         }
 
@@ -172,7 +167,7 @@ public:
                     }
                     if (vInitiands.empty())
                         return 0;
-                    uint8 j = urand(0,vInitiands.size() -1);
+                    uint8 j = urand(0, vInitiands.size() -1);
                     return vInitiands[j];
                 }
                 case DATA_ADD_JEDOGA_OPFER: return JedogaSacrifices;
@@ -188,7 +183,7 @@ public:
                 case DATA_ELDER_NADOX_EVENT: m_auiEncounter[0] = data; break;
                 case DATA_PRINCE_TALDARAM_EVENT:
                     if (data == DONE)
-                        HandleGameObject(Prince_TaldaramGate,true);
+                        HandleGameObject(Prince_TaldaramGate, true);
                     m_auiEncounter[1] = data;
                     break;
                 case DATA_JEDOGA_SHADOWSEEKER_EVENT:

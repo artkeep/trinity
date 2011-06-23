@@ -271,7 +271,7 @@ public:
             me->SetDisplayId(11686);
         }
 
-        void EnterCombat(Unit * /*who*/) {}
+        void EnterCombat(Unit* /*who*/) {}
         void AttackStart(Unit* /*who*/) {}
         void MoveInLineOfSight(Unit* /*who*/) {}
 
@@ -326,7 +326,7 @@ public:
                             if (Creature* VoiceTrigger = (Unit::GetCreature(*me, pInstance->GetData64(DATA_BLOOD_ELF_COUNCIL_VOICE))))
                                 VoiceTrigger->DealDamage(VoiceTrigger, VoiceTrigger->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
                             pInstance->SetData(DATA_ILLIDARICOUNCILEVENT, DONE);
-                            //me->SummonCreature(AKAMAID,746.466980f,304.394989f,311.90208f,6.272870f,TEMPSUMMON_DEAD_DESPAWN,0);
+                            //me->SummonCreature(AKAMAID, 746.466980f, 304.394989f, 311.90208f, 6.272870f, TEMPSUMMON_DEAD_DESPAWN, 0);
                         }
                         me->DealDamage(me, me->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
                         return;
@@ -492,12 +492,12 @@ public:
             BlessingTimer = 60000;
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
             DoScriptText(SAY_GATH_SLAY, me);
         }
 
-        void JustDied(Unit * /*victim*/)
+        void JustDied(Unit* /*victim*/)
         {
             DoScriptText(SAY_GATH_DEATH, me);
         }
@@ -518,7 +518,7 @@ public:
         void CastAuraOnCouncil()
         {
             uint32 spellid = 0;
-            switch (urand(0,1))
+            switch (urand(0, 1))
             {
                 case 0: spellid = SPELL_DEVOTION_AURA;   break;
                 case 1: spellid = SPELL_CHROMATIC_AURA;  break;
@@ -540,7 +540,7 @@ public:
             {
                 if (Unit* pUnit = SelectCouncilMember())
                 {
-                    switch (urand(0,1))
+                    switch (urand(0, 1))
                     {
                         case 0: DoCast(pUnit, SPELL_BLESS_SPELLWARD);  break;
                         case 1: DoCast(pUnit, SPELL_BLESS_PROTECTION); break;
@@ -570,7 +570,7 @@ public:
 
             if (SealTimer <= diff)
             {
-                switch (urand(0,1))
+                switch (urand(0, 1))
                 {
                     case 0: DoCast(me, SPELL_SEAL_OF_COMMAND);  break;
                     case 1: DoCast(me, SPELL_SEAL_OF_BLOOD);    break;
@@ -621,12 +621,12 @@ public:
             Cooldown = 0;
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
             DoScriptText(SAY_ZERE_SLAY, me);
         }
 
-        void JustDied(Unit * /*victim*/)
+        void JustDied(Unit* /*victim*/)
         {
             DoScriptText(SAY_ZERE_DEATH, me);
         }
@@ -650,7 +650,7 @@ public:
             {
                 DoCast(me, SPELL_DAMPEN_MAGIC);
                 Cooldown = 1000;
-                DampenMagicTimer = 67200;                      // almost 1,12 minutes
+                DampenMagicTimer = 67200;                      // almost 1, 12 minutes
                 ArcaneBoltTimer += 1000;                        // Give the Mage some time to spellsteal Dampen.
             } else DampenMagicTimer -= diff;
 
@@ -721,12 +721,12 @@ public:
             ReflectiveShieldTimer = 0;
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
             DoScriptText(SAY_MALA_SLAY, me);
         }
 
-        void JustDied(Unit * /*victim*/)
+        void JustDied(Unit* /*victim*/)
         {
             DoScriptText(SAY_MALA_DEATH, me);
         }
@@ -807,12 +807,12 @@ public:
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
             DoScriptText(SAY_VERA_SLAY, me);
         }
 
-        void JustDied(Unit * /*victim*/)
+        void JustDied(Unit* /*victim*/)
         {
             DoScriptText(SAY_VERA_DEATH, me);
         }
@@ -891,14 +891,14 @@ public:
     {
         PrepareAuraScript(spell_boss_lady_malande_shield_AuraScript);
 
-        bool Validate(SpellEntry const * /*spellEntry*/)
+        bool Validate(SpellEntry const* /*spellEntry*/)
         {
             return sSpellStore.LookupEntry(SPELL_REFLECTIVE_SHIELD_T);
         }
 
         void Trigger(AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount)
         {
-            Unit * target = GetTarget();
+            Unit* target = GetTarget();
             if (dmgInfo.GetAttacker() == target)
                 return;
             int32 bp = absorbAmount / 2;

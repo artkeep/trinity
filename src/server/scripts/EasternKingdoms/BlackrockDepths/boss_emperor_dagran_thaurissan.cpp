@@ -62,7 +62,7 @@ public:
             //Counter= 0;
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/)
         {
             DoScriptText(SAY_AGGRO, me);
             me->CallForHelp(VISIBLE_RANGE);
@@ -81,7 +81,7 @@ public:
 
             if (HandOfThaurissan_Timer <= diff)
             {
-                if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM,0))
+                if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                     DoCast(pTarget, SPELL_HANDOFTHAURISSAN);
 
                 //3 Hands of Thaurissan will be casted

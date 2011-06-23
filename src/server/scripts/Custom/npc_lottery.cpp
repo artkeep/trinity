@@ -21,14 +21,14 @@ SDAuthor: PrinceCreed
 SD%Complete: 100%
 SDComment: //
 SDCategory: Custom
-EndScriptData */
+EndScriptData 
 
 #include "ScriptPCH.h"
 
 /*######
 ## npc_lotto
 ######*/
-
+/*
 #define GOSSIP_BUY_TICKET           "Купить билет"
 #define TICKET_COST                 1000000
 #define EVENT_LOTTO           132
@@ -56,7 +56,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32, uint32 uiAction)
     {
         pPlayer->PlayerTalkClass->ClearMenus();
         
@@ -75,7 +75,7 @@ public:
                 pCreature->MonsterWhisper(msg, pPlayer->GetGUID());
                 break;
         }
-        pPlayer->PlayerTalkClass->CloseGossip();
+        pPlayer->PlayerTalkClass->SendCloseGossip();
         return true;
     }
 
@@ -174,3 +174,4 @@ void AddSC_npc_lottery()
     new npc_lotto;
 }
 
+*/

@@ -212,7 +212,7 @@ public:
 
     bool OnGossipHello(Player* /*pPlayer*/, GameObject* pGo)
     {
-        pGo->SummonCreature(C_AERANAS,-1321.79f, 4043.80f, 116.24f, 1.25f, TEMPSUMMON_TIMED_DESPAWN, 180000);
+        pGo->SummonCreature(C_AERANAS, -1321.79f, 4043.80f, 116.24f, 1.25f, TEMPSUMMON_TIMED_DESPAWN, 180000);
         return false;
     }
 
@@ -287,7 +287,7 @@ public:
                 pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
                 break;
             case GOSSIP_ACTION_TRADE:
-                pPlayer->SEND_VENDORLIST(pCreature->GetGUID());
+                pPlayer->GetSession()->SendListInventory(pCreature->GetGUID());
                 break;
         }
 
@@ -438,7 +438,7 @@ public:
             case 27:
                 DoScriptText(SAY_ELF_COMPLETE, me, pPlayer);
                 // Award quest credit
-                pPlayer->GroupEventHappens(QUEST_ROAD_TO_FALCON_WATCH,me);
+                pPlayer->GroupEventHappens(QUEST_ROAD_TO_FALCON_WATCH, me);
                 break;
             }
         }
@@ -498,13 +498,13 @@ public:
             if (uiType != POINT_MOTION_TYPE || uiId != 1)
                 return;
 
-            if (Creature* pHelboar = me->GetCreature(*me,uiHelboarGUID))
+            if (Creature* pHelboar = me->GetCreature(*me, uiHelboarGUID))
             {
                 pHelboar->RemoveCorpse();
                 DoCast(SPELL_SUMMON_POO);
 
                 if (Player* pOwner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
-                    me->GetMotionMaster()->MoveFollow(pOwner,0.0f,0.0f);
+                    me->GetMotionMaster()->MoveFollow(pOwner, 0.0f, 0.0f);
             }
         }
 
@@ -517,7 +517,7 @@ public:
                     if (pHelboar->GetGUID() != uiHelboarGUID && me->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && !me->FindCurrentSpellBySpellId(SPELL_SUMMON_POO))
                     {
                         uiHelboarGUID = pHelboar->GetGUID();
-                        me->GetMotionMaster()->MovePoint(1,pHelboar->GetPositionX(),pHelboar->GetPositionY(),pHelboar->GetPositionZ());
+                        me->GetMotionMaster()->MovePoint(1, pHelboar->GetPositionX(), pHelboar->GetPositionY(), pHelboar->GetPositionZ());
                     }
                 }
                 uiCheckTimer = 5000;

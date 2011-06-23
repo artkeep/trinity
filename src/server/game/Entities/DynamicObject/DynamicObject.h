@@ -61,11 +61,12 @@ class DynamicObject : public WorldObject, public GridObject<DynamicObject>
         void Say(int32 textId, uint32 language, uint64 targetGuid) { MonsterSay(textId, language, targetGuid); }
         void Yell(int32 textId, uint32 language, uint64 targetGuid) { MonsterYell(textId, language, targetGuid); }
         void TextEmote(int32 textId, uint64 targetGuid) { MonsterTextEmote(textId, targetGuid); }
-        void Whisper(int32 textId,uint64 receiver) { MonsterWhisper(textId, receiver); }
+        void Whisper(int32 textId, uint64 receiver) { MonsterWhisper(textId, receiver); }
         void YellToZone(int32 textId, uint32 language, uint64 targetGuid) { MonsterYellToZone(textId, language, targetGuid); }
 
     protected:
         Aura* _aura;
+        Aura* _removedAura;
         Unit* _caster;
         int32 _duration; // for non-aura dynobjects
         bool _isViewpoint;

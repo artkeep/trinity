@@ -1,21 +1,21 @@
-/* 
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+/*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * Script Author: LordVanMartin
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "ScriptPCH.h"
 #include "nexus.h"
 
@@ -51,12 +51,12 @@ enum Achievs
 
 const Position RiftLocation[6] =
 {
-    {652.64f, -273.70f, -8.75f},
-    {634.45f, -265.94f, -8.44f},
-    {620.73f, -281.17f, -9.02f},
-    {626.10f, -304.67f, -9.44f},
-    {639.87f, -314.11f, -9.49f},
-    {651.72f, -297.44f, -9.37f}
+    {652.64f, -273.70f, -8.75f, 0.0f},
+    {634.45f, -265.94f, -8.44f, 0.0f},
+    {620.73f, -281.17f, -9.02f, 0.0f},
+    {626.10f, -304.67f, -9.44f, 0.0f},
+    {639.87f, -314.11f, -9.49f, 0.0f},
+    {651.72f, -297.44f, -9.37f, 0.0f}
 };
 
 class boss_anomalus : public CreatureScript
@@ -71,7 +71,7 @@ public:
 
     struct boss_anomalusAI : public ScriptedAI
     {
-        boss_anomalusAI(Creature *c) : ScriptedAI(c),summons(me)
+        boss_anomalusAI(Creature *c) : ScriptedAI(c)
         {
             pInstance = c->GetInstanceScript();
         }
@@ -83,13 +83,10 @@ public:
         uint32 uiCreateRiftTimer;
         uint64 uiChaoticRiftGUID;
 
-        SummonList summons;
-
         bool bDeadChaoticRift; // needed for achievement: Chaos Theory(2037)
 
         void Reset()
         {
-            summons.DespawnAll();
             Phase = 0;
             uiSparkTimer = 5*IN_MILLISECONDS;
             uiChaoticRiftGUID = 0;
@@ -99,24 +96,6 @@ public:
             if (pInstance)
                 pInstance->SetData(DATA_ANOMALUS_EVENT, NOT_STARTED);
         }
-
-    void EnterEvadeMode()
-    {
-        summons.DespawnAll();
-        _EnterEvadeMode();
-        me->GetMotionMaster()->MoveTargetedHome();
-        Reset();
-    }
-
-    void SummonedCreatureDespawn(Creature *summon)
-    {
-        summons.Despawn(summon);
-    }
-
-    void JustSummoned(Creature *summon)
-    {
-        summons.Summon(summon);
-    }
 
         void EnterCombat(Unit* /*who*/)
         {
@@ -129,7 +108,6 @@ public:
         void JustDied(Unit* /*killer*/)
         {
             DoScriptText(SAY_DEATH, me);
-            summons.DespawnAll();
 
             if (pInstance)
             {
@@ -171,10 +149,10 @@ public:
                 Phase = 1;
                 DoScriptText(SAY_SHIELD, me);
                 DoCast(me, SPELL_RIFT_SHIELD);
-                Creature* Rift = me->SummonCreature(MOB_CHAOTIC_RIFT, RiftLocation[urand(0,5)], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1*IN_MILLISECONDS);
+                Creature* Rift = me->SummonCreature(MOB_CHAOTIC_RIFT, RiftLocation[urand(0, 5)], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1*IN_MILLISECONDS);
                 if (Rift)
                 {
-                    me->AddAura(SPELL_CHARGE_RIFT,Rift);
+                    //DoCast(Rift, SPELL_CHARGE_RIFT);
                     if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                         Rift->AI()->AttackStart(pTarget);
                     uiChaoticRiftGUID = Rift->GetGUID();
@@ -182,11 +160,10 @@ public:
                 }
             }
 
-
             if (uiSparkTimer <= diff)
             {
                 if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, DUNGEON_MODE(SPELL_SPARK,H_SPELL_SPARK));
+                    DoCast(pTarget, SPELL_SPARK);
                 uiSparkTimer = 5*IN_MILLISECONDS;
             } else uiSparkTimer -= diff;
 
@@ -195,7 +172,6 @@ public:
     };
 
 };
-
 
 enum RiftSpells
 {
@@ -236,12 +212,10 @@ public:
             DoCast(me, SPELL_ARCANEFORM, false);
         }
 
-
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/)
         {
             if (Creature* pAnomalus = Unit::GetCreature(*me, pInstance ? pInstance->GetData64(DATA_ANOMALUS) : 0))
-                if (pInstance && pInstance->GetData(DATA_ANOMALUS_EVENT) == IN_PROGRESS)
-                    CAST_AI(boss_anomalus::boss_anomalusAI,pAnomalus->AI())->bDeadChaoticRift = true;
+                CAST_AI(boss_anomalus::boss_anomalusAI, pAnomalus->AI())->bDeadChaoticRift = true;
         }
 
         void UpdateAI(const uint32 diff)
@@ -254,10 +228,10 @@ public:
                 Unit* pAnomalus = Unit::GetUnit(*me, pInstance ? pInstance->GetData64(DATA_ANOMALUS) : 0);
                 if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 {
-                    int dmg=244+rand()%162;
                     if (pAnomalus && pAnomalus->HasAura(SPELL_RIFT_SHIELD))
-                        dmg*= 2;
-                    me->CastCustomSpell(pTarget,SPELL_CHAOTIC_ENERGY_BURST,&dmg,0,0,false);
+                        DoCast(pTarget, SPELL_CHARGED_CHAOTIC_ENERGY_BURST);
+                    else
+                        DoCast(pTarget, SPELL_CHAOTIC_ENERGY_BURST);
                 }
                 uiChaoticEnergyBurstTimer = 1*IN_MILLISECONDS;
             } else uiChaoticEnergyBurstTimer -= diff;
@@ -278,7 +252,6 @@ public:
     };
 
 };
-
 
 void AddSC_boss_anomalus()
 {

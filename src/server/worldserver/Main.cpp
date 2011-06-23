@@ -52,7 +52,6 @@ int m_ServiceStatus = -1;
 WorldDatabaseWorkerPool WorldDatabase;                      ///< Accessor to the world database
 CharacterDatabaseWorkerPool CharacterDatabase;              ///< Accessor to the character database
 LoginDatabaseWorkerPool LoginDatabase;                      ///< Accessor to the realm/login database
-ExtraDatabaseWorkerPool ExtraDatabase;                      ///< Accessor to the extra database
 
 uint32 realmID;                                             ///< Id of the realm
 
@@ -67,7 +66,7 @@ void usage(const char *prog)
         "    -s install               install service\n\r"
         "    -s uninstall             uninstall service\n\r"
         #endif
-        ,prog);
+        , prog);
 }
 
 /// Launch the Trinity server

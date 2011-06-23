@@ -29,6 +29,20 @@
 //#define GOSSIP_MENU "Long have I waited for this day, hero. Are you and your allies prepared to bring the Lich King to justice? We charge on your command!"
 #define GOSSIP_START_EVENT "We are prepared, Highlord. Let us battle for the fate of Azeroth! For the light of dawn!"
 
+enum eEnums
+{
+    SOUND_ENDING_7_KING                   = 17360,
+    MOVIE_ID_ARTHAS_DEATH                 = 16
+};
+
+enum eAchievements
+{
+    ACHIEV_BEEN_WAITING_A_LONG_TIME_FOR_THIS_10 = 4601,
+    ACHIEV_BEEN_WAITING_A_LONG_TIME_FOR_THIS_25 = 4621,
+    ACHIEV_NECK_DEEP_IN_VILE_10                 = 4581,
+    ACHIEV_NECK_DEEP_IN_VILE_25                 = 4622,
+};
+
 enum Yells
 {
     SAY_INTRO_1_KING         = -1810001,
@@ -37,7 +51,7 @@ enum Yells
     SAY_INTRO_4_TIRION       = -1810004,
     SAY_INTRO_5_KING         = -1810005,
     SAY_AGGRO                = -1810006,
-    SAY_REMORSELESSS_WINTER   = -1810007,
+    SAY_REMORSELESSS_WINTER  = -1810007,
     SAY_RANDOM_1             = -1810008,
     SAY_RANDOM_2             = -1810009,
     SAY_KILL_1               = -1810010,
@@ -108,6 +122,9 @@ enum Spells
     SPELL_SUMMON_DEFILE              = 72762,
     SPELL_SUMMON_VILE_SPIRIT         = 70498, //????????
     SPELL_SUMMON_SHADOW_TRAP         = 73539,
+    SPELL_SHADOW_TRAP_INTRO          = 73530,
+    SPELL_SHADOW_TRAP_PERIODIC       = 73525,
+    SPELL_SHADOW_TRAP_EFFECT         = 73529,
     SPELL_INFEST                     = 70541,
     SPELL_NECROTIC_PLAGUE            = 70337, //70337 - initial cast
     SPELL_NECROTIC_PLAGUE_IMMUNITY   = 72846,
@@ -269,6 +286,28 @@ static Locations TeleportPoint[]=
     {965.997f, 278.398f, 195.777f},
 };*/
 
+typedef std::list<Player*> TPlayerList;
+
+TPlayerList GetPlayersInTheMap(Map *pMap)
+{
+    TPlayerList players;
+    const Map::PlayerList &PlayerList = pMap->GetPlayers();
+    if (!PlayerList.isEmpty())
+        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+            if (Player* player = i->getSource())
+                players.push_back(player);
+    return players;
+}
+TPlayerList GetAttackablePlayersInTheMap(Map *pMap)
+{
+    TPlayerList players = GetPlayersInTheMap(pMap);
+    for (TPlayerList::iterator it = players.begin(); it != players.end();)
+        if (!(*it)->isTargetableForAttack())
+            players.erase(it++);
+        else
+            ++it;
+    return players;
+}
 Player *SelectRandomPlayerFromList(TPlayerList &players)
 {
     if (players.empty())
@@ -290,6 +329,23 @@ Player *SelectRandomAttackablePlayerInTheMap(Map *pMap)
     return SelectRandomPlayerFromList(players);
 }
 
+uint32 GetPhase(const EventMap &em)
+{
+    switch (em.GetPhaseMask())
+    {
+        case 0x01: return 0;
+        case 0x02: return 1;
+        case 0x04: return 2;
+        case 0x08: return 3;
+        case 0x10: return 4;
+        case 0x20: return 5;
+        case 0x40: return 6;
+        case 0x80: return 7;
+        default:
+            return 0;
+    }
+}
+
 class boss_the_lich_king : public CreatureScript
 {
     public:
@@ -297,9 +353,8 @@ class boss_the_lich_king : public CreatureScript
 
         struct boss_the_lich_kingAI : public BossAI
         {
-            boss_the_lich_kingAI(Creature* creature) : BossAI(creature, DATA_LICH_KING_EVENT), summons(me), uiStage(1)
+            boss_the_lich_kingAI(Creature* creature) : BossAI(creature, DATA_THE_LICH_KING), summons(me), uiStage(1)
             {
-                instance = me->GetInstanceScript();
             }
 
             uint32 GetData(uint32 dataId)
@@ -329,6 +384,9 @@ class boss_the_lich_king : public CreatureScript
 
                 if(SpellEntry* plague = GET_SPELL(SPELL_PLAGUE_SIPHON)) //hack
                     plague->Targets = 18;
+
+                if (SpellEntry *shadowEffect = GET_SPELL(SPELL_SHADOW_TRAP_EFFECT))
+                    shadowEffect->EffectRadiusIndex[1] = 13;
 
                 if(SpellEntry* raging = GET_SPELL(SPELL_SUMMON_RAGING_SPIRIT))
                 {
@@ -371,16 +429,17 @@ class boss_the_lich_king : public CreatureScript
 
             void EnterEvadeMode()
             {
-                events.Reset();
-                BossAI::EnterEvadeMode();
+                ScriptedAI::EnterEvadeMode();
                 me->SetReactState(REACT_PASSIVE);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                events.Reset();
             }
 
-            void EnterCombat(Unit* /*pWho*/)
+            void EnterCombat(Unit* victim)
             {
                 if (uiStage > 1)
                     return;
+
                 instance->SetData(DATA_BEEN_WAITING_ACHIEVEMENT, NOT_STARTED);
                 instance->SetData(DATA_NECK_DEEP_ACHIEVEMENT, DONE);
 
@@ -411,18 +470,18 @@ class boss_the_lich_king : public CreatureScript
                 if (IsHeroic())
                     events.ScheduleEvent(EVENT_SHADOW_TRAP, 10000, 0, PHASE_1);
                 DoScriptText(SAY_AGGRO, me);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                DoZoneInCombat();
                 DoCast(me, SPELL_NECROTIC_PLAGUE_IMMUNITY);
                 if(instance)
                     uiTirionGUID = instance->GetData64(GUID_TIRION);
-
-                if(instance)
-                    instance->SetData(DATA_LICH_KING_EVENT, IN_PROGRESS);
+                instance->SetBossState(DATA_THE_LICH_KING, IN_PROGRESS);
             }
 
             void Cleanup()
             {
                 instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_INFEST);
-                instance->DoCastSpellOnPlayers(SPELL_TELEPORT_ICC_FROZEN_THRONE);
+                instance->DoCastSpellOnPlayers(FROZEN_THRONE_TELEPORT);
                 instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_NECROTIC_PLAGUE);
                 instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_NECROTIC_PLAGUE_EFFECT);
                 instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_ICE_PULSE);
@@ -430,12 +489,10 @@ class boss_the_lich_king : public CreatureScript
                 summons.DespawnAll();
             }
 
-            void JustDied(Unit* /*pKiller*/)
+            void JustDied(Unit* killer)
             {
-                if(!instance)
-                    return;
+                BossAI::JustDied(killer);
 
-                instance->SetData(DATA_LICH_KING_EVENT, DONE);
                 if(instance->GetData(DATA_BEEN_WAITING_ACHIEVEMENT) == DONE)
                     instance->DoCompleteAchievement(RAID_MODE(ACHIEV_BEEN_WAITING_A_LONG_TIME_FOR_THIS_10,ACHIEV_BEEN_WAITING_A_LONG_TIME_FOR_THIS_25));
                 if(instance->GetData(DATA_NECK_DEEP_ACHIEVEMENT) == DONE)
@@ -447,6 +504,7 @@ class boss_the_lich_king : public CreatureScript
                 if(Creature* tirion = Unit::GetCreature(*me, uiTirionGUID))
                 {
                     tirion->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    tirion->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
                     tirion->RemoveAllAuras();
                 }
             }
@@ -455,8 +513,9 @@ class boss_the_lich_king : public CreatureScript
             {
                 if (type != POINT_MOTION_TYPE)
                     return;
-                if (instance->GetData(DATA_LICH_KING_EVENT) == DONE)
+                if (instance->GetBossState(DATA_THE_LICH_KING) == DONE)
                     return;
+
                 switch(id)
                 {
                     case POINT_PLATFORM_CENTER:
@@ -476,9 +535,7 @@ class boss_the_lich_king : public CreatureScript
 
             void JustReachedHome()
             {
-                if(!instance)
-                    return;
-                instance->SetData(DATA_LICH_KING_EVENT, FAIL);
+                instance->SetBossState(DATA_THE_LICH_KING, FAIL);
                 Cleanup();
                 if (Creature *tirion = ObjectAccessor::GetCreature(*me, instance->GetData64(GUID_TIRION)))
                     tirion->AI()->DoAction(ACTION_RESET);
@@ -498,7 +555,6 @@ class boss_the_lich_king : public CreatureScript
                 switch(summoned->GetEntry())
                 {
                     case NPC_RAGING_SPIRIT:
-                        //summoned->SetDisplayId(11649); //Some sort of spirit. Until Clone is fixed for non-minions, it's the only way to make a mob to look like something.
                         summoned->CastSpell(summoned, SPELL_NECROTIC_PLAGUE_IMMUNITY, true);
                         if (Unit *target = summoned->SelectNearbyTarget())
                         {
@@ -527,16 +583,11 @@ class boss_the_lich_king : public CreatureScript
                         //summoned->SetVisible(false);
                         break;
                     }
-                    //case NPC_TERENAS_MENETHIL:
-                    //{
-                    //    DoScriptText(SAY_ENDING_9_FATHER, summoned);
-                    //    summoned->CastSpell(summoned, SPELL_MENETHIL_VISUAL, true);
-                    //    summoned->CastSpell(summoned, SPELL_REVIVE, true);
-                    //    //TPlayerList players = GetPlayersInTheMap(me->GetMap());
-                    //    //for (TPlayerList::iterator it = players.begin(); it != players.end(); ++it)
-                    //    //    summoned->CastSpell(*it, SPELL_REVIVE_EFFECT, true);
-                    //    break;
-                    //}
+                    case NPC_TERENAS_MENETHIL:
+                    {
+                        DoScriptText(SAY_ENDING_9_FATHER, summoned);
+                        break;
+                    }
                     case NPC_VALKYR:
                     {
                         if (Unit *valkyrTarget = SelectTarget(SELECT_TARGET_RANDOM, 1, 100.0f, true))
@@ -580,6 +631,7 @@ class boss_the_lich_king : public CreatureScript
                             spiritWarden->AI()->DoAction(ACTION_ATTACK_TERENAS_FIGHTER);
                             events.ScheduleEvent(EVENT_KILL_FROSTMOURNE_PLAYERS, 60000, 0, PHASE_5);
                         }
+                        break;
                     }
                     case ACTION_CANCEL_ALL_TRANSITION_EVENTS:
                     {
@@ -687,7 +739,7 @@ class boss_the_lich_king : public CreatureScript
                                 {
                                     (*it)->RemoveAllAuras();
                                     me->DealDamage(*it, (*it)->GetHealth());
-                                    pTirion->CastSpell(*it, SPELL_TELEPORT_ICC_FROZEN_THRONE, true);
+                                    pTirion->CastSpell(*it, FROZEN_THRONE_TELEPORT, true);
                                 }
                         }
                         events.ScheduleEvent(EVENT_CHECK_ALIVE_PLAYERS, 5000);
@@ -970,6 +1022,7 @@ class boss_the_lich_king : public CreatureScript
                                 {
                                     if(Creature* tirion = Unit::GetCreature(*me, uiTirionGUID))
                                     {
+                                        tirion->SetUInt64Value(UNIT_FIELD_TARGET, me->GetGUID());
                                         tirion->GetMotionMaster()->MoveJump(517.482910f, -2124.905762f, 1040.861328f, 10.0f, 15.0f);
                                         tirion->SetUInt32Value(UNIT_NPC_EMOTESTATE, 375);
                                     }
@@ -1092,8 +1145,6 @@ class boss_the_lich_king : public CreatureScript
                 }
             }
         private:
-            InstanceScript* instance;
-
             uint8 uiStage;
             uint8 uiPhase;
 
@@ -1118,7 +1169,7 @@ class boss_the_lich_king : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_the_lich_kingAI(creature);
+            return GetIcecrownCitadelAI<boss_the_lich_kingAI>(creature);
         }
 };
 
@@ -1129,9 +1180,8 @@ class npc_tirion_icc : public CreatureScript
 
         struct npc_tirion_iccAI : public ScriptedAI
         {
-            npc_tirion_iccAI(Creature* creature) : ScriptedAI(creature)
+            npc_tirion_iccAI(Creature* creature) : ScriptedAI(creature), _instance(creature->GetInstanceScript())
             {
-                instance = creature->GetInstanceScript();
             }
 
             void Reset()
@@ -1149,22 +1199,22 @@ class npc_tirion_icc : public CreatureScript
                 DoCast(me, SPELL_REVIVE, true);
                 DoCast(SPELL_WMO_INTACT);
                 //Rebuilding ice shards
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_ICE_SHARD_1)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_ICE_SHARD_1)))
                     go->SetGoState(GO_STATE_READY);
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_ICE_SHARD_2)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_ICE_SHARD_2)))
                     go->SetGoState(GO_STATE_READY);
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_ICE_SHARD_3)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_ICE_SHARD_3)))
                     go->SetGoState(GO_STATE_READY);
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_ICE_SHARD_4)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_ICE_SHARD_4)))
                     go->SetGoState(GO_STATE_READY);
                 //Hiding edge destroy warning
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
                     go->SetGoState(GO_STATE_READY);
                 //Hiding inner waterfall
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_FROSTY_EDGE_INNER)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_FROSTY_EDGE_INNER)))
                     go->SetGoState(GO_STATE_READY);
                 //Showing outer waterfall
-                if (GameObject *go = ObjectAccessor::GetGameObject(*me, instance->GetData64(GUID_FROSTY_EDGE_OUTER)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*me, _instance->GetData64(GUID_FROSTY_EDGE_OUTER)))
                     go->SetGoState(GO_STATE_ACTIVE);
             }
 
@@ -1193,8 +1243,8 @@ class npc_tirion_icc : public CreatureScript
                     case ACTION_START_EVENT:
                     {
                         bIntro = true;
-                        if(instance)
-                            uiLichKingGUID = instance->GetData64(GUID_LICH_KING);
+                        if(_instance)
+                            uiLichKingGUID = _instance->GetData64(DATA_THE_LICH_KING);
                         break;
                     }
                     case ACTION_RESET:
@@ -1237,7 +1287,10 @@ class npc_tirion_icc : public CreatureScript
                         {
                             if(Creature* lich = Unit::GetCreature(*me, uiLichKingGUID))
                             {
+                                lich->SetFacingToObject(me);
                                 lich->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_TALK);
+                                me->SetUInt64Value(UNIT_FIELD_TARGET, lich->GetGUID());
+                                lich->SetUInt64Value(UNIT_FIELD_TARGET, me->GetGUID());
                                 DoScriptText(SAY_INTRO_1_KING, lich);
                             }
                             uiIntroTimer = 14000;
@@ -1315,7 +1368,7 @@ class npc_tirion_icc : public CreatureScript
                 } else uiIntroTimer -= diff;
             }
             private:
-                InstanceScript* instance;
+                InstanceScript* _instance;
 
                 uint64 uiLichKingGUID;
                 uint32 uiIntroTimer;
@@ -1325,8 +1378,8 @@ class npc_tirion_icc : public CreatureScript
 
         bool OnGossipHello(Player* player, Creature* creature)
         {
-            InstanceScript* instance = creature->GetInstanceScript();
-            if (!instance)
+            InstanceScript* _instance = creature->GetInstanceScript();
+            if (!_instance)
                 return false;
 
             Player *unfriendlyPlayer = NULL;
@@ -1348,7 +1401,7 @@ class npc_tirion_icc : public CreatureScript
                 return true;
             }
 
-            if (instance->GetData(DATA_LICH_KING_EVENT) == DONE)
+            if (_instance->GetBossState(DATA_THE_LICH_KING) == DONE)
             {
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "The Lich King was already defeated here. Teleport me back to the Light's Hammer", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
                 player->SEND_GOSSIP_MENU(GOSSIP_MENU, creature->GetGUID());
@@ -1362,7 +1415,7 @@ class npc_tirion_icc : public CreatureScript
                 return true;
             }
 
-            if ((instance->GetData(DATA_BLOOD_QUEEN_LANA_THEL_EVENT) == DONE && instance->GetData(DATA_PROFESSOR_PUTRICIDE_EVENT) == DONE && instance->GetData(DATA_SINDRAGOSA_EVENT) == DONE) || player->isGameMaster())
+            if ((_instance->GetBossState(DATA_BLOOD_QUEEN_LANA_THEL) == DONE && _instance->GetBossState(DATA_PROFESSOR_PUTRICIDE) == DONE && _instance->GetBossState(DATA_SINDRAGOSA) == DONE) || player->isGameMaster())
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_START_EVENT, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
 
             player->SEND_GOSSIP_MENU(GOSSIP_MENU, creature->GetGUID());
@@ -1378,7 +1431,7 @@ class npc_tirion_icc : public CreatureScript
                     creature->MonsterSay("OK, I'll wait for raid leader", LANG_UNIVERSAL, player->GetGUID());
                     break;
                 case GOSSIP_ACTION_INFO_DEF+4:
-                    creature->CastSpell(player,SPELL_TELEPORT_ICC_LIGHT_S_HAMMER, true); player->GetGUID();
+                    creature->CastSpell(player,LIGHT_S_HAMMER_TELEPORT, true); player->GetGUID();
                     break;
                 case GOSSIP_ACTION_INFO_DEF+3:
                     CAST_AI(npc_tirion_icc::npc_tirion_iccAI, creature->AI())->DoAction(ACTION_START_EVENT);
@@ -1766,7 +1819,7 @@ public:
                             me->DespawnOrUnsummon();
                             return;
                         }
-                        /*if (!curVictim->isAlive() || curVictim->GetTypeId() != TYPEID_PLAYER)
+                       /* if (!curVictim->isAlive() || curVictim->GetTypeId() != TYPEID_PLAYER)
                         {
                             Player *player = curVictim->ToPlayer();
                             uint8 count = 0;
@@ -1776,7 +1829,7 @@ public:
                             }
                             EnterEvadeMode();
                             AttackStart(player);
-                        }*/
+                        } */
                         events.ScheduleEvent(EVENT_CHECK_PLAYER_IN_FROSTMOURNE_ROOM, 2000);
                         break;
                     }
@@ -1802,83 +1855,6 @@ public:
 };
 const float npc_vile_spirit_icc::Z_VILE_SPIRIT = 1050.0f;
 
-//class spell_lich_king_pain_and_suffering : public SpellScriptLoader
-//{
-//    public:
-//        spell_lich_king_pain_and_suffering() : SpellScriptLoader("spell_lich_king_pain_and_suffering") { } //74115
-//
-//        class spell_lich_king_pain_and_suffering_AuraScript : public AuraScript
-//        {
-//            PrepareAuraScript(spell_lich_king_pain_and_suffering_AuraScript)
-//
-//            class AnyAlivePetOrPlayerInObjectFrontalConeCheck
-//            {
-//                public:
-//                    AnyAlivePetOrPlayerInObjectFrontalConeCheck(WorldObject const* obj) : i_obj(obj) {}
-//                    bool operator()(Unit* u)
-//                    {
-//                        if (u->GetTypeId() != TYPEID_PLAYER)
-//                            return false;
-//                        if (!u->isTargetableForAttack())
-//                            return false;
-//                        if (!u->isAlive())
-//                            return false;
-//                        Position myPos, uPos;
-//                        i_obj->GetPosition(&myPos);
-//                        u->GetPosition(&uPos);
-//                        float orientation = i_obj->GetOrientation();
-//                        float angle = myPos.GetAngle(&uPos);
-//                        float coneAngle = M_PI / 180 * 1.0f;
-//                        angle = MapManager::NormalizeOrientation(orientation - angle);
-//                        if ((0.0f <= angle) && (angle <= coneAngle / 2) ||
-//                            ((2 * M_PI - coneAngle / 2) <= angle) && (angle <= (2 * M_PI)))
-//                            return true;
-//                        return false;
-//                    }
-//                private:
-//                    WorldObject const* i_obj;
-//            };
-//            void OnPeriodic(AuraEffect const*aurEff)
-//            {
-//                PreventDefaultAction();
-//                Unit *caster = GetCaster();
-//                if (!caster || !caster->isAlive() || caster->HasUnitState(UNIT_STAT_CASTING))
-//                    return;
-//                AnyAlivePetOrPlayerInObjectFrontalConeCheck checker(caster);
-//                std::list<Unit *> targets;
-//                Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck> searcher(caster, targets, checker);
-//
-//                TypeContainerVisitor<Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
-//                TypeContainerVisitor<Trinity::UnitListSearcher<AnyAlivePetOrPlayerInObjectFrontalConeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
-//
-//                CellPair p(Trinity::ComputeCellPair(caster->GetPositionX(), caster->GetPositionY()));
-//                Cell cell(p);
-//                cell.data.Part.reserved = ALL_DISTRICT;
-//                cell.SetNoCreate();
-//
-//                cell.Visit(p, world_unit_searcher, *GetTarget()->GetMap(), *GetTarget(), 100.0f);
-//                cell.Visit(p, grid_unit_searcher, *GetTarget()->GetMap(), *GetTarget(), 100.0f);
-//
-//                for (std::list<Unit*>::iterator it = targets.begin(); it != targets.end(); ++it)
-//                    caster->CastSpell((*it), SPELL_PAIN_AND_SUFFERING_DAMAGE, true);
-//                //Next time try to target somebody else
-//                if (Player *randomTarget = SelectRandomPlayerInTheMap(caster->GetMap()))
-//                    caster->SetFacingToObject(randomTarget);
-//            }
-//
-//
-//            void Register()
-//            {
-//                OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_pain_and_suffering_AuraScript::OnPeriodic, EFFECT_2, SPELL_AURA_PERIODIC_TRIGGER_SPELL); //74117
-//            }
-//        };
-//
-//        AuraScript* GetAuraScript() const
-//        {
-//            return new spell_lich_king_pain_and_suffering_AuraScript();
-//        }
-//};
-
 class spell_lich_king_pain_and_suffering_effect : public SpellScriptLoader
 {
     public:
@@ -1889,18 +1865,6 @@ class spell_lich_king_pain_and_suffering_effect : public SpellScriptLoader
         {
             PrepareSpellScript(spell_lich_king_pain_and_suffering_effect_SpellScript);
 
-            //void HandleScript(SpellEffIndex effIndex)
-            //{
-            //    Unit *caster = GetCaster();
-            //    if (!caster || !caster->isAlive())
-            //    {
-            //        PreventHitDefaultEffect(effIndex);
-            //        return;
-            //    }
-            //    //Next time try to target random player
-            //    if (Player *randomTarget = SelectRandomPlayerInTheMap(caster->GetMap()))
-            //        caster->SetFacingToObject(randomTarget);
-            //}
             class AnyAlivePetOrPlayerInObjectFrontalConeCheck
             {
                 public:
@@ -1942,7 +1906,6 @@ class spell_lich_king_pain_and_suffering_effect : public SpellScriptLoader
                 OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_pain_and_suffering_effect_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_TARGET_ENEMY);
                 OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_pain_and_suffering_effect_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_AREA_PATH);
                 OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_pain_and_suffering_effect_SpellScript::FilterTargets, EFFECT_2, TARGET_UNIT_AREA_PATH);
-                //OnEffect += SpellEffectFn(spell_lich_king_pain_and_suffering_effect_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
             }
         };
 
@@ -1988,7 +1951,7 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
                             return false;
                         //Ignore Tirion, The Lich King, Raging Spirits, too
                         uint32 entry = u->ToCreature()->GetEntry();
-                        if (entry == NPC_LICH_KING || entry == NPC_TIRION_ICC || entry == NPC_RAGING_SPIRIT)
+                        if (entry == NPC_THE_LICH_KING || entry == NPC_TIRION_ICC || entry == NPC_RAGING_SPIRIT)
                             return false;
                         return true;
                     }
@@ -1996,24 +1959,15 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
                     WorldObject const* i_obj;
                     float i_range;
             };
-            //void OnPeriodic(AuraEffect const*aurEff)
-            //{
-            //    PreventDefaultAction();
-            //    if (!(GetTarget() && GetTarget()->isAlive() && GetCaster() && GetCaster()->isAlive()))
-            //        return;
-            //    m_stackAmount = GetStackAmount();
-            //    GetCaster()->DealDamage(GetTarget(), (uint32)aurEff->GetBaseAmount() * m_stackAmount, 0, SPELL_DIRECT_DAMAGE, SPELL_SCHOOL_MASK_SHADOW, aurEff->GetSpellProto(), true);
-            //    //if (GetTarget() && GetTarget()->isAlive() && GetCaster() && GetCaster()->isAlive())
-            //    //    GetCaster()->CastSpell(GetTarget(), SPELL_NECROTIC_PLAGUE_EFFECT, true);
-            //}
+
             void OnRemove(AuraEffect const * aurEff, AuraEffectHandleModes mode)
             {
                 Unit *target = GetTarget();
                 if (!target)
                     return;
                 if(GetStackAmount() >= 30)
-                    if (InstanceScript *instance = target->GetInstanceScript())
-                        instance->SetData(DATA_BEEN_WAITING_ACHIEVEMENT, DONE);
+                    if (InstanceScript *_instance = target->GetInstanceScript())
+                        _instance->SetData(DATA_BEEN_WAITING_ACHIEVEMENT, DONE);
                 CellPair p(Trinity::ComputeCellPair(target->GetPositionX(), target->GetPositionY()));
                 Cell cell(p);
                 cell.data.Part.reserved = ALL_DISTRICT;
@@ -2046,10 +2000,10 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
                 if (stacksTransferred < 1)
                     stacksTransferred = 1;
                 uint32 spellId = aurEff->GetSpellProto()->Id;
-                InstanceScript *instance = target->GetInstanceScript();
-                if (instance)
+                InstanceScript *_instance = target->GetInstanceScript();
+                if (_instance)
                 {
-                    Unit *lichKing = ObjectAccessor::GetCreature(*target, instance->GetData64(GUID_LICH_KING));
+                    Unit *lichKing = ObjectAccessor::GetCreature(*target, _instance->GetData64(DATA_THE_LICH_KING));
                     if (lichKing)
                     {
                         if (newTarget)
@@ -2085,8 +2039,6 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
 
             void Register()
             {
-                //OnEffectPeriodic += AuraEffectPeriodicFn(spell_lich_king_necrotic_plague_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
-                //OnEffectApply += AuraEffectApplyFn(spell_lich_king_necrotic_plague_AuraScript::OnApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
                 OnEffectRemove += AuraEffectRemoveFn(spell_lich_king_necrotic_plague_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
             }
         private:
@@ -2098,87 +2050,6 @@ class spell_lich_king_necrotic_plague : public SpellScriptLoader
             return new spell_lich_king_necrotic_plague_AuraScript();
         }
 };
-
-//class spell_lich_king_defile : public SpellScriptLoader
-//{
-//    public:
-//        spell_lich_king_defile() : SpellScriptLoader("spell_lich_king_defile") { } 
-//
-//        class spell_lich_king_defile_SpellScript : public SpellScript
-//        {
-//            PrepareSpellScript(spell_lich_king_defile_SpellScript)
-//
-//            bool Load()
-//            {
-//                m_hitCount = 0;
-//                m_radius = 8.0f;
-//                return true;
-//            }
-//
-//            void FilterTargets(std::list<Unit*>& unitList)
-//            {
-//                LeaveOnlyPlayers(unitList);
-//                Unit *caster = GetCaster();
-//                for (std::list<Unit*>::iterator it = unitList.begin(); it != unitList.end(); )
-//                {
-//                    if ((*it)->GetDistance2d(caster) > m_radius)
-//                        unitList.erase(it++);
-//                    else
-//                        ++it;                        
-//                }
-//                if (!unitList.empty())
-//                    ++m_hitCount;
-//            }
-//
-//            void HandleDamage(SpellEffIndex effIndex)
-//            {
-//                //PreventHitDefaultEffect(effIndex);
-//                
-//                Unit *caster = GetCaster();
-//                if (!(caster && caster->isAlive()) && caster->GetAI())
-//                    return;
-//                Map *pMap = caster->GetMap();
-//                //Radius increases by 10% per hit on heroic and by 5% if it's normal
-//                m_radius = 8.0f + m_hitCount;
-//                uint32 triggeredSpellId = SPELL_DEFILE_DAMAGE;
-//                int32 triggeredSpellBaseDamage = 3000;
-//                if (SpellEntry const* defileDamage = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_DAMAGE), caster))
-//                {
-//                    triggeredSpellId = defileDamage->Id;
-//                    triggeredSpellBaseDamage = (int32)(defileDamage->EffectBasePoints[EFFECT_0] * (1.0f + (pMap->IsHeroic() ? 0.1f : 0.05f) * m_hitCount));
-//                }
-//                int hitDamage = (int32)(GetSpellInfo()->EffectBasePoints[EFFECT_0] * (1.0f + (pMap->IsHeroic() ? 0.1f : 0.05f) * m_hitCount));
-//                SetHitDamage(hitDamage);
-//
-//                if (SpellEntry const* defileIncrease = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_INCREASE), caster))
-//                {
-//                    caster->CastSpell(caster, defileIncrease->Id, true);
-//                    if (Aura *defileIncreaseAura = caster->GetAura(defileIncrease->Id))
-//                        m_hitCount = defileIncreaseAura->GetStackAmount();
-//                }
-//            }
-//
-//            void HandleDefileIncrease(SpellEffIndex effIndex)
-//            {
-//                PreventHitDefaultEffect(effIndex);
-//            }
-//
-//            void Register()
-//            {
-//                OnUnitTargetSelect += SpellUnitTargetFn(spell_lich_king_defile_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_AREA_ENEMY_SRC);
-//                OnEffect += SpellEffectFn(spell_lich_king_defile_SpellScript::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-//                OnEffect += SpellEffectFn(spell_lich_king_defile_SpellScript::HandleDefileIncrease, EFFECT_1, SPELL_EFFECT_APPLY_AURA);
-//            }
-//        private:
-//            uint32 m_hitCount;
-//            float m_radius;
-//        };
-//
-//        SpellScript* GetSpellScript() const
-//        {
-//            return new spell_lich_king_defile_SpellScript();
-//        }
-//};
 
 class spell_lich_king_defile : public SpellScriptLoader
 {
@@ -2225,6 +2096,10 @@ class spell_lich_king_defile : public SpellScriptLoader
                     triggeredSpellBaseDamage = (int32)(defileDamage->EffectBasePoints[EFFECT_0] * (1.0f + (pMap->IsHeroic() ? 0.1f : 0.05f) * m_hitCount));
                 }
 
+                values.AddSpellMod(SPELLVALUE_BASE_POINT0, ((int32)(triggeredSpellBaseDamage)));
+                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, ((int32)(m_radius * 50)));
+                //values.AddSpellMod(SPELLVALUE_MAX_TARGETS, 1);
+
                 bool increaseRadius = false;
                 uint64 ownerGuid = (caster->GetOwner() ? caster->GetOwner()->GetGUID() : 0);
                 Unit *curVictim = NULL;
@@ -2237,11 +2112,12 @@ class spell_lich_king_defile : public SpellScriptLoader
                         continue;
                     if (curVictim->GetDistance2d(caster) > m_radius)
                         continue;
-                    caster->CastCustomSpell(triggeredSpellId, SPELLVALUE_BASE_POINT0, triggeredSpellBaseDamage, curVictim, true, NULL, NULL, GetCasterGUID());
+                    caster->CastCustomSpell(triggeredSpellId, values, curVictim, true, NULL, NULL, GetCasterGUID());
                     increaseRadius = true;
                 }
                 if (!increaseRadius)
                     return;
+
                 if (SpellEntry const* defileIncrease = sSpellMgr->GetSpellForDifficultyFromSpell(sSpellStore.LookupEntry(SPELL_DEFILE_INCREASE), caster))
                 {
                     caster->CastSpell(caster, defileIncrease->Id, true);
@@ -2261,6 +2137,7 @@ class spell_lich_king_defile : public SpellScriptLoader
         private:
             uint32 m_hitCount;
             float m_radius;
+            CustomSpellValues values;
         };
 
         AuraScript* GetAuraScript() const
@@ -2370,8 +2247,8 @@ class spell_lich_king_vile_spirit_summon : public SpellScriptLoader
                 Unit *caster = GetCaster();
                 if (!caster || !caster->isAlive())
                     return;
-                InstanceScript *instance = caster->GetInstanceScript();
-                if (instance)
+                InstanceScript *_instance = caster->GetInstanceScript();
+                if (_instance)
                 {
                     uint32 spawnMod = caster->GetMap()->GetSpawnMode();
                     uint32 maxSummoned;
@@ -2460,8 +2337,8 @@ class spell_lich_king_winter : public SpellScriptLoader
 
                     caster->CastSpell(caster, SPELL_QUAKE, true);
                     DoScriptText(SAY_BROKEN_ARENA, caster);
-                    InstanceScript *instance = caster->GetInstanceScript();
-                    if (!instance)
+                    InstanceScript *_instance = caster->GetInstanceScript();
+                    if (!_instance)
                         return;
                 }
             }
@@ -2470,8 +2347,8 @@ class spell_lich_king_winter : public SpellScriptLoader
                 Unit *caster = GetCaster();
                 if (!caster || !caster->isAlive())
                     return;
-                InstanceScript *instance = caster->GetInstanceScript();
-                if (!instance)
+                InstanceScript *_instance = caster->GetInstanceScript();
+                if (!_instance)
                     return;
                 //Rebuild platform's edge only in second transition phase
                 if (UnitAI *pAI = caster->GetAI())
@@ -2482,22 +2359,22 @@ class spell_lich_king_winter : public SpellScriptLoader
                         caster->CastSpell(caster, SPELL_WMO_REBUILD, true);
                     }
                 //Destroying ice shards
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_ICE_SHARD_1)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_ICE_SHARD_1)))
                     go->SetGoState(GO_STATE_ACTIVE);
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_ICE_SHARD_2)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_ICE_SHARD_2)))
                     go->SetGoState(GO_STATE_ACTIVE);
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_ICE_SHARD_3)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_ICE_SHARD_3)))
                     go->SetGoState(GO_STATE_ACTIVE);
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_ICE_SHARD_4)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_ICE_SHARD_4)))
                     go->SetGoState(GO_STATE_ACTIVE);
                 //Hiding platform destroy warning - it's bugged and is enabled somehow, need to disable it preventively
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
                     go->SetGoState(GO_STATE_READY);
                 //Hiding inner waterfall
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_FROSTY_EDGE_INNER)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_FROSTY_EDGE_INNER)))
                     go->SetGoState(GO_STATE_READY);
                 //Showing outer waterfall
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_FROSTY_EDGE_OUTER)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_FROSTY_EDGE_OUTER)))
                     go->SetGoState(GO_STATE_ACTIVE);
             }
 
@@ -2533,16 +2410,16 @@ class spell_lich_king_quake : public SpellScriptLoader
                 //Two spells should be casted in this very sequence
                 caster->CastSpell(caster, SPELL_WMO_INTACT, true);
                 caster->CastSpell(caster, SPELL_WMO_DESTROY, true);
-                if (InstanceScript* instance = GetTarget()->GetInstanceScript())
+                if (InstanceScript* _instance = GetTarget()->GetInstanceScript())
                 {
                     //Hiding platform destroy warning
-                    if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
+                    if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
                         go->SetGoState(GO_STATE_READY);
                     //Showing inner waterfall
-                    if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_FROSTY_EDGE_INNER)))
+                    if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_FROSTY_EDGE_INNER)))
                         go->SetGoState(GO_STATE_ACTIVE);
                     //Hiding outer waterfall
-                    if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_FROSTY_EDGE_OUTER)))
+                    if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_FROSTY_EDGE_OUTER)))
                         go->SetGoState(GO_STATE_READY);
                 }
             }
@@ -2552,11 +2429,11 @@ class spell_lich_king_quake : public SpellScriptLoader
                 Unit *caster = GetCaster();
                 if (!caster || !caster->isAlive())
                     return;
-                InstanceScript *instance = caster->GetInstanceScript();
-                if (!instance)
+                InstanceScript *_instance = caster->GetInstanceScript();
+                if (!_instance)
                     return;
                 //Showing visual warning
-                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
+                if (GameObject *go = ObjectAccessor::GetGameObject(*caster, _instance->GetData64(GUID_EDGE_DESTROY_WARNING)))
                     go->SetGoState(GO_STATE_ACTIVE);
             }
 
@@ -2593,8 +2470,8 @@ class spell_vile_spirit_distance_check : public SpellScriptLoader
                 {
                     caster->CastSpell(caster, SPELL_SPIRIT_BURST, true);
 
-                    if (InstanceScript* instance = caster->GetInstanceScript())
-                        instance->SetData(DATA_NECK_DEEP_ACHIEVEMENT, FAIL);
+                    if (InstanceScript* _instance = caster->GetInstanceScript())
+                        _instance->SetData(DATA_NECK_DEEP_ACHIEVEMENT, FAIL);
                     caster->GetAI()->DoAction(ACTION_DESPAWN);
                 }
             }
@@ -2741,7 +2618,19 @@ class spell_valkyr_target_search : public SpellScriptLoader
 
             void FilterTargets(std::list<Unit*>& unitList)
             {
-                LeaveOnlyPlayers(unitList);
+                for (std::list<Unit*>::iterator itr = unitList.begin(); itr != unitList.end();)
+                {
+                    if ((*itr)->GetTypeId() != TYPEID_PLAYER)
+                        unitList.erase(itr++);
+                    else
+                        ++itr;
+                }
+
+                std::list<Unit*>::iterator itr = unitList.begin();
+                std::advance(itr, urand(0, unitList.size()-1));
+                Unit* target = *itr;
+                unitList.clear();
+                unitList.push_back(target);
             }
 
             void Register()
@@ -2838,7 +2727,7 @@ public:
     {
         npc_shambling_horror_iccAI(Creature *creature): ScriptedAI(creature)
         {
-            instance = creature->GetInstanceScript();
+            _instance = creature->GetInstanceScript();
         }
         
         void EnterCombat(Unit* who)
@@ -2890,7 +2779,7 @@ public:
         }
     private:
         bool isFrenzied;
-        InstanceScript *instance;
+        InstanceScript *_instance;
         EventMap events;
     };
     CreatureAI* GetAI(Creature* creature) const
@@ -3226,10 +3115,10 @@ class spell_lich_king_harvest_soul : public SpellScriptLoader
                 player->getThreatManager().clearReferences();
                 player->GetMap()->LoadGrid(FrostmourneRoom[0].m_positionX, FrostmourneRoom[0].m_positionY);
                 player->m_Events.AddEvent(new TeleportToFrostmourneRoom(player, 2), player->m_Events.CalculateTime(uint64(2000)));
-                InstanceScript *instance = player->GetInstanceScript();
-                if (instance)
+                InstanceScript *_instance = player->GetInstanceScript();
+                if (_instance)
                 {
-                    if (Creature *lichKing = ObjectAccessor::GetCreature(*caster, instance->GetData64(GUID_LICH_KING)))
+                    if (Creature *lichKing = ObjectAccessor::GetCreature(*caster, _instance->GetData64(DATA_THE_LICH_KING)))
                         lichKing->AI()->DoAction(ACTION_PREPARE_FROSTMOURNE_ROOM);
                 }
             }
@@ -3348,7 +3237,7 @@ enum eEvents
                             events.Reset();
                             Player *player = me->FindNearestPlayer(80.0f, true);
                             player->CastSpell(player, SPELL_DESTROY_SOUL, true);
-                            if (Creature *lichKing = ObjectAccessor::GetCreature(*me, me->GetInstanceScript()->GetData64(GUID_LICH_KING)))
+                            if (Creature *lichKing = ObjectAccessor::GetCreature(*me, me->GetInstanceScript()->GetData64(DATA_THE_LICH_KING)))
                                 DoCast(lichKing, IsHeroic() ? SPELL_HARVESTED_SOUL_HEROIC : SPELL_HARVESTED_SOUL_NORMAL, true);
                             TeleportPlayerToFrozenThrone(player);
                             player->RemoveAurasDueToSpell(SPELL_IN_FROSTMOURNE_ROOM);
@@ -3424,7 +3313,7 @@ enum eEvents
             {
                 Player *player = me->FindNearestPlayer(80.0f, true);
                 player->CastSpell(player, SPELL_DESTROY_SOUL, true);
-                if (Creature *lichKing = ObjectAccessor::GetCreature(*me, me->GetInstanceScript()->GetData64(GUID_LICH_KING)))
+                if (Creature *lichKing = ObjectAccessor::GetCreature(*me, me->GetInstanceScript()->GetData64(DATA_THE_LICH_KING)))
                     DoCast(lichKing, IsHeroic() ? SPELL_HARVESTED_SOUL_HEROIC : SPELL_HARVESTED_SOUL_NORMAL, true);
                 TeleportPlayerToFrozenThrone(player);
                 events.Reset();
@@ -3479,6 +3368,103 @@ enum eEvents
         }
 };
 
+class npc_shadow_trap : public CreatureScript
+{
+enum eEvents
+{
+    EVENT_BECOME_ACTIVE = 1,
+    EVENT_ACTIVE,
+    EVENT_CHECK,
+    EVENT_DESPAWN
+};
+
+public:
+
+    npc_shadow_trap() : CreatureScript("npc_shadow_trap") { }
+
+    struct npc_shadow_trapAI : public Scripted_NoMovementAI
+    {
+        npc_shadow_trapAI(Creature* creature) : Scripted_NoMovementAI(creature) { }
+
+        void Reset()
+        {
+            events.ScheduleEvent(EVENT_BECOME_ACTIVE, 500);
+            events.ScheduleEvent(EVENT_DESPAWN, 60000);
+            SetCombatMovement(false);
+            active = false;
+        }
+
+        //void MoveInLineOfSight(Unit* who)
+        //{
+        //    if (active && me->IsWithinDistInMap(who, 4.0f))
+        //    {
+        //        if (who->GetTypeId() == TYPEID_PLAYER)
+        //            me->CastSpell(who, SPELL_SHADOW_TRAP_EFFECT, true);
+        //    }
+        //}
+
+        void UpdateAI(const uint32 uiDiff)
+        {
+            events.Update(uiDiff);
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_BECOME_ACTIVE:
+                    {
+                        DoCast(me, SPELL_SHADOW_TRAP_INTRO, true);
+                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                        events.ScheduleEvent(EVENT_ACTIVE, 1500);
+                        break;
+                    }
+                    case EVENT_ACTIVE:
+                    {
+                        me->RemoveAura(SPELL_SHADOW_TRAP_INTRO);
+                        DoCast(me, SPELL_SHADOW_TRAP_PERIODIC, true);
+                        //If they don't reach that player within around 45 seconds, they will despawn harmlessly.
+                        events.ScheduleEvent(EVENT_DESPAWN, 45000);
+                        events.ScheduleEvent(EVENT_CHECK, 500);
+                        active = true;
+                        break;
+                    }
+                    case EVENT_CHECK:
+                    {
+                        if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 4.0f, true))
+                        {
+                            if (target->GetTypeId() == TYPEID_PLAYER)
+                                me->CastSpell(target, SPELL_SHADOW_TRAP_EFFECT, true);
+                        }
+                        else if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 4.0f, true))
+                        {
+                            if (target->GetTypeId() == TYPEID_PLAYER)
+                                me->CastSpell(target, SPELL_SHADOW_TRAP_EFFECT, true);
+                        }
+                        events.ScheduleEvent(EVENT_CHECK, 1500);
+                        break;
+                    }
+                    case EVENT_DESPAWN:
+                    {
+                        DoCast(me, SPELL_SHADOW_TRAP_INTRO, true);
+                        me->RemoveAura(SPELL_SHADOW_TRAP_PERIODIC);
+                        me->DespawnOrUnsummon(2000);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+        }
+    private:
+        EventMap events;
+        bool active;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_shadow_trapAI(creature);
+    }
+};
+
 void AddSC_boss_lichking()
 {
     new boss_the_lich_king();
@@ -3491,6 +3477,7 @@ void AddSC_boss_lichking()
     new npc_defile_icc();
     new npc_spirit_warden_icc();
     new npc_terenas_fighter_icc();
+    new npc_shadow_trap();
     new spell_lich_king_necrotic_plague();
     new spell_lich_king_infection();
     new spell_lich_king_valkyr_summon();

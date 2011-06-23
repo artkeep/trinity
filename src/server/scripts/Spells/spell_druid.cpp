@@ -40,7 +40,7 @@ class spell_dru_glyph_of_starfire : public SpellScriptLoader
         {
             PrepareSpellScript(spell_dru_glyph_of_starfire_SpellScript);
 
-            bool Validate(SpellEntry const * /*spellEntry*/)
+            bool Validate(SpellEntry const* /*spellEntry*/)
             {
                 if (!sSpellStore.LookupEntry(DRUID_INCREASED_MOONFIRE_DURATION))
                     return false;
@@ -53,7 +53,7 @@ class spell_dru_glyph_of_starfire : public SpellScriptLoader
             {
                 Unit* caster = GetCaster();
                 if (Unit* unitTarget = GetHitUnit())
-                    if (AuraEffect const * aurEff = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x00000002, 0, 0, caster->GetGUID()))
+                    if (AuraEffect const* aurEff = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x00000002, 0, 0, caster->GetGUID()))
                     {
                         Aura* aura = aurEff->GetBase();
 
@@ -102,7 +102,7 @@ class spell_dru_moonkin_form_passive : public SpellScriptLoader
                 return true;
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // Set absorbtion amount to unlimited
                 amount = -1;
@@ -146,7 +146,7 @@ class spell_dru_primal_tenacity : public SpellScriptLoader
                 return true;
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // Set absorbtion amount to unlimited
                 amount = -1;
@@ -190,7 +190,7 @@ class spell_dru_savage_defense : public SpellScriptLoader
                 return true;
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // Set absorbtion amount to unlimited
                 amount = -1;
@@ -224,19 +224,38 @@ class spell_dru_t10_restoration_4p_bonus : public SpellScriptLoader
         {
             PrepareSpellScript(spell_dru_t10_restoration_4p_bonus_SpellScript);
 
+            bool Load()
+            {
+                return GetCaster()->GetTypeId() == TYPEID_PLAYER;
+            }
+
             void FilterTargets(std::list<Unit*>& unitList)
             {
-                unitList.remove(GetTargetUnit());
-                std::list<Unit*> tempTargets;
-                std::list<Unit*>::iterator end = unitList.end(), itr = unitList.begin();
-                for (; itr != end; ++itr)
-                    if (GetCaster()->IsInRaidWith(*itr))
-                        tempTargets.push_back(*itr);
+                if (!GetCaster()->ToPlayer()->GetGroup())
+                {
+                    unitList.clear();
+                    unitList.push_back(GetCaster());
+                }
+                else
+                {
+                    unitList.remove(GetTargetUnit());
+                    std::list<Unit*> tempTargets;
+                    for (std::list<Unit*>::const_iterator itr = unitList.begin(); itr != unitList.end(); ++itr)
+                        if ((*itr)->GetTypeId() == TYPEID_PLAYER && GetCaster()->IsInRaidWith(*itr))
+                            tempTargets.push_back(*itr);
 
-                itr = tempTargets.begin();
-                std::advance(itr, urand(0, tempTargets.size()-1));
-                unitList.clear();
-                unitList.push_back(*itr);
+                    if (tempTargets.empty())
+                    {
+                        unitList.clear();
+                        FinishCast(SPELL_FAILED_DONT_REPORT);
+                        return;
+                    }
+
+                    std::list<Unit*>::const_iterator it2 = tempTargets.begin();
+                    std::advance(it2, urand(0, tempTargets.size() - 1));
+                    unitList.clear();
+                    unitList.push_back(*it2);
+                }
             }
 
             void Register()

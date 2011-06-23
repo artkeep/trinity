@@ -1,3 +1,13 @@
+# Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+#
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
   Northrend/isle_of_conquest.cpp
@@ -31,9 +41,15 @@ set(scripts_STAT_SRCS
   Northrend/Ulduar/HallsOfStone/boss_maiden_of_grief.cpp
   Northrend/Ulduar/HallsOfStone/boss_sjonnir.cpp
   Northrend/Ulduar/HallsOfStone/halls_of_stone.cpp
-  Northrend/ObsidianSanctum/instance_obsidian_sanctum.cpp
-  Northrend/ObsidianSanctum/obsidian_sanctum.h
-  Northrend/ObsidianSanctum/boss_sartharion.cpp
+  Northrend/ChamberOfAspects/ObsidianSanctum/instance_obsidian_sanctum.cpp
+  Northrend/ChamberOfAspects/ObsidianSanctum/obsidian_sanctum.h
+  Northrend/ChamberOfAspects/ObsidianSanctum/boss_sartharion.cpp
+  Northrend/ChamberOfAspects/RubySanctum/boss_baltharus.cpp
+  Northrend/ChamberOfAspects/RubySanctum/boss_halion.cpp
+  Northrend/ChamberOfAspects/RubySanctum/boss_ragefire.cpp
+  Northrend/ChamberOfAspects/RubySanctum/boss_zarithrian.cpp
+  Northrend/ChamberOfAspects/RubySanctum/instance_ruby_sanctum.cpp
+  Northrend/ChamberOfAspects/RubySanctum/ruby_sanctum.h
   Northrend/FrozenHalls/HallsOfReflection/halls_of_reflection.h
   Northrend/FrozenHalls/HallsOfReflection/boss_falric.cpp
   Northrend/FrozenHalls/HallsOfReflection/instance_halls_of_reflection.cpp
@@ -73,7 +89,7 @@ set(scripts_STAT_SRCS
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_faction_champions.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_lord_jaraxxus.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/trial_of_the_crusader.h
-  Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_beasts_of_northrend.cpp
+  Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_northrend_beasts.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/trial_of_the_crusader.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/boss_twin_valkyr.cpp
   Northrend/CrusadersColiseum/TrialOfTheCrusader/instance_trial_of_the_crusader.cpp
@@ -100,7 +116,6 @@ set(scripts_STAT_SRCS
   Northrend/Naxxramas/instance_naxxramas.cpp
   Northrend/Naxxramas/boss_grobbulus.cpp
   Northrend/Naxxramas/boss_noth.cpp
-  Northrend/Naxxramas/mob_naxxramas.cpp
   Northrend/crystalsong_forest.cpp
   Northrend/VaultOfArchavon/boss_archavon.cpp
   Northrend/VaultOfArchavon/boss_koralon.cpp
@@ -148,7 +163,7 @@ set(scripts_STAT_SRCS
   Northrend/IcecrownCitadel/instance_icecrown_citadel.cpp
   Northrend/IcecrownCitadel/icecrown_citadel.cpp
   Northrend/IcecrownCitadel/icecrown_citadel.h
-  Northrend/IcecrownCitadel/boss_valithria_dreamwalker.cpp
+  Northrend/IcecrownCitadel/icecrown_citadel_teleport.cpp
   Northrend/IcecrownCitadel/boss_lord_marrowgar.cpp
   Northrend/IcecrownCitadel/boss_lady_deathwhisper.cpp
   Northrend/IcecrownCitadel/boss_deathbringer_saurfang.cpp
@@ -157,6 +172,7 @@ set(scripts_STAT_SRCS
   Northrend/IcecrownCitadel/boss_professor_putricide.cpp
   Northrend/IcecrownCitadel/boss_blood_prince_council.cpp
   Northrend/IcecrownCitadel/boss_blood_queen_lana_thel.cpp
+  Northrend/IcecrownCitadel/boss_valithria_dreamwalker.cpp
   Northrend/IcecrownCitadel/boss_sindragosa.cpp
   Northrend/IcecrownCitadel/boss_the_lich_king.cpp
   Northrend/zuldrak.cpp
@@ -177,12 +193,6 @@ set(scripts_STAT_SRCS
   Northrend/DraktharonKeep/drak_tharon_keep.h
   Northrend/DraktharonKeep/boss_tharon_ja.cpp
   Northrend/DraktharonKeep/boss_dred.cpp
-  Northrend/RubySanctum/instance_ruby_sanctum.cpp
-  Northrend/RubySanctum/boss_halion.cpp
-  Northrend/RubySanctum/boss_ragefire.cpp
-  Northrend/RubySanctum/boss_zarithrian.cpp
-  Northrend/RubySanctum/boss_baltharus.cpp
-  Northrend/RubySanctum/ruby_sanctum.h
   Northrend/wintergrasp.cpp
   Northrend/isle_of_conquest.cpp
   

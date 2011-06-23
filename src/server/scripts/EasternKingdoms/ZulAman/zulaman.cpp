@@ -58,7 +58,7 @@ class npc_forest_frog : public CreatureScript
 
             void Reset() {}
 
-            void EnterCombat(Unit * /*who*/) {}
+            void EnterCombat(Unit* /*who*/) {}
 
             void DoSpawnRandom()
             {
@@ -86,8 +86,8 @@ class npc_forest_frog : public CreatureScript
 
                     if (cEntry) me->UpdateEntry(cEntry);
 
-                    if (cEntry == 24408) pInstance->SetData(TYPE_RAND_VENDOR_1,DONE);
-                    if (cEntry == 24409) pInstance->SetData(TYPE_RAND_VENDOR_2,DONE);
+                    if (cEntry == 24408) pInstance->SetData(TYPE_RAND_VENDOR_1, DONE);
+                    if (cEntry == 24409) pInstance->SetData(TYPE_RAND_VENDOR_2, DONE);
                 }
             }
 
@@ -132,7 +132,7 @@ class npc_zulaman_hostage : public CreatureScript
             bool IsLoot;
             uint64 PlayerGUID;
             void Reset() {}
-            void EnterCombat(Unit * /*who*/) {}
+            void EnterCombat(Unit* /*who*/) {}
             void JustDied(Unit* /*who*/)
             {
                 Player* pPlayer = Unit::GetPlayer(*me, PlayerGUID);

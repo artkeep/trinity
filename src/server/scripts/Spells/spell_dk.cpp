@@ -28,10 +28,11 @@ enum DeathKnightSpells
 {
     DK_SPELL_RUNIC_POWER_ENERGIZE               = 49088,
     DK_SPELL_ANTI_MAGIC_SHELL_TALENT            = 51052,
-    DK_SPELL_SUMMON_GARGOYLE                    = 50514,
     DK_SPELL_CORPSE_EXPLOSION_TRIGGERED         = 43999,
+    DK_SPELL_GHOUL_EXPLODE                      = 47496,
     DISPLAY_GHOUL_CORPSE                        = 25537,
     DK_SPELL_SCOURGE_STRIKE_TRIGGERED           = 70890,
+    DK_SPELL_BLOOD_BOIL_TRIGGERED               = 65658,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_TALENT_R1   = 49189,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
     DK_SPELL_BLOOD_TAP                          = 45529,
@@ -55,7 +56,7 @@ class spell_dk_anti_magic_shell_raid : public SpellScriptLoader
                 return true;
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // TODO: this should absorb limited amount of damage, but no info on calculation formula
                 amount = -1;
@@ -97,12 +98,12 @@ class spell_dk_anti_magic_shell_self : public SpellScriptLoader
                 return true;
             }
 
-            bool Validate(SpellEntry const * /*spellEntry*/)
+            bool Validate(SpellEntry const* /*spellEntry*/)
             {
                 return sSpellStore.LookupEntry(DK_SPELL_RUNIC_POWER_ENERGIZE);
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // Set absorbtion amount to unlimited
                 amount = -1;
@@ -115,7 +116,7 @@ class spell_dk_anti_magic_shell_self : public SpellScriptLoader
 
             void Trigger(AuraEffect * aurEff, DamageInfo & /*dmgInfo*/, uint32 & absorbAmount)
             {
-                Unit * target = GetTarget();
+                Unit* target = GetTarget();
                 // damage absorbed by Anti-Magic Shell energizes the DK with additional runic power.
                 // This, if I'm not mistaken, shows that we get back ~20% of the absorbed damage as runic power.
                 int32 bp = absorbAmount * 2 / 10;
@@ -154,17 +155,17 @@ class spell_dk_anti_magic_zone : public SpellScriptLoader
                 return true;
             }
 
-            bool Validate(SpellEntry const * /*spellEntry*/)
+            bool Validate(SpellEntry const* /*spellEntry*/)
             {
                 return sSpellStore.LookupEntry(DK_SPELL_ANTI_MAGIC_SHELL_TALENT);
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
-                SpellEntry const * talentSpell = sSpellStore.LookupEntry(DK_SPELL_ANTI_MAGIC_SHELL_TALENT);
+                SpellEntry const* talentSpell = sSpellStore.LookupEntry(DK_SPELL_ANTI_MAGIC_SHELL_TALENT);
                 amount = SpellMgr::CalculateSpellEffectAmount(talentSpell, EFFECT_0, GetCaster());
                 // assume caster is a player here
-                if (Unit * caster = GetCaster())
+                if (Unit* caster = GetCaster())
                      amount += int32(2 * caster->ToPlayer()->GetTotalAttackPowerValue(BASE_ATTACK));
             }
 
@@ -196,9 +197,11 @@ class spell_dk_corpse_explosion : public SpellScriptLoader
         {
             PrepareSpellScript(spell_dk_corpse_explosion_SpellScript);
 
-            bool Validate(SpellEntry const * /*spellEntry*/)
+            bool Validate(SpellEntry const* /*spellEntry*/)
             {
                 if (!sSpellStore.LookupEntry(DK_SPELL_CORPSE_EXPLOSION_TRIGGERED))
+                    return false;
+                if (!sSpellStore.LookupEntry(DK_SPELL_GHOUL_EXPLODE))
                     return false;
                 return true;
             }
@@ -208,45 +211,20 @@ class spell_dk_corpse_explosion : public SpellScriptLoader
                 if (Unit* unitTarget = GetHitUnit())
                 {
                     int32 bp = 0;
-                    bool ghoul = false;
-                    // Living ghoul as a target
-                    if (unitTarget->isAlive())
+                    if (unitTarget->isAlive())  // Living ghoul as a target
                     {
-                        ghoul = true;
                         bp = int32(unitTarget->CountPctFromMaxHealth(25));
+                        unitTarget->CastCustomSpell(unitTarget, DK_SPELL_GHOUL_EXPLODE, &bp, NULL, NULL, false);
                     }
-                    // Some corpse
-                    else
-                        bp = GetEffectValue();	
-
-                    uint32 spellid = SpellMgr::CalculateSpellEffectAmount(GetSpellInfo(), 1);
-
-                    // ghoul case
-                    if (ghoul)
+                    else                        // Some corpse
                     {
-                        spellid = 47496;
-                        // ap bonus is offlike?
-                        bp += GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK) * 0.1f;
-                        // ghoul cast on self, 1,5 seconds
-                        unitTarget->CastCustomSpell(unitTarget, spellid, &bp, NULL, NULL, false);
-                    }
-                    else 
-                        GetCaster()->CastCustomSpell(unitTarget, spellid, &bp, NULL, NULL, true);
-
-                    // ghoul is dead already by 47496
-                    if (!ghoul)
-                    {
+                        bp = GetEffectValue();
+                        GetCaster()->CastCustomSpell(unitTarget, SpellMgr::CalculateSpellEffectAmount(GetSpellInfo(), 1), &bp, NULL, NULL, true);
                         // Corpse Explosion (Suicide)
-                        unitTarget->CastCustomSpell(unitTarget, DK_SPELL_CORPSE_EXPLOSION_TRIGGERED, &bp, NULL, NULL, true);
+                        unitTarget->CastSpell(unitTarget, DK_SPELL_CORPSE_EXPLOSION_TRIGGERED, true);
                         // Set corpse look
                         unitTarget->SetDisplayId(DISPLAY_GHOUL_CORPSE + urand(0, 3));
                     }
-
-                    // impossible to summon a new pet for a time when corpse exist, don't know how on offy
-                    /*if (ghoul)
-                    {
-                        DoSomethingToRemoveCorpse();
-                    }*/              
                 }
             }
 
@@ -259,6 +237,39 @@ class spell_dk_corpse_explosion : public SpellScriptLoader
         SpellScript* GetSpellScript() const
         {
             return new spell_dk_corpse_explosion_SpellScript();
+        }
+};
+
+// 47496 - Explode, Gnoul spell for Corpse Explosion
+class spell_dk_gnoul_explode : public SpellScriptLoader
+{
+    public:
+        spell_dk_gnoul_explode() : SpellScriptLoader("spell_dk_gnoul_explode") { }
+
+        class spell_dk_gnoul_explode_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_dk_gnoul_explode_SpellScript);
+
+            void Suicide(SpellEffIndex /*effIndex*/)
+            {
+                if (Unit* unitTarget = GetHitUnit())
+                {
+                    // Corpse Explosion (Suicide)
+                    unitTarget->CastSpell(unitTarget, DK_SPELL_CORPSE_EXPLOSION_TRIGGERED, true);
+                    // Set corpse look
+                    unitTarget->SetDisplayId(DISPLAY_GHOUL_CORPSE + urand(0, 3));
+                }
+            }
+
+            void Register()
+            {
+                OnEffect += SpellEffectFn(spell_dk_gnoul_explode_SpellScript::Suicide, EFFECT_1, SPELL_EFFECT_SCHOOL_DAMAGE);
+            }
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_dk_gnoul_explode_SpellScript();
         }
 };
 
@@ -350,95 +361,43 @@ class spell_dk_death_pact : public SpellScriptLoader
         }
 };
 
-// 50524 Runic Power Feed (keeping Gargoyle alive)
-class spell_dk_runic_power_feed : public SpellScriptLoader
+// 55090 Scourge Strike (55265, 55270, 55271)
+class spell_dk_scourge_strike : public SpellScriptLoader
 {
     public:
-        spell_dk_runic_power_feed() : SpellScriptLoader("spell_dk_runic_power_feed") { }
+        spell_dk_scourge_strike() : SpellScriptLoader("spell_dk_scourge_strike") { }
 
-        class spell_dk_runic_power_feed_SpellScript : public SpellScript
+        class spell_dk_scourge_strike_SpellScript : public SpellScript
         {
-            PrepareSpellScript(spell_dk_runic_power_feed_SpellScript);
+            PrepareSpellScript(spell_dk_scourge_strike_SpellScript);
 
-            bool Validate(SpellEntry const * /*spellEntry*/)
+            bool Validate(SpellEntry const* /*spellEntry*/)
             {
-                if (!sSpellStore.LookupEntry(DK_SPELL_SUMMON_GARGOYLE))
+                if (!sSpellStore.LookupEntry(DK_SPELL_SCOURGE_STRIKE_TRIGGERED))
                     return false;
                 return true;
             }
 
             void HandleDummy(SpellEffIndex /*effIndex*/)
             {
-                if (Unit* caster = GetCaster())
+                Unit* caster = GetCaster();
+                if (Unit* unitTarget = GetHitUnit())
                 {
-                    // No power, dismiss Gargoyle
-                    if (caster->GetPower(POWER_RUNIC_POWER) < 30)
-                        caster->RemoveAurasDueToSpell(DK_SPELL_SUMMON_GARGOYLE, caster->GetGUID());
-                    else
-                        caster->ModifyPower(POWER_RUNIC_POWER, -30);
+                    int32 bp = CalculatePctN(GetHitDamage(), GetEffectValue() * unitTarget->GetDiseasesByCaster(caster->GetGUID()));
+                    caster->CastCustomSpell(unitTarget, DK_SPELL_SCOURGE_STRIKE_TRIGGERED, &bp, NULL, NULL, true);
                 }
             }
 
             void Register()
             {
-                OnEffect += SpellEffectFn(spell_dk_runic_power_feed_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+                OnEffect += SpellEffectFn(spell_dk_scourge_strike_SpellScript::HandleDummy, EFFECT_2, SPELL_EFFECT_DUMMY);
             }
         };
 
         SpellScript* GetSpellScript() const
         {
-            return new spell_dk_runic_power_feed_SpellScript();
+            return new spell_dk_scourge_strike_SpellScript();
         }
-};
-
-// 55090 Scourge Strike (55265, 55270, 55271)
-class spell_dk_scourge_strike : public SpellScriptLoader
-{
-public:
-    spell_dk_scourge_strike() : SpellScriptLoader("spell_dk_scourge_strike") { }
- 
-    class spell_dk_scourge_strike_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(spell_dk_scourge_strike_SpellScript)
-    private:
-        float m_multip;
-    public:
-        spell_dk_scourge_strike_SpellScript() : m_multip(0.0f) { }
- 
-        bool Validate(SpellEntry const * /*spellEntry*/)
-        {
-            if (!sSpellStore.LookupEntry(DK_SPELL_SCOURGE_STRIKE_TRIGGERED))
-                return false;
-            return true;
-        }
-        void HandleDummy(SpellEffIndex /*effIndex*/)
-        {
-            Unit* caster = GetCaster();
-            if (Unit* unitTarget = GetHitUnit())
-                m_multip = (GetEffectValue() * unitTarget->GetDiseasesByCaster(caster->GetGUID())) / 100.0f;
-        }
- 
-        void HandleAfterHit()
-        {
-            Unit* caster = GetCaster();
-            if (Unit* unitTarget = GetHitUnit())
-            {
-                int32 bp = GetTrueDamage() * m_multip;
-                caster->CastCustomSpell(unitTarget, DK_SPELL_SCOURGE_STRIKE_TRIGGERED, &bp, NULL, NULL, true);
-            }
-        }
- 
-        void Register()
-        {
-            OnEffect += SpellEffectFn(spell_dk_scourge_strike_SpellScript::HandleDummy, EFFECT_2, SPELL_EFFECT_DUMMY);
-            AfterHit += SpellHitFn(spell_dk_scourge_strike_SpellScript::HandleAfterHit);
-        }
-    };
- 
-    SpellScript* GetSpellScript() const
-    {
-        return new spell_dk_scourge_strike_SpellScript();
-    }
 };
 
 // 49145 - Spell Deflection
@@ -459,7 +418,7 @@ class spell_dk_spell_deflection : public SpellScriptLoader
                 return true;
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // Set absorbtion amount to unlimited
                 amount = -1;
@@ -482,6 +441,52 @@ class spell_dk_spell_deflection : public SpellScriptLoader
         AuraScript *GetAuraScript() const
         {
             return new spell_dk_spell_deflection_AuraScript();
+        }
+};
+
+// 48721 Blood Boil
+class spell_dk_blood_boil : public SpellScriptLoader
+{
+    public:
+        spell_dk_blood_boil() : SpellScriptLoader("spell_dk_blood_boil") { }
+
+        class spell_dk_blood_boil_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_dk_blood_boil_SpellScript);
+
+            bool Validate(SpellEntry const* /*spellEntry*/)
+            {
+                if (!sSpellStore.LookupEntry(DK_SPELL_BLOOD_BOIL_TRIGGERED))
+                    return false;
+                return true;
+            }
+
+            bool Load()
+            {
+                _executed = false;
+                return GetCaster()->GetTypeId() == TYPEID_PLAYER && GetCaster()->getClass() == CLASS_DEATH_KNIGHT;
+            }
+
+            void HandleAfterHit()
+            {
+                if (_executed || !GetHitUnit())
+                    return;
+
+                _executed = true;
+                GetCaster()->CastSpell(GetCaster(), DK_SPELL_BLOOD_BOIL_TRIGGERED, true);
+            }
+
+            void Register()
+            {
+                AfterHit += SpellHitFn(spell_dk_blood_boil_SpellScript::HandleAfterHit);
+            }
+
+            bool _executed;
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_dk_blood_boil_SpellScript();
         }
 };
 
@@ -516,7 +521,7 @@ class spell_dk_will_of_the_necropolis : public SpellScriptLoader
                 return true;
             }
 
-            void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
             {
                 // Set absorbtion amount to unlimited
                 amount = -1;
@@ -526,7 +531,7 @@ class spell_dk_will_of_the_necropolis : public SpellScriptLoader
             {
                 // min pct of hp is stored in effect 0 of talent spell
                 uint32 rank = sSpellMgr->GetSpellRank(GetSpellProto()->Id);
-                SpellEntry const * talentProto = sSpellStore.LookupEntry(sSpellMgr->GetSpellWithRank(DK_SPELL_WILL_OF_THE_NECROPOLIS_TALENT_R1, rank));
+                SpellEntry const* talentProto = sSpellStore.LookupEntry(sSpellMgr->GetSpellWithRank(DK_SPELL_WILL_OF_THE_NECROPOLIS_TALENT_R1, rank));
 
                 int32 remainingHp = int32(GetTarget()->GetHealth() - dmgInfo.GetDamage());
                 int32 minHp = int32(GetTarget()->CountPctFromMaxHealth(SpellMgr::CalculateSpellEffectAmount(talentProto, EFFECT_0, GetCaster())));
@@ -599,11 +604,12 @@ void AddSC_deathknight_spell_scripts()
     new spell_dk_anti_magic_shell_self();
     new spell_dk_anti_magic_zone();
     new spell_dk_corpse_explosion();
+    new spell_dk_gnoul_explode();
     new spell_dk_death_gate();
     new spell_dk_death_pact();
-    new spell_dk_runic_power_feed();
     new spell_dk_scourge_strike();
     new spell_dk_spell_deflection();
+    new spell_dk_blood_boil();
     new spell_dk_will_of_the_necropolis();
     new spell_dk_blood_tap();
 }

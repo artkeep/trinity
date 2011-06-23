@@ -265,7 +265,7 @@ public:
             me->HandleEmoteCommand(EMOTE_ONESHOT_SALUTE);
         }
 
-        void SpellHit(Unit * /*caster*/, const SpellEntry *spell)
+        void SpellHit(Unit* /*caster*/, const SpellEntry *spell)
         {
             if (spell->Id == SPELL_FLARE || spell->Id == SPELL_FOLLY)
             {
@@ -297,7 +297,7 @@ public:
 
         void ReceiveEmote(Player* /*pPlayer*/, uint32 emote)
         {
-            if (emote == TEXTEMOTE_SALUTE)
+            if (emote == TEXT_EMOTE_SALUTE)
             {
                 if (FlareCount >= 2)
                 {
@@ -381,7 +381,7 @@ public:
             BigWill = 0;
         }
 
-        void EnterCombat(Unit * /*who*/) { }
+        void EnterCombat(Unit* /*who*/) { }
 
         void MoveInLineOfSight(Unit *who)
         {
@@ -394,7 +394,7 @@ public:
             }
         }
 
-        void KilledUnit(Unit * /*victim*/) { }
+        void KilledUnit(Unit* /*victim*/) { }
 
         void UpdateAI(const uint32 diff)
         {
@@ -446,7 +446,7 @@ public:
 
                 if (!EventGrate && EventInProgress)
                 {
-                    float x,y,z;
+                    float x, y, z;
                     pWarrior->GetPosition(x, y, z);
 
                     if (x >= -1684 && x <= -1674 && y >= -4334 && y <= -4324) {

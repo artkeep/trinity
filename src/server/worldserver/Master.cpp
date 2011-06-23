@@ -99,7 +99,7 @@ public:
                 w_loops = World::m_worldLoopCounter;
             }
             // possible freeze
-            else if (getMSTimeDiff(w_lastchange,curtime) > _delaytime)
+            else if (getMSTimeDiff(w_lastchange, curtime) > _delaytime)
             {
                 sLog->outError("World Thread hangs, kicking out server!");
                 ASSERT(false);
@@ -414,31 +414,6 @@ bool Master::_StartDB()
         return false;
     }
 
-    ///- Get extra database info from configuration file
-    dbstring = sConfig->GetStringDefault("ExtraDatabaseInfo", "");
-    if (dbstring.empty())
-    {
-        sLog->outError("Extra database not specified in configuration file");
-        return false;
-    }
-
-    async_threads = sConfig->GetIntDefault("ExtraDatabase.WorkerThreads", 1);
-    if (async_threads < 1 || async_threads > 32)
-    {
-        sLog->outError("Extra database: invalid number of worker threads specified. "
-            "Please pick a value between 1 and 32.");
-        return false;
-    }
-
-    synch_threads = sConfig->GetIntDefault("ExtraDatabase.SynchThreads", 1);
-
-    ///- Initialise the Extra database
-    if (!ExtraDatabase.Open(dbstring, async_threads, synch_threads))
-    {
-        sLog->outError("Cannot connect to extra database %s", dbstring.c_str());
-        return false;
-    }
-
     ///- Get login database info from configuration file
     dbstring = sConfig->GetStringDefault("LoginDatabaseInfo", "");
     if (dbstring.empty())
@@ -481,7 +456,7 @@ bool Master::_StartDB()
     clearOnlineAccounts();
 
     ///- Insert version info into DB
-    WorldDatabase.PExecute("UPDATE version SET core_version = '%s', core_revision = '%s'", _FULLVERSION, _REVISION);
+    WorldDatabase.PExecute("UPDATE version SET core_version = '%s', core_revision = '%s'", _FULLVERSION, _HASH);
 
     sWorld->LoadDBVersion();
 

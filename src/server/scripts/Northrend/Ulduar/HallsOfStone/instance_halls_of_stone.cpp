@@ -1,21 +1,20 @@
-/* 
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+/*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * Script Author: LordVanMartin
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "ScriptPCH.h"
 #include "halls_of_stone.h"
 
@@ -145,7 +144,7 @@ public:
                 case GO_TRIBUNAL_CHEST_HERO:
                     uiTribunalChest = go->GetGUID();
                     if (m_auiEncounter[2] == DONE)
-                        go->RemoveFlag(GAMEOBJECT_FLAGS,GO_FLAG_INTERACT_COND);
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     break;
                 case 191527:
                     uiTribunalSkyFloor = go->GetGUID();
@@ -160,12 +159,12 @@ public:
                 case DATA_MAIDEN_OF_GRIEF_EVENT:
                     m_auiEncounter[1] = data;
                     if (m_auiEncounter[1] == DONE)
-                        HandleGameObject(uiBrannDoor,true);
+                        HandleGameObject(uiBrannDoor, true);
                     break;
                 case DATA_KRYSTALLUS_EVENT:
                     m_auiEncounter[0] = data;
                     if (m_auiEncounter[0] == DONE)
-                        HandleGameObject(uiMaidenOfGriefDoor,true);
+                        HandleGameObject(uiMaidenOfGriefDoor, true);
                     break;
                 case DATA_SJONNIR_EVENT:
                     m_auiEncounter[3] = data;
@@ -174,10 +173,10 @@ public:
                     m_auiEncounter[2] = data;
                     if (m_auiEncounter[2] == DONE)
                     {
-                        HandleGameObject(uiSjonnirDoor,true);
+                        HandleGameObject(uiSjonnirDoor, true);
                         GameObject* go = instance->GetGameObject(uiTribunalChest);
                         if (go)
-                            go->RemoveFlag(GAMEOBJECT_FLAGS,GO_FLAG_INTERACT_COND);
+                            go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     }
                     break;
             }
@@ -268,7 +267,6 @@ public:
     };
 
 };
-
 
 void AddSC_instance_halls_of_stone()
 {

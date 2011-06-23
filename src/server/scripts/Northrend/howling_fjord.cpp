@@ -114,22 +114,22 @@ public:
                     me->DespawnOrUnsummon();
                     break;
                 case 5:
-                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER,10.0f))
+                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER, 10.0f))
                         Trigger->CastSpell(Trigger, SPELL_COSMETIC_LOW_POLY_FIRE, false);
                     SetRun(false);
                     break;
                 case 6:
-                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER,10.0f))
+                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER, 10.0f))
                         Trigger->CastSpell(Trigger, SPELL_COSMETIC_LOW_POLY_FIRE, false);
                     SetRun(true);
                     break;
                 case 8:
-                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER,10.0f))
+                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER, 10.0f))
                         Trigger->CastSpell(Trigger, SPELL_COSMETIC_LOW_POLY_FIRE, false);
                     SetRun(false);
                     break;
                 case 9:
-                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER,10.0f))
+                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER, 10.0f))
                         Trigger->CastSpell(Trigger, SPELL_COSMETIC_LOW_POLY_FIRE, false);
                     break;
                 case 10:
@@ -139,7 +139,7 @@ public:
                     SetRun(false);
                     break;
                 case 14:
-                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER,10.0f))
+                    if (Unit* Trigger = me->FindNearestCreature(NPC_HANES_FIRE_TRIGGER, 10.0f))
                         Trigger->CastSpell(Trigger, SPELL_COSMETIC_LOW_POLY_FIRE, false);
                     SetRun(true);
                     break;
@@ -173,41 +173,26 @@ public:
 
         void Reset()
         {
-            InitScriptData();
-        }
+            uint64 summonerGUID = 0;
 
-        void InitScriptData()
-        {
-            Player* pPlayer = NULL;
             if (me->isSummon())
-                if (Unit* summoner = CAST_SUM(me)->GetSummoner())
+                if (Unit* summoner = me->ToTempSummon()->GetSummoner())
                     if (summoner->GetTypeId() == TYPEID_PLAYER)
-                        pPlayer = CAST_PLR(summoner);
+                        summonerGUID = summoner->GetGUID();
 
-            if (!pPlayer)
+            if (!summonerGUID)
                 return;
 
             me->SetUnitMovementFlags(MOVEMENTFLAG_WALKING);
-            Start(false, false, pPlayer->GetGUID());
+            Start(false, false, summonerGUID);
         }
 
-        void WaypointReached(uint32 i)
+        void WaypointReached(uint32 waypointId)
         {
-            Player* pPlayer = NULL;
-            if (me->isSummon())
-                if (Unit* summoner = CAST_SUM(me)->GetSummoner())
-                    if (summoner->GetTypeId() == TYPEID_PLAYER)
-                        pPlayer = CAST_PLR(summoner);
-
-            if (!pPlayer)
+            if (waypointId != 26)
                 return;
 
-            switch(i)
-            {
-            case 26:
-                me->DespawnOrUnsummon();
-                break;
-            }
+            me->DespawnOrUnsummon();
         }
     };
 
@@ -400,7 +385,7 @@ public:
 
         void JustSummoned(Creature* pSummon)
         {
-            if (Player* pPlayer = me->GetPlayer(*me,uiPlayerGUID))
+            if (Player* pPlayer = me->GetPlayer(*me, uiPlayerGUID))
             {
                 if (pPlayer->isAlive())
                 {

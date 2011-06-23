@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+ * Copyright (C) 2010 TrinityScript 2
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -14,14 +14,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-/* ScriptData
-Author: Kuidin Sergey (Ghost)
-SDName: boss_grand_champions
-SD%Complete: 50 %
-SDComment: Is missing the ai to make the npcs look for a new mount and use it.
-SDCategory: Trial Of the Champion
-EndScriptData */
 
 #include "ScriptPCH.h"
 #include "ScriptedEscortAI.h"
@@ -116,7 +108,7 @@ void AggroAllPlayers(Creature* pTemp)
                 pTemp->SetReactState(REACT_AGGRESSIVE);
                 pTemp->SetInCombatWith(pPlayer);
                 pPlayer->SetInCombatWith(pTemp);
-                pTemp->AddThreat(pPlayer, 0.0f);
+                pTemp->AddThreat(pPlayer, 100.0f);
             }
         }
     }
@@ -154,31 +146,34 @@ class generic_vehicleAI_toc5 : public CreatureScript
 public:
     generic_vehicleAI_toc5() : CreatureScript("generic_vehicleAI_toc5") { }
 
-        CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const
     {
         return new generic_vehicleAI_toc5AI(pCreature);
     }
 
     struct generic_vehicleAI_toc5AI : public npc_escortAI
     {
-        generic_vehicleAI_toc5AI(Creature* pCreature) : npc_escortAI(pCreature)
+        generic_vehicleAI_toc5AI(Creature* pCreature) : npc_escortAI(pCreature), vehicle(pCreature->GetVehicleKit())
         {
             SetDespawnAtEnd(false);
             uiWaypointPath = 0;
-            pInstance = (InstanceScript*)pCreature->GetInstanceScript();
+            pInstance = pCreature->GetInstanceScript();
         }
 
         InstanceScript* pInstance;
+        Vehicle *vehicle;
 
         uint32 uiShieldBreakerTimer;
         uint32 uiBuffTimer;
-
         uint32 uiWaypointPath;
 
         void Reset()
         {
+            ASSERT(vehicle);
             uiShieldBreakerTimer = 8000;
             uiBuffTimer = urand(30000,60000);
+
+            vehicle->Reset();
         }
 
         void SetData(uint32 uiType, uint32 uiData)
@@ -237,6 +232,9 @@ public:
 
         void EnterCombat(Unit* pWho)
         {
+            if (Unit* champ = vehicle->GetPassenger(SEAT_ID_0))
+                champ->ToCreature()->SetInCombatWithZone();
+
             DoCastSpellShield();
         }
 
@@ -255,21 +253,14 @@ public:
 
             if (uiBuffTimer <= uiDiff)
             {
-                    DoCastSpellShield();
+                DoCastSpellShield();
                 uiBuffTimer = urand(30000,45000);
             }else uiBuffTimer -= uiDiff;
 
             //dosen't work at all
             if (uiShieldBreakerTimer <= uiDiff)
             {
-                Vehicle *pVehicle = me->GetVehicleKit();
-                if (!pVehicle)
-
-
-                    return;
-
-
-                if (Unit* pPassenger = pVehicle->GetPassenger(SEAT_ID_0))
+                if (Unit* pPassenger = vehicle->GetPassenger(SEAT_ID_0))
                 {
                     Map::PlayerList const& players = me->GetMap()->GetPlayers();
                     if (me->GetMap()->IsDungeon() && !players.isEmpty())
@@ -304,13 +295,13 @@ public:
     {
         return new boss_warrior_toc5AI(pCreature);
     }
-
+	
     struct boss_warrior_toc5AI : public ScriptedAI
     {
 
         boss_warrior_toc5AI(Creature* pCreature) : ScriptedAI(pCreature)
         {
-            pInstance = (InstanceScript*)pCreature->GetInstanceScript();
+            pInstance = pCreature->GetInstanceScript();
 
             bDone = false;
             bHome = false;
@@ -331,7 +322,7 @@ public:
         uint32 uiInterceptTimer;
         uint32 uiMortalStrikeTimer;
         uint32 uiAttackTimer;
-        uint32 uiResetTimer;
+    	uint32 uiResetTimer;
 
         bool bDone;
         bool bHome;
@@ -362,7 +353,7 @@ public:
             {
                 bDone = true;
 
-             DoScriptText(SAY_START_2, me);
+     		DoScriptText(SAY_START_2, me);
 
                 if (pInstance && me->GetGUID() == pInstance->GetData64(DATA_GRAND_CHAMPION_1))
                     me->SetHomePosition(739.678f,662.541f,412.393f,4.49f);
@@ -424,7 +415,7 @@ public:
 
         void JustDied(Unit* pKiller)
         {
-                 DoScriptText(SAY_START_1, me);
+    	 		DoScriptText(SAY_START_1, me);
             if (pInstance)
                 pInstance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
 
@@ -439,17 +430,17 @@ class boss_mage_toc5 : public CreatureScript
 public:
     boss_mage_toc5() : CreatureScript("boss_mage_toc5") { }
 
-        CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const
     {
         return new boss_mage_toc5AI(pCreature);
     }
-
+	
     struct boss_mage_toc5AI : public ScriptedAI
     {
 
         boss_mage_toc5AI(Creature* pCreature) : ScriptedAI(pCreature)
         {
-            pInstance = (InstanceScript*)pCreature->GetInstanceScript();
+            pInstance = pCreature->GetInstanceScript();
 
             bDone = false;
             bHome = false;
@@ -559,7 +550,7 @@ public:
 
         void JustDied(Unit* pKiller)
         {
-                 DoScriptText(SAY_START_1, me);
+    	 		DoScriptText(SAY_START_1, me);
             if (pInstance)
                 pInstance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
 
@@ -574,7 +565,7 @@ class boss_shaman_toc5 : public CreatureScript
 public:
     boss_shaman_toc5() : CreatureScript("boss_shaman_toc5") { }
 
-        CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const
     {
         return new boss_shaman_toc5AI(pCreature);
     }
@@ -583,7 +574,7 @@ public:
     {
         boss_shaman_toc5AI(Creature* pCreature) : ScriptedAI(pCreature)
         {
-            pInstance = (InstanceScript*)pCreature->GetInstanceScript();
+            pInstance = pCreature->GetInstanceScript();
 
             bDone = false;
             bHome = false;
@@ -708,7 +699,7 @@ public:
 
         void JustDied(Unit* pKiller)
         {
-                 DoScriptText(SAY_START_1, me);
+    	 		DoScriptText(SAY_START_1, me);
             if (pInstance)
                 pInstance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
 
@@ -723,7 +714,7 @@ class boss_hunter_toc5 : public CreatureScript
 public:
     boss_hunter_toc5() : CreatureScript("boss_hunter_toc5") { }
 
-        CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const
     {
         return new boss_hunter_toc5AI(pCreature);
     }
@@ -732,7 +723,7 @@ public:
     {
         boss_hunter_toc5AI(Creature* pCreature) : ScriptedAI(pCreature)
         {
-            pInstance = (InstanceScript*)pCreature->GetInstanceScript();
+            pInstance = pCreature->GetInstanceScript();
 
             bDone = false;
             bHome = false;
@@ -880,7 +871,7 @@ public:
 
         void JustDied(Unit* pKiller)
         {
-             DoScriptText(SAY_START_1, me);
+    	 	DoScriptText(SAY_START_1, me);
             if (pInstance)
                 pInstance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
 
@@ -896,7 +887,7 @@ class boss_rouge_toc5 : public CreatureScript
 public:
     boss_rouge_toc5() : CreatureScript("boss_rouge_toc5") { }
 
-        CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const
     {
         return new boss_rouge_toc5AI(pCreature);
     }
@@ -905,7 +896,7 @@ public:
     {
         boss_rouge_toc5AI(Creature* pCreature) : ScriptedAI(pCreature)
         {
-            pInstance = (InstanceScript*)pCreature->GetInstanceScript();
+            pInstance = pCreature->GetInstanceScript();
 
             bDone = false;
             bHome = false;
@@ -995,7 +986,8 @@ public:
             if (uiPosionBottleTimer <= uiDiff)
             {
                 if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM,0))
-                DoCast(pTarget,SPELL_POISON_BOTTLE);
+                    DoCast(pTarget,SPELL_POISON_BOTTLE);
+
                 uiPosionBottleTimer = 19000;
             } else uiPosionBottleTimer -= uiDiff;
 
@@ -1004,7 +996,7 @@ public:
 
         void JustDied(Unit* pKiller)
         {
-             DoScriptText(SAY_START_1, me);
+    	 	DoScriptText(SAY_START_1, me);
             if (pInstance)
                 pInstance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
 

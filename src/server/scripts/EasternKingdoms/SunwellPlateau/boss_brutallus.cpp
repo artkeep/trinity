@@ -119,7 +119,7 @@ public:
                 pInstance->SetData(DATA_BRUTALLUS_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/)
         {
             DoScriptText(YELL_AGGRO, me);
 
@@ -129,7 +129,7 @@ public:
 
         void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(RAND(YELL_KILL1,YELL_KILL2,YELL_KILL3), me);
+            DoScriptText(RAND(YELL_KILL1, YELL_KILL2, YELL_KILL3), me);
         }
 
         void JustDied(Unit* /*Killer*/)
@@ -139,9 +139,9 @@ public:
             if (pInstance)
             {
                 pInstance->SetData(DATA_BRUTALLUS_EVENT, DONE);
-                float x,y,z;
-                me->GetPosition(x,y,z);
-                me->SummonCreature(FELMYST, x,y, z+30, me->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN, 0);
+                float x, y, z;
+                me->GetPosition(x, y, z);
+                me->SummonCreature(FELMYST, x, y, z+30, me->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN, 0);
             }
         }
 
@@ -155,7 +155,6 @@ public:
         {
             if (!Intro || IsIntro)
                 return;
-            sLog->outError("Start Intro");
             Creature *Madrigosa = Unit::GetCreature(*me, pInstance ? pInstance->GetData64(DATA_MADRIGOSA) : 0);
             if (Madrigosa)
             {
@@ -167,7 +166,8 @@ public:
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                 me->Attack(Madrigosa, true);
                 Madrigosa->Attack(me, true);
-            }else
+            }
+            else
             {
                 //Madrigosa not found, end intro
                 sLog->outError("Madrigosa was not found");
@@ -180,7 +180,6 @@ public:
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             Intro = false;
             IsIntro = false;
-            sLog->outError("End Intro");
         }
 
         void AttackStart(Unit* pWho)
@@ -316,7 +315,7 @@ public:
 
             if (StompTimer <= diff)
             {
-                DoScriptText(RAND(YELL_LOVE1,YELL_LOVE2,YELL_LOVE3), me);
+                DoScriptText(RAND(YELL_LOVE1, YELL_LOVE2, YELL_LOVE3), me);
                 DoCast(me->getVictim(), SPELL_STOMP);
                 StompTimer = 30000;
             } else StompTimer -= diff;
@@ -331,7 +330,7 @@ public:
                         (*i)->CastSpell((*i), SPELL_BURN, true);
                         break;
                     }
-                BurnTimer = urand(60000,180000);
+                BurnTimer = urand(60000, 180000);
             } else BurnTimer -= diff;
 
             if (BerserkTimer < diff && !Enraged)

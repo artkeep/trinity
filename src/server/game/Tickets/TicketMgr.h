@@ -20,12 +20,10 @@
 
 #include <string>
 #include <ace/Singleton.h>
-#include "Common.h"
-#include "DatabaseEnv.h"
-#include "SQLStorage.h"
-#include "SQLStorageImpl.h"
-#include "Chat.h"
-#include "World.h"
+
+#include "ObjectMgr.h"
+
+class ChatHandler;
 
 // from blizzard lua
 enum GMTicketSystemStatus
@@ -86,7 +84,7 @@ public:
 
     bool IsClosed() const { return _closedBy; }
     bool IsCompleted() const { return _completed; }
-    bool IsFromPlayer(const uint64& guid) { return guid == _playerGuid; }
+    bool IsFromPlayer(const uint64& guid) const { return guid == _playerGuid; }
     bool IsAssigned() const { return _assignedTo != 0; }
     bool IsAssignedTo(const uint64& guid) const { return guid == _assignedTo; }
     bool IsAssignedNotTo(const uint64& guid) const { return IsAssigned() && !IsAssignedTo(guid); }
@@ -97,13 +95,14 @@ public:
     std::string GetMessage() const { return _message; }
     Player* GetAssignedPlayer() const { return sObjectMgr->GetPlayer(_assignedTo); }
     const uint64& GetAssignedToGUID() const { return _assignedTo; }
-    const char* GetAssignedToName() const
+    std::string GetAssignedToName() const
     {
         std::string name;
+        // save queries if ticket is not assigned
         if (_assignedTo)
-            if (sObjectMgr->GetPlayerNameByGUID(_assignedTo, name))
-                return name.c_str();
-        return NULL;
+            sObjectMgr->GetPlayerNameByGUID(_assignedTo, name);
+
+        return name;
     }
     const uint64& GetLastModifiedTime() const { return _lastModifiedTime; }
     GMTicketEscalationStatus GetEscalatedStatus() const { return _escalatedStatus; }
@@ -131,7 +130,7 @@ public:
 
     bool LoadFromDB(Field* fields);
     void SaveToDB(SQLTransaction& trans) const;
-    void DeleteFromDB(SQLTransaction& trans);
+    void DeleteFromDB();
 
     void WritePacket(WorldPacket& data) const;
     void SendResponse(WorldSession* session) const;
@@ -211,7 +210,7 @@ public:
     uint32 GetOpenTicketCount() const { return _openTicketCount; }
     uint32 GetNextSurveyID() { return ++_lastSurveyId; }
 
-    void Initialize() { SetStatus(sWorld->getBoolConfig(CONFIG_ALLOW_TICKETS)); }
+    void Initialize();
 
     void ShowList(ChatHandler& handler, bool onlineOnly) const;
     void ShowClosedList(ChatHandler& handler) const;

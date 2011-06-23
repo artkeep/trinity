@@ -23,6 +23,7 @@ SDComments: Hodir's Protective Gaze and Mimiron's Destabilization Matrix don't w
 EndScriptData */
 
 #include "ScriptPCH.h"
+#include "ScriptMgr.h"
 #include "ulduar.h"
 
 enum Sara_Yells
@@ -431,7 +432,7 @@ public:
             {
                 instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_SANITY);
                 // Reset Keepers
-                for (uint8 data = DATA_YS_FREYA; data <= DATA_YS_HODIR; ++data)
+                for (uint8 data = NPC_YS_FREYA; data <= NPC_YS_HODIR; ++data)
                 {
                     if (Creature *pCreature = Creature::GetCreature((*me), instance->GetData64(data)))
                     {
@@ -443,7 +444,7 @@ public:
                     }
                 }
                 // Reset Yogg-Saron
-                for (uint8 data = DATA_YOGGSARON_BRAIN; data <= DATA_YOGGSARON; ++data)
+                for (uint8 data = NPC_YOGGSARON_BRAIN; data <= NPC_YOGGSARON; ++data)
                 {
                     if (Creature *pCreature = Creature::GetCreature((*me), instance->GetData64(data)))
                         pCreature->AI()->EnterEvadeMode();
@@ -504,7 +505,7 @@ public:
             // Keepers activation
             if (instance)
             {
-                for (uint8 data = DATA_YS_FREYA; data <= DATA_YS_HODIR; ++data)
+                for (uint8 data = NPC_YS_FREYA; data <= NPC_YS_HODIR; ++data)
                 {
                     if (Creature *pCreature = Creature::GetCreature((*me), instance->GetData64(data)))
                     {
@@ -921,7 +922,7 @@ public:
                 switch(illusion)
                 {
                     case 0: // Chamber of the Aspects Illusion
-                        if (Creature *pBrain = Creature::GetCreature((*me), instance->GetData64(DATA_YOGGSARON_BRAIN)))
+                        if (Creature *pBrain = Creature::GetCreature((*me), instance->GetData64(NPC_YOGGSARON_BRAIN)))
                         {
                             pBrain->AI()->Reset();
                             pBrain->AI()->DoAction(ACTION_CHAMBER_ILLUSION);
@@ -930,7 +931,7 @@ public:
                         }
                         break;
                     case 1: // Icecrown Illusion
-                        if (Creature *pBrain = Creature::GetCreature((*me), instance->GetData64(DATA_YOGGSARON_BRAIN)))
+                        if (Creature *pBrain = Creature::GetCreature((*me), instance->GetData64(NPC_YOGGSARON_BRAIN)))
                         {
                             pBrain->AI()->Reset();
                             pBrain->AI()->DoAction(ACTION_ICECROWN_ILLUSION);
@@ -939,7 +940,7 @@ public:
                         }
                         break;
                     case 2: // Stormwind Illusion
-                        if (Creature *pBrain = Creature::GetCreature((*me), instance->GetData64(DATA_YOGGSARON_BRAIN)))
+                        if (Creature *pBrain = Creature::GetCreature((*me), instance->GetData64(NPC_YOGGSARON_BRAIN)))
                         {
                             pBrain->AI()->Reset();
                             pBrain->AI()->DoAction(ACTION_STORMWIND_ILLUSION);
@@ -1625,25 +1626,25 @@ public:
             case NPC_IMAGE_OF_FREYA:
                 DoScriptText(SAY_FREYA_HELP, pCreature);
                 pCreature->AddAura(SPELL_KEEPER_ACTIVE, pCreature);
-                if (Creature *pFreya = pCreature->GetCreature(*pCreature, instance->GetData64(DATA_YS_FREYA)))
+                if (Creature *pFreya = pCreature->GetCreature(*pCreature, instance->GetData64(NPC_YS_FREYA)))
                     pFreya->AddAura(SPELL_KEEPER_ACTIVE, pFreya);
                 break;
             case NPC_IMAGE_OF_THORIM:
                 DoScriptText(SAY_THORIM_HELP, pCreature);
                 pCreature->AddAura(SPELL_KEEPER_ACTIVE, pCreature);
-                if (Creature *pThorim = pCreature->GetCreature(*pCreature, instance->GetData64(DATA_YS_THORIM)))
+                if (Creature *pThorim = pCreature->GetCreature(*pCreature, instance->GetData64(NPC_YS_THORIM)))
                     pThorim->AddAura(SPELL_KEEPER_ACTIVE, pThorim);
                 break;
             case NPC_IMAGE_OF_MIMIRON:
                 DoScriptText(SAY_MIMIRON_HELP, pCreature);
                 pCreature->AddAura(SPELL_KEEPER_ACTIVE, pCreature);
-                if (Creature *pMimiron = pCreature->GetCreature(*pCreature, instance->GetData64(DATA_YS_MIMIRON)))
+                if (Creature *pMimiron = pCreature->GetCreature(*pCreature, instance->GetData64(NPC_YS_MIMIRON)))
                     pMimiron->AddAura(SPELL_KEEPER_ACTIVE, pMimiron);
                 break;
             case NPC_IMAGE_OF_HODIR:
                 DoScriptText(SAY_HODIR_HELP, pCreature);
                 pCreature->AddAura(SPELL_KEEPER_ACTIVE, pCreature);
-                if (Creature *pHodir = pCreature->GetCreature(*pCreature, instance->GetData64(DATA_YS_HODIR)))
+                if (Creature *pHodir = pCreature->GetCreature(*pCreature, instance->GetData64(NPC_YS_HODIR)))
                     pHodir->AddAura(SPELL_KEEPER_ACTIVE, pHodir);
                 break;
         }

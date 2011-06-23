@@ -18,6 +18,7 @@
 
 #include "Player.h"
 #include "ObjectMgr.h"
+#include "ArenaTeamMgr.h"
 #include "World.h"
 #include "WorldPacket.h"
 
@@ -538,8 +539,8 @@ inline Player* Battleground::_GetPlayer(BattlegroundPlayerMap::const_iterator it
 
 inline Player* Battleground::_GetPlayerForTeam(uint32 teamId, BattlegroundPlayerMap::const_iterator itr, const char* context) const
 {
-    Player* player = NULL;
-    if (player = _GetPlayer(itr, context))
+    Player* player = _GetPlayer(itr, context);
+    if (player)
     {
         uint32 team = itr->second.Team;
         if (!team)
@@ -559,14 +560,14 @@ void Battleground::SetTeamStartLoc(uint32 TeamID, float X, float Y, float Z, flo
     m_TeamStartLocO[idx] = O;
 }
 
-void Battleground::SendPacketToAll(WorldPacket *packet)
+void Battleground::SendPacketToAll(WorldPacket* packet)
 {
     for (BattlegroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
         if (Player* player = _GetPlayer(itr, "SendPacketToAll"))
             player->GetSession()->SendPacket(packet);
 }
 
-void Battleground::SendPacketToTeam(uint32 TeamID, WorldPacket *packet, Player *sender, bool self)
+void Battleground::SendPacketToTeam(uint32 TeamID, WorldPacket* packet, Player *sender, bool self)
 {
     for (BattlegroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
         if (Player* player = _GetPlayerForTeam(TeamID, itr, "SendPacketToTeam"))
@@ -685,21 +686,12 @@ void Battleground::EndBattleground(uint32 winner)
     SetStatus(STATUS_WAIT_LEAVE);
     //we must set it this way, because end time is sent in packet!
     m_EndTime = TIME_TO_AUTOREMOVE;
-    // Battleground Stats & Logging
-    // Log Only Level 80 Battlegrounds
-    if (isBattleground() && GetMinLevel() == 80)
-    {
-        PreparedStatement* stmt = ExtraDatabase.GetPreparedStatement(EXTRA_ADD_BGSTAT);
-        stmt->setUInt32(0, GetTypeID(true));
-        stmt->setUInt32(1, GetWinner());
-        ExtraDatabase.Execute(stmt);
-    }
 
     // arena rating calculation
     if (isArena() && isRated())
     {
-        winner_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(winner));
-        loser_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
+        winner_arena_team = sArenaTeamMgr->GetArenaTeamById(GetArenaTeamIdForTeam(winner));
+        loser_arena_team = sArenaTeamMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
         if (winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team)
         {
             if (winner != WINNER_NONE)
@@ -715,44 +707,47 @@ void Battleground::EndBattleground(uint32 winner)
                 SetArenaTeamRatingChangeForTeam(winner, winner_change);
                 SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
                 /** World of Warcraft Armory **/
-                uint32 maxChartID;
-                QueryResult result = CharacterDatabase.PQuery("SELECT MAX(gameid) FROM armory_game_chart");
-                if(!result)
-                    maxChartID = 0;
-                else
+                if (sWorld->getBoolConfig(CONFIG_ARMORY_ENABLE))
                 {
-                    maxChartID = (*result)[0].GetUInt32();
-                    result.release();
-                }
-                uint32 gameID = maxChartID+1;
-                for(BattlegroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
-                {
-                    Player *plr = sObjectMgr->GetPlayer(itr->first);
-                    if (!plr)
-                        continue;
-                    uint32 plTeamID = plr->GetArenaTeamId(winner_arena_team->GetSlot());
-                    int changeType;
-                    uint32 resultRating;
-                    uint32 resultTeamID;
-                    int32 ratingChange;
-                    if (plTeamID == winner_arena_team->GetId())
-                    {
-                        changeType = 1; //win
-                        resultRating = winner_team_rating;
-                        resultTeamID = plTeamID;
-                        ratingChange = winner_change;
-                    }
+                    uint32 maxChartID;
+                    QueryResult result = CharacterDatabase.PQuery("SELECT MAX(gameid) FROM armory_game_chart");
+                    if(!result)
+                        maxChartID = 0;
                     else
                     {
-                        changeType = 2; //lose
-                        resultRating = loser_team_rating;
-                        resultTeamID = loser_arena_team->GetId();
-                        ratingChange = loser_change;
+                        maxChartID = (*result)[0].GetUInt32();
+                        result.release();
                     }
-                    std::ostringstream sql_query;
-                    //                                                        gameid,              teamid,                     guid,                    changeType,             ratingChange,               teamRating,                  damageDone,                          deaths,                          healingDone,                           damageTaken,,                           healingTaken,                         killingBlows,                      mapId,                 start,                   end
-                    sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetGUID() << "', '" << changeType << "', '" << ratingChange  << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
-                    CharacterDatabase.Execute(sql_query.str().c_str());
+                    uint32 gameID = maxChartID+1;
+                    for(BattlegroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
+                    {
+                        Player *plr = sObjectMgr->GetPlayer(itr->first);
+                        if (!plr)
+                            continue;
+                        uint32 plTeamID = plr->GetArenaTeamId(winner_arena_team->GetSlot());
+                        int changeType;
+                        uint32 resultRating;
+                        uint32 resultTeamID;
+                        int32 ratingChange;
+                        if (plTeamID == winner_arena_team->GetId())
+                        {
+                            changeType = 1; //win
+                            resultRating = winner_team_rating;
+                            resultTeamID = plTeamID;
+                            ratingChange = winner_change;
+                        }
+                        else
+                        {
+                            changeType = 2; //lose
+                            resultRating = loser_team_rating;
+                            resultTeamID = loser_arena_team->GetId();
+                            ratingChange = loser_change;
+                        }
+                        std::ostringstream sql_query;
+                        //                                                        gameid,              teamid,                     guid,                    changeType,             ratingChange,               teamRating,                  damageDone,                          deaths,                          healingDone,                           damageTaken,,                           healingTaken,                         killingBlows,                      mapId,                 start,                   end
+                        sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetGUID() << "', '" << changeType << "', '" << ratingChange  << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
+                        CharacterDatabase.Execute(sql_query.str().c_str());
+                    }
                 }
                 /** World of Warcraft Armory **/
                 sLog->outArena("Arena match Type: %u for Team1Id: %u - Team2Id: %u ended. WinnerTeamId: %u. Winner rating: +%d, Loser rating: %d", m_ArenaType, m_ArenaTeamIds[BG_TEAM_ALLIANCE], m_ArenaTeamIds[BG_TEAM_HORDE], winner_arena_team->GetId(), winner_change, loser_change);
@@ -827,7 +822,7 @@ void Battleground::EndBattleground(uint32 winner)
                 if (member)
                     plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->PersonalRating);
 
-                winner_arena_team->MemberWon(plr,loser_matchmaker_rating, winner_change);
+                winner_arena_team->MemberWon(plr, loser_matchmaker_rating, winner_change);
             }
             else
             {
@@ -969,7 +964,6 @@ void Battleground::RemovePlayerAtLeave(const uint64& guid, bool Transport, bool 
             // if arena, remove the specific arena auras
             if (isArena())
             {
-                plr->RemoveArenaAuras(true);                // removes debuffs / dots etc., we don't want the player to die after porting out
                 bgTypeId=BATTLEGROUND_AA;                   // set the bg type to all arenas (it will be used for queue refreshing)
 
                 // unsummon current and summon old pet if there was one and there isn't a current pet
@@ -979,8 +973,8 @@ void Battleground::RemovePlayerAtLeave(const uint64& guid, bool Transport, bool 
                 if (isRated() && GetStatus() == STATUS_IN_PROGRESS)
                 {
                     //left a rated match while the encounter was in progress, consider as loser
-                    ArenaTeam * winner_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(team)));
-                    ArenaTeam * loser_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(team));
+                    ArenaTeam * winner_arena_team = sArenaTeamMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(team)));
+                    ArenaTeam * loser_arena_team = sArenaTeamMgr->GetArenaTeamById(GetArenaTeamIdForTeam(team));
                     if (winner_arena_team && loser_arena_team && winner_arena_team != loser_arena_team)
                         loser_arena_team->MemberLost(plr, GetArenaMatchmakerRating(GetOtherTeam(team)));
                 }
@@ -1001,15 +995,15 @@ void Battleground::RemovePlayerAtLeave(const uint64& guid, bool Transport, bool 
             if (isRated() && GetStatus() == STATUS_IN_PROGRESS)
             {
                 //left a rated match while the encounter was in progress, consider as loser
-                ArenaTeam * others_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(team)));
-                ArenaTeam * players_arena_team = sObjectMgr->GetArenaTeamById(GetArenaTeamIdForTeam(team));
+                ArenaTeam * others_arena_team = sArenaTeamMgr->GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(team)));
+                ArenaTeam * players_arena_team = sArenaTeamMgr->GetArenaTeamById(GetArenaTeamIdForTeam(team));
                 if (others_arena_team && players_arena_team)
                     players_arena_team->OfflineMemberLost(guid, GetArenaMatchmakerRating(GetOtherTeam(team)));
             }
         }
 
         // remove from raid group if player is member
-        if (Group *group = GetBgRaid(team))
+        if (Group* group = GetBgRaid(team))
         {
             if (!group->RemoveMember(guid))                // group was disbanded
             {
@@ -1131,16 +1125,16 @@ void Battleground::AddPlayer(Player* plr)
         if (team == ALLIANCE)                                // gold
         {
             if (plr->GetTeam() == HORDE)
-                plr->CastSpell(plr, SPELL_HORDE_GOLD_FLAG,true);
+                plr->CastSpell(plr, SPELL_HORDE_GOLD_FLAG, true);
             else
-                plr->CastSpell(plr, SPELL_ALLIANCE_GOLD_FLAG,true);
+                plr->CastSpell(plr, SPELL_ALLIANCE_GOLD_FLAG, true);
         }
         else                                                // green
         {
             if (plr->GetTeam() == HORDE)
-                plr->CastSpell(plr, SPELL_HORDE_GREEN_FLAG,true);
+                plr->CastSpell(plr, SPELL_HORDE_GREEN_FLAG, true);
             else
-                plr->CastSpell(plr, SPELL_ALLIANCE_GREEN_FLAG,true);
+                plr->CastSpell(plr, SPELL_ALLIANCE_GREEN_FLAG, true);
         }
 
         plr->DestroyConjuredItems(true);
@@ -1169,6 +1163,7 @@ void Battleground::AddPlayer(Player* plr)
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
+    plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
@@ -1353,7 +1348,6 @@ void Battleground::UpdatePlayerScore(Player* Source, uint32 type, uint32 value, 
             break;
         case SCORE_DEATHS:                                  // Deaths
             itr->second->Deaths += value;
-            Source->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, ACHIEVEMENT_CRITERIA_CONDITION_NO_DEATH);
             break;
         case SCORE_HONORABLE_KILLS:                         // Honorable kills
             itr->second->HonorableKills += value;
@@ -1430,7 +1424,7 @@ bool Battleground::AddObject(uint32 type, uint32 entry, float x, float y, float 
     // Must be created this way, adding to godatamap would add it to the base map of the instance
     // and when loading it (in go::LoadFromDB()), a new guid would be assigned to the object, and a new object would be created
     // So we must create it specific for this instance
-    GameObject * go = new GameObject;
+    GameObject* go = new GameObject;
     if (!go->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, GetBgMap(),
         PHASEMASK_NORMAL, x, y, z, o, rotation0, rotation1, rotation2, rotation3, 100, GO_STATE_READY))
     {
@@ -1555,7 +1549,7 @@ Creature* Battleground::AddCreature(uint32 entry, uint32 type, uint32 teamval, f
 
     pCreature->SetHomePosition(x, y, z, o);
 
-    CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(entry);
+    CreatureTemplate const *cinfo = sObjectMgr->GetCreatureTemplate(entry);
     if (!cinfo)
     {
         sLog->outError("Battleground::AddCreature: creature template (entry: %u) does not exist for BG (map: %u, instance id: %u)!",

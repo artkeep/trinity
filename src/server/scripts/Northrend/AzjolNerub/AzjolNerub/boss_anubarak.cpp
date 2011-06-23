@@ -159,7 +159,7 @@ public:
             return NULL;
         }
 
-        void EnterCombat(Unit * /*pWho*/)
+        void EnterCombat(Unit* /*pWho*/)
         {
             DoScriptText(SAY_AGGRO, me);
             if (pInstance)
@@ -182,7 +182,7 @@ public:
                     switch(uiImpalePhase)
                     {
                     case IMPALE_PHASE_TARGET:
-                        if (Unit *target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
                         {
                             if (Creature *pImpaleTarget = DoSummonImpaleTarget(target))
                                 pImpaleTarget->CastSpell(pImpaleTarget, SPELL_IMPALE_SHAKEGROUND, true);
@@ -212,7 +212,7 @@ public:
                 {
                     for (uint8 i = 0; i < 2; ++i)
                     {
-                        if (Creature *Guardian = me->SummonCreature(CREATURE_GUARDIAN,SpawnPointGuardian[i],TEMPSUMMON_CORPSE_DESPAWN,0))
+                        if (Creature *Guardian = me->SummonCreature(CREATURE_GUARDIAN, SpawnPointGuardian[i], TEMPSUMMON_CORPSE_DESPAWN, 0))
                         {
                             Guardian->AddThreat(me->getVictim(), 0.0f);
                             DoZoneInCombat(Guardian);
@@ -229,7 +229,7 @@ public:
                         {
                             for (uint8 i = 0; i < 2; ++i)
                             {
-                                if (Creature *Venomancer = me->SummonCreature(CREATURE_VENOMANCER,SpawnPoint[i],TEMPSUMMON_CORPSE_DESPAWN,0))
+                                if (Creature *Venomancer = me->SummonCreature(CREATURE_VENOMANCER, SpawnPoint[i], TEMPSUMMON_CORPSE_DESPAWN, 0))
                                 {
                                     Venomancer->AddThreat(me->getVictim(), 0.0f);
                                     DoZoneInCombat(Venomancer);
@@ -248,7 +248,7 @@ public:
                         {
                             for (uint8 i = 0; i < 2; ++i)
                             {
-                                if (Creature *Datter = me->SummonCreature(CREATURE_DATTER,SpawnPoint[i],TEMPSUMMON_CORPSE_DESPAWN,0))
+                                if (Creature *Datter = me->SummonCreature(CREATURE_DATTER, SpawnPoint[i], TEMPSUMMON_CORPSE_DESPAWN, 0))
                                 {
                                     Datter->AddThreat(me->getVictim(), 0.0f);
                                     DoZoneInCombat(Datter);
@@ -312,7 +312,7 @@ public:
 
                 if (uiPoundTimer <= diff)
                 {
-                    if (Unit *target = me->getVictim())
+                    if (Unit* target = me->getVictim())
                     {
                         if (Creature *pImpaleTarget = DoSummonImpaleTarget(target))
                             me->CastSpell(pImpaleTarget, DUNGEON_MODE(SPELL_POUND, SPELL_POUND_H), false);
@@ -325,7 +325,7 @@ public:
             }
         }
 
-        void JustDied(Unit * /*pKiller*/)
+        void JustDied(Unit* /*pKiller*/)
         {
             DoScriptText(SAY_DEATH, me);
             lSummons.DespawnAll();
@@ -337,7 +337,7 @@ public:
         {
             if (pVictim == me)
                 return;
-            DoScriptText(RAND(SAY_SLAY_1,SAY_SLAY_2,SAY_SLAY_3), me);
+            DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2, SAY_SLAY_3), me);
         }
 
         void JustSummoned(Creature* summon)

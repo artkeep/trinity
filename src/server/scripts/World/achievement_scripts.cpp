@@ -23,23 +23,6 @@
 #include "BattlegroundIC.h"
 #include "BattlegroundSA.h"
 
-class achievement_school_of_hard_knocks : public AchievementCriteriaScript
-{
-    public:
-        achievement_school_of_hard_knocks() : AchievementCriteriaScript("achievement_school_of_hard_knocks") { }
-
-        bool OnCheck(Player* source, Unit* /*target*/)
-        {
-            static uint32 const orphanEntries[6] = {14305, 14444, 22818, 22817, 33533, 33532};
-            uint32 currentPet = GUID_ENPART(source->GetCritterGUID());
-            for (uint8 i = 0; i < 6; ++i)
-                if (currentPet == orphanEntries[i])
-                    return true;
-
-            return false;
-        }
-};
-
 class achievement_storm_glory : public AchievementCriteriaScript
 {
     public:
@@ -185,9 +168,29 @@ class achievement_bg_sa_artillery : public AchievementCriteriaScript
         }
 };
 
+class achievement_arena_kills : public AchievementCriteriaScript
+{
+    public:
+        achievement_arena_kills(char const* name, uint8 arenaType) : AchievementCriteriaScript(name),
+            _arenaType(arenaType)
+        {
+        }
+
+        bool OnCheck(Player* source, Unit* /*target*/)
+        {
+            // this checks GetBattleground() for NULL already
+            if (!source->InArena())
+                return false;
+
+            return source->GetBattleground()->GetArenaType() == _arenaType;
+        }
+
+    private:
+        uint8 const _arenaType;
+};
+
 void AddSC_achievement_scripts()
 {
-    new achievement_school_of_hard_knocks();
     new achievement_storm_glory();
     new achievement_resilient_victory();
     new achievement_bg_control_all_nodes();
@@ -196,4 +199,7 @@ void AddSC_achievement_scripts()
     new achievement_bg_ic_glaive_grave();
     new achievement_bg_ic_mowed_down();
     new achievement_bg_sa_artillery();
+    new achievement_arena_kills("achievement_arena_2v2_kills", ARENA_TYPE_2v2);
+    new achievement_arena_kills("achievement_arena_3v3_kills", ARENA_TYPE_3v3);
+    new achievement_arena_kills("achievement_arena_5v5_kills", ARENA_TYPE_5v5);
 }

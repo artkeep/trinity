@@ -513,7 +513,7 @@ void Map::ScriptsProcess()
                 break;
 
             case SCRIPT_COMMAND_TELEPORT_TO:
-                if  (step.script->TeleportTo.Flags & SF_TELEPORT_USE_CREATURE)
+                if (step.script->TeleportTo.Flags & SF_TELEPORT_USE_CREATURE)
                 {
                     // Source or target must be Creature.
                     if (Creature *cSource = _GetScriptCreatureSourceOrTarget(source, target, step.script, true))
@@ -776,7 +776,7 @@ void Map::ScriptsProcess()
                 if (Player* pReceiver = _GetScriptPlayerSourceOrTarget(source, target, step.script))
                 {
                     ItemPosCountVec dest;
-                    uint8 msg = pReceiver->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, step.script->CreateItem.ItemEntry, step.script->CreateItem.Amount);
+                    InventoryResult msg = pReceiver->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, step.script->CreateItem.ItemEntry, step.script->CreateItem.Amount);
                     if (msg == EQUIP_ERR_OK)
                     {
                         if (Item* item = pReceiver->StoreNewItem(dest, step.script->CreateItem.ItemEntry, true))
@@ -909,7 +909,7 @@ void Map::ScriptsProcess()
             case SCRIPT_COMMAND_CLOSE_GOSSIP:
                 // Source must be Player.
                 if (Player *pSource = _GetScriptPlayer(source, true, step.script))
-                    pSource->PlayerTalkClass->CloseGossip();
+                    pSource->PlayerTalkClass->SendCloseGossip();
                 break;
 
             case SCRIPT_COMMAND_PLAYMOVIE:

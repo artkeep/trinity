@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -13,7 +14,6 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 
 /* ScriptData
 SDName: Boss_Onyxia
@@ -77,14 +77,14 @@ struct sOnyxMove
 
 static sOnyxMove aMoveData[]=
 {
-    {0, 1, SPELL_BREATH_WEST_TO_EAST,   -33.5561f, -182.682f, -56.9457f},//west
-    {1, 0, SPELL_BREATH_EAST_TO_WEST,   -31.4963f, -250.123f, -55.1278f},//east
-    {2, 4, SPELL_BREATH_NW_TO_SE,         6.8951f, -180.246f, -55.896f},//north-west
-    {3, 5, SPELL_BREATH_NE_TO_SW,        10.2191f, -247.912f, -55.896f},//north-east
-    {4, 2, SPELL_BREATH_SE_TO_NW,       -63.5156f, -240.096f, -55.477f},//south-east
-    {5, 3, SPELL_BREATH_SW_TO_NE,       -58.2509f, -189.020f, -55.790f},//south-west
-    {6, 7, SPELL_BREATH_SOUTH_TO_NORTH, -65.8444f, -213.809f, -55.2985f},//south
-    {7, 6, SPELL_BREATH_NORTH_TO_SOUTH,  22.8763f, -217.152f, -55.0548f},//north
+    {0, 1, SPELL_BREATH_WEST_TO_EAST,   -33.5561f, -182.682f, -56.9457f}, //west
+    {1, 0, SPELL_BREATH_EAST_TO_WEST,   -31.4963f, -250.123f, -55.1278f}, //east
+    {2, 4, SPELL_BREATH_NW_TO_SE,         6.8951f, -180.246f, -55.896f}, //north-west
+    {3, 5, SPELL_BREATH_NE_TO_SW,        10.2191f, -247.912f, -55.896f}, //north-east
+    {4, 2, SPELL_BREATH_SE_TO_NW,       -63.5156f, -240.096f, -55.477f}, //south-east
+    {5, 3, SPELL_BREATH_SW_TO_NE,       -58.2509f, -189.020f, -55.790f}, //south-west
+    {6, 7, SPELL_BREATH_SOUTH_TO_NORTH, -65.8444f, -213.809f, -55.2985f}, //south
+    {7, 6, SPELL_BREATH_NORTH_TO_SOUTH,  22.8763f, -217.152f, -55.0548f}, //north
 };
 
 const Position MiddleRoomLocation = {-23.6155f, -215.357f, -55.7344f, 0.0f};
@@ -201,7 +201,7 @@ public:
         void JustSummoned(Creature *pSummoned)
         {
             pSummoned->SetInCombatWithZone();
-            if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM,0))
+            if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 pSummoned->AI()->AttackStart(pTarget);
 
             switch (pSummoned->GetEntry())
@@ -226,7 +226,7 @@ public:
             DoScriptText(SAY_KILL, me);
         }
 
-        void SpellHit(Unit * /*pCaster*/, const SpellEntry* pSpell)
+        void SpellHit(Unit* /*pCaster*/, const SpellEntry* pSpell)
         {
             if (pSpell->Id == SPELL_BREATH_EAST_TO_WEST ||
                 pSpell->Id == SPELL_BREATH_WEST_TO_EAST ||
@@ -263,7 +263,7 @@ public:
                         break;
                     case 10:
                         me->SetFlying(true);
-                        me->GetMotionMaster()->MovePoint(11, Phase2Location.GetPositionX(),Phase2Location.GetPositionY(),Phase2Location.GetPositionZ()+25);
+                        me->GetMotionMaster()->MovePoint(11, Phase2Location.GetPositionX(), Phase2Location.GetPositionY(), Phase2Location.GetPositionZ()+25);
                         me->SetSpeed(MOVE_FLIGHT, 1.0f);
                         DoScriptText(SAY_PHASE_2_TRANS, me);
                         if (m_pInstance)
@@ -369,21 +369,6 @@ public:
                     }
                     else
                         m_uiBellowingRoarTimer -= uiDiff;
-
-                    if (m_uiWhelpTimer < uiDiff)
-                    {
-                        me->SummonCreature(NPC_WHELP, aSpawnLocations[0].GetPositionX(), aSpawnLocations[0].GetPositionY(), aSpawnLocations[0].GetPositionZ(), 0.0f, TEMPSUMMON_CORPSE_DESPAWN);
-                        me->SummonCreature(NPC_WHELP, aSpawnLocations[1].GetPositionX(), aSpawnLocations[1].GetPositionY(), aSpawnLocations[1].GetPositionZ(), 0.0f, TEMPSUMMON_CORPSE_DESPAWN);
-                        if (m_uiSummonWhelpCount >= RAID_MODE(8, 16))
-                        {
-                            m_uiSummonWhelpCount = 0;
-                            m_uiWhelpTimer = 40000;
-                        }
-                        else
-                            m_uiWhelpTimer = 500;
-                    }
-                    else
-                        m_uiWhelpTimer -= uiDiff;
                 }
 
                 if (m_uiFlameBreathTimer <= uiDiff)
@@ -432,9 +417,7 @@ public:
                     SetCombatMovement(true);
                     me->SetFlying(false);
                     m_bIsMoving = false;
-                    me->GetMotionMaster()->MovePoint(9,me->GetHomePosition());
-                    m_uiWhelpTimer = 10000;
-                    m_uiSummonWhelpCount = 0;
+                    me->GetMotionMaster()->MovePoint(9, me->GetHomePosition());
                     return;
                 }
 
@@ -496,7 +479,7 @@ public:
                 {
                     me->SummonCreature(NPC_WHELP, aSpawnLocations[0].GetPositionX(), aSpawnLocations[0].GetPositionY(), aSpawnLocations[0].GetPositionZ(), 0.0f, TEMPSUMMON_CORPSE_DESPAWN);
                     me->SummonCreature(NPC_WHELP, aSpawnLocations[1].GetPositionX(), aSpawnLocations[1].GetPositionY(), aSpawnLocations[1].GetPositionZ(), 0.0f, TEMPSUMMON_CORPSE_DESPAWN);
-                    if (m_uiSummonWhelpCount >= RAID_MODE(20,40))
+                    if (m_uiSummonWhelpCount >= RAID_MODE(20, 40))
                     {
                         m_uiSummonWhelpCount = 0;
                         m_uiWhelpTimer = 90000;

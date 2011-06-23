@@ -111,28 +111,25 @@ void InstanceScript::UpdateDoorState(GameObject *door)
         return;
 
     bool open = true;
-    for (DoorInfoMap::iterator itr = lower; itr != upper; ++itr)
+    for (DoorInfoMap::iterator itr = lower; itr != upper && open; ++itr)
     {
-        if (itr->second.type == DOOR_TYPE_ROOM)
+        switch (itr->second.type)
         {
-            if (itr->second.bossInfo->state == IN_PROGRESS)
-            {
-                open = false;
+            case DOOR_TYPE_ROOM:
+                open = (itr->second.bossInfo->state != IN_PROGRESS);
                 break;
-            }
-        }
-        else if (itr->second.type == DOOR_TYPE_PASSAGE)
-        {
-            if (itr->second.bossInfo->state != DONE)
-            {
-                open = false;
+            case DOOR_TYPE_PASSAGE:
+                open = (itr->second.bossInfo->state == DONE);
                 break;
-            }
+            case DOOR_TYPE_SPAWN_HOLE:
+                open = (itr->second.bossInfo->state == IN_PROGRESS);
+                break;
+            default:
+                break;
         }
     }
 
     door->SetGoState(open ? GO_STATE_ACTIVE : GO_STATE_READY);
-    //sLog->outError("Door %u is %s.", door->GetEntry(), open ? "opened" : "closed");
 }
 
 void InstanceScript::AddDoor(GameObject *door, bool add)
@@ -263,12 +260,12 @@ void InstanceScript::DoUseDoorOrButton(uint64 uiGuid, uint32 uiWithRestoreTime, 
         if (pGo->GetGoType() == GAMEOBJECT_TYPE_DOOR || pGo->GetGoType() == GAMEOBJECT_TYPE_BUTTON)
         {
             if (pGo->getLootState() == GO_READY)
-                pGo->UseDoorOrButton(uiWithRestoreTime,bUseAlternativeState);
+                pGo->UseDoorOrButton(uiWithRestoreTime, bUseAlternativeState);
             else if (pGo->getLootState() == GO_ACTIVATED)
                 pGo->ResetDoorOrButton();
         }
         else
-            sLog->outError("SD2: Script call DoUseDoorOrButton, but gameobject entry %u is type %u.",pGo->GetEntry(),pGo->GetGoType());
+            sLog->outError("SD2: Script call DoUseDoorOrButton, but gameobject entry %u is type %u.", pGo->GetEntry(), pGo->GetGoType());
     }
 }
 
@@ -398,7 +395,7 @@ void InstanceScript::DoCastSpellOnPlayers(uint32 spell)
 bool InstanceScript::CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/ /*= NULL*/, uint32 /*miscvalue1*/ /*= 0*/)
 {
     sLog->outError("Achievement system call InstanceScript::CheckAchievementCriteriaMeet but instance script for map %u not have implementation for achievement criteria %u",
-        instance->GetId(),criteria_id);
+        instance->GetId(), criteria_id);
     return false;
 }
 

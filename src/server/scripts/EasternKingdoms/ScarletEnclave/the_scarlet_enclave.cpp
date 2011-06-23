@@ -62,7 +62,7 @@ public:
             {
                 Player *plr = NULL;
                 if (me->isSummon())
-                    if (Unit *summoner = CAST_SUM(me)->GetSummoner())
+                    if (Unit *summoner = me->ToTempSummon()->GetSummoner())
                         if (summoner->GetTypeId() == TYPEID_PLAYER)
                             plr = CAST_PLR(summoner);
 
@@ -77,7 +77,7 @@ public:
                         FlyBackTimer = 500;
                         break;
                     case 1:
-                        plr->GetClosePoint(x,y,z, me->GetObjectSize());
+                        plr->GetClosePoint(x, y, z, me->GetObjectSize());
                         z += 2.5; x -= 2; y -= 1.5;
                         me->GetMotionMaster()->MovePoint(0, x, y, z);
                         me->SetUInt64Value(UNIT_FIELD_TARGET, plr->GetGUID());

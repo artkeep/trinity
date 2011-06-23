@@ -1,22 +1,12 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Copyright (C) 2010 TrinityScript 2
+ * This program is free software licensed under GPL version 2
+ * Please see the included DOCS/LICENSE.TXT for more information
  */
 
 #ifndef DEF_TOC_H
 #define DEF_TOC_H
+
 
 enum eData
 {
@@ -39,7 +29,7 @@ enum Data64
 {
     DATA_ANNOUNCER,
     DATA_MAIN_GATE,
-    DATA_MAIN_GATE1,
+    DATA_MAIN_GATE1,				
 
     DATA_GRAND_CHAMPION_VEHICLE_1,
     DATA_GRAND_CHAMPION_VEHICLE_2,
@@ -66,54 +56,54 @@ enum eNpcs
     NPC_JAELYNE                 = 34657,
     NPC_LANA                    = 34703,
 
-    // Crusader Champions
+	// Crusader Champions
     NPC_EADRIC                  = 35119,
     NPC_PALETRESS               = 34928,
 
-    // Crusader mobs
+	// Crusader mobs
     NPC_ARGENT_LIGHWIELDER      = 35309,
     NPC_ARGENT_MONK             = 35305,
     NPC_PRIESTESS               = 35307,
 
-    // Black Knight
+	// Black Knight
     NPC_BLACK_KNIGHT            = 35451,
-
-    // Black Knight's add
+	
+	// Black Knight's add
     NPC_RISEN_JAEREN            = 35545,
     NPC_RISEN_ARELAS            = 35564,
-
-    // Announcer
+	
+	// Announcer	
     NPC_JAEREN_AN               = 35591,
     NPC_ARELAS_AN               = 35592,
 
-    // Memory
-    MEMORY_ALGALON                = 35052,
-    MEMORY_ARCHIMONDE            = 35041,
-    MEMORY_CHROMAGGUS            = 35033,
+	// Memory	
+    MEMORY_ALGALON              = 35052,
+    MEMORY_ARCHIMONDE           = 35041,
+    MEMORY_CHROMAGGUS           = 35033,
     MEMORY_CYANIGOSA            = 35046,
-    MEMORY_DELRISSA                = 35043,
-    MEMORY_ECK                     = 35047,
+    MEMORY_DELRISSA             = 35043,
+    MEMORY_ECK                  = 35047,
     MEMORY_ENTROPIUS            = 35044,
     MEMORY_GRUUL                = 35039,
-    MEMORY_HAKKAR                = 35034,
-    MEMORY_HEIGAN                = 35049,
+    MEMORY_HAKKAR               = 35034,
+    MEMORY_HEIGAN               = 35049,
     MEMORY_HEROD                = 35030,
-    MEMORY_HOGGER                = 34942,
+    MEMORY_HOGGER               = 34942,
     MEMORY_IGNIS                = 35050,
-    MEMORY_ILLIDAN                = 35042,
-    MEMORY_INGVAR                = 35045,
-    MEMORY_KALITHRESH            = 35037,
-    MEMORY_LUCIFRON                = 35031,
-    MEMORY_MALCHEZAAR            = 35038,
-    MEMORY_MUTANUS                = 35029,
-    MEMORY_ONYXIA                = 35048,
-    MEMORY_THUNDERAAN            = 35032,
-    MEMORY_VANCLEEF                = 35028,
+    MEMORY_ILLIDAN              = 35042,
+    MEMORY_INGVAR               = 35045,
+    MEMORY_KALITHRESH           = 35037,
+    MEMORY_LUCIFRON             = 35031,
+    MEMORY_MALCHEZAAR           = 35038,
+    MEMORY_MUTANUS              = 35029,
+    MEMORY_ONYXIA               = 35048,
+    MEMORY_THUNDERAAN           = 35032,
+    MEMORY_VANCLEEF             = 35028,
     MEMORY_VASHJ                = 35040,
     MEMORY_VEKNILASH            = 35036,
     MEMORY_VEZAX                = 35051,
 
-    // Announcer Start Event
+	// Announcer Start Event
     NPC_JAEREN                  = 35004,
     NPC_ARELAS                  = 35005
 };
@@ -142,11 +132,11 @@ enum eVehicles
     VEHICLE_EVENSONG_MOUNT                          = 34658,
     VEHICLE_LANA_STOUTHAMMER_MOUNT                  = 35636,
     //Faction Champions (ALLIANCE)
-    VEHICLE_DARNASSIA_NIGHTSABER                    = 33298,
-    VEHICLE_EXODAR_ELEKK                            = 33416,
-    VEHICLE_STORMWIND_STEED                         = 33297,
-    VEHICLE_GNOMEREGAN_MECHANOSTRIDER               = 33301,
-    VEHICLE_IRONFORGE_RAM                           = 33408,
+    VEHICLE_DARNASSIA_NIGHTSABER                    = 33319,
+    VEHICLE_EXODAR_ELEKK                            = 33318,
+    VEHICLE_STORMWIND_STEED                         = 33217,
+    VEHICLE_GNOMEREGAN_MECHANOSTRIDER               = 33317,
+    VEHICLE_IRONFORGE_RAM                           = 33316,
     //Grand Champions Horde Vehicles
     VEHICLE_MOKRA_SKILLCRUSHER_MOUNT                = 35638,
     VEHICLE_ERESSEA_DAWNSINGER_MOUNT                = 35635,
@@ -154,15 +144,15 @@ enum eVehicles
     VEHICLE_ZUL_TORE_MOUNT                          = 35641,
     VEHICLE_DEATHSTALKER_VESCERI_MOUNT              = 35634,
     //Faction Champions (HORDE)
-    VEHICLE_FORSAKE_WARHORSE                        = 33414,
-    VEHICLE_THUNDER_BLUFF_KODO                      = 33300,
-    VEHICLE_ORGRIMMAR_WOLF                          = 33409,
-    VEHICLE_SILVERMOON_HAWKSTRIDER                  = 33418,
-    VEHICLE_DARKSPEAR_RAPTOR                        = 33299,
+    VEHICLE_FORSAKE_WARHORSE                        = 33324,
+    VEHICLE_THUNDER_BLUFF_KODO                      = 33322,
+    VEHICLE_ORGRIMMAR_WOLF                          = 33320,
+    VEHICLE_SILVERMOON_HAWKSTRIDER                  = 33323,
+    VEHICLE_DARKSPEAR_RAPTOR                        = 33321,
 
     VEHICLE_ARGENT_WARHORSE                         = 35644,
     VEHICLE_ARGENT_BATTLEWORG                       = 36558,
-    VEHICLE_GR                                      = 35492,
+    VEHICLE_GR                                      = 35492, 
 
     VEHICLE_BLACK_KNIGHT                            = 35491
 };

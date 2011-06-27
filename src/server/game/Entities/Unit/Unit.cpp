@@ -848,7 +848,7 @@ void Unit::CastSpell(Unit* Victim, SpellEntry const *spellInfo, bool triggered, 
             originalCaster=owner->GetGUID();
 
     SpellCastTargets targets;
-    targets.setUnitTarget(Victim);
+    targets.SetUnitTarget(Victim);
 
     if (castItem)
         sLog->outStaticDebug("WORLD: cast Item spellId - %i", spellInfo->Id);
@@ -891,7 +891,7 @@ void Unit::CastCustomSpell(uint32 spellId, CustomSpellValues const &value, Unit*
     }
 
     SpellCastTargets targets;
-    targets.setUnitTarget(Victim);
+    targets.SetUnitTarget(Victim);
 
     if (!originalCaster && triggeredByAura)
         originalCaster = triggeredByAura->GetCasterGUID();
@@ -930,9 +930,9 @@ void Unit::CastSpell(float x, float y, float z, uint32 spellId, bool triggered, 
     Spell* spell = new Spell(this, spellInfo, triggered, originalCaster);
 
     SpellCastTargets targets;
-    targets.setDst(x, y, z, GetOrientation());
+    targets.SetDst(x, y, z, GetOrientation());
     if (OriginalVictim)
-        targets.setUnitTarget(OriginalVictim);
+        targets.SetUnitTarget(OriginalVictim);
     spell->m_CastItem = castItem;
     spell->prepare(&targets, triggeredByAura);
 }
@@ -966,7 +966,7 @@ void Unit::CastSpell(GameObject *go, uint32 spellId, bool triggered, Item *castI
     Spell* spell = new Spell(this, spellInfo, triggered, originalCaster);
 
     SpellCastTargets targets;
-    targets.setGOTarget(go);
+    targets.SetGOTarget(go);
     spell->m_CastItem = castItem;
     spell->prepare(&targets, triggeredByAura);
 }
@@ -3146,7 +3146,7 @@ Aura* Unit::_TryStackingOrRefreshingExistingAura(SpellEntry const* newAura, uint
         casterGUID = caster->GetGUID();
 
     // passive and Incanter's Absorption and auras with different type can stack with themselves any number of times
-    if (!IsPassiveSpell(newAura) && newAura->Id != 44413)
+    if (!IsMultiSlotAura(newAura))
     {
         // check if cast item changed
         uint64 castItemGUID = 0;
@@ -5795,7 +5795,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             {
                 if (effIndex != 0)
                     return false;
-                AuraEffect* counter = triggeredByAura->GetBase()->GetEffect(1);
+                AuraEffect* counter = triggeredByAura->GetBase()->GetEffect(EFFECT_1);
                 if (!counter)
                     return true;
 
@@ -6131,7 +6131,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                             // regen mana for caster
                             CastCustomSpell(this, 59117, &basepoints0, NULL, NULL, true, castItem, triggeredByAura);
                             // Get second aura of spell for replenishment effect on party
-                            if (AuraEffect const* aurEff = (*i)->GetBase()->GetEffect(1))
+                            if (AuraEffect const* aurEff = (*i)->GetBase()->GetEffect(EFFECT_1))
                             {
                                 // Replenishment - roll chance
                                 if (roll_chance_i(aurEff->GetAmount()))
@@ -6199,7 +6199,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             {
                 // Multiple effects stack, so let's try to find this aura.
                 int32 bonus = 0;
-                if (AuraEffect* aurEff = target->GetAuraEffect(47753, 0))
+                if (AuraEffect const* aurEff = target->GetAuraEffect(47753, 0))
                     bonus = aurEff->GetAmount();
 
                 basepoints0 = CalculatePctN(int32(damage), triggerAmount) + bonus;
@@ -6805,7 +6805,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             {
                 if (procFlag & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_POS)
                 {
-                    if ((procSpell->SpellFamilyName == SPELLFAMILY_PALADIN) && (procSpell->SpellFamilyFlags[0] & 0x40000000))
+                    if (procSpell->SpellFamilyName == SPELLFAMILY_PALADIN && (procSpell->SpellFamilyFlags[0] & 0x40000000))
                     {
                         basepoints0 = damage / 12;
 
@@ -6820,6 +6820,11 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 else if (damage > 0)
                     triggered_spell_id = 58597;
 
+                // Item - Paladin T8 Holy 4P Bonus
+                if (Unit* caster = triggeredByAura->GetCaster())
+                    if (AuraEffect const* aurEff = caster->GetAuraEffect(64895, 0))
+                        cooldown = aurEff->GetAmount();
+
                 target = this;
                 break;
             }
@@ -6827,7 +6832,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             if (dummySpell->SpellIconID == 3025)
             {
                 // 4 damage tick
-                basepoints0 = triggerAmount*damage/400;
+                basepoints0 = triggerAmount * damage / 400;
                 triggered_spell_id = 61840;
                 // Add remaining ticks to damage done
                 basepoints0 += pVictim->GetRemainingPeriodicAmount(GetGUID(), triggered_spell_id, SPELL_AURA_PERIODIC_DAMAGE);
@@ -6837,7 +6842,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
             if (dummySpell->SpellIconID == 3030)
             {
                 // 4 healing tick
-                basepoints0 = triggerAmount*damage/400;
+                basepoints0 = triggerAmount * damage / 400;
                 triggered_spell_id = 54203;
                 break;
             }
@@ -6925,7 +6930,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
 
                     // At melee attack or Hammer of the Righteous spell damage considered as melee attack
                     bool stacker = !procSpell || procSpell->Id == 53595;
-                    bool damager = procSpell && procSpell->EquippedItemClass == ITEM_CLASS_WEAPON;
+                    // spells with SPELL_DAMAGE_CLASS_MELEE excluding Judgements
+                    bool damager = procSpell && procSpell->EquippedItemClass != -1;
 
                     if (!stacker && !damager)
                         return false;
@@ -6956,7 +6962,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
 
                     // At melee attack or Hammer of the Righteous spell damage considered as melee attack
                     bool stacker = !procSpell || procSpell->Id == 53595;
-                    bool damager = procSpell && procSpell->EquippedItemClass == ITEM_CLASS_WEAPON;
+                    // spells with SPELL_DAMAGE_CLASS_MELEE excluding Judgements
+                    bool damager = procSpell && procSpell->EquippedItemClass != -1;
 
                     if (!stacker && !damager)
                         return false;
@@ -7028,6 +7035,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                 {
                     triggered_spell_id = 54968;
                     basepoints0 = CalculatePctN(int32(damage), triggerAmount);
+                    break;
+                }
+                // Item - Paladin T8 Holy 2P Bonus
+                case 64890:
+                {
+                    triggered_spell_id = 64891;
+                    basepoints0 = triggerAmount * damage / 300;
                     break;
                 }
                 case 71406: // Tiny Abomination in a Jar
@@ -7362,6 +7376,26 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                             return true;
                         }
                     }
+                    return false;
+                }
+                // Item - Shaman T10 Elemental 4P Bonus
+                case 70817:
+                {
+                    // try to find spell Flame Shock on the target
+                    if (AuraEffect const* aurEff = target->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_SHAMAN, 0x10000000, 0x0, 0x0, GetGUID()))
+                    {
+                        Aura* flameShock  = aurEff->GetBase();
+                        int32 maxDuration = flameShock->GetMaxDuration();
+                        int32 newDuration = flameShock->GetDuration() + 2 * aurEff->GetAmplitude();
+
+                        flameShock->SetDuration(newDuration);
+                        // is it blizzlike to change max duration for FS?
+                        if (newDuration > maxDuration)
+                            flameShock->SetMaxDuration(newDuration);
+
+                        return true;
+                    }
+                    // if not found Flame Shock
                     return false;
                 }
                 case 63280: // Glyph of Totem of Wrath
@@ -8078,6 +8112,9 @@ bool Unit::HandleAuraProc(Unit* pVictim, uint32 damage, Aura * triggeredByAura, 
                     if (pVictim->HasAura(53601))
                     {
                         int32 bp0 = CalculatePctN(int32(damage / 12), SpellMgr::CalculateSpellEffectAmount(dummySpell, 2));
+                        // Item - Paladin T9 Holy 4P Bonus
+                        if (AuraEffect const* aurEff = GetAuraEffect(67191, 0))
+                            AddPctN(bp0, aurEff->GetAmount());
                         CastCustomSpell(pVictim, 66922, &bp0, NULL, NULL, true);
                         return true;
                     }
@@ -8150,7 +8187,7 @@ bool Unit::HandleAuraProc(Unit* pVictim, uint32 damage, Aura * triggeredByAura, 
                         return false;
 
                     int32 bp0 = int32(CalculatePctN(GetCreateMana(), SpellMgr::CalculateSpellEffectAmount(spInfo, 0)));
-                    CastCustomSpell(this, 67545, &bp0, NULL, NULL, true, NULL, triggeredByAura->GetEffect(0), GetGUID());
+                    CastCustomSpell(this, 67545, &bp0, NULL, NULL, true, NULL, triggeredByAura->GetEffect(EFFECT_0), GetGUID());
                     return true;
                 }
                 case 44544: // Fingers of Frost
@@ -8186,7 +8223,7 @@ bool Unit::HandleAuraProc(Unit* pVictim, uint32 damage, Aura * triggeredByAura, 
                     // can't proc from death rune use
                     if (rune == RUNE_DEATH)
                         return false;
-                    AuraEffect* aurEff = triggeredByAura->GetEffect(0);
+                    AuraEffect* aurEff = triggeredByAura->GetEffect(EFFECT_0);
                     if (!aurEff)
                         return false;
                     // Reset amplitude - set death rune remove timer to 30s
@@ -8845,6 +8882,8 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
         // Deathbringer Saurfang - Rune of Blood
         case 72408:
             // can proc only if target is marked with rune
+            // this should be handled by targetAuraSpell, but because 72408 is not passive
+            // one failed proc will remove the entire aura
             if (!pVictim->HasAura(72410))
                 return false;
             break;
@@ -8852,16 +8891,12 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
         case 72176:
             basepoints0 = 3;
             break;
-        case 44543: // Fingers of Frost (Rank 1)
-        case 44545: // Fingers of Frost (Rank 2)                  
-            // Frostbite
-            if (AuraEffect * aurEff = GetAuraEffect(SPELL_AURA_ADD_TARGET_TRIGGER, SPELLFAMILY_MAGE, 0, 0x200, 0, GetGUID()))
-            {
-                int chance = triggerAmount - aurEff->GetAmount();
-                if ((chance <= 0) || !roll_chance_i(chance))
-                    return false;               
-            }
-            break;
+        // Deathbringer Saurfang - Mark of the Fallen Champion
+        case 72256:
+            // this should be handled by targetAuraSpell, but because 72408 is not passive
+            // one failed proc will remove the entire aura
+            CastSpell(NULL, trigger_spell_id, true, NULL, triggeredByAura);
+            return true;
         case 15337: // Improved Spirit Tap (Rank 1)
         case 15338: // Improved Spirit Tap (Rank 2)
         {
@@ -8959,7 +8994,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
         }
         // Cast positive spell on enemy target
         case 7099:  // Curse of Mending
-        case 39647: // Curse of Mending
+        case 39703: // Curse of Mending
         case 29494: // Temptation
         case 20233: // Improved Lay on Hands (cast on target)
         {
@@ -11149,7 +11184,7 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         // Improved Faerie Fire
                         if (pVictim->HasAuraState(AURA_STATE_FAERIE_FIRE))
                             if (AuraEffect const* aurEff = GetDummyAuraEffect(SPELLFAMILY_DRUID, 109, 0))
-                                crit_chance+=aurEff->GetAmount();
+                                crit_chance += aurEff->GetAmount();
 
                         // cumulative effect - don't break
 
@@ -11159,7 +11194,7 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                             // Improved Insect Swarm
                             if (AuraEffect const* aurEff = GetDummyAuraEffect(SPELLFAMILY_DRUID, 1771, 0))
                                 if (pVictim->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, 0x00000002, 0, 0))
-                                    crit_chance+=aurEff->GetAmount();
+                                    crit_chance += aurEff->GetAmount();
                            break;
                         }
                     break;
@@ -11173,9 +11208,8 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         if (spellProto->SpellFamilyFlags[0] & 0x40000000)
                         {
                             // Sacred Shield
-                            AuraEffect const* aura = pVictim->GetAuraEffect(58597, 1);
-                            if (aura && aura->GetCasterGUID() == GetGUID())
-                                crit_chance+=aura->GetAmount();
+                            if (AuraEffect const* aura = pVictim->GetAuraEffect(58597, 1, GetGUID()))
+                                crit_chance += aura->GetAmount();
                             break;
                         }
                         // Exorcism
@@ -12059,7 +12093,7 @@ void Unit::MeleeDamageBonus(Unit *pVictim, uint32 *pdamage, WeaponAttackType att
             case 6427: case 6428:                           // Dirty Deeds
                 if (pVictim->HasAuraState(AURA_STATE_HEALTHLESS_35_PERCENT, spellProto, this))
                 {
-                    AuraEffect* eff0 = (*i)->GetBase()->GetEffect(0);
+                    AuraEffect* eff0 = (*i)->GetBase()->GetEffect(EFFECT_0);
                     if (!eff0 || (*i)->GetEffIndex() != 1)
                     {
                         sLog->outError("Spell structure of DD (%u) changed.", (*i)->GetId());
@@ -12529,6 +12563,7 @@ int32 Unit::GetHealthGain(int32 dVal)
     return gain;
 }
 
+// returns negative amount on power reduction
 int32 Unit::ModifyPower(Powers power, int32 dVal)
 {
     int32 gain = 0;
@@ -15806,7 +15841,10 @@ void Unit::SetStunned(bool apply)
         SetUInt64Value(UNIT_FIELD_TARGET, 0);
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
 
-//        AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
+        // MOVEMENTFLAG_ROOT cannot be used in conjunction with ie. MOVEMENTFLAG_FORWARD,
+        // this will freeze clients. That's why we remove any current movement flags before
+        // setting MOVEMENTFLAG_ROOT
+        SetUnitMovementFlags(MOVEMENTFLAG_ROOT);
 
         // Creature specific
         if (GetTypeId() != TYPEID_PLAYER)
@@ -15838,7 +15876,7 @@ void Unit::SetStunned(bool apply)
             data << uint32(0);
             SendMessageToSet(&data, true);
 
-//            RemoveUnitMovementFlag(MOVEMENTFLAG_ROOT);
+            RemoveUnitMovementFlag(MOVEMENTFLAG_ROOT);
         }
     }
 }

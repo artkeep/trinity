@@ -28,6 +28,7 @@
 #include "Opcodes.h"
 #include "WorldSession.h"
 #include "WorldPacket.h"
+#include "WardenDataStorage.h"
 #include "Player.h"
 #include "Vehicle.h"
 #include "SkillExtraItems.h"
@@ -1266,6 +1267,10 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_ANTICHEAT_DETECTIONS_ENABLED] = sConfig->GetIntDefault("Anticheat.DetectionsEnabled",31);
     m_int_configs[CONFIG_ANTICHEAT_MAX_REPORTS_FOR_DAILY_REPORT] = sConfig->GetIntDefault("Anticheat.MaxReportsForDailyReport",70);
 
+    // Warden
+    m_bool_configs[CONFIG_BOOL_WARDEN_KICK] = sConfig->GetBoolDefault("Warden.Kick", false);
+    m_int_configs[CONFIG_INT_WARDEN_BANDAY] = sConfig->GetIntDefault("Warden.BanDay", 0);
+
     sScriptMgr->OnConfigLoad(reload);
 }
 
@@ -1758,6 +1763,9 @@ void World::SetInitialWorldSettings()
     sLog->outString("Starting Game Event system...");
     uint32 nextGameEvent = sGameEventMgr->StartSystem();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
+
+     sLog->outString("Loading Warden Data..." );
+     WardenDataStorage.Init();
 
     // Delete all characters which have been deleted X days before
     Player::DeleteOldCharacters();

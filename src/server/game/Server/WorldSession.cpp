@@ -27,6 +27,8 @@
 #include "Opcodes.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "WardenMac.h"
+#include "WardenWin.h"
 #include "Player.h"
 #include "Vehicle.h"
 #include "ObjectMgr.h"
@@ -93,7 +95,7 @@ m_inQueue(false), m_playerLoading(false), m_playerLogout(false),
 m_playerRecentlyLogout(false), m_playerSave(false),
 m_sessionDbcLocale(sWorld->GetAvailableDbcLocale(locale)),
 m_sessionDbLocaleIndex(locale),
-m_latency(0), m_TutorialsChanged(false), recruiterId(recruiter)
+m_latency(0), m_TutorialsChanged(false), recruiterId(recruiter), m_Warden(NULL)
 {
     if (sock)
     {
@@ -120,6 +122,9 @@ WorldSession::~WorldSession()
         m_Socket->RemoveReference ();
         m_Socket = NULL;
     }
+
+    if (m_Warden)
+        delete m_Warden;
 
     ///- empty incoming packet queue
     WorldPacket* packet = NULL;
@@ -323,6 +328,9 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
     }
 
     ProcessQueryCallbacks();
+
+    if (m_Socket && !m_Socket->IsClosed() && m_Warden)
+        m_Warden->Update();
 
     //check if we are safe to proceed with logout
     //logout procedure should happen only in World::UpdateSessions() method!!!
@@ -1084,3 +1092,14 @@ void WorldSession::ProcessQueryCallbacks()
         _stableSwapCallback.FreeResult();
     }
 }
+
+void WorldSession::InitWarden(BigNumber *K, std::string os)
+{
+    if (os == "niW")                                        // Windows
+        m_Warden = (WardenBase*)new WardenWin();
+    else                                                    // MacOS
+        m_Warden = (WardenBase*)new WardenMac();
+
+    m_Warden->Init(this, K);
+}
+

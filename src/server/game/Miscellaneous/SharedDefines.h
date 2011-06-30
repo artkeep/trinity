@@ -267,8 +267,8 @@ enum SpellAttr0
     SPELL_ATTR0_REQ_AMMO                         = 0x00000002, //  1
     SPELL_ATTR0_ON_NEXT_SWING                    = 0x00000004, //  2 on next swing
     SPELL_ATTR0_UNK3                             = 0x00000008, //  3 not set in 3.0.3
-    SPELL_ATTR0_UNK4                             = 0x00000010, //  4
-    SPELL_ATTR0_TRADESPELL                       = 0x00000020, //  5 trade spells, will be added by client to a sublist of profession spell
+    SPELL_ATTR0_ABILITY                          = 0x00000010, //  4 client puts 'ability' instead of 'spell' in game strings for these spells
+    SPELL_ATTR0_TRADESPELL                       = 0x00000020, //  5 trade spells (recipes), will be added by client to a sublist of profession spell
     SPELL_ATTR0_PASSIVE                          = 0x00000040, //  6 Passive spell
     SPELL_ATTR0_HIDDEN_CLIENTSIDE                = 0x00000080, //  7 Spells with this attribute are not visible in spellbook or aura bar
     SPELL_ATTR0_HIDE_IN_COMBAT_LOG               = 0x00000100, //  8 This attribite controls whether spell appears in combat logs
@@ -410,7 +410,7 @@ enum SpellAttr4
     SPELL_ATTR4_UNK0                             = 0x00000001, //  0
     SPELL_ATTR4_UNK1                             = 0x00000002, //  1 proc on finishing move?
     SPELL_ATTR4_UNK2                             = 0x00000004, //  2
-    SPELL_ATTR4_CANT_PROC_FROM_SELFCAST          = 0x00000008, //  3
+    SPELL_ATTR4_UNK3                             = 0x00000008, //  3
     SPELL_ATTR4_UNK4                             = 0x00000010, //  4 This will no longer cause guards to attack on use??
     SPELL_ATTR4_UNK5                             = 0x00000020, //  5
     SPELL_ATTR4_NOT_STEALABLE                    = 0x00000040, //  6 although such auras might be dispellable, they cannot be stolen
@@ -423,8 +423,8 @@ enum SpellAttr4
     SPELL_ATTR4_UNK13                            = 0x00002000, // 13
     SPELL_ATTR4_DAMAGE_DOESNT_BREAK_AURAS        = 0x00004000, // 14 doesn't break auras by damage from these spells
     SPELL_ATTR4_UNK15                            = 0x00008000, // 15
-    SPELL_ATTR4_NOT_USABLE_IN_ARENA              = 0x00010000, // 16 not usable in arena
-    SPELL_ATTR4_USABLE_IN_ARENA                  = 0x00020000, // 17 usable in arena
+    SPELL_ATTR4_NOT_USABLE_IN_ARENA              = 0x00010000, // 16
+    SPELL_ATTR4_USABLE_IN_ARENA                  = 0x00020000, // 17
     SPELL_ATTR4_UNK18                            = 0x00040000, // 18
     SPELL_ATTR4_UNK19                            = 0x00080000, // 19
     SPELL_ATTR4_NOT_CHECK_SELFCAST_POWER         = 0x00100000, // 20 supersedes message "More powerful spell applied" for self casts.
@@ -1281,8 +1281,8 @@ enum Targets
 {
     TARGET_UNIT_CASTER                 = 1,
     TARGET_UNIT_NEARBY_ENEMY           = 2,
-    TARGET_UNIT_NEARBY_ALLY            = 3,
-    TARGET_UNIT_NEARBY_ALLY_UNK        = 4,
+    TARGET_UNIT_NEARBY_PARTY           = 3,
+    TARGET_UNIT_NEARBY_ALLY            = 4,
     TARGET_UNIT_PET                    = 5,
     TARGET_UNIT_TARGET_ENEMY           = 6,
     TARGET_UNIT_AREA_ENTRY_SRC         = 7,

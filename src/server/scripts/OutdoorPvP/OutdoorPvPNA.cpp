@@ -29,7 +29,7 @@ OutdoorPvPNA::OutdoorPvPNA()
     m_TypeId = OUTDOOR_PVP_NA;
 }
 
-void OutdoorPvPNA::HandleKillImpl(Player *plr, Unit* killed)
+void OutdoorPvPNA::HandleKillImpl(Player* plr, Unit* killed)
 {
     if (killed->GetTypeId() == TYPEID_PLAYER && plr->GetTeam() != killed->ToPlayer()->GetTeam())
     {
@@ -63,19 +63,14 @@ uint32 OPvPCapturePointNA::GetAliveGuardsCount()
         case NA_NPC_GUARD_13:
         case NA_NPC_GUARD_14:
         case NA_NPC_GUARD_15:
+        {
+            if (Creature* cr = HashMapHolder<Creature>::Find(itr->second))
             {
-                if (Creature* cr = HashMapHolder<Creature>::Find(itr->second))
-                {
-                    if (cr->isAlive())
-                        ++cnt;
-                }
-                else if (CreatureData const* cd = sObjectMgr->GetCreatureData(GUID_LOPART(itr->second)))
-                {
-                    if (!cd->is_dead)
-                        ++cnt;
-                }
+                if (cr->isAlive())
+                    ++cnt;
             }
-            break;
+        }
+        break;
         default:
             break;
         }
@@ -183,7 +178,7 @@ void OPvPCapturePointNA::FactionTakeOver(uint32 team)
     UpdateWyvernRoostWorldState(NA_ROOST_E);
 }
 
-bool OPvPCapturePointNA::HandlePlayerEnter(Player *plr)
+bool OPvPCapturePointNA::HandlePlayerEnter(Player* plr)
 {
     if (OPvPCapturePoint::HandlePlayerEnter(plr))
     {
@@ -196,7 +191,7 @@ bool OPvPCapturePointNA::HandlePlayerEnter(Player *plr)
     return false;
 }
 
-void OPvPCapturePointNA::HandlePlayerLeave(Player *plr)
+void OPvPCapturePointNA::HandlePlayerLeave(Player* plr)
 {
     plr->SendUpdateWorldState(NA_UI_TOWER_SLIDER_DISPLAY, 0);
     OPvPCapturePoint::HandlePlayerLeave(plr);
@@ -297,7 +292,7 @@ void OPvPCapturePointNA::FillInitialWorldStates(WorldPacket &data)
     data << NA_MAP_HALAA_ALLIANCE << uint32(bool(m_HalaaState & HALAA_A));
 }
 
-void OutdoorPvPNA::SendRemoveWorldStates(Player *plr)
+void OutdoorPvPNA::SendRemoveWorldStates(Player* plr)
 {
     plr->SendUpdateWorldState(NA_UI_HORDE_GUARDS_SHOW, 0);
     plr->SendUpdateWorldState(NA_UI_ALLIANCE_GUARDS_SHOW, 0);
@@ -409,7 +404,7 @@ bool OPvPCapturePointNA::HandleCustomSpell(Player* plr, uint32 spellId, GameObje
     return false;
 }
 
-int32 OPvPCapturePointNA::HandleOpenGo(Player *plr, uint64 guid)
+int32 OPvPCapturePointNA::HandleOpenGo(Player* plr, uint64 guid)
 {
     int32 retval = OPvPCapturePoint::HandleOpenGo(plr, guid);
     if (retval >= 0)

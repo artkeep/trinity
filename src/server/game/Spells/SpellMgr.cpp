@@ -3987,11 +3987,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->MaxAffectedTargets = 1;
             ++count;
             break;
-        case 59921: // Frost Fever
-            // Icy Clutch shouldn't be applied at caster when login
-            spellInfo->AttributesEx4 |= SPELL_ATTR4_CANT_PROC_FROM_SELFCAST;
-            ++count;
-            break;
         case 52479: // Gift of the Harvester
             spellInfo->MaxAffectedTargets = 1;
             // a trap always has dst = src?

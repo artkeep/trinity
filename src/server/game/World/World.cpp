@@ -585,6 +585,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_PLAYER_COMMANDS] = sConfig->GetBoolDefault("AllowPlayerCommands", 1);
     m_bool_configs[CONFIG_PRESERVE_CUSTOM_CHANNELS] = sConfig->GetBoolDefault("PreserveCustomChannels", false);
     m_int_configs[CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION] = sConfig->GetIntDefault("PreserveCustomChannelDuration", 14);
+    m_bool_configs[CONFIG_RECRUIT_A_FRIEND_GROUP_REWARD_SPLIT] = sConfig->GetBoolDefault("RecruitAFriend.RewardSplitInGroup", true);
     m_bool_configs[CONFIG_GRID_UNLOAD] = sConfig->GetBoolDefault("GridUnload", true);
     m_int_configs[CONFIG_INTERVAL_SAVE] = sConfig->GetIntDefault("PlayerSaveInterval", 15 * MINUTE * IN_MILLISECONDS);
     m_int_configs[CONFIG_INTERVAL_DISCONNECT_TOLERANCE] = sConfig->GetIntDefault("DisconnectToleranceInterval", 0);

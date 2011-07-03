@@ -549,7 +549,8 @@ void KillRewarder::_RewardPlayer(Player* player, bool isDungeon)
     // Give reputation and kill credit only in PvE.
     if (!_isPvP || _isBattleGround)
     {
-        const float rate = _group ?
+        bool splitInGroup = player->GetsRecruitAFriendBonus(false) ? sWorld->getBoolConfig(CONFIG_RECRUIT_A_FRIEND_GROUP_REWARD_SPLIT) : true;
+        const float rate = _group && splitInGroup ?
             _groupRate * float(player->getLevel()) / _sumLevel : // Group rate depends on summary level.
             1.0f;                                                // Personal rate is 100%.
         if (_xp)

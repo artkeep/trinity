@@ -1121,6 +1121,14 @@ RecruitAFriend.MaxLevel = 60
 RecruitAFriend.MaxDifference = 4
 
 #
+#    RecruitAFriend.RewardSplitInGroup
+#        Description: Allow experience and reputation split for players in group with active RAF
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+RecruitAFriend.RewardSplitInGroup = 1
+
+#
 #    InstantLogout
 #        Description: Required security level for instantly logging out everywhere.
 #                     Does not work while in combat, dueling or falling.

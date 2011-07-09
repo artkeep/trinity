@@ -44,7 +44,7 @@ enum SpellInterruptFlags
     SPELL_INTERRUPT_FLAG_MOVEMENT     = 0x01, // why need this for instant?
     SPELL_INTERRUPT_FLAG_PUSH_BACK    = 0x02, // push back
     SPELL_INTERRUPT_FLAG_INTERRUPT    = 0x04, // interrupt
-    SPELL_INTERRUPT_FLAG_AUTOATTACK   = 0x08, // no
+    SPELL_INTERRUPT_FLAG_AUTOATTACK   = 0x08, // enter combat
     SPELL_INTERRUPT_FLAG_ABORT_ON_DMG = 0x10,               // _complete_ interrupt on direct damage
     //SPELL_INTERRUPT_UNK             = 0x20                // unk, 564 of 727 spells having this spell start with "Glyph"
 };
@@ -1485,6 +1485,8 @@ class Unit : public WorldObject
         Aura * AddAura(uint32 spellId, Unit* target);
         Aura * AddAura(SpellEntry const *spellInfo, uint8 effMask, Unit* target);
         void SetAuraStack(uint32 spellId, Unit* target, uint32 stack);
+        void SendPlaySpellVisual(uint32 id);
+        void SendPlaySpellImpact(uint64 guid, uint32 id);
 
         bool IsDamageToThreatSpell(SpellEntry const* spellInfo) const;
 
@@ -1796,7 +1798,7 @@ class Unit : public WorldObject
         {
             ShapeshiftForm form = GetShapeshiftForm();
             return form != FORM_NONE && form != FORM_BATTLESTANCE && form != FORM_BERSERKERSTANCE && form != FORM_DEFENSIVESTANCE &&
-                form != FORM_SHADOW && form != FORM_STEALTH;
+                form != FORM_SHADOW && form != FORM_STEALTH && form != FORM_UNDEAD;
         }
 
         float m_modMeleeHitChance;
@@ -2056,7 +2058,6 @@ class Unit : public WorldObject
 
         bool m_ControlledByPlayer;
 
-        bool CheckPlayerCondition(Player* pPlayer);
         bool HandleSpellClick(Unit* clicker, int8 seatId = -1);
         void EnterVehicle(Unit *base, int8 seatId = -1);
         void ExitVehicle(Position const* exitPosition = NULL);

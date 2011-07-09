@@ -4205,6 +4205,10 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->SpellFamilyFlags[2] = 0x10;
             ++count;
             break;
+        case 61607: // Mark of Blood
+            spellInfo->AttributesEx |= SPELL_ATTR1_NO_THREAT;
+            ++count;
+            break;
         case 41013: // Parasitic Shadowfiend Passive
             spellInfo->EffectApplyAuraName[0] = 4; // proc debuff, and summon infinite fiends
             ++count;

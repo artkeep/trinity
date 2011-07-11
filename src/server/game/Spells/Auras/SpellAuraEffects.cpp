@@ -3364,61 +3364,6 @@ void AuraEffect::HandleAuraModIncreaseFlightSpeed(AuraApplication const* aurApp,
                         }
                         break;
                     }
-                    case 65528:                                 // Gossip NPC Appearance - Pirates' Day
-                    {
-                        // expecting npc's using this spell to have models with race info.
-                        uint32 race = GetCreatureModelRace(target->GetNativeDisplayId());
-
-                        // random gender, regardless of current gender
-                        switch(race)
-                        {
-                            case RACE_HUMAN:
-                                target->SetDisplayId(roll_chance_i(50) ? 25037 : 25048);
-                                break;
-                            case RACE_ORC:
-                                target->SetDisplayId(roll_chance_i(50) ? 25039 : 25050);
-                                break;
-                            case RACE_DWARF:
-                                target->SetDisplayId(roll_chance_i(50) ? 25034 : 25045);
-                                break;
-                            case RACE_NIGHTELF:
-                                target->SetDisplayId(roll_chance_i(50) ? 25038 : 25049);
-                                break;
-                            case RACE_UNDEAD_PLAYER:
-                                target->SetDisplayId(roll_chance_i(50) ? 25042 : 25053);
-                                break;
-                            case RACE_TAUREN:
-                                target->SetDisplayId(roll_chance_i(50) ? 25040 : 25051);
-                                break;
-                            case RACE_GNOME:
-                                target->SetDisplayId(roll_chance_i(50) ? 25035 : 25046);
-                                break;
-                            case RACE_TROLL:
-                                target->SetDisplayId(roll_chance_i(50) ? 25041 : 25052);
-                                break;
-                            //case RACE_GOBLIN:
-                                //target->SetDisplayId(roll_chance_i(50) ? 25036 : 25047);
-                                //break;
-                            case RACE_BLOODELF:
-                                target->SetDisplayId(roll_chance_i(50) ? 25032 : 25043);
-                                break;
-                            case RACE_DRAENEI:
-                                target->SetDisplayId(roll_chance_i(50) ? 25033 : 25044);
-                                break;
-                        }
-
-                        break;
-                    }
-                    case 65529:                                 // Gossip NPC Appearance - Day of the Dead (DotD)
-                        // random, regardless of current gender
-                        target->SetDisplayId(roll_chance_i(50) ? 29203 : 29204);
-                        break;
-                    case 71450:                                 // Crown Parcel Service Uniform
-                        target->SetDisplayId(target->getGender() == GENDER_MALE ? 31002 : 31003);
-                        break;
-                    case 75531:                               // Gnomeregan Pride
-                        target->SetDisplayId(31654);
-                        break;
                     // Pygmy Oil
                     case 53806:
                         target->SetDisplayId(22512);
@@ -3437,33 +3382,80 @@ void AuraEffect::HandleAuraModIncreaseFlightSpeed(AuraApplication const* aurApp,
                 }
             }
             else
-            if (Player *plr = target->m_movedPlayer)
             {
-                WorldPacket data;
-                if (apply)
-                    data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+                CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(GetMiscValue());
+                if (!ci)
+                {
+                    target->SetDisplayId(16358);              // pig pink ^_^
+                    sLog->outError("Auras: unknown creature id = %d (only need its modelid) From Spell Aura Transform in Spell ID = %d", GetMiscValue(), GetId());
+                }
                 else
-                    data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-                data.append(plr->GetPackGUID());
-                data << uint32(0);                                      // unknown
-                plr->SendDirectMessage(&data);
+                {
+                    uint32 model_id = 0;
+
+                    if (uint32 modelid = ci->GetRandomValidModelId())
+                        model_id = modelid;                     // Will use the default model here
+
+                    // Polymorph (sheep)
+                    if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_MAGE && GetSpellProto()->SpellIconID == 82 && GetSpellProto()->SpellVisual[0] == 12978)
+                        if (Unit* caster = GetCaster())
+                            if (caster->HasAura(52648))         // Glyph of the Penguin
+                                model_id = 26452;
+
+                    target->SetDisplayId(model_id);
+
+                    // Dragonmaw Illusion (set mount model also)
+                    if (GetId() == 42016 && target->GetMountID() && !target->GetAuraEffectsByType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED).empty())
+                        target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, 16314);
+                }
             }
         }
 
-        if (mode & AURA_EFFECT_HANDLE_REAL)
-        {
-            //Players on flying mounts must be immune to polymorph
-            if (target->GetTypeId() == TYPEID_PLAYER)
-                target->ApplySpellImmune(GetId(), IMMUNITY_MECHANIC, MECHANIC_POLYMORPH, apply);
+        // update active transform spell only when transform or shapeshift not set or not overwriting negative by positive case
+        if (!target->getTransForm() || !IsPositiveSpell(GetId()) || IsPositiveSpell(target->getTransForm()))
+            target->setTransForm(GetId());
 
-            // Dragonmaw Illusion (overwrite mount model, mounted aura already applied)
-            if (apply && target->HasAuraEffect(42016, 0) && target->GetMountID())
-                target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, 16314);
+        // polymorph case
+        if ((mode & AURA_EFFECT_HANDLE_REAL) && target->GetTypeId() == TYPEID_PLAYER && target->IsPolymorphed())
+        {
+            // for players, start regeneration after 1s (in polymorph fast regeneration case)
+            // only if caster is Player (after patch 2.4.2)
+            if (IS_PLAYER_GUID(GetCasterGUID()))
+                target->ToPlayer()->setRegenTimerCount(1*IN_MILLISECONDS);
+
+            //dismount polymorphed target (after patch 2.4.2)
+            if (target->IsMounted())
+                target->RemoveAurasByType(SPELL_AURA_MOUNTED);
         }
     }
+    else
+    {
+        // HandleEffect(this, AURA_EFFECT_HANDLE_SEND_FOR_CLIENT, true) will reapply it if need
+        if (target->getTransForm() == GetId())
+            target->setTransForm(0);
 
-    if (mode & AURA_EFFECT_HANDLE_CHANGE_AMOUNT_MASK)
-        target->UpdateSpeed(MOVE_FLIGHT, true);
+        target->RestoreDisplayId();
+
+        // Dragonmaw Illusion (restore mount model)
+        if (GetId() == 42016 && target->GetMountID() == 16314)
+        {
+            if (!target->GetAuraEffectsByType(SPELL_AURA_MOUNTED).empty())
+            {
+                uint32 cr_id = target->GetAuraEffectsByType(SPELL_AURA_MOUNTED).front()->GetMiscValue();
+                if (CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(cr_id))
+                {
+                    uint32 team = 0;
+                    if (target->GetTypeId() == TYPEID_PLAYER)
+                        team = target->ToPlayer()->GetTeam();
+
+                    uint32 displayID = sObjectMgr->ChooseDisplayId(team, ci);
+                    sObjectMgr->GetCreatureModelRandomGender(&displayID);
+
+                    target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, displayID);
+                }
+            }
+        }
+    }
 }
 
 void AuraEffect::HandleAuraModIncreaseSwimSpeed(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
@@ -4012,8 +4004,9 @@ void AuraEffect::HandleModTotalPercentStat(AuraApplication const* aurApp, uint8 
         }
     }
 
-    //recalculate current HP/MP after applying aura modifications (only for spells with SPELL_ATTR0_UNK4 0x00000010 flag)
-    if (GetMiscValue() == STAT_STAMINA && (m_spellProto->Attributes & SPELL_ATTR0_UNK4))
+    // recalculate current HP/MP after applying aura modifications (only for spells with SPELL_ATTR0_UNK4 0x00000010 flag)
+    // this check is total bullshit i think
+    if (GetMiscValue() == STAT_STAMINA && (m_spellProto->Attributes & SPELL_ATTR0_ABILITY))
         target->SetHealth(std::max<uint32>(uint32(healthPct * target->GetMaxHealth() * 0.01f), (alive ? 1 : 0)));
 }
 
@@ -6263,26 +6256,21 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
         return;
     }
 
-    // We use it to fight with invalid data that appears later sometimes.
-    SpellEntry const*spellProto = GetSpellProto();
-    const uint32 effIndex = GetEffIndex();
-    uint64 casterGuid = GetCasterGUID();
-
     // Consecrate ticks can miss and will not show up in the combat log
-    if (spellProto->Effect[effIndex] == SPELL_EFFECT_PERSISTENT_AREA_AURA &&
-        caster->SpellHitResult(target, spellProto, false) != SPELL_MISS_NONE)
+    if (GetSpellProto()->Effect[GetEffIndex()] == SPELL_EFFECT_PERSISTENT_AREA_AURA &&
+        caster->SpellHitResult(target, GetSpellProto(), false) != SPELL_MISS_NONE)
         return;
 
     // some auras remove at specific health level or more
     if (GetAuraType() == SPELL_AURA_PERIODIC_DAMAGE)
     {
-        switch (spellProto->Id)
+        switch (GetSpellProto()->Id)
         {
             case 43093: case 31956: case 38801:  // Grievous Wound
             case 35321: case 38363: case 39215:  // Gushing Wound
                 if (target->IsFullHealth())
                 {
-                    target->RemoveAurasDueToSpell(spellProto->Id);
+                    target->RemoveAurasDueToSpell(GetSpellProto()->Id);
                     return;
                 }
                 break;
@@ -6291,7 +6279,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
                 uint32 percent = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), 1, caster);
                 if (!target->HealthBelowPct(percent))
                 {
-                    target->RemoveAurasDueToSpell(spellProto->Id);
+                    target->RemoveAurasDueToSpell(GetSpellProto()->Id);
                     return;
                 }
                 break;
@@ -6308,18 +6296,18 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
 
     if (GetAuraType() == SPELL_AURA_PERIODIC_DAMAGE)
     {
-        damage = caster->SpellDamageBonus(target, spellProto, damage, DOT, GetBase()->GetStackAmount());
+        damage = caster->SpellDamageBonus(target, GetSpellProto(), damage, DOT, GetBase()->GetStackAmount());
 
         // Calculate armor mitigation
-        if (Unit::IsDamageReducedByArmor(GetSpellSchoolMask(spellProto), spellProto, effIndex))
+        if (Unit::IsDamageReducedByArmor(GetSpellSchoolMask(GetSpellProto()), GetSpellProto(), GetEffIndex()))
         {
-            uint32 damageReductedArmor = caster->CalcArmorReducedDamage(target, damage, spellProto);
+            uint32 damageReductedArmor = caster->CalcArmorReducedDamage(target, damage, GetSpellProto());
             cleanDamage.mitigated_damage += damage - damageReductedArmor;
             damage = damageReductedArmor;
         }
 
         // Curse of Agony damage-per-tick calculation
-        if (spellProto->SpellFamilyName == SPELLFAMILY_WARLOCK && (spellProto->SpellFamilyFlags[0] & 0x400) && spellProto->SpellIconID == 544)
+        if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_WARLOCK && (GetSpellProto()->SpellFamilyFlags[0] & 0x400) && GetSpellProto()->SpellIconID == 544)
         {
             uint32 totalTick = GetTotalTicks();
             // 1..4 ticks, 1/2 from normal tick damage
@@ -6331,7 +6319,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
             // 5..8 ticks have normal tick damage
         }
         // There is a Chance to make a Soul Shard when Drain soul does damage
-        if (spellProto->SpellFamilyName == SPELLFAMILY_WARLOCK && (spellProto->SpellFamilyFlags[0] & 0x00004000))
+        if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_WARLOCK && (GetSpellProto()->SpellFamilyFlags[0] & 0x00004000))
         {
             if (caster->GetTypeId() == TYPEID_PLAYER && caster->ToPlayer()->isHonorOrXPTarget(target))
             {
@@ -6345,7 +6333,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
                 }
             }
         }
-        if (spellProto->SpellFamilyName == SPELLFAMILY_GENERIC)
+        if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_GENERIC)
         {
             switch (GetId())
             {
@@ -6371,7 +6359,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
     caster->ApplyResilience(target, NULL, &dmg, crit, CR_CRIT_TAKEN_SPELL);
     damage = dmg;
 
-    caster->CalcAbsorbResist(target, GetSpellSchoolMask(spellProto), DOT, damage, &absorb, &resist, spellProto);
+    caster->CalcAbsorbResist(target, GetSpellSchoolMask(GetSpellProto()), DOT, damage, &absorb, &resist, GetSpellProto());
 
     sLog->outDetail("PeriodicTick: %u (TypeId: %u) attacked %u (TypeId: %u) for %u dmg inflicted by %u abs is %u",
         GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), target->GetGUIDLow(), target->GetTypeId(), damage, GetId(), absorb);
@@ -6393,9 +6381,9 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
     SpellPeriodicAuraLogInfo pInfo(this, damage, overkill, absorb, resist, 0.0f, crit);
     target->SendPeriodicAuraLog(&pInfo);
 
-    caster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, damage, BASE_ATTACK, spellProto);
+    caster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, damage, BASE_ATTACK, GetSpellProto());
 
-    caster->DealDamage(target, damage, &cleanDamage, DOT, GetSpellSchoolMask(spellProto), spellProto, true);
+    caster->DealDamage(target, damage, &cleanDamage, DOT, GetSpellSchoolMask(GetSpellProto()), GetSpellProto(), true);
 }
 
 void AuraEffect::HandlePeriodicHealthLeechAuraTick(Unit* target, Unit* caster) const

@@ -94,6 +94,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     uint32 updateTime = sWorld->GetUpdateTime();
 
     PSendSysMessage(LANG_CONNECTED_PLAYERS, PlayersNum, MaxPlayersNum, queuedClientsNum, maxQueuedClientsNum);
+    SendSysMessage(_FULLVERSION);
     PSendSysMessage(LANG_UPTIME, uptime.c_str());
     PSendSysMessage("Update time diff: %u.", updateTime);
 

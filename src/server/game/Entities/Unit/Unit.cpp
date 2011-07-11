@@ -12175,7 +12175,7 @@ void Unit::ApplySpellDispelImmunity(const SpellEntry * spellProto, DispelType ty
     if (apply && spellProto->AttributesEx & SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY)
     {
         // Create dispel mask by dispel type
-        uint32 dispelMask = GetDispellMask(type);
+        uint32 dispelMask = GetDispelMask(type);
         // Dispel all existing auras vs current dispel type
         AuraApplicationMap& auras = GetAppliedAuras();
         for (AuraApplicationMap::iterator itr = auras.begin(); itr != auras.end();)
@@ -17030,19 +17030,6 @@ void Unit::JumpTo(WorldObject *obj, float speedZ)
     obj->GetContactPoint(this, x, y, z);
     float speedXY = GetExactDist2d(x, y) * 10.0f / speedZ;
     GetMotionMaster()->MoveJump(x, y, z, speedXY, speedZ);
-}
-
-bool Unit::CheckPlayerCondition(Player* pPlayer)
-{
-    switch(GetEntry())
-    {
-            case 35644: // Argent Warhorse
-            case 36558: // Argent Battleworg
-                if (!pPlayer->HasItemOrGemWithIdEquipped(46106, 1)) // Check item Argent Lance
-                    return false;
-            default:
-                return true;
-    }
 }
 
 bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)

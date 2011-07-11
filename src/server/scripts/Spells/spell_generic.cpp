@@ -232,13 +232,13 @@ class spell_gen_pet_summoned : public SpellScriptLoader
                 if (caster->GetTypeId() != TYPEID_PLAYER)
                     return;
 
-                Player* plr = caster->ToPlayer();
-                if (plr->GetLastPetNumber())
+                Player* player = caster->ToPlayer();
+                if (player->GetLastPetNumber())
                 {
-                    PetType newPetType = (plr->getClass() == CLASS_HUNTER) ? HUNTER_PET : SUMMON_PET;
-                    if (Pet* newPet = new Pet(plr, newPetType))
+                    PetType newPetType = (player->getClass() == CLASS_HUNTER) ? HUNTER_PET : SUMMON_PET;
+                    if (Pet* newPet = new Pet(player, newPetType))
                     {
-                        if (newPet->LoadPetFromDB(plr, 0, plr->GetLastPetNumber(), true))
+                        if (newPet->LoadPetFromDB(player, 0, player->GetLastPetNumber(), true))
                         {
                             // revive the pet if it is dead
                             if (newPet->getDeathState() == DEAD)
@@ -476,10 +476,10 @@ class spell_gen_trick_or_treat : public SpellScriptLoader
 
             void HandleScript(SpellEffIndex /*effIndex*/)
             {
-                if (Player* pTarget = GetHitPlayer())
+                if (Player* target = GetHitPlayer())
                 {
-                    GetCaster()->CastSpell(pTarget, roll_chance_i(50) ? SPELL_TRICK : SPELL_TREAT, true, NULL);
-                    GetCaster()->CastSpell(pTarget, SPELL_TRICKED_OR_TREATED, true, NULL);
+                    GetCaster()->CastSpell(target, roll_chance_i(50) ? SPELL_TRICK : SPELL_TREAT, true, NULL);
+                    GetCaster()->CastSpell(target, SPELL_TRICKED_OR_TREATED, true, NULL);
                 }
             }
 
@@ -647,7 +647,7 @@ class spell_gen_divine_storm_cd_reset : public SpellScriptLoader
 
             void HandleScript(SpellEffIndex /*effIndex*/)
             {
-                if (Player *caster = GetCaster()->ToPlayer())
+                if (Player* caster = GetCaster()->ToPlayer())
                     if (caster->HasSpellCooldown(SPELL_DIVINE_STORM))
                         caster->RemoveSpellCooldown(SPELL_DIVINE_STORM, true);
             }
@@ -992,9 +992,9 @@ class spell_generic_clone_weapon : public SpellScriptLoader
                     case SPELL_COPY_WEAPON_2:
                     case SPELL_COPY_WEAPON_3:
                     {
-                        if (Player* plrCaster = caster->ToPlayer())
+                        if (Player* player = caster->ToPlayer())
                         {
-                            if (Item* mainItem = plrCaster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
+                            if (Item* mainItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
                                 target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, mainItem->GetEntry());
                         }
                         else
@@ -1004,9 +1004,9 @@ class spell_generic_clone_weapon : public SpellScriptLoader
                     case SPELL_COPY_OFFHAND:
                     case SPELL_COPY_OFFHAND_2:
                     {
-                        if (Player* plrCaster = caster->ToPlayer())
+                        if (Player* player = caster->ToPlayer())
                         {
-                            if (Item* offItem = plrCaster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+                            if (Item* offItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
                                 target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, offItem->GetEntry());
                         }
                         else
@@ -1015,9 +1015,9 @@ class spell_generic_clone_weapon : public SpellScriptLoader
                     }
                     case SPELL_COPY_RANGED:
                     {
-                        if (Player* plrCaster = caster->ToPlayer())
+                        if (Player* player = caster->ToPlayer())
                         {
-                            if (Item* rangedItem = plrCaster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED))
+                            if (Item* rangedItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED))
                                 target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, rangedItem->GetEntry());
                         }
                         else
@@ -1266,15 +1266,8 @@ class spell_gen_launch : public SpellScriptLoader
 
             void HandleScript(SpellEffIndex effIndex)
             {
-                PreventHitDefaultEffect(effIndex);
-
-                SpellEntry const* const spell = GetSpellInfo();
-
                 if (Player* player = GetHitPlayer())
-                {
-                    player->CastSpell(player,spell->EffectTriggerSpell[1],true); // changes the player's seat
                     player->AddAura(SPELL_LAUNCH_NO_FALLING_DAMAGE,player); // prevents falling damage
-                }
             }
 
             void Launch()
@@ -1313,7 +1306,7 @@ class spell_gen_vehicle_scaling : public SpellScriptLoader
 {
     public:
         spell_gen_vehicle_scaling() : SpellScriptLoader("spell_gen_vehicle_scaling") { }
-        
+
         class spell_gen_vehicle_scaling_AuraScript : public AuraScript
         {
             PrepareAuraScript(spell_gen_vehicle_scaling_AuraScript);
@@ -1326,7 +1319,7 @@ class spell_gen_vehicle_scaling : public SpellScriptLoader
 
                 float factor;
                 uint16 baseItemLevel;
-                        
+
                 // TODO: Reserach coeffs for different vehicles
                 switch (GetId())
                 {
@@ -1339,14 +1332,14 @@ class spell_gen_vehicle_scaling : public SpellScriptLoader
                         baseItemLevel = 170;
                         break;
                 }
-                        
+
                 float avgILvl = caster->ToPlayer()->GetAverageItemLevel();
                 if (avgILvl < baseItemLevel)
                     return;                     // TODO: Research possibility of scaling down
-                        
+
                 amount = uint16((avgILvl - baseItemLevel) * factor);
             }
-                
+
             void Register()
             {
                 DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_gen_vehicle_scaling_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_HEALING_PCT);
@@ -1354,7 +1347,7 @@ class spell_gen_vehicle_scaling : public SpellScriptLoader
                 DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_gen_vehicle_scaling_AuraScript::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_INCREASE_HEALTH_PERCENT);
             }
         };
- 
+
         AuraScript* GetAuraScript() const
         {
             return new spell_gen_vehicle_scaling_AuraScript();

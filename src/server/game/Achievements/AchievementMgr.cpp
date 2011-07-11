@@ -433,8 +433,7 @@ void AchievementMgr::ResetAchievementCriteria(AchievementCriteriaTypes type, uin
 {
     sLog->outDebug(LOG_FILTER_ACHIEVEMENTSYS, "AchievementMgr::ResetAchievementCriteria(%u, %u, %u)", type, miscvalue1, miscvalue2);
 
-    // disable for gamemasters with GM-mode enabled
-    if (m_player->isGameMaster())
+    if (m_player->GetSession()->GetSecurity() > AccountTypes(sWorld->getIntConfig(CONFIG_GM_LEVEL_ALLOW_ACHIEVEMENTS)))
         return;
 
     AchievementCriteriaEntryList const& achievementCriteriaList = sAchievementMgr->GetAchievementCriteriaByType(type);
@@ -734,8 +733,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
 {
     sLog->outDebug(LOG_FILTER_ACHIEVEMENTSYS, "AchievementMgr::UpdateAchievementCriteria(%u, %u, %u)", type, miscValue1, miscValue2);
 
-    // disable for gamemasters with GM-mode enabled
-    if (m_player->isGameMaster())
+    if (m_player->GetSession()->GetSecurity() > AccountTypes(sWorld->getIntConfig(CONFIG_GM_LEVEL_ALLOW_ACHIEVEMENTS)))
         return;
 
     AchievementCriteriaEntryList const& achievementCriteriaList = sAchievementMgr->GetAchievementCriteriaByType(type);
@@ -2004,12 +2002,11 @@ void AchievementMgr::RemoveTimedAchievement(AchievementCriteriaTimedTypes type, 
     }
 }
 
-void AchievementMgr::CompletedAchievement(AchievementEntry const* achievement)
+void AchievementMgr::CompletedAchievement(AchievementEntry const* achievement, bool ignoreGMAllowAchievementConfig)
 {
     sLog->outDetail("AchievementMgr::CompletedAchievement(%u)", achievement->ID);
 
-    // disable for gamemasters with GM-mode enabled
-    if (m_player->isGameMaster())
+    if (m_player->GetSession()->GetSecurity() > AccountTypes(sWorld->getIntConfig(CONFIG_GM_LEVEL_ALLOW_ACHIEVEMENTS)) && !ignoreGMAllowAchievementConfig)
         return;
 
     if (achievement->flags & ACHIEVEMENT_FLAG_COUNTER || HasAchieved(achievement))

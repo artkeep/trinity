@@ -396,8 +396,12 @@ PersistentCharacterCleanFlags = 0
 #        Kick player on failed check
 #        Default: 0 (Disabled)
 #                 1 (Enabled)
+#	Warden.BanDay
+#		Ban player in failed chaeck
+#		Default: 0 (Disabled)
 
 Warden.Kick = 1
+Warden.BanDay = 3
 
 #
 ###################################################################################################

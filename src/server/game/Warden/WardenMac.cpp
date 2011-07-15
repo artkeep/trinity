@@ -27,6 +27,7 @@
 #include "World.h"
 #include "Player.h"
 #include "Util.h"
+#include "Config.h"
 #include "WardenMac.h"
 #include "WardenModuleMac.h"
 
@@ -256,11 +257,9 @@ void WardenMac::HandleData(ByteBuffer &buff)
         found = true;
     }
 
-    uint32 banDay = sWorld->getIntConfig(CONFIG_INT_WARDEN_BANDAY);
-
-    if (found && banDay)
+    if (found && sWorld->getIntConfig(CONFIG_INT_WARDEN_BANDAY))
     {
-        std::string sDuratuin = (std::string(banDay + "d"));
+        std::string sDuratuin = (std::string(std::string(sConfig->GetStringDefault("Warden.BanDay", "")) + "d"));
         std::string sText = ("Игрок: " + std::string(Client->GetPlayerName()) + " использовал читерское ПО и был забанен на " + sDuratuin.c_str());
         sWorld->SendGMText(LANG_GM_BROADCAST, sText.c_str());
         sWorld->BanAccount(BAN_CHARACTER, Client->GetPlayerName(), sDuratuin.c_str(), "Cheating software user", "Server guard");

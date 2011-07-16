@@ -563,6 +563,13 @@ void GameObject::Update(uint32 diff)
                 return;
             }
 
+            if (IsTemporary)
+            {
+                SetRespawnTime(0);
+                Delete();
+                return;
+            }
+
             SetLootState(GO_READY);
 
             //burning flags in some battlegrounds, if you find better condition, just add it

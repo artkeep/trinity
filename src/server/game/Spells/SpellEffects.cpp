@@ -4280,6 +4280,7 @@ void Spell::EffectSummonObjectWild(SpellEffIndex effIndex)
 
     pGameObj->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
     pGameObj->SetSpellId(m_spellInfo->Id);
+    pGameObj->IsTemporary = true;
 
     ExecuteLogEffectSummonObject(effIndex, pGameObj);
 
@@ -4325,6 +4326,7 @@ void Spell::EffectSummonObjectWild(SpellEffIndex effIndex)
         {
             linkedGO->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
             linkedGO->SetSpellId(m_spellInfo->Id);
+            linkedGO->IsTemporary = true;
 
             ExecuteLogEffectSummonObject(effIndex, linkedGO);
 
@@ -5799,6 +5801,7 @@ void Spell::EffectSummonObject(SpellEffIndex effIndex)
     pGameObj->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
     pGameObj->SetSpellId(m_spellInfo->Id);
     m_caster->AddGameObject(pGameObj);
+    pGameObj->IsTemporary = true;
 
     ExecuteLogEffectSummonObject(effIndex, pGameObj);
 
@@ -6447,6 +6450,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
     //m_ObjToDel.push_back(pGameObj);
 
     cMap->Add(pGameObj);
+    pGameObj->IsTemporary = true;
 
     if (uint32 linkedEntry = pGameObj->GetGOInfo()->GetLinkedGameObjectEntry())
     {
@@ -6461,7 +6465,8 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
 
             ExecuteLogEffectSummonObject(effIndex, linkedGO);
 
-            linkedGO->GetMap()->Add(linkedGO);
+            cMap->Add(linkedGO);
+            linkedGO->IsTemporary = true;
         }
         else
         {

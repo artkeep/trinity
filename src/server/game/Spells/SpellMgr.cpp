@@ -4368,6 +4368,11 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->CastingTimeIndex = 1;
             ++count;
             break;
+        case 53651: // Light's Beacon
+            // aura casted on a whole raid and shouldn't put caster in combat
+            spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_INITIAL_AGGRO;
+            ++count;
+            break;
         case 61719: // Easter Lay Noblegarden Egg Aura - Interrupt flags copied from aura which this aura is linked with
             spellInfo->AuraInterruptFlags = AURA_INTERRUPT_FLAG_HITBYSPELL | AURA_INTERRUPT_FLAG_TAKE_DAMAGE;
             ++count;

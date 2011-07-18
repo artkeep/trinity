@@ -3981,6 +3981,11 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_WITH_TRIGGERED;
             ++count;
             break;
+        case 31117: // Unstable Affliction
+            // this attribute currently makes spell to ignore resilience and absorbs
+            spellInfo->AttributesEx4 &= ~SPELL_ATTR4_FIXED_DAMAGE;
+            ++count;
+            break;
         case 16007: // Draco-Incarcinatrix 900
             // was 46, but effect is aura effect
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_NEARBY_ENTRY;
@@ -4208,13 +4213,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectRadiusIndex[0] = 37;
             ++count;
             break;
-        // Ghoul's explosion - fix wrong target(?) + make instakill
-	    case 47496:
-	    spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENEMY_DST;
-	    spellInfo->EffectImplicitTargetB[0] = 0;
-	    spellInfo->Effect[1] = SPELL_EFFECT_INSTAKILL;
-	    ++count;
-	    break;
         // Master Shapeshifter: missing stance data for forms other than bear - bear version has correct data
         // To prevent aura staying on target after talent unlearned
         case 48420:

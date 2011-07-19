@@ -1043,10 +1043,10 @@ void Log::outWarden(const char * str, ...)
 
     va_list ap;
 
-    va_start(ap, str);
-    vutf8printf(stdout, str, &ap);
-    va_end(ap);
-    printf( "\n" );
+    //va_start(ap, str);
+    //vutf8printf(stdout, str, &ap);
+    //va_end(ap);
+    //printf( "\n" );
     if (wardenLogFile)
     {
         outTimestamp(wardenLogFile);
@@ -1059,5 +1059,5 @@ void Log::outWarden(const char * str, ...)
 
         fflush(wardenLogFile);
     }
-    fflush(stdout);
+    //fflush(stdout);
 }

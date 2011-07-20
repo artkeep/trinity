@@ -12010,7 +12010,8 @@ void Unit::MeleeDamageBonus(Unit* victim, uint32 *pdamage, WeaponAttackType attT
         }
         // Creatures' melee
         else if ((*i)->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
-            AddPctN(DoneTotalMod, (*i)->GetAmount());
+            if (!HasUnitTypeMask(UNIT_MASK_GUARDIAN))
+                AddPctN(DoneTotalMod, (*i)->GetAmount());
 
     AuraEffectList const& mDamageDoneVersus = GetAuraEffectsByType(SPELL_AURA_MOD_DAMAGE_DONE_VERSUS);
     for (AuraEffectList::const_iterator i = mDamageDoneVersus.begin(); i != mDamageDoneVersus.end(); ++i)

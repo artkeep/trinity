@@ -262,7 +262,7 @@ void WardenMac::HandleData(ByteBuffer &buff)
         std::string sDuratuin = (std::string(std::string(sConfig->GetStringDefault("Warden.BanDay", "")) + "d"));
         std::string sText = ("Игрок: " + std::string(Client->GetPlayerName()) + " использовал читерское ПО и был забанен на " + sDuratuin.c_str());
         sWorld->SendGMText(LANG_GM_BROADCAST, sText.c_str());
-        sWorld->BanAccount(BAN_CHARACTER, Client->GetPlayerName(), sDuratuin.c_str(), "Cheating software user", "Server guard");
+        sWorld->BanAccount(BAN_CHARACTER, Client->GetPlayerName(), sDuratuin.c_str(), "Использование запрещенного ПО", "Защита сервера");
     }
     else if (found && sWorld->getBoolConfig(CONFIG_BOOL_WARDEN_KICK))
         Client->KickPlayer();

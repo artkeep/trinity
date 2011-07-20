@@ -1217,13 +1217,13 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_MAX_RESULTS_LOOKUP_COMMANDS] = sConfig->GetIntDefault("Command.LookupMaxResults", 0);
 
     // chat logging
-    m_bool_configs[CONFIG_CHATLOG_CHANNEL] = sConfig->GetBoolDefault("CLogs.Channel", false);
+    m_bool_configs[CONFIG_CHATLOG_CHANNEL] = sConfig->GetBoolDefault("ChatLogs.Channel", false);
     m_bool_configs[CONFIG_CHATLOG_WHISPER] = sConfig->GetBoolDefault("CLogs.Whisper", false);
-    m_bool_configs[CONFIG_CHATLOG_SYSCHAN] = sConfig->GetBoolDefault("CLogs.SysChan", false);
+    m_bool_configs[CONFIG_CHATLOG_SYSCHAN] = sConfig->GetBoolDefault("ChatLogs.SysChan", false);
     m_bool_configs[CONFIG_CHATLOG_PARTY] = sConfig->GetBoolDefault("CLogs.Party", false);
-    m_bool_configs[CONFIG_CHATLOG_RAID] = sConfig->GetBoolDefault("CLogs.Raid", false);
+    m_bool_configs[CONFIG_CHATLOG_RAID] = sConfig->GetBoolDefault("ChatLogs.Raid", false);
     m_bool_configs[CONFIG_CHATLOG_GUILD] = sConfig->GetBoolDefault("CLogs.Guild", false);
-    m_bool_configs[CONFIG_CHATLOG_PUBLIC] = sConfig->GetBoolDefault("CLogs.Public", false);
+    m_bool_configs[CONFIG_CHATLOG_PUBLIC] = sConfig->GetBoolDefault("ChatLogs.Public", false);
     m_bool_configs[CONFIG_CHATLOG_ADDON] = sConfig->GetBoolDefault("ChatLogs.Addon", false);
     m_bool_configs[CONFIG_CHATLOG_BGROUND] = sConfig->GetBoolDefault("ChatLogs.Battleground", false);
 

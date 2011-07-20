@@ -741,7 +741,7 @@ ChatLogs.Channel = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-CLogs.Ls = 0
+ChatLogs.Whisper = 0
 
 #
 #    ChatLogs.SysChan
@@ -758,7 +758,7 @@ ChatLogs.SysChan = 0
 #                     1 - (Enabled)
 
 
-CLogs.Pa = 0
+ChatLogs.Party = 0
 
 #
 #    ChatLogs.Raid
@@ -775,7 +775,7 @@ ChatLogs.Raid = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-CLogs.Gi = 0
+zLogs.Guild = 0
 
 #
 #    ChatLogs.Public

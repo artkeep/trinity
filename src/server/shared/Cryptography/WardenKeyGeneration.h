@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Sha1.h"
+#include "SHA1.h"
 
 #ifndef _WARDEN_KEY_GENERATION_H
 #define _WARDEN_KEY_GENERATION_H

@@ -2213,10 +2213,19 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
             }
 
             Position pos;
-            if (cur == TARGET_DEST_CASTER_FRONT_LEAP)
-                m_caster->GetFirstCollisionPosition(pos, dist, angle);
-            else
-                m_caster->GetNearPosition(pos, dist, angle);
+            switch (cur)
+            {
+                case TARGET_DEST_CASTER_FRONT_LEAP:
+                case TARGET_DEST_CASTER_FRONT_LEFT:
+                case TARGET_DEST_CASTER_BACK_LEFT:
+                case TARGET_DEST_CASTER_BACK_RIGHT:
+                case TARGET_DEST_CASTER_FRONT_RIGHT:
+                    m_caster->GetFirstCollisionPosition(pos, dist, angle);
+                    break;
+                default:
+                    m_caster->GetNearPosition(pos, dist, angle);
+                    break;
+            }
             m_targets.SetDst(*m_caster);
             m_targets.ModDst(pos);
             break;
@@ -2793,18 +2802,6 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                         unitList.sort(Trinity::PowerPctOrderPred((Powers)power));
                         unitList.resize(maxSize);
                     }
-                    // Replenishment: refresh existing auras
-                    if (m_spellInfo->Id == 57669)
-                        for (std::list<Unit *>::iterator itr = unitList.begin(); itr != unitList.end();)
-                            if (AuraEffect * aurEff = (*itr)->GetAuraEffect(SPELL_AURA_PERIODIC_ENERGIZE, SPELLFAMILY_GENERIC, 3184, EFFECT_0))
-                            {
-                                aurEff->SetAmount((*itr)->GetMaxPower(POWER_MANA) * 25 / 10000);
-                                aurEff->GetBase()->RefreshDuration();
-
-                                itr = unitList.erase(itr);
-                            }
-                            else
-                                ++itr;
                 }
             }
 
@@ -3079,10 +3076,6 @@ void Spell::cancel()
         default:
             break;
     }
-    
-    SetReferencedFromCurrent(false);
-    if (m_selfContainer && *m_selfContainer == this)
-        *m_selfContainer = NULL;
 
     SetReferencedFromCurrent(false);
     if (m_selfContainer && *m_selfContainer == this)
@@ -4358,15 +4351,15 @@ void Spell::TakePower()
     bool hit = true;
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
     {
-        if (m_spellInfo->powerType == POWER_RAGE || m_spellInfo->powerType == POWER_ENERGY || m_spellInfo->powerType == POWER_RUNE)
+        if (m_spellInfo->powerType == POWER_RAGE || m_spellInfo->powerType == POWER_ENERGY ||
+            m_spellInfo->powerType == POWER_RUNE || m_spellInfo->powerType == POWER_RUNIC_POWER)
             if (uint64 targetGUID = m_targets.GetUnitTargetGUID())
                 for (std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
                     if (ihit->targetGUID == targetGUID)
                     {
-                        if (ihit->missCondition != SPELL_MISS_NONE && ihit->missCondition != SPELL_MISS_MISS/* && ihit->targetGUID != m_caster->GetGUID()*/)
-                            hit = false;
-                        if (ihit->missCondition != SPELL_MISS_NONE)
+                        if (ihit->missCondition != SPELL_MISS_NONE && ihit->missCondition != SPELL_MISS_IMMUNE)
                         {
+                            hit = false;
                             //lower spell cost on fail (by talent aura)
                             if (Player *modOwner = m_caster->ToPlayer()->GetSpellModOwner())
                                 modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_SPELL_COST_REFUND_ON_FAIL, m_powerCost);
@@ -4399,10 +4392,10 @@ void Spell::TakePower()
         return;
     }
 
-    if (hit)
+    if (hit || m_spellInfo->AttributesEx & SPELL_ATTR1_REQ_COMBO_POINTS1)
         m_caster->ModifyPower(powerType, -m_powerCost);
     else
-        m_caster->ModifyPower(powerType, -irand(0, m_powerCost/4));
+        m_caster->ModifyPower(powerType, -m_powerCost/5);
 
     // Set the five second timer
     if (powerType == POWER_MANA && m_powerCost > 0)
@@ -5111,6 +5104,49 @@ SpellCastResult Spell::CheckCast(bool strict)
 
                 break;
             }
+            case SPELL_EFFECT_DISPEL:
+            {
+                Unit* target = m_targets.GetUnitTarget();
+                if (!target || i != 0 || m_spellInfo->DmgClass != SPELL_DAMAGE_CLASS_MAGIC)
+                    break;
+
+                bool dispelAura = false;
+
+                // Create dispel mask by dispel type
+                uint32 dispelMask;
+                for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
+                    if (m_spellInfo->Effect[j] == SPELL_EFFECT_DISPEL)
+                        dispelMask |= GetDispelMask(DispelType(m_spellInfo->EffectMiscValue[j]));
+
+                // we should not be able to dispel diseases if the target is affected by unholy blight
+                if (dispelMask & (1 << DISPEL_DISEASE) && target->HasAura(50536))
+                    dispelMask &= ~(1 << DISPEL_DISEASE);
+
+                Unit::AuraMap const& auras = target->GetOwnedAuras();
+                for (Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                {
+                    Aura* aura = itr->second;
+
+                    // don't try to remove passive auras
+                    if (aura->IsPassive())
+                        continue;
+
+                    if ((1<<aura->GetSpellProto()->Dispel) & dispelMask)
+                    {
+                        // do not remove positive auras if friendly target
+                        //               negative auras if non-friendly target
+                        if (IsPositiveSpell(aura->GetId()) == target->IsFriendlyTo(m_caster))
+                            continue;
+
+                        dispelAura = true;
+                        break;
+                    }
+                }
+
+                if (!dispelAura)
+                    return SPELL_FAILED_NOTHING_TO_DISPEL;
+                break;
+            }
             case SPELL_EFFECT_POWER_BURN:
             case SPELL_EFFECT_POWER_DRAIN:
             {
@@ -5282,6 +5318,13 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_caster->GetCharmGUID())
                     return SPELL_FAILED_ALREADY_HAVE_CHARM;
 
+                break;
+            }
+            case SPELL_EFFECT_TRANS_DOOR:
+            {
+                // Ritual of Summoning shouldn't be used in Battlegrounds or Arenas
+                if (m_spellInfo->Id == 698 && m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->ToPlayer()->InBattleground())
+                    return SPELL_FAILED_NOT_HERE;
                 break;
             }
             case SPELL_EFFECT_SUMMON_PLAYER:
@@ -7373,6 +7416,13 @@ void Spell::PrepareTriggersExecutedOnHit()
              if (m_spellInfo->SpellFamilyFlags[1] & 0x00001000 ||  m_spellInfo->SpellFamilyFlags[0] & 0x00100220)
                  m_preCastSpell = 68391;
              break;
+        }
+        case SPELLFAMILY_DEATHKNIGHT:
+        {
+            // Frost Fever (prevents proc of Chilblains at login)
+            if (m_spellInfo->Id == 59921 && m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->ToPlayer()->GetSession()->PlayerLoading())
+                return;
+            break;
         }
     }
 

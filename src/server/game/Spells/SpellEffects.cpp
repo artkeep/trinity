@@ -4065,8 +4065,6 @@ void Spell::SpellDamageWeaponDmg(SpellEffIndex effIndex)
 
     // some spell specific modifiers
     float totalDamagePercentMod  = 1.0f;                    // applied to final bonus+weapon damage
-    bool spellBonusNeedWeaponDamagePercentMod = false;      // if set applied weapon damage percent mode to spell bonus
-
     int32 fixed_bonus = 0;
     int32 spell_bonus = 0;                                  // bonus specific for spell
 
@@ -4191,12 +4189,8 @@ void Spell::SpellDamageWeaponDmg(SpellEffIndex effIndex)
         case SPELLFAMILY_HUNTER:
         {
             // Kill Shot - bonus damage from Ranged Attack Power
-            if (m_spellInfo->SpellFamilyFlags && UI64LIT(0x80000000000000))
-            {
-                // 0.4*RAP added to damage (that is 0.2 if we apply PercentMod (200%) to spell_bonus, too)
-                spellBonusNeedWeaponDamagePercentMod = true;
-                spell_bonus += int32( 0.2f * m_caster->GetTotalAttackPowerValue(RANGED_ATTACK) );
-            }
+            if (m_spellInfo->SpellFamilyFlags[1] & 0x800000)
+                spell_bonus += int32(0.4f * m_caster->GetTotalAttackPowerValue(RANGED_ATTACK));
             break;
         }
         case SPELLFAMILY_DEATHKNIGHT:

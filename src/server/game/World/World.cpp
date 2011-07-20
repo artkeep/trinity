@@ -1218,11 +1218,11 @@ void World::LoadConfigSettings(bool reload)
 
     // chat logging
     m_bool_configs[CONFIG_CHATLOG_CHANNEL] = sConfig->GetBoolDefault("ChatLogs.Channel", false);
-    m_bool_configs[CONFIG_CHATLOG_WHISPER] = sConfig->GetBoolDefault("ChatLogs.Whisper", false);
+    m_bool_configs[CONFIG_CHATLOG_WHISPER] = sConfig->GetBoolDefault("CLogs.Ls", false);
     m_bool_configs[CONFIG_CHATLOG_SYSCHAN] = sConfig->GetBoolDefault("ChatLogs.SysChan", false);
-    m_bool_configs[CONFIG_CHATLOG_PARTY] = sConfig->GetBoolDefault("ChatLogs.Party", false);
+    m_bool_configs[CONFIG_CHATLOG_PARTY] = sConfig->GetBoolDefault("CLogs.Pa", false);
     m_bool_configs[CONFIG_CHATLOG_RAID] = sConfig->GetBoolDefault("ChatLogs.Raid", false);
-    m_bool_configs[CONFIG_CHATLOG_GUILD] = sConfig->GetBoolDefault("ChatLogs.Guild", false);
+    m_bool_configs[CONFIG_CHATLOG_GUILD] = sConfig->GetBoolDefault("CLogs.Gi", false);
     m_bool_configs[CONFIG_CHATLOG_PUBLIC] = sConfig->GetBoolDefault("ChatLogs.Public", false);
     m_bool_configs[CONFIG_CHATLOG_ADDON] = sConfig->GetBoolDefault("ChatLogs.Addon", false);
     m_bool_configs[CONFIG_CHATLOG_BGROUND] = sConfig->GetBoolDefault("ChatLogs.Battleground", false);

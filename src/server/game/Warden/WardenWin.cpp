@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -493,9 +493,9 @@ void WardenWin::HandleData(ByteBuffer &buff)
     if (found && sWorld->getIntConfig(CONFIG_INT_WARDEN_BANDAY))
     {
         std::string sDuratuin = (std::string(std::string(sConfig->GetStringDefault("Warden.BanDay", "")) + "d"));
-        std::string sText = ("Èãðîê: " + std::string(Client->GetPlayerName()) + " èñïîëüçîâàë ÷èòåðñêîå ÏÎ è áûë çàáàíåí íà " + sDuratuin.c_str());
+        std::string sText = ("Ð˜Ð³Ñ€Ð¾Ðº: " + std::string(Client->GetPlayerName()) + " Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð» Ñ‡Ð¸Ñ‚ÐµÑ€ÑÐºÐ¾Ðµ ÐŸÐž Ð¸ Ð±Ñ‹Ð» Ð·Ð°Ð±Ð°Ð½ÐµÐ½ Ð½Ð° " + sDuratuin.c_str());
         sWorld->SendGMText(LANG_GM_BROADCAST, sText.c_str());
-        sWorld->BanAccount(BAN_CHARACTER, Client->GetPlayerName(), sDuratuin.c_str(), "Èñïîëüçîâàíèå çàïðåùåííîãî ÏÎ", "Çàùèòà ñåðâåðà");
+        sWorld->BanAccount(BAN_CHARACTER, Client->GetPlayerName(), sDuratuin.c_str(), "Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð·Ð°Ð¿Ñ€ÐµÑ‰ÐµÐ½Ð½Ð¾Ð³Ð¾ ÐŸÐž", "Ð—Ð°Ñ‰Ð¸Ñ‚Ð° ÑÐµÑ€Ð²ÐµÑ€Ð°");
     }
     else if (found && sWorld->getBoolConfig(CONFIG_BOOL_WARDEN_KICK))
         Client->KickPlayer();

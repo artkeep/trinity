@@ -733,7 +733,7 @@ ChatLogTimestamp = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-ChatLogs.Channel = 0
+CLogs.Channel = 0
 
 #
 #    ChatLogs.Whisper
@@ -741,7 +741,7 @@ ChatLogs.Channel = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-ChatLogs.Whisper = 0
+CLogs.Whisper = 0
 
 #
 #    ChatLogs.SysChan
@@ -749,7 +749,7 @@ ChatLogs.Whisper = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-ChatLogs.SysChan = 0
+CLogs.SysChan = 0
 
 #
 #    ChatLogs.Party
@@ -758,7 +758,7 @@ ChatLogs.SysChan = 0
 #                     1 - (Enabled)
 
 
-ChatLogs.Party = 0
+CLogs.Party = 0
 
 #
 #    ChatLogs.Raid
@@ -767,7 +767,7 @@ ChatLogs.Party = 0
 #                     1 - (Enabled)
 
 
-ChatLogs.Raid = 0
+CLogs.Raid = 0
 
 #
 #    ChatLogs.Guild
@@ -775,7 +775,7 @@ ChatLogs.Raid = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-ChatLogs.Guild = 0
+CLogs.Guild = 0
 
 #
 #    ChatLogs.Public
@@ -783,7 +783,7 @@ ChatLogs.Guild = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-ChatLogs.Public = 0
+CLogs.Public = 0
 
 #
 #    ChatLogs.Addon

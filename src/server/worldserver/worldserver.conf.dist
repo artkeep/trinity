@@ -775,7 +775,7 @@ ChatLogs.Raid = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Logs.Guild = 0
+ChatLogs.Guild = 0
 
 #
 #    ChatLogs.Public

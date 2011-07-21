@@ -1002,7 +1002,7 @@ bool OutdoorPvPWG::UpdateCreatureInfo(Creature *creature)
             {
                 if (!creature->isAlive())
                     creature->Respawn(true);
-                creature->setFaction(WintergraspFaction[getDefenderTeam()]);
+                creature->setFaction(creature->GetPositionX() > POS_X_CENTER ? WintergraspFaction[getDefenderTeam()] : WintergraspFaction[getAttackerTeam()]);
             }
             else
             {

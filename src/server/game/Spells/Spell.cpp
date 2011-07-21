@@ -5327,6 +5327,12 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_NOT_HERE;
                 break;
             }
+            case SPELL_EFFECT_TELEPORT_UNITS:
+            {
+                if (m_spellInfo->Id == 8690 && m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->ToPlayer()->InBattleground())
+                    return SPELL_FAILED_NOT_HERE;
+                break;
+            }
             case SPELL_EFFECT_SUMMON_PLAYER:
             {
                 if (m_caster->GetTypeId() != TYPEID_PLAYER)

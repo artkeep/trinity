@@ -455,6 +455,11 @@ void GameObject::Update(uint32 diff)
                         if (ok->GetTypeId() == TYPEID_PLAYER)
                             if (sScriptMgr->OnGossipHello(ok->ToPlayer(), this))
                                 return;
+                                
+                        // Traps should put caster in combat and activate PvP mode
+                        if (owner && owner->isAlive())
+                            owner->CombatStart(ok);
+
 
                         m_cooldownTime = time(NULL) + goInfo->trap.cooldown ? goInfo->trap.cooldown :  uint32(4);   // template or 4 seconds
 

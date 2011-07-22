@@ -1033,12 +1033,6 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage *damageInfo, int32 dama
     if (damage < 0)
         return;
 
-    if (spellInfo->AttributesEx4 & SPELL_ATTR4_FIXED_DAMAGE)
-    {
-        damageInfo->damage = damage;
-        return;
-    }
-
     Unit* victim = damageInfo->target;
     if (!victim || !victim->isAlive())
         return;
@@ -5545,6 +5539,12 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     victim->RemoveAurasWithMechanic(1<<MECHANIC_STUN, AURA_REMOVE_BY_ENEMY_SPELL);
                     return true;
                 }
+                // Glyph of Scourge Strike
+                case 58642:
+                {
+                    triggered_spell_id = 69961; // Glyph of Scourge Strike
+                    break;
+                }
                 // Glyph of Life Tap
                 case 63320:
                 {
@@ -5872,17 +5872,20 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                 {
                     switch (dummySpell->Id)
                     {
-                        case 11119: basepoints0 = int32(0.04f*damage); break;
-                        case 11120: basepoints0 = int32(0.08f*damage); break;
-                        case 12846: basepoints0 = int32(0.12f*damage); break;
-                        case 12847: basepoints0 = int32(0.16f*damage); break;
-                        case 12848: basepoints0 = int32(0.20f*damage); break;
+                        case 11119: basepoints0 = int32(0.08f * damage); break;
+                        case 11120: basepoints0 = int32(0.16f * damage); break;
+                        case 12846: basepoints0 = int32(0.24f * damage); break;
+                        case 12847: basepoints0 = int32(0.32f * damage); break;
+                        case 12848: basepoints0 = int32(0.40f * damage); break;
                         default:
                             sLog->outError("Unit::HandleDummyAuraProc: non handled spell id: %u (IG)", dummySpell->Id);
                             return false;
                     }
 
+                    // 4 damage tick
+                    basepoints0 /= 4;
                     triggered_spell_id = 12654;
+                    // Add remaining ticks to damage done
                     basepoints0 += victim->GetRemainingPeriodicAmount(GetGUID(), triggered_spell_id, SPELL_AURA_PERIODIC_DAMAGE);
                     break;
                 }
@@ -8786,6 +8789,33 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
     // Custom triggered spells
     switch (auraSpellInfo->Id)
     {
+        // Deep Wounds
+        case 12834:
+        case 12849:
+        case 12867:
+        {
+            if (GetTypeId() != TYPEID_PLAYER)
+                return false;
+
+            // now compute approximate weapon damage by formula from wowwiki.com
+            Item* item = NULL;
+            if (procFlags & PROC_FLAG_DONE_OFFHAND_ATTACK)
+                item = ToPlayer()->GetUseableItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+            else
+                item = ToPlayer()->GetUseableItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+
+            // dunno if it's really needed but will prevent any possible crashes
+            if (!item)
+                return false;
+
+            ItemTemplate const* weapon = item->GetTemplate();
+
+            float weaponDPS = weapon->getDPS();
+            float attackPower = GetTotalAttackPowerValue(BASE_ATTACK) / 14.0f;
+            float weaponSpeed = float(weapon->Delay) / 1000.0f;
+            basepoints0 = int32((weaponDPS + attackPower) * weaponSpeed);
+            break;
+        }
         // Persistent Shield (Scarab Brooch trinket)
         // This spell originally trigger 13567 - Dummy Trigger (vs dummy efect)
         case 26467:
@@ -10488,6 +10518,11 @@ uint32 Unit::SpellDamageBonus(Unit* victim, SpellEntry const* spellProto, uint32
     if (!spellProto || !victim || damagetype == DIRECT_DAMAGE)
         return pdamage;
 
+    // small exception for Deep Wounds, can't find any general rule
+    // should ignore ALL damage mods, they already calculated in trigger spell
+    if (spellProto->Id == 12721) // Deep Wounds
+        return pdamage;
+
     // For totems get damage bonus from owner
     if (GetTypeId() == TYPEID_UNIT && ToCreature()->isTotem())
         if (Unit* owner = GetOwner())
@@ -10789,9 +10824,9 @@ uint32 Unit::SpellDamageBonus(Unit* victim, SpellEntry const* spellProto, uint32
                     AddPctN(DoneTotalMod, aurEff->GetAmount());
 
             // Sigil of the Vengeful Heart
-           if (spellProto->SpellFamilyFlags[0] & 0x2000)
-               if (AuraEffect* aurEff = GetAuraEffect(64962, EFFECT_1))
-                   AddPctN(DoneTotal, aurEff->GetAmount());
+            if (spellProto->SpellFamilyFlags[0] & 0x2000)
+                if (AuraEffect* aurEff = GetAuraEffect(64962, EFFECT_1))
+                    AddPctN(DoneTotal, aurEff->GetAmount());
 
             // Glacier Rot
             if (spellProto->SpellFamilyFlags[0] & 0x2 || spellProto->SpellFamilyFlags[1] & 0x6)
@@ -11003,6 +11038,12 @@ uint32 Unit::SpellDamageBonus(Unit* victim, SpellEntry const* spellProto, uint32
         DoneTotal = 0;
         DoneTotalMod = 1.0f;
     }
+
+    // Some spells don't benefit from pct done mods
+    // maybe should be implemented like SPELL_ATTR3_NO_DONE_BONUS,
+    // but then it may break spell power coeffs work on spell 31117
+    if (spellProto->AttributesEx6 & SPELL_ATTR6_NO_DONE_PCT_DAMAGE_MODS)
+        DoneTotalMod = 1.0f;
 
     float tmpDamage = (int32(pdamage) + DoneTotal) * DoneTotalMod;
     // apply spellmod to Done damage (flat and pct)
@@ -15900,11 +15941,10 @@ void Unit::SetStunned(bool apply)
         SetTarget(0);
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
 
-        // MOVEMENTFLAG_ROOT cannot be used in conjunction with
-        // MOVEMENTFLAG_FORWARD, MOVEMENTFLAG_BACKWARD, MOVEMENTFLAG_STRAFE_LEFT, MOVEMENTFLAG_STRAFE RIGHT, MOVEMENTFLAG_FALLING (tested 3.3.5a)
-        // this will freeze clients. That's why we remove any current movement flags before
+        // MOVEMENTFLAG_ROOT cannot be used in conjunction with MOVEMENTFLAG_MASK_MOVING (tested 3.3.5a)
+        // this will freeze clients. That's why we remove MOVEMENTFLAG_MASK_MOVING before
         // setting MOVEMENTFLAG_ROOT
-        RemoveUnitMovementFlag(MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_BACKWARD | MOVEMENTFLAG_STRAFE_LEFT | MOVEMENTFLAG_STRAFE_RIGHT | MOVEMENTFLAG_FALLING);
+        RemoveUnitMovementFlag(MOVEMENTFLAG_MASK_MOVING);
         AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
 
         // Creature specific
@@ -15949,11 +15989,10 @@ void Unit::SetRooted(bool apply)
         if (m_rootTimes > 0) // blizzard internal check?
             m_rootTimes++;
 
-        // MOVEMENTFLAG_ROOT cannot be used in conjunction with
-        // MOVEMENTFLAG_FORWARD, MOVEMENTFLAG_BACKWARD, MOVEMENTFLAG_STRAFE_LEFT, MOVEMENTFLAG_STRAFE RIGHT, MOVEMENTFLAG_FALLING (tested 3.3.5a)
-        // this will freeze clients. That's why we remove any current movement flags before
+        // MOVEMENTFLAG_ROOT cannot be used in conjunction with MOVEMENTFLAG_MASK_MOVING (tested 3.3.5a)
+        // this will freeze clients. That's why we remove MOVEMENTFLAG_MASK_MOVING before
         // setting MOVEMENTFLAG_ROOT
-        RemoveUnitMovementFlag(MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_BACKWARD | MOVEMENTFLAG_STRAFE_LEFT | MOVEMENTFLAG_STRAFE_RIGHT | MOVEMENTFLAG_FALLING);
+        RemoveUnitMovementFlag(MOVEMENTFLAG_MASK_MOVING);
         AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
 
         if (GetTypeId() == TYPEID_PLAYER)

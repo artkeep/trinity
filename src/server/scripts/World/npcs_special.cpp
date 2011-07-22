@@ -2050,27 +2050,6 @@ public:
     }
 };
 
-class npc_lightwell : public CreatureScript
-{
-public:
-    npc_lightwell() : CreatureScript("npc_lightwell") { }
-
-    struct npc_lightwellAI : public PassiveAI
-    {
-        npc_lightwellAI(Creature* c) : PassiveAI(c) {}
-
-        void Reset()
-        {
-            DoCast(me, 59907, false); // Spell for Lightwell Charges
-        }
-    };
-
-    CreatureAI *GetAI(Creature* creature) const
-    {
-        return new npc_lightwellAI(creature);
-    }
-};
-
 enum eTrainingDummy
 {
     NPC_ADVANCED_TARGET_DUMMY                  = 2674,
@@ -2904,7 +2883,6 @@ void AddSC_npcs_special()
     new npc_snake_trap;
     new npc_mirror_image;
     new npc_ebon_gargoyle;
-    new npc_lightwell;
     new npc_spring_rabbit();
     new mob_mojo;
     new npc_training_dummy;

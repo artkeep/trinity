@@ -42,7 +42,7 @@
 #include "CreatureAISelector.h"
 #include "Group.h"
 
-GameObject::GameObject() : WorldObject(), m_goValue(new GameObjectValue), m_AI(NULL)
+GameObject::GameObject() : WorldObject(), m_goValue(new GameObjectValue), m_AI(NULL), IsTemporary(false)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;

@@ -4317,6 +4317,7 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectSpellClassMask[EFFECT_0][1] = 0x20400800;
             ++count;
             break;
+        case 50526: // Wandering Plague
         case 63675: // Improved Devouring Plague
             spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
             ++count;

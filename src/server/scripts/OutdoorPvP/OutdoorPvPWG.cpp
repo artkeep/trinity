@@ -880,12 +880,12 @@ void OutdoorPvPWG::OnGameObjectCreate(GameObject *go)
                 itr->second->type = BUILDING_TOWER;
             if (itr->second->damageState == DAMAGE_INTACT && !itr->second->health)
             {
-                itr->second->health = go->GetGOValue()->building.health;
+                itr->second->health = go->GetGOValue()->Building.Health;
                 go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
             }
             else
             {
-                go->GetGOValue()->building.health = itr->second->health;
+                go->GetGOValue()->Building.Health = itr->second->health;
                 if (itr->second->damageState == DAMAGE_DAMAGED)
                     go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
                 else if (itr->second->damageState == DAMAGE_DESTROYED)
@@ -936,8 +936,7 @@ void OutdoorPvPWG::RebuildAllBuildings()
         if (itr->second->building && itr->second->building->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
         {
             UpdateGameObjectInfo(itr->second->building);
-            itr->second->building->Rebuild();
-            itr->second->health = itr->second->building->GetGOValue()->building.health;
+            itr->second->building->SetDestructibleState(GO_DESTRUCTIBLE_REBUILDING, NULL, true);
             itr->second->damageState = DAMAGE_INTACT;
         }
         else

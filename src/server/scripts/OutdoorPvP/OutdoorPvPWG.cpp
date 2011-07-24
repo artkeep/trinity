@@ -464,20 +464,25 @@ bool OutdoorPvPWG::SetupOutdoorPvP()
     return true;
 }
 
-void OutdoorPvPWG::ProcessEvent(GameObject *obj, uint32 eventId)
+void OutdoorPvPWG::ProcessEvent(WorldObject *obj, uint32 eventId)
 {
-    if (obj->GetEntry() == 192829) // Titan Relic
+    // we handle only gameobjects here
+    GameObject* go = obj->ToGameObject();
+    if (!go)
+        return;
+
+    if (go->GetEntry() == 192829) // Titan Relic
     {
-        if (obj->GetGOInfo()->goober.eventId == eventId && isWarTime() && MaingateDestroyed)
+        if (go->GetGOInfo()->goober.eventId == eventId && isWarTime() && MaingateDestroyed)
         {
             m_changeDefender = true;
             m_timer = 0;
         }
         return;
     }
-    if (obj->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+    if (go->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
     {
-        BuildingStateMap::const_iterator itr = m_buildingStates.find(obj->GetDBTableGUIDLow());
+        BuildingStateMap::const_iterator itr = m_buildingStates.find(go->GetDBTableGUIDLow());
         if (itr == m_buildingStates.end())
             return;
         std::string msgStr;
@@ -509,7 +514,7 @@ void OutdoorPvPWG::ProcessEvent(GameObject *obj, uint32 eventId)
         }
 
         BuildingState *state = itr->second;
-        if (eventId == obj->GetGOInfo()->building.damagedEvent)
+        if (eventId == go->GetGOInfo()->building.damagedEvent)
         {
             state->damageState = DAMAGE_DAMAGED;
             switch (state->type)
@@ -556,11 +561,11 @@ void OutdoorPvPWG::ProcessEvent(GameObject *obj, uint32 eventId)
                     break;
             }
         }
-        else if (eventId == obj->GetGOInfo()->building.destroyedEvent)
+        else if (eventId == go->GetGOInfo()->building.destroyedEvent)
         {
-            if (obj->GetEntry() == 191810)
+            if (go->GetEntry() == 191810)
             {
-               //obj->TakenDamage(30000);
+               //go->TakenDamage(30000);
                MaingateDestroyed = true;
             }
 
@@ -630,8 +635,8 @@ void OutdoorPvPWG::ProcessEvent(GameObject *obj, uint32 eventId)
                         (*itr)->PlayDirectSound(TeamIDsound); // Wintergrasp Fortress under Siege
 
                         // Add Support of Quests Toppling the Towers & Southern Sabotage
-                        if (obj->GetEntry() == 190356 || obj->GetEntry() == 190357 || obj->GetEntry() == 190358)
-                            (*itr)->RewardPlayerAndGroupAtEvent(TOWER_PVP_DESTROYED, obj);
+                        if (go->GetEntry() == 190356 || go->GetEntry() == 190357 || go->GetEntry() == 190358)
+                            (*itr)->RewardPlayerAndGroupAtEvent(TOWER_PVP_DESTROYED, go);
                     }
                     for (PlayerSet::iterator itr = m_players[getAttackerTeam()].begin(); itr != m_players[getAttackerTeam()].end(); ++itr)
                     {

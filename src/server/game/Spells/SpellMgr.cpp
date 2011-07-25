@@ -28,6 +28,8 @@
 #include "CreatureAI.h"
 #include "MapManager.h"
 #include "BattlegroundIC.h"
+#include "OutdoorPvPMgr.h"
+#include "OutdoorPvPWG.h"
 
 bool IsAreaEffectTarget[TOTAL_SPELL_TARGETS];
 SpellEffectTargetTypes EffectTargetType[TOTAL_SPELL_EFFECTS];
@@ -782,6 +784,14 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
                 default:
                     break;
             }
+            break;
+        case SPELLFAMILY_ROGUE:
+            // Envenom
+            if (spellproto->SpellFamilyFlags[1] & 0x8)
+                return true;
+            // Slice and Dice
+            else if (spellproto->SpellFamilyFlags[0] & 0x40000)
+                return true;
             break;
         case SPELLFAMILY_MAGE:
             // Amplify Magic, Dampen Magic
@@ -3348,24 +3358,25 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
             break;
         }
         case 58730: // No fly Zone - Wintergrasp
-            {
-                if (!player)
-                    return false;
+        {
+            if (!player)
+                return false;
 
-                AreaTableEntry const* pArea = GetAreaEntryByAreaID(player->GetAreaId());
-                if (!(pArea && pArea->flags & AREA_FLAG_NO_FLY_ZONE))
+            if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
+            {
+                OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+                if (!pvpWG->isWarTime() || (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY)) || player->HasAura(45472) || player->HasAura(44795) || player->GetPositionZ() > 619.2f || player->isInFlight())
                     return false;
-                if (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY))
-                    return false;
-                break;
             }
+            break;
+        }
         case 58045: // Essence of Wintergrasp - Wintergrasp
         case 57940: // Essence of Wintergrasp - Northrend
-            {
-                if (!player || player->GetTeamId() != sWorld->getWorldState(WORLDSTATE_WINTERGRASP_CONTROLING_FACTION))
-                    return false;
-                break;
-            }
+        {
+            if (!player || player->GetTeamId() != sWorld->getWorldState(WORLDSTATE_WINTERGRASP_CONTROLING_FACTION))
+                return false;
+            break;
+        }
         case 68719: // Oil Refinery - Isle of Conquest.
         case 68720: // Quarry - Isle of Conquest.
         {
@@ -3905,6 +3916,16 @@ void SpellMgr::LoadSpellCustomAttr()
         case 26863:
         case 48656:
         case 48657:
+        case 703: // Garrote
+        case 8631:
+        case 8632:
+        case 8633:
+        case 11289:
+        case 11290:
+        case 26839:
+        case 26884:
+        case 48675:
+        case 48676:
         case 5221: // Shred
         case 6800:
         case 8992:
@@ -3914,6 +3935,16 @@ void SpellMgr::LoadSpellCustomAttr()
         case 27002:
         case 48571:
         case 48572:
+        case 8676: // Ambush
+        case 8724:
+        case 8725:
+        case 11267:
+        case 11268:
+        case 11269:
+        case 27441:
+        case 48689:
+        case 48690:
+        case 48691:
         case 21987: // Lash of Pain
         case 23959: // Test Stab R50
         case 24825: // Test Backstab
@@ -3942,6 +3973,11 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_AREA_ENEMY_SRC;
             ++count;
             break;
+        case 18754: case 18755: case 18756: // Improved Succubus
+            // now aura will be applied correctly
+            spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
+            ++count;
+            break;
         case 3286:  // Bind
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ENEMY;
             spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
@@ -3958,8 +3994,18 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->procChance = 0;
             ++count;
             break;
+        case 45524: // Chains of Ice
+            // this will fix self-damage caused by Glyph of Chains of Ice
+            spellInfo->EffectImplicitTargetA[2] = TARGET_UNIT_TARGET_ENEMY;
+            ++count;
+            break;
         case 32182: // Heroism
             spellInfo->excludeCasterAuraSpell = 57723; // Exhaustion
+            ++count;
+            break;
+        case 57994: // Wind Shear
+            // this required because with 0 bp it isn't handled in SpellEffects
+            spellInfo->EffectBasePoints[1] = 1;
             ++count;
             break;
         case 2825:  // Bloodlust
@@ -3978,11 +4024,6 @@ void SpellMgr::LoadSpellCustomAttr()
         case 63320: // Glyph of Life Tap
         // Entries were not updated after spell effect change, we have to do that manually :/
             spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_WITH_TRIGGERED;
-            ++count;
-            break;
-        case 31117: // Unstable Affliction
-            // this attribute currently makes spell to ignore resilience and absorbs
-            spellInfo->AttributesEx4 &= ~SPELL_ATTR4_FIXED_DAMAGE;
             ++count;
             break;
         case 16007: // Draco-Incarcinatrix 900
@@ -4036,7 +4077,7 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectRadiusIndex[0] = 45;
             ++count;
             break;
-        case 63944:                             // Renewed Hope hack
+        case 63944: // Renewed Hope hack
             spellInfo->EffectApplyAuraName[0] = 87;
             spellInfo->EffectMiscValue[0] = 127;
             ++count;
@@ -4169,15 +4210,21 @@ void SpellMgr::LoadSpellCustomAttr()
         case 53257: // Cobra Strikes
             spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
-            count++;
+            ++count;
             break;
         case 44544: // Fingers of Frost
             spellInfo->EffectSpellClassMask[0] = flag96(685904631, 1151048, 0);
             ++count;
             break;
-        case 74396:    // Fingers of Frost visual buff
+        case 74396: // Fingers of Frost visual buff
             spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
+            ++count;
+            break;
+        case 35098: // Rapid Killing
+        case 35099:
+            // just a temp solution to make Rapid Recuperation proc from this
+            spellInfo->AttributesEx2 |= SPELL_ATTR2_TRIGGERED_CAN_TRIGGER_PROC;
             ++count;
             break;
         case 28200: // Ascendance (Talisman of Ascendance trinket)
@@ -4210,6 +4257,17 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectRadiusIndex[0] = 37;
             ++count;
             break;
+        case 67201: // Item - Priest T9 Healing 2P Bonus
+            spellInfo->EffectApplyAuraName[0] = SPELL_AURA_ADD_PCT_MODIFIER;
+            spellInfo->EffectMiscValue[0] = 0;
+            ++count;
+            break;
+        case 67202: // Item - Priest T9 Healing 4P Bonus
+            spellInfo->EffectApplyAuraName[0] = SPELL_AURA_ADD_PCT_MODIFIER;
+            spellInfo->EffectMiscValue[0] = 0;
+            spellInfo->EffectSpellClassMask[0] = flag96(0x00000000, 0x01000000, 0x00001000);
+            ++count;
+            break;
         // Master Shapeshifter: missing stance data for forms other than bear - bear version has correct data
         // To prevent aura staying on target after talent unlearned
         case 48420:
@@ -4227,6 +4285,10 @@ void SpellMgr::LoadSpellCustomAttr()
         case 47569: // Improved Shadowform (Rank 1)
             // with this spell atrribute aura can be stacked several times
             spellInfo->Attributes &= ~SPELL_ATTR0_NOT_SHAPESHIFT;
+            ++count;
+            break;
+        case 55689: // Glyph of Shadow (to prevent glyph aura loss)
+            spellInfo->AttributesEx2 |= SPELL_ATTR2_NOT_NEED_SHAPESHIFT;
             ++count;
             break;
         case 30421: // Nether Portal - Perseverence
@@ -4248,6 +4310,10 @@ void SpellMgr::LoadSpellCustomAttr()
         case 51726:
             spellInfo->AttributesEx3 |= SPELL_ATTR3_STACK_FOR_DIFF_CASTERS;
             spellInfo->SpellFamilyFlags[2] = 0x10;
+            ++count;
+            break;
+        case 61607: // Mark of Blood
+            spellInfo->AttributesEx |= SPELL_ATTR1_NO_THREAT;
             ++count;
             break;
         case 41013: // Parasitic Shadowfiend Passive
@@ -4286,6 +4352,10 @@ void SpellMgr::LoadSpellCustomAttr()
             break;
         case 42650: // Army of the Dead - now we can interrupt this
             spellInfo->InterruptFlags = SPELL_INTERRUPT_FLAG_INTERRUPT;
+            ++count;
+            break;
+        case 61851: // Killing Spree - should remove snares from caster
+            spellInfo->AttributesEx |= SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY;
             ++count;
             break;
         case 18500: // Wing Buffet
@@ -4369,8 +4439,21 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->CastingTimeIndex = 1;
             ++count;
             break;
+        case 53651: // Light's Beacon
+            // aura casted on a whole raid and shouldn't put caster in combat
+            spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_INITIAL_AGGRO;
+            ++count;
+            break;
         case 61719: // Easter Lay Noblegarden Egg Aura - Interrupt flags copied from aura which this aura is linked with
             spellInfo->AuraInterruptFlags = AURA_INTERRUPT_FLAG_HITBYSPELL | AURA_INTERRUPT_FLAG_TAKE_DAMAGE;
+            ++count;
+            break;
+        // VAULT OF ARCHAVON SPELLS
+        //
+        case 58963: // Crushing Leap
+        case 60895: // Crushing Leap (heroic)
+            // don't have better idea for now
+            spellInfo->rangeIndex = 134;
             ++count;
             break;
         // ULDUAR SPELLS
@@ -4452,6 +4535,17 @@ void SpellMgr::LoadSpellCustomAttr()
             break;
         // ENDOF ULDUAR SPELLS
         //
+        // TRIAL OF THE CRUSADER SPELLS
+        //
+        case 66258: // Infernal Eruption (10N)
+        case 67901: // Infernal Eruption (25N)
+            // increase duration from 15 to 18 seconds because caster is already
+            // unsummoned when spell missile hits the ground so nothing happen in result
+            spellInfo->DurationIndex = 85;
+            ++count;
+            break;
+        // ENDOF TRIAL OF THE CRUSADER SPELLS
+        //
         // ICECROWN CITADEL SPELLS
         //
         // THESE SPELLS ARE WORKING CORRECTLY EVEN WITHOUT THIS HACK
@@ -4497,6 +4591,10 @@ void SpellMgr::LoadSpellCustomAttr()
         case 71413: // Green Ooze Summon (Professor Putricide)
         case 71414: // Orange Ooze Summon (Professor Putricide)
             spellInfo->EffectImplicitTargetA[0] = TARGET_DEST_DEST;
+            ++count;
+            break;
+        case 71159: // Awaken Plagued Zombies
+            spellInfo->DurationIndex = 21;
             ++count;
             break;
         // THIS IS HERE BECAUSE COOLDOWN ON CREATURE PROCS IS NOT IMPLEMENTED
@@ -4604,7 +4702,7 @@ void SpellMgr::LoadSpellCustomAttr()
                     spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_CASTER;
                 else
                     break;
-                count++;
+                ++count;
                 break;
             case SPELLFAMILY_DRUID:
                 // Starfall Target Selection
@@ -4614,26 +4712,22 @@ void SpellMgr::LoadSpellCustomAttr()
                 else if (spellInfo->SpellFamilyFlags[0] & 0x8)
                     mSpellCustomAttr[i] |= SPELL_ATTR0_CU_AURA_CC;
                 // Rake
-                else if (spellInfo->SpellFamilyFlags[0] & 0x1000)
+                else if (spellInfo->SpellFamilyFlags[0] & 0x1000 && spellInfo->SpellIconID == 494)
                     mSpellCustomAttr[i] |= SPELL_ATTR0_CU_IGNORE_ARMOR;
                 else
                     break;
                 ++count;
                 break;
-            case SPELLFAMILY_PRIEST:
-                // Twin Disciplines should affect at Prayer of Mending
-                if (spellInfo->SpellIconID == 2292)
-                    spellInfo->EffectSpellClassMask[0] = flag96(0, 622642, 2581594112);
-                // Spiritual Healing should affect at Prayer of Mending
-                else if (spellInfo->SpellIconID == 46)
-                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
-                // Divine Providence should affect at Prayer of Mending
-                else if (spellInfo->SpellIconID == 2845 && spellInfo->Id != 64844)
-                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
             case SPELLFAMILY_PALADIN:
                 // Seals of the Pure should affect Seal of Righteousness
                 if (spellInfo->SpellIconID == 25 && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
                     spellInfo->EffectSpellClassMask[0][1] |= 0x20000000;
+                // Sanctified Retribution talent fix
+                else if (spellInfo->SpellFamilyFlags[2] & 0x20 && spellInfo->SpellIconID == 555)
+                {
+                    spellInfo->Effect[1] = 0;
+                    spellInfo->Effect[2] = 0;
+                }
                 else
                     break;
                 ++count;
@@ -4642,6 +4736,20 @@ void SpellMgr::LoadSpellCustomAttr()
                 // Icy Touch - extend FamilyFlags (unused value) for Sigil of the Frozen Conscience to use
                 if (spellInfo->SpellIconID == 2721 && spellInfo->SpellFamilyFlags[0] & 0x2)
                     spellInfo->SpellFamilyFlags[0] |= 0x40;
+                ++count;
+                break;
+            case SPELLFAMILY_PRIEST:
+                // Twin Disciplines should affect at Prayer of Mending
+                if (spellInfo->SpellIconID == 2292)
+                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
+                // Spiritual Healing should affect at Prayer of Mending
+                else if (spellInfo->SpellIconID == 46)
+                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
+                // Divine Providence should affect at Prayer of Mending
+                else if (spellInfo->SpellIconID == 2845 && spellInfo->Id != 64844)
+                    spellInfo->EffectSpellClassMask[0][1] |= 0x20;
+                else
+                    break;
                 ++count;
                 break;
         }

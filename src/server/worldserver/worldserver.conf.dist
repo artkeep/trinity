@@ -1141,6 +1141,14 @@ RecruitAFriend.MaxLevel = 60
 RecruitAFriend.MaxDifference = 4
 
 #
+#    RecruitAFriend.RewardSplitInGroup
+#        Description: Allow experience and reputation split for players in group with active RAF
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+RecruitAFriend.RewardSplitInGroup = 1
+
+#
 #    InstantLogout
 #        Description: Required security level for instantly logging out everywhere.
 #                     Does not work while in combat, dueling or falling.
@@ -1325,6 +1333,21 @@ MaxRecruitAFriendBonusDistance = 100
 #        Default:     3600 - (1 hour)
 
 MailDeliveryDelay = 3600
+
+#
+#    ExternalMail
+#        Enable external mail delivery from mail_external table.
+#        Default: 0 (disabled)
+#                 1 (enabled)
+
+ExternalMail = 0
+
+#
+#    ExternalMailInterval
+#        Mail delivery delay time for item sending from mail_external table, in minutes.
+#        Default: 1 minute
+
+ExternalMailInterval = 1
 
 #
 #    SkillChance.Prospecting
@@ -1919,6 +1942,17 @@ GM.AllowFriend = 0
 #                     1 - (Enabled)
 
 GM.LowerSecurity = 0
+
+#
+#    GM.AllowAchievementGain.Level
+#        Description: Max GM level allowed to obtain achievements.
+#        Default:     3 - (Players, Moderators, GameMasters, Admins)
+#                     0 - (Players)
+#                     1 - (Players, Moderators)
+#                     2 - (Players, Moderators, GameMasters)
+#                     3 - (Players, Moderators, GameMasters, Admins)
+
+GM.AllowAchievementGain.Level = 3
 
 #
 #    GM.TicketSystem.ChanceOfGMSurvey
@@ -2802,4 +2836,126 @@ DuelResetCooldown = 0
 
 PreventPlayersAccessToGMIsland = 0
 
+#     Anticheat.Enable
+#        Description: Enables or disables the Anticheat System functionality
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)  
+
+Anticheat.Enable = 1
+
+#     Anticheat.ReportsForIngameWarnings
+#        Description: How many reports the player must have to notify to GameMasters ingame when he generates a new report.
+#        Default:     70
+
+Anticheat.ReportsForIngameWarnings = 70
+      
+#     Anticheat.DetectionsEnabled
+#        Description: It represents which detections are enabled.
+#    
+#        SPEED_HACK_DETECTION            = 1
+#        FLY_HACK_DETECTION              = 2
+#        WALK_WATER_HACK_DETECTION       = 4
+#        JUMP_HACK_DETECTION             = 8
+#        TELEPORT_PLANE_HACK_DETECTION   = 16
+#        CLIMB_HACK_DETECTION            = 32
+#
+#        Default:     31
+
+Anticheat.DetectionsEnabled = 31
+
+#     Anticheat.MaxReportsForDailyReport
+#        Description: How many reports must the player have to make a report that it is in DB for a day (not only during the player's session).
+#        Default:     70
+
+Anticheat.MaxReportsForDailyReport = 70
+
 ###################################################################################################
+
+######################################################################
+#   OutdoorPvP.Wintergrasp.Enabled
+#       Determines whether the Wintergrasp battle is enabled or not.
+#        Default: 0 = Disable
+#                 1 = Enable
+#
+#   OutdoorPvP.Wintergrasp.SaveState.Period
+#      Interval of Save Wintergrasp State Data  to restore it after crash/shutdown/restart
+#      Interval (in milliseconds)
+#      Default (10000 milliseconds)
+#      Warning:  Do not set it less 1 second!
+#
+#   OutdoorPvP.Wintergrasp.StartTime
+#       The start time of the first battle after server starts (in minutes)
+#       Default: 30
+#
+#   OutdoorPvP.Wintergrasp.BattleTime
+#       Time limit of a battle (in minutes)
+#       Default: 30
+#
+#   OutdoorPvP.Wintergrasp.Interval
+#       Interval between battles (in minutes)
+#       Default: 150
+#
+#   OutdoorPvP.Wintergrasp.CustomHonorRewards
+#       Defines whether custom honor rewards should be given to player
+#        for partaking in the Wintergrasp Battle.
+#        Default: 0 = Disable
+#                 1 = Enable
+#
+#   OutdoorPvP.Wintergrasp.CustomHonorBattleWin
+#       Defines the amount of honor points that should be given to the
+#        team winning the Wintergrasp Battle.
+#       Requires OutdoorPvP.Wintergrasp.CustomHonorRewards = 1.
+#       Default: 3000
+#
+#   OutdoorPvP.Wintergrasp.CustomHonorBattleLose
+#       Defines the amount of honor points that should be given to the
+#        team losing the Wintergrasp Battle.
+#       Requires OutdoorPvP.Wintergrasp.CustomHonorRewards = 1.
+#       Default: 1250
+#
+#   OutdoorPvP.Wintergrasp.CustomHonorDamageTower
+#       Defines the amount of honor points that should be given to the
+#        team for damaging a tower.
+#       Requires OutdoorPvP.Wintergrasp.CustomHonorRewards = 1.
+#       Default: 750
+#
+#   OutdoorPvP.Wintergrasp.CustomHonorDestroyedTower
+#       Defines the amount of honor points that should be given to the
+#        team for destroying a tower.
+#       Requires OutdoorPvP.Wintergrasp.CustomHonorRewards = 1.
+#       Default: 750
+#
+#   OutdoorPvP.Wintergrasp.CustomHonorIntactBuilding
+#      Defines the amount of honor points that should be given to the
+#        team for intact buildings after the battle.
+#       Requires OutdoorPvP.Wintergrasp.CustomHonorRewards = 1.
+#       Default: 1500
+#
+#   OutdoorPvP.Wintergrasp.Antifarm.Enable
+#		Enable or Disable antifarm system
+#              (Default: 0)
+#
+#   OutdoorPvP.Wintergrasp.Antifarm.Atk
+#		Min count atack players for antifarm
+#              (Default: 5)
+#
+#   OutdoorPvP.Wintergrasp.Antifarm.Def
+#		Min count defense players for antifarm
+#              (Default: 5)
+#
+##########################################################
+
+OutdoorPvP.Wintergrasp.Enabled = 1
+OutdoorPvP.Wintergrasp.SaveState.Period = 60000
+OutdoorPvP.Wintergrasp.StartTime = 30
+OutdoorPvP.Wintergrasp.BattleTime = 30
+OutdoorPvP.Wintergrasp.Interval = 150
+OutdoorPvP.Wintergrasp.CustomHonorRewards = 0
+OutdoorPvP.Wintergrasp.CustomHonorBattleWin = 3000
+OutdoorPvP.Wintergrasp.CustomHonorBattleLose = 1250
+OutdoorPvP.Wintergrasp.CustomHonorDamageTower = 750
+OutdoorPvP.Wintergrasp.CustomHonorDestroyedTower = 750
+OutdoorPvP.Wintergrasp.CustomHonorIntactBuilding = 1500
+OutdoorPvP.Wintergrasp.Antifarm.Enable = 0
+OutdoorPvP.Wintergrasp.Antifarm.Atk = 5
+OutdoorPvP.Wintergrasp.Antifarm.Def = 5

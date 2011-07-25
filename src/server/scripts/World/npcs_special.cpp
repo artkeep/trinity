@@ -1841,6 +1841,7 @@ public:
 };
 
 //UPDATE `creature_template` SET `ScriptName` = 'npc_spring_rabbit' WHERE `entry` = 32791;
+
 enum eSpringRabbit
 {
     NPC_SPRING_RABBIT           = 32791,
@@ -1880,7 +1881,7 @@ public:
                     {
                         if (rabbit->GetGUID() == me->GetGUID())
                             return;
-                            
+
                         if (!rabbit->HasAura(SPELL_SPRING_RABBIT_IN_LOVE))
                         {
                             me->CastSpell(me, SPELL_SPRING_RABBIT_IN_LOVE, true);
@@ -2883,8 +2884,8 @@ void AddSC_npcs_special()
     new npc_snake_trap;
     new npc_mirror_image;
     new npc_ebon_gargoyle;
-    new npc_spring_rabbit();
     new mob_mojo;
+    new npc_spring_rabbit;
     new npc_training_dummy;
     new npc_shadowfiend;
     new npc_wormhole;
@@ -2894,4 +2895,3 @@ void AddSC_npcs_special()
     new npc_experience;
     new npc_argent_squire;
 }
-

@@ -458,7 +458,6 @@ public:
                 case 11:
                 case 22:
                 case 23:
-                case 26:
                 case 55:
                 case 56:
                     SetHoldState(true);
@@ -508,6 +507,8 @@ public:
                     SetRun(false);
                     SpawnTimeRift(0, &uiInfiniteDraconianGUID[0]);
                     DoScriptText(SAY_PHASE307, me);
+                    SetHoldState(true);
+                    bStepping = true;
                     break;
                 case 29:
                     SetRun(false);

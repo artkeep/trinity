@@ -43,7 +43,7 @@ public:
 
     void SetTempReportsTimer(uint32 time, uint8 type);
     uint32 GetTempReportsTimer(uint8 type);
-
+    
     void SetDailyReportState(bool b);
     bool GetDailyReportState();
 private:

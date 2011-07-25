@@ -23,6 +23,7 @@
 
 struct VehicleEntry;
 struct VehicleSeatEntry;
+struct Position;
 class Unit;
 
 enum PowerType
@@ -54,6 +55,7 @@ enum VehicleSeatFlags
     VEHICLE_SEAT_FLAG_CAN_CONTROL                = 0x00000800,           // Lua_UnitInVehicleControlSeat
     VEHICLE_SEAT_FLAG_UNCONTROLLED               = 0x00002000,           // can override !& VEHICLE_SEAT_FLAG_CAN_ENTER_OR_EXIT
     VEHICLE_SEAT_FLAG_CAN_ATTACK                 = 0x00004000,           // Can attack, cast spells and use items from vehicle?
+    VEHICLE_SEAT_FLAG_PASSENGER_NOT_SELECTABLE   = 0x00100000,           // Can't select passenger?
     VEHICLE_SEAT_FLAG_CAN_ENTER_OR_EXIT          = 0x02000000,           // Lua_CanExitVehicle - can enter and exit at free will
     VEHICLE_SEAT_FLAG_CAN_SWITCH                 = 0x04000000,           // Lua_CanSwitchVehicleSeats
     VEHICLE_SEAT_FLAG_CAN_CAST                   = 0x20000000,           // Lua_UnitHasVehicleUI
@@ -129,7 +131,8 @@ class Vehicle
         void RelocatePassengers(float x, float y, float z, float ang);
         void RemoveAllPassengers();
         void Dismiss();
-        bool IsVehicleInUse() { return m_Seats.begin() != m_Seats.end(); }
+        void Relocate(Position pos);
+        bool IsVehicleInUse() { return Seats.begin() != Seats.end(); }
 
         SeatMap Seats;
 

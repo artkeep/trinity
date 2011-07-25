@@ -1698,19 +1698,6 @@ bool WorldObject::canSeeOrDetect(WorldObject const* obj, bool ignoreStealth, boo
             return false;
     }
 
-    // Traps can only be detected within melee distance
-    if (const GameObject *thisGO = obj->ToGameObject())
-    {
-        if (thisGO->GetGoType() == GAMEOBJECT_TYPE_TRAP && thisGO->GetOwnerGUID() && ToPlayer())
-        {
-            if (thisGO->GetOwner() == ToPlayer() ||
-                obj->IsWithinDist(this, ToPlayer()->HasAura(2836) ? 20.0f : 4.0f, false)) // Detect Traps increases chance to detect traps
-                return true;
-
-            return false;
-        }
-    }
-
     if (!obj->isVisibleForInState(this))
         return false;
 

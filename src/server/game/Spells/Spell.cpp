@@ -52,7 +52,6 @@
 #include "DisableMgr.h"
 #include "SpellScript.h"
 #include "InstanceScript.h"
-#include "InstanceSaveMgr.h" 
 
 extern pEffect SpellEffects[TOTAL_SPELL_EFFECTS];
 
@@ -5353,12 +5352,9 @@ SpellCastResult Spell::CheckCast(bool strict)
                     uint32 mapId = m_caster->GetMap()->GetId();
                     Difficulty difficulty = m_caster->GetMap()->GetDifficulty();
                     if (map->IsRaid())
-                        if (InstanceSave* targetsave = target->ToPlayer()->GetInstanceSave(mapId, true))
-                        {
-                            InstanceSave* m_castersave = m_caster->ToPlayer()->GetInstanceSave(mapId, true);
-                            if (targetsave->GetInstanceId() != m_castersave->GetInstanceId()) 
+                        if (InstancePlayerBind* targetBind = target->GetBoundInstance(mapId, difficulty))
+                            if (targetBind->perm && targetBind != m_caster->ToPlayer()->GetBoundInstance(mapId, difficulty))
                                 return SPELL_FAILED_TARGET_LOCKED_TO_RAID_INSTANCE;
-                        } 
 
                     InstanceTemplate const* instance = sObjectMgr->GetInstanceTemplate(mapId);
                     if (!instance)

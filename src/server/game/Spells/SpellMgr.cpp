@@ -4175,7 +4175,7 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectSpellClassMask[0] = flag96(685904631, 1151048, 0);
             ++count;
             break;
-        case 74396: // Fingers of Frost visual buff
+        case 74396:    // Fingers of Frost visual buff
             spellInfo->procCharges = 2;
             spellInfo->StackAmount = 0;
             ++count;

@@ -260,6 +260,7 @@ void GlobalCooldownMgr::CancelGlobalCooldown(SpellEntry const* spellInfo)
 }
 
 ////////////////////////////////////////////////////////////
+// Methods of class Unit
 Unit::~Unit()
 {
     // set current spells as deletable
@@ -731,12 +732,9 @@ uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDam
 
         // in bg, count dmg if victim is also a player
         if (victim->GetTypeId() == TYPEID_PLAYER)
-        {
             if (Battleground *bg = killer->GetBattleground())
-            {
                 bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damage);
-            }
-        }
+
         killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE, damage, 0, victim);
         killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HIT_DEALT, damage);
     }
@@ -4509,7 +4507,7 @@ float Unit::GetTotalAuraMultiplier(AuraType auratype) const
     return multiplier;
 }
 
-int32 Unit::GetMaxPositiveAuraModifier(AuraType auratype) const
+int32 Unit::GetMaxPositiveAuraModifier(AuraType auratype)
 {
     int32 modifier = 0;
 
@@ -8724,14 +8722,14 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                         break;
                     }
                     //Item - Icecrown 25 Normal Healer Weapon Proc
-		    case 71865:
+                    case 71865:
                     {
                         trigger_spell_id = 71864;
                         target = this;
                         break;
                     }
-		    //Item - Icecrown 25 Heroic Healer Weapon Proc
-		    case 71868:
+                    //Item - Icecrown 25 Heroic Healer Weapon Proc
+                    case 71868:
                     {
                         trigger_spell_id = 71866;
                         target = this;
@@ -9340,16 +9338,6 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                 return false;
             break;
         }
-        case 45176: // Master Poisoner Proc Trigger (SERVERSIDE)
-        {
-            if (!procSpell)
-                return false;
-
-            basepoints0 = procSpell->Id;
-            break;
-        }
-        default:
-            break;
     }
 
     if (cooldown && GetTypeId() == TYPEID_PLAYER && ToPlayer()->HasSpellCooldown(trigger_spell_id))

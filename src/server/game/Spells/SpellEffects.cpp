@@ -3158,9 +3158,6 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                         properties->Id == 2081)     // Mechanical Dragonling, Arcanite Dragonling, Mithril Dragonling TODO: Research on meaning of basepoints
                         amount = 1;
 
-                    if ((properties->Id == 2081 || m_spellInfo->Id == 13258 || m_spellInfo->Id == 13166) && !m_CastItem)
-                        return;
-
                     TempSummonType summonType = (duration == 0) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
 
                     for (uint32 count = 0; count < amount; ++count)
@@ -7074,12 +7071,6 @@ void Spell::SummonGuardian(uint32 i, uint32 entry, SummonPropertiesEntry const *
     switch (m_spellInfo->Id)
     {
         case 1122: // Inferno
-        case 4073:  // Mechanical Dragonling
-        case 12749: // Mithril Mechanical Dragonling
-        case 18662: // Curse of Doom
-        case 19804: // Arcanite Dragonling
-        case 48739: // Winterfin First Responder
-        case 65783: // Ogre Pinata
             amount = 1;
             break;
         case 49028: // Dancing Rune Weapon

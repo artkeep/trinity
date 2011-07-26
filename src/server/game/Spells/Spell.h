@@ -513,8 +513,6 @@ class Spell
         void CleanupTargetList();
 
         void SetSpellValue(SpellValueMod mod, int32 value);
-
-        void SetMagnetingAura(Aura* aura) { m_magnetingAura = aura; }
     protected:
 
         bool HasGlobalCooldown();
@@ -571,8 +569,6 @@ class Spell
         int32 damage;
         // used in effects handlers
         Aura * m_spellAura;
-        // pointer to magneting aura if spell is redirected
-        Aura* m_magnetingAura;
 
         // this is set in Spell Hit, but used in Apply Aura handler
         DiminishingLevels m_diminishLevel;

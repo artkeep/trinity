@@ -205,11 +205,9 @@ class SpellScript : public _SpellScript
         bool _IsDefaultEffectPrevented(SpellEffIndex effIndex) { return m_hitPreventDefaultEffectMask & (1<<effIndex); }
         void _PrepareScriptCall(SpellScriptHookType hookType);
         void _FinishScriptCall();
-        bool IsInAfterHitPhase() { return (m_currentScriptState == SPELL_SCRIPT_HOOK_AFTER_HIT); };
         bool IsInCheckCastHook() const { return m_currentScriptState == SPELL_SCRIPT_HOOK_CHECK_CAST; }
         bool IsInHitPhase() const { return (m_currentScriptState >= HOOK_SPELL_HIT_START && m_currentScriptState < HOOK_SPELL_HIT_END); }
         bool IsInEffectHook() const { return (m_currentScriptState == SPELL_SCRIPT_HOOK_EFFECT); }
-
     private:
         Spell* m_spell;
         uint8 m_hitPreventEffectMask;
@@ -321,9 +319,6 @@ class SpellScript : public _SpellScript
 
         // Creates item. Calls Spell::DoCreateItem method.
         void CreateItem(uint32 effIndex, uint32 itemId);
-              
-        // returns total damage of a spell
-        int32 GetTrueDamage();
 
         // finishes spellcast prematurely with selected error message
         void FinishCast(SpellCastResult result);

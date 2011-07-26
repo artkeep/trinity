@@ -64,7 +64,6 @@ enum DoorType
     MAX_DOOR_TYPES,
 };
 
-
 enum BoundaryType
 {
     BOUNDARY_NONE = 0,

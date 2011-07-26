@@ -1,17 +1,18 @@
-/* Copyright (C) 2008 - 2010 TrinityCore <http://www.trinitycore.org>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+/*
+ * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ScriptLoader.h"
@@ -373,13 +374,11 @@ void AddSC_boss_taldaram();
 void AddSC_boss_jedoga_shadowseeker();
 void AddSC_boss_elder_nadox();
 void AddSC_boss_volazj();
-
 void AddSC_boss_argent_challenge();      //Trial of the Champion
 void AddSC_boss_black_knight();
 void AddSC_boss_grand_champions();
 void AddSC_instance_trial_of_the_champion();
 void AddSC_trial_of_the_champion();
-
 void AddSC_boss_anubarak_trial();        //Trial of the Crusader
 void AddSC_boss_faction_champions();
 void AddSC_boss_jaraxxus();
@@ -387,7 +386,6 @@ void AddSC_boss_northrend_beasts();
 void AddSC_boss_twin_valkyr();
 void AddSC_trial_of_the_crusader();
 void AddSC_instance_trial_of_the_crusader();
-
 void AddSC_boss_anubrekhan();            //Naxxramas
 void AddSC_boss_maexxna();
 void AddSC_boss_patchwerk();
@@ -429,7 +427,6 @@ void AddSC_boss_krystallus();
 void AddSC_boss_sjonnir();
 void AddSC_instance_halls_of_stone();
 void AddSC_halls_of_stone();
-
 void AddSC_boss_auriaya();               //Ulduar Ulduar
 void AddSC_boss_flame_leviathan();
 void AddSC_boss_ignis();
@@ -443,7 +440,6 @@ void AddSC_boss_mimiron();
 void AddSC_boss_hodir();
 void AddSC_boss_freya();
 void AddSC_instance_ulduar();
-
 void AddSC_boss_keleseth();              //Utgarde Keep
 void AddSC_boss_skarvald_dalronn();
 void AddSC_boss_ingvar_the_plunderer();

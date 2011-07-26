@@ -343,6 +343,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
         sAnticheatMgr->StartHackDetection(plMover, movementInfo, opcode);
 
     /*----------------------*/
+
     /* process position-change */
     WorldPacket data(opcode, recv_data.size());
     movementInfo.time = getMSTime();

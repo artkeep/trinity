@@ -35,8 +35,8 @@ enum DeathKnightSpells
     DK_SPELL_BLOOD_BOIL_TRIGGERED               = 65658,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_TALENT_R1   = 49189,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
-    DK_SPELL_BLOOD_TAP                          = 45529,
     DK_SPELL_BLOOD_PRESENCE                     = 48266,
+    DK_SPELL_BLOOD_TAP                          = 45529,
     DK_SPELL_IMPROVED_BLOOD_PRESENCE_TRIGGERED  = 63611,
     DK_SPELL_UNHOLY_PRESENCE                    = 48265,
     DK_SPELL_IMPROVED_UNHOLY_PRESENCE_TRIGGERED = 63622,
@@ -244,7 +244,7 @@ class spell_dk_corpse_explosion : public SpellScriptLoader
         }
 };
 
-// 47496 - Explode, GHoul spell for Corpse Explosion
+// 47496 - Explode, Ghoul spell for Corpse Explosion
 class spell_dk_ghoul_explode : public SpellScriptLoader
 {
     public:
@@ -698,7 +698,7 @@ public:
         return new spell_dk_improved_unholy_presence_AuraScript();
     }
 };
-      
+
 void AddSC_deathknight_spell_scripts()
 {
     new spell_dk_anti_magic_shell_raid();

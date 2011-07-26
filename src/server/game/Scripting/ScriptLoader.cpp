@@ -27,8 +27,6 @@ void AddSC_example_commandscript();
 
 //TeleNPC2
 void AddSC_npc_teleport();
-//Hunter Pet Vendor
-void AddSC_npc_hunterpetvendor();
 // Custom
 //NPC Transport Service
 void AddSC_npc_mount();	
@@ -1270,8 +1268,6 @@ void AddCustomScripts()
     AddSC_npc_teleport();
     // Custom
     AddSC_npc_mount();		
-    //Hunter Pet Vendor
-    AddSC_npc_hunterpetvendor();
     AddSC_npcs_mini_boss();	
 #endif
 }

@@ -456,7 +456,7 @@ void Spell::SpellDamageSchoolDmg(SpellEffIndex effIndex)
                         float distance = m_caster->GetDistance2d(unitTarget);
                         damage = (distance > radius) ? 0 : int32(SpellMgr::CalculateSpellEffectAmount(m_spellInfo, 0) * distance);
                         break;
-                         }
+                    }
 
                     // Lightning Nova
                     case 65279:
@@ -669,22 +669,17 @@ void Spell::SpellDamageSchoolDmg(SpellEffIndex effIndex)
                     }
                 }
                 // Eviscerate
-                if (m_spellInfo->SpellFamilyFlags[EFFECT_0] & 0x20000)
+                else if ((m_spellInfo->SpellFamilyFlags[0] & 0x00020000) && m_caster->GetTypeId() == TYPEID_PLAYER)
                 {
-                    if (!m_caster->ToPlayer())
-                        return;
+                    if (uint32 combo = ((Player*)m_caster)->GetComboPoints())
+                    {
+                        float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
+                        damage += irand(int32(ap * combo * 0.03f), int32(ap * combo * 0.07f));
 
-                    uint32 combo = m_caster->ToPlayer()->GetComboPoints();
-                    if (!combo)
-                        return;
-
-                    float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
-                    damage += irand(int32(ap * combo * 0.03f), int32(ap * combo * 0.07f));
-
-                    // Eviscerate and Envenom Bonus Damage
-                    if (AuraEffect const * aurEffB = m_caster->GetAuraEffect(37169, EFFECT_0, m_caster->GetGUID()))
-                        damage += combo * aurEffB->GetAmount();
-                    break;
+                        // Eviscerate and Envenom Bonus Damage (item set effect)
+                        if (m_caster->HasAura(37169))
+                            damage += combo*40;
+                    }
                 }
                 break;
             }
@@ -750,17 +745,22 @@ void Spell::SpellDamageSchoolDmg(SpellEffIndex effIndex)
                     damage += CalculatePctN(m_caster->GetShieldBlockValue(), SpellMgr::CalculateSpellEffectAmount(m_spellInfo, EFFECT_1));
                     break;
                 }
-		//Item - Icecrown 25 Normal Dagger Proc
+                //Item - Icecrown 25 Normal Dagger Proc
                 if (m_spellInfo->Id == 71887 || m_spellInfo->Id == 71881)
+                {
                     if (Aura * aur = m_caster->GetAura(71880))
                         if (roll_chance_i(25))
-                        m_caster->CastSpell(m_caster, 71883, true);
-                break;
-		//Item - Icecrown 25 Heroic Dagger Proc
-		if (m_spellInfo->Id == 71886 || m_spellInfo->Id == 71882)
+                            m_caster->CastSpell(m_caster, 71883, true);
+                    break;
+                }
+                //Item - Icecrown 25 Heroic Dagger Proc
+                if (m_spellInfo->Id == 71886 || m_spellInfo->Id == 71882)
+                {
                     if (Aura * aur = m_caster->GetAura(71892))
                         if (roll_chance_i(35))
-                        m_caster->CastSpell(m_caster, 71888, true);
+                            m_caster->CastSpell(m_caster, 71888, true);
+                    break;
+                }
                 break;
             }
             case SPELLFAMILY_DEATHKNIGHT:
@@ -1165,15 +1165,13 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                 }
                 case 51582:                                 //Rocket Boots Engaged (Rocket Boots Xtreme and Rocket Boots Xtreme Lite)
                 {
-                    if (!m_CastItem) 
+                    if (!m_CastItem && m_caster->GetTypeId() != TYPEID_PLAYER) 
                         return;
 
                     if (Battleground* bg = m_caster->ToPlayer()->GetBattleground())
                         bg->EventPlayerDroppedFlag(m_caster->ToPlayer());
 
-                    ((Player*)m_caster)->RemoveSpellCooldown(30452, true);
                     m_caster->CastSpell(m_caster, 30452, true, NULL);
-                    ((Player*)m_caster)->AddSpellCooldown(30452,m_CastItem->GetEntry(), time(NULL)+300);
                     return;
                 }
                 case 52759:                                 // Ancestral Awakening
@@ -1314,6 +1312,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                         m_caster->ToPlayer()->RestoreSpellMods(this, 46916);
                         aura->DropCharge();
                     }
+                return;
             }
             // Execute
             if (m_spellInfo->SpellFamilyFlags[EFFECT_0] & SPELLFAMILYFLAG_WARRIOR_EXECUTE)
@@ -4519,7 +4518,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                         unitTarget->CastSpell(unitTarget, 70972, false);
 
                     return;
-                        
+                }        
                 //Teleport to Lake Wintergrasp
                 case 58622:
                 {

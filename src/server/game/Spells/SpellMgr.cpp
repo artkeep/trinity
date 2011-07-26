@@ -801,11 +801,6 @@ bool SpellMgr::_isPositiveEffect(uint32 spellId, uint32 effIndex, bool deep) con
             if (spellproto->SpellIconID == 45)
                 return true;
             break;
-        case SPELLFAMILY_WARRIOR:
-	     // Shockwave
-            if (spellId == 46968)
-                return false;
-            break;
         case SPELLFAMILY_PRIEST:
             switch (spellId)
             {
@@ -3983,12 +3978,6 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
             ++count;
             break;
-        // Chains of Ice
-        case 45524:
-            // this will fix self-damage caused by Glyph of Chains of Ice
-            spellInfo->EffectImplicitTargetA[2] = TARGET_UNIT_TARGET_ENEMY;
-            ++count;
-            break;
         case 8494: // Mana Shield (rank 2)
             // because of bug in dbc
             spellInfo->procChance = 0;
@@ -4010,12 +3999,6 @@ void SpellMgr::LoadSpellCustomAttr()
             break;
         case 2825:  // Bloodlust
             spellInfo->excludeCasterAuraSpell = 57724; // Sated
-            ++count;
-            break;
-        // Fiery Payback hack
-        case 44440:
-        case 44441:
-            spellInfo->CasterAuraStateNot = AURA_STATE_NONE;
             ++count;
             break;
         case 20335: // Heart of the Crusader
@@ -4194,7 +4177,6 @@ void SpellMgr::LoadSpellCustomAttr()
         case 17941: // Shadow Trance
         case 22008: // Netherwind Focus
         case 31834: // Light's Grace
-        case 34477: // Misdirection
         case 34754: // Clearcasting
         case 34936: // Backlash
         case 48108: // Hot Streak

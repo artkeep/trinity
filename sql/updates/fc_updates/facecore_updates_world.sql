@@ -1,6 +1,3 @@
--- Fix Summon Infernal spell. Thanks inordon fod idea
-UPDATE `creature_template` SET flags_extra = 0 WHERE `entry` = 89; 
-
 -- DKs Blood Tap spell fix
 DELETE FROM `spell_script_names` WHERE `spell_id`=45529;
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES (45529, 'spell_dk_blood_tap');

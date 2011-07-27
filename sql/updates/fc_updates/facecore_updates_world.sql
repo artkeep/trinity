@@ -10,18 +10,6 @@ UPDATE `instance_template` SET `script`='instance_blackrock_spire' WHERE `map`=2
 UPDATE `creature_template` SET `ScriptName`='npc_rookey_whelp' WHERE entry=10161;
 UPDATE `gameobject_template` SET `ScriptName`='go_rookey_egg' WHERE entry=175124;
 
--- Nature's Grasp fix
-DELETE FROM `spell_proc_event` WHERE `entry` IN (16689,16810,16811,16812,16813,17329,27009,53312);
-INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`procFlags`,`procEx`,`ppmRate`,`CustomChance`,`Cooldown`) VALUES
-(16689,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 1)
-(16810,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 2)
-(16811,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 3)
-(16812,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 4)
-(16813,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 5)
-(17329,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 6)
-(27009,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 7)
-(53312,0,0,0,0,0,0,0,0,100,1);-- Nature's Grasp (Rank 8)
-
 -- Seals of the Pure fix
 DELETE FROM spell_bonus_data WHERE entry IN (25742);
 INSERT INTO `spell_bonus_data` (`entry`, `direct_bonus`, `dot_bonus`, `ap_bonus`, `ap_dot_bonus`, `comments`) VALUES
@@ -53,29 +41,12 @@ INSERT INTO `spell_proc_event` VALUES (71871, 0x01, 0x0A, 0x00000000, 0x00000000
 DELETE FROM `spell_proc_event` WHERE `entry` IN (71873); 
 INSERT INTO `spell_proc_event` VALUES (71873, 0x01, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000014, 0x00000018, 0, 37, 35);
 
--- Divine Storm heal effect fix
-DELETE FROM `spell_bonus_data` WHERE `entry` IN ('54172');
-INSERT INTO `spell_bonus_data` (`entry`, `direct_bonus`, `dot_bonus`, `ap_bonus`, `ap_dot_bonus`, `comments`) VALUES
-('54172','0','0','0','0','Paladin - Divine Storm');
-
-DELETE FROM `spell_dbc` WHERE `Id` IN ('199997');
-INSERT INTO `spell_dbc` (`Id`, `Dispel`, `Mechanic`, `Attributes`, `AttributesEx`, `AttributesEx2`, `AttributesEx3`, `AttributesEx4`, `AttributesEx5`, `Stances`, `StancesNot`, `Targets`, `CastingTimeIndex`, `AuraInterruptFlags`, `ProcFlags`, `ProcChance`, `ProcCharges`, `MaxLevel`, `BaseLevel`, `SpellLevel`, `DurationIndex`, `RangeIndex`, `StackAmount`, `EquippedItemClass`, `EquippedItemSubClassMask`, `EquippedItemInventoryTypeMask`, `Effect1`, `Effect2`, `Effect3`, `EffectDieSides1`, `EffectDieSides2`, `EffectDieSides3`, `EffectRealPointsPerLevel1`, `EffectRealPointsPerLevel2`, `EffectRealPointsPerLevel3`, `EffectBasePoints1`, `EffectBasePoints2`, `EffectBasePoints3`, `EffectMechanic1`, `EffectMechanic2`, `EffectMechanic3`, `EffectImplicitTargetA1`, `EffectImplicitTargetA2`, `EffectImplicitTargetA3`, `EffectImplicitTargetB1`, `EffectImplicitTargetB2`, `EffectImplicitTargetB3`, `EffectRadiusIndex1`, `EffectRadiusIndex2`, `EffectRadiusIndex3`, `EffectApplyAuraName1`, `EffectApplyAuraName2`, `EffectApplyAuraName3`, `EffectAmplitude1`, `EffectAmplitude2`, `EffectAmplitude3`, `EffectMultipleValue1`, `EffectMultipleValue2`, `EffectMultipleValue3`, `EffectMiscValue1`, `EffectMiscValue2`, `EffectMiscValue3`, `EffectMiscValueB1`, `EffectMiscValueB2`, `EffectMiscValueB3`, `EffectTriggerSpell1`, `EffectTriggerSpell2`, `EffectTriggerSpell3`, `EffectSpellClassMaskA1`, `EffectSpellClassMaskA2`, `EffectSpellClassMaskA3`, `EffectSpellClassMaskB1`, `EffectSpellClassMaskB2`, `EffectSpellClassMaskB3`, `EffectSpellClassMaskC1`, `EffectSpellClassMaskC2`, `EffectSpellClassMaskC3`, `MaxTargetLevel`, `SpellFamilyName`, `SpellFamilyFlags1`, `SpellFamilyFlags2`, `SpellFamilyFlags3`, `MaxAffectedTargets`, `DmgClass`, `PreventionType`, `DmgMultiplier1`, `DmgMultiplier2`, `DmgMultiplier3`, `AreaGroupId`, `SchoolMask`, `Comment`) VALUES
-('199997','0','0','0','0','0','0','0','0','0','0','0','1','0','0','0','0','0','0','0','0','1','0','-1','0','0','6','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','0','0','0','0','0','0','0','0','4','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','10','0','0','0','0','0','0','0','0','0','0','0','Divine Storm Helper (SERVERSIDE)');
-
-DELETE FROM `spell_proc_event` WHERE `entry` IN ('199997');
-INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMask0`, `SpellFamilyMask1`, `SpellFamilyMask2`, `procFlags`, `procEx`, `ppmRate`, `CustomChance`, `Cooldown`) VALUES
-('199997','0','10','0','131072','0','16','0','0','100','0');
-
 -- The Valiant's Challenge
 UPDATE `creature_template` SET `ScriptName` = 'npc_squire_danny' WHERE `entry` = 33518;
 UPDATE `creature_template` SET `KillCredit1` = 33708 WHERE `entry` = 33707;
 UPDATE `creature_template` SET `ScriptName` = 'npc_argent_champion' WHERE `entry` = 33707;
 DELETE FROM `creature_template_addon` WHERE `entry` = 33707;
 INSERT INTO `creature_template_addon` (`entry`, `mount`) VALUES ('33707', '14337');
-
--- prevent bagouse varlock's summon spell on battlegrounds
-DELETE FROM `disables` WHERE `sourceType`=0 and `entry` = 698;
-INSERT INTO `disables` VALUES (0, 698, (1+16+32), "489,529,529,566", "4572,4571,3417,3418,3820", "Ritual of Summoning spell on BG");
 
 -- Fizzcrank Recon Pilot
 DELETE FROM `creature_ai_scripts` WHERE creature_id = 25841;
@@ -109,21 +80,6 @@ UPDATE `instance_encounters` SET `creditType` = '0', `creditEntry` = '26632' WHE
 UPDATE `instance_encounters` SET `creditEntry` = '23980' WHERE `entry` IN ('575', '576');
 -- [Dungeon Finder] Fix CoS reward
 UPDATE `instance_encounters` SET `creditType`=0, `creditEntry`=26533 WHERE `entry` IN (296, 300);
-
--- Master Poisoner fix
-DELETE FROM `spell_dbc` WHERE `Id` IN ('45176');
-INSERT INTO `spell_dbc` (`Id`, `Dispel`, `Mechanic`, `Attributes`, `AttributesEx`, `AttributesEx2`, `AttributesEx3`, `AttributesEx4`, `AttributesEx5`, `Stances`, `StancesNot`, `Targets`, `CastingTimeIndex`, `AuraInterruptFlags`, `ProcFlags`, `ProcChance`, `ProcCharges`, `MaxLevel`, `BaseLevel`, `SpellLevel`, `DurationIndex`, `RangeIndex`, `StackAmount`, `EquippedItemClass`, `EquippedItemSubClassMask`, `EquippedItemInventoryTypeMask`, `Effect1`, `Effect2`, `Effect3`, `EffectDieSides1`, `EffectDieSides2`, `EffectDieSides3`, `EffectRealPointsPerLevel1`, `EffectRealPointsPerLevel2`, `EffectRealPointsPerLevel3`, `EffectBasePoints1`, `EffectBasePoints2`, `EffectBasePoints3`, `EffectMechanic1`, `EffectMechanic2`, `EffectMechanic3`, `EffectImplicitTargetA1`, `EffectImplicitTargetA2`, `EffectImplicitTargetA3`, `EffectImplicitTargetB1`, `EffectImplicitTargetB2`, `EffectImplicitTargetB3`, `EffectRadiusIndex1`, `EffectRadiusIndex2`, `EffectRadiusIndex3`, `EffectApplyAuraName1`, `EffectApplyAuraName2`, `EffectApplyAuraName3`, `EffectAmplitude1`, `EffectAmplitude2`, `EffectAmplitude3`, `EffectMultipleValue1`, `EffectMultipleValue2`, `EffectMultipleValue3`, `EffectMiscValue1`, `EffectMiscValue2`, `EffectMiscValue3`, `EffectMiscValueB1`, `EffectMiscValueB2`, `EffectMiscValueB3`, `EffectTriggerSpell1`, `EffectTriggerSpell2`, `EffectTriggerSpell3`, `EffectSpellClassMaskA1`, `EffectSpellClassMaskA2`, `EffectSpellClassMaskA3`, `EffectSpellClassMaskB1`, `EffectSpellClassMaskB2`, `EffectSpellClassMaskB3`, `EffectSpellClassMaskC1`, `EffectSpellClassMaskC2`, `EffectSpellClassMaskC3`, `MaxTargetLevel`, `SpellFamilyName`, `SpellFamilyFlags1`, `SpellFamilyFlags2`, `SpellFamilyFlags3`, `MaxAffectedTargets`, `DmgClass`, `PreventionType`, `DmgMultiplier1`, `DmgMultiplier2`, `DmgMultiplier3`, `AreaGroupId`, `SchoolMask`, `Comment`) VALUES
-('45176','0','0','0','0','0','0','0','0','0','0','0','1','0','0','0','0','1','1','1','0','1','0','-1','0','0','3','0','0','0','0','0','0','0','0','0','0','0','0','0','0','6','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','8','0','0','0','0','0','0','0','0','0','0','1','Master Poisoner Trigger (SERVERSIDE)');
-DELETE FROM `spell_proc_event` WHERE `entry` IN ('31226', '31227', '58410');
-INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMask0`, `SpellFamilyMask1`, `SpellFamilyMask2`, `procFlags`, `procEx`, `ppmRate`, `CustomChance`, `Cooldown`) VALUES
-('31226','0','8','0','524288','0','0','0','0','0','0'), -- Master Poisoner (Rank 1)
-('31227','0','8','0','524288','0','0','0','0','0','0'), -- Master Poisoner (Rank 2)
-('58410','0','8','0','524288','0','0','0','0','0','0'); -- Master Poisoner (Rank 3)
-
--- Envenom fix
-DELETE FROM `spell_bonus_data` WHERE `entry` IN ('32645');
-INSERT INTO `spell_bonus_data` (`entry`, `direct_bonus`, `dot_bonus`, `ap_bonus`, `ap_dot_bonus`, `comments`) VALUES
-('32645','0','0','0','0','Rogue - Envenom');
 
 -- fix for YTDB after "guards don't evade..." commit
 UPDATE `creature_template` SET `Unit_flags` = 36864 WHERE `entry` = 3296;
@@ -165,19 +121,10 @@ UPDATE quest_template SET prevQuestID = 24657 where ExclusiveGroup = 24658;
 -- Cinderglacier
 UPDATE `spell_proc_event` SET `SpellFamilyName` = '15', `SpellFamilyMask0` = 0x42002, `SpellFamilyMask1` = 0x6, `SpellFamilyMask2` = 0x80 WHERE `entry` = 53386;
 
--- Druid Berserk fix
-DELETE FROM `spell_script_names` WHERE `spell_id`=50334 AND `ScriptName`='spell_dru_berserk';
-INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
-(50334, 'spell_dru_berserk');
-
 -- Fix spell 66926 for quest "They Grow Up So Fast"
 DELETE FROM `spell_script_names` WHERE `spell_id`=66926;
 INSERT INTO `spell_script_names` VALUES
 (66926, 'spell_gen_venomhide_check');
-
--- Lifebloom final bloom fix
-UPDATE `spell_bonus_data` SET `direct_bonus`=0.3857 WHERE `entry`=33778 ;
-UPDATE `spell_bonus_data` SET `dot_bonus`=0.0653 WHERE `entry` IN (48450, 48451, 48628);
 
 -- fix some quests in Borean Tundra
 UPDATE creature_template SET scriptname = 'vehicle_wyrmrest_skytalon' WHERE entry = 32535;
@@ -207,10 +154,6 @@ INSERT INTO `creature_model_info` (`modelid`, `bounding_radius`, `combat_reach`,
 
 -- Fix Battleground Demolisher (http://www.wowhead.com/npc=28781) HP
 UPDATE `creature_template` SET `exp` = 0 WHERE `entry` = 32796;
-
--- Fix Explosive shot from spd scaling
-DELETE FROM `spell_bonus_data` WHERE `entry`='53352';
-INSERT INTO `spell_bonus_data`(`entry`,`direct_bonus`,`dot_bonus`,`ap_bonus`,`ap_dot_bonus`,`comments`) VALUES ( '53352','0','0','0.14','0','Hunter - Explosive Shot (triggered)');
 
 -- Fix Isle of Conquest
 DELETE FROM npc_spellclick_spells WHERE npc_entry IN (35413, 35419, 35431, 35433);
@@ -329,9 +272,6 @@ INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `Spell
 (34859, 0, 6, 6144, 4, 4096, 0, 2, 0, 0, 0), -- rank2
 (34860, 0, 6, 6144, 4, 4096, 0, 2, 0, 0, 0); -- rank3
 
--- Fixed spell Wyvern Sting
-DELETE FROM `spell_linked_spell` WHERE `comment` = 'Wyvern Sting';
-
 -- Fixed talent Threat of Thassarian of Death Knights
 UPDATE `spell_proc_event` SET `SpellFamilyMask0`=`SpellFamilyMask0`|0x00000001 WHERE `entry` IN (66192,66191,65661);
 
@@ -341,35 +281,6 @@ INSERT INTO `spell_linked_spell` VALUES
 (32612,54661,0,'Invisibility Sanctuary Effect'),
 (5215,54661,0,'Prowl Sanctuary Effect'),
 (1784,54661,0,'Stealth Sanctuary Effect');
-
--- Fixed spell damage counting exploit (items with spd) for some classes
--- Druid
-UPDATE `spell_bonus_data` SET `direct_bonus` = 0, `dot_bonus` = 0 WHERE `entry` IN (779,1822,60089);
-DELETE FROM `spell_bonus_data` WHERE `entry` IN (1079,9007,22568);
-INSERT INTO `spell_bonus_data` VALUES
-(1079,0,0,-1,-1,'Druid - Rip'),
-(9007,0,0,-1,-1,'Druid - Pounce Bleed'),
-(22568,0,0,-1,-1,'Druid - Ferocious Bite');
--- Hunter
-UPDATE `spell_bonus_data` SET `direct_bonus` = 0, `dot_bonus` = 0 WHERE `entry` IN (3044,3674,53352,13812,13797,1978,42243);
-UPDATE `spell_bonus_data` SET `ap_dot_bonus` = 0.1 WHERE `entry` = 13812;
-DELETE FROM `spell_bonus_data` WHERE `entry` IN (24131,53353);
-INSERT INTO `spell_bonus_data` VALUES
-(24131,0,0,-1,-1,'Hunter - Wyvern Sting (triggered)'),
-(53353,0,0,-1,-1,'Hunter - Chimera Shot (Serpent)');
-DELETE FROM `spell_ranks` WHERE `first_spell_id` = 24131;
-INSERT INTO `spell_ranks` VALUES
-(24131,24131,1),
-(24131,24134,2),
-(24131,24135,3),
-(24131,27069,4),
-(24131,49009,5),
-(24131,49010,6);
--- Rogue
-UPDATE `spell_bonus_data` SET `direct_bonus` = 0, `dot_bonus` = 0 WHERE `entry` IN (2818,2819,11353,11354,25349,26968,27187,57969,57970);
-
--- Fixed shaman's talent Elemental Focus
-UPDATE `spell_proc_event` SET `SpellFamilyMask0` = `SpellFamilyMask0` &~ 192 WHERE `entry` = 16164;
 
 -- Blood reserve proc
 DELETE FROM `spell_proc_event` WHERE `entry` IN (64568);
@@ -383,41 +294,12 @@ UPDATE `creature_template` SET `faction_A` = 35, `faction_H` = 35 WHERE `entry` 
 -- Fix bug with cannons movement in Strange of Ancients
 UPDATE `creature_template` SET `speed_run` = 0  WHERE `entry` in (27894, 32795);
 
--- Fixed spell Anti-Magic Zone
-UPDATE `creature_template` SET `modelid1` = 11686, `unit_flags` = 33554432 WHERE `modelid1` = 4590 AND `entry` = 28306;
-
--- Fix Druid Enrage spell
-DELETE FROM `spell_ranks` WHERE `first_spell_id` = 1178;
-INSERT INTO `spell_ranks` VALUES (1178,1178,1),(1178,9635,2);
-
--- Fixed warlock's talent Empowered Imp
-UPDATE `spell_proc_event` set `procFlags` = 0x00010004 WHERE `entry` = 54278;
-
 -- Fixed talent Scent of Blood for death knights
 DELETE FROM `spell_proc_event` WHERE `entry` IN (49004,49508,49509);
 INSERT INTO `spell_proc_event` (`entry`,`procEx`) VALUES
 (49004,0x00000033),
 (49508,0x00000033),
 (49509,0x00000033);
-
--- Fixed paladin's talent Blessing of Sanctuary
-DELETE FROM `spell_dbc` WHERE `id` = 20912;
-INSERT INTO `spell_dbc` (`Id`,`CastingTimeIndex`,`DurationIndex`,`RangeIndex`,`Effect1`,`EffectBasePoints1`,`EffectImplicitTargetA1`,`EffectApplyAuraName1`,`EffectMiscValue1`,`SpellFamilyName`,`Comment`) VALUES
-(20912,1,21,1,6,-3,1,87,127,10,'Blessing of Sanctuary Helper (SERVERSIDE)');
--- Blessing of Sanctuary vs Vigilance
-UPDATE `spell_group` SET `spell_id` = 68066 WHERE `id` = 1091 and `spell_id` = 47930;
-UPDATE `spell_group` SET `spell_id` = 20912 WHERE `id` = 1092 and `spell_id` = 20911;
-
--- Fixed mage's talent Hot Streak
-UPDATE `spell_proc_event` SET `SpellFamilyMask1`=`SpellFamilyMask1`|0x00010000 WHERE `entry` IN (44445,44446,44448);
-
--- Fixed spell bonus coefficient for spell Healing Stream Totem.
-DELETE FROM `spell_bonus_data` WHERE `entry` = 52042;
-DELETE FROM `spell_proc_event` WHERE `entry` IN (20335,20336,20337);
-INSERT INTO `spell_proc_event` VALUES
-(20335,0x00,10,0x00800000,0x00000000,0x00000008,0x00000100,0x00000000,0.000000,100.000000,0),
-(20336,0x00,10,0x00800000,0x00000000,0x00000008,0x00000100,0x00000000,0.000000,100.000000,0),
-(20337,0x00,10,0x00800000,0x00000000,0x00000008,0x00000100,0x00000000,0.000000,100.000000,0);
 
 -- Fix Spring Fling achievement
 UPDATE `creature_template` SET `ScriptName` = 'npc_spring_rabbit' WHERE `entry` = 32791;

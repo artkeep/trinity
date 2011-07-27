@@ -1,1 +1,0 @@
-REPLACE INTO `trinity_string` VALUES ('12000', 'Cheater DETECTED> %s  ID:( %u ) Reason> %s', null, null, null, null, null, null, null, 'Найден читер:> %s ID:( %u) Причина> %s');

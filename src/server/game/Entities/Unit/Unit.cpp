@@ -778,12 +778,7 @@ uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDam
             victim->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DIRECT_DAMAGE, spellProto ? spellProto->Id : 0);
 
         if (victim->GetTypeId() != TYPEID_PLAYER)
-        {
-            if (spellProto && IsDamageToThreatSpell(spellProto))
-                victim->AddThreat(this, damage * 2.0f, damageSchoolMask, spellProto);
-            else
-                victim->AddThreat(this, (float)damage, damageSchoolMask, spellProto);
-        }
+            victim->AddThreat(this, (float)damage, damageSchoolMask, spellProto);
         else                                                // victim is a player
         {
             // random durability for items (HIT TAKEN)
@@ -10611,22 +10606,25 @@ int32 Unit::HealBySpell(Unit* victim, SpellEntry const* spellInfo, uint32 addHea
     return gain;
 }
 
-void Unit::SendEnergizeSpellLog(Unit* victim, uint32 SpellID, uint32 Damage, Powers powertype)
+void Unit::SendEnergizeSpellLog(Unit* victim, uint32 spellID, uint32 damage, Powers powerType)
 {
     WorldPacket data(SMSG_SPELLENERGIZELOG, (8+8+4+4+4+1));
     data.append(victim->GetPackGUID());
     data.append(GetPackGUID());
-    data << uint32(SpellID);
-    data << uint32(powertype);
-    data << uint32(Damage);
+    data << uint32(spellID);
+    data << uint32(powerType);
+    data << uint32(damage);
     SendMessageToSet(&data, true);
 }
 
-void Unit::EnergizeBySpell(Unit* victim, uint32 SpellID, uint32 Damage, Powers powertype)
+void Unit::EnergizeBySpell(Unit* victim, uint32 spellID, uint32 damage, Powers powerType)
 {
-    SendEnergizeSpellLog(victim, SpellID, Damage, powertype);
+    SendEnergizeSpellLog(victim, spellID, damage, powerType);
     // needs to be called after sending spell log
-    victim->ModifyPower(powertype, Damage);
+    victim->ModifyPower(powerType, damage);
+
+    SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellID);
+    victim->getHostileRefManager().threatAssist(this, float(damage) * 0.5f, spellInfo);
 }
 
 uint32 Unit::SpellDamageBonus(Unit* victim, SpellEntry const* spellProto, uint32 pdamage, DamageEffectType damagetype, uint32 stack)
@@ -11936,36 +11934,6 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) con
             return true;
         if (spellInfo->EffectApplyAuraName[index] == SPELL_AURA_MOD_TAUNT)
             return true;
-    }
-
-    return false;
-}
-
-bool Unit::IsDamageToThreatSpell(SpellEntry const* spellInfo) const
-{
-    if (!spellInfo)
-        return false;
-
-    switch(spellInfo->SpellFamilyName)
-    {
-        case SPELLFAMILY_WARLOCK:
-            if (spellInfo->SpellFamilyFlags[0] == 0x100) // Searing Pain
-                return true;
-            break;
-        case SPELLFAMILY_SHAMAN:
-            if (spellInfo->SpellFamilyFlags[0] == SPELLFAMILYFLAG_SHAMAN_FROST_SHOCK)
-                return true;
-            break;
-        case SPELLFAMILY_DEATHKNIGHT:
-            if (spellInfo->SpellFamilyFlags[1] == 0x20000000) // Rune Strike
-                return true;
-            if (spellInfo->SpellFamilyFlags[2] == 0x8) // Death and Decay
-                return true;
-            break;
-        case SPELLFAMILY_WARRIOR:
-            if (spellInfo->SpellFamilyFlags[0] == 0x80) // Thunder Clap
-                return true;
-            break;
     }
 
     return false;

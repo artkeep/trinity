@@ -463,7 +463,7 @@ class Spell
         void SendResurrectRequest(Player* target);
 
         void HandleEffects(Unit *pUnitTarget, Item *pItemTarget, GameObject *pGOTarget, uint32 i);
-        void HandleThreatSpells(uint32 spellId);
+        void HandleThreatSpells();
 
         const SpellEntry * const m_spellInfo;
         Item* m_CastItem;

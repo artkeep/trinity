@@ -32,9 +32,9 @@ struct SpellEntry;
 class HostileRefManager : public RefManager<Unit, ThreatManager>
 {
     private:
-        Unit *iOwner;
+        Unit* iOwner;
     public:
-        explicit HostileRefManager(Unit *pOwner) { iOwner = pOwner; }
+        explicit HostileRefManager(Unit* owner) { iOwner = owner; }
         ~HostileRefManager();
 
         Unit* getOwner() { return iOwner; }
@@ -42,11 +42,11 @@ class HostileRefManager : public RefManager<Unit, ThreatManager>
         // send threat to all my hateres for the pVictim
         // The pVictim is hated than by them as well
         // use for buffs and healing threat functionality
-        void threatAssist(Unit *pVictim, float fThreat, SpellEntry const *threatSpell = 0, bool pSingleTarget = false);
+        void threatAssist(Unit* victim, float baseThreat, SpellEntry const* threatSpell = NULL);
 
-        void addTempThreat(float fThreat, bool apply);
+        void addTempThreat(float threat, bool apply);
 
-        void addThreatPercent(int32 iPercent);
+        void addThreatPercent(int32 percent);
 
         // The references are not needed anymore
         // tell the source to remove them from the list and free the mem
@@ -59,13 +59,13 @@ class HostileRefManager : public RefManager<Unit, ThreatManager>
 
         void updateThreatTables();
 
-        void setOnlineOfflineState(bool bIsOnline);
+        void setOnlineOfflineState(bool isOnline);
 
         // set state for one reference, defined by Unit
-        void setOnlineOfflineState(Unit *pCreature, bool bIsOnline);
+        void setOnlineOfflineState(Unit* creature, bool isOnline);
 
         // delete one reference, defined by Unit
-        void deleteReference(Unit *pCreature);
+        void deleteReference(Unit* creature);
 
         void UpdateVisibility();
 };

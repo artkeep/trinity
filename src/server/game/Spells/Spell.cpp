@@ -3433,8 +3433,7 @@ void Spell::_handle_immediate_phase()
 {
     m_spellAura = NULL;
     // handle some immediate features of the spell here
-    HandleThreatSpells(m_spellInfo->Id);
-
+    HandleThreatSpells();
     PrepareScriptHitHandlers();
 
     for (uint32 j = 0; j < MAX_SPELL_EFFECTS; ++j)
@@ -4621,22 +4620,55 @@ void Spell::TakeReagents()
     }
 }
 
-void Spell::HandleThreatSpells(uint32 spellId)
+void Spell::HandleThreatSpells()
 {
-    if (!m_targets.GetUnitTarget() || !spellId)
+    if (m_UniqueTargetInfo.empty())
         return;
 
-    if (!m_targets.GetUnitTarget()->CanHaveThreatList())
+    if ((m_spellInfo->AttributesEx  & SPELL_ATTR1_NO_THREAT) ||
+        (m_spellInfo->AttributesEx3 & SPELL_ATTR3_NO_INITIAL_AGGRO))
         return;
 
-    uint16 threat = sSpellMgr->GetSpellThreat(spellId);
+    float threat = 0.0f;
+    if (SpellThreatEntry const* threatEntry = sSpellMgr->GetSpellThreatEntry(m_spellInfo->Id))
+    {
+        if (threatEntry->apPctMod != 0.0f)
+            threat += threatEntry->apPctMod * m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
 
-    if (!threat)
+        threat += threatEntry->flatMod;
+    }
+    else if ((m_customAttr & SPELL_ATTR0_CU_NO_INITIAL_THREAT) == 0)
+        threat += m_spellInfo->spellLevel;
+
+    // past this point only multiplicative effects occur
+    if (threat == 0.0f)
         return;
 
-    m_targets.GetUnitTarget()->AddThreat(m_caster, float(threat));
+    // since 2.0.1 threat from positive effects also is distributed among all targets, so the overall caused threat is at most the defined bonus
+    threat /= m_UniqueTargetInfo.size();
 
-    sLog->outStaticDebug("Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr->GetSpellRank(spellId), threat);
+    for (std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    {
+        if (ihit->missCondition != SPELL_MISS_NONE)
+            continue;
+
+        Unit* target = ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
+        if (!target)
+            continue;
+
+        // positive spells distribute threat among all units that are in combat with target, like healing
+        if (IsPositiveSpell(m_spellInfo->Id))
+            target->getHostileRefManager().threatAssist(m_caster, threat, m_spellInfo);
+        // for negative spells threat gets distributed among affected targets
+        else
+        {
+            if (!target->CanHaveThreatList())
+                continue;
+
+            target->AddThreat(m_caster, threat, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
+        }
+    }
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell %u, added an additional %f threat for %s %u target(s)", m_spellInfo->Id, threat, IsPositiveSpell(m_spellInfo->Id) ? "assisting" : "harming", uint32(m_UniqueTargetInfo.size()));
 }
 
 void Spell::HandleEffects(Unit *pUnitTarget, Item *pItemTarget, GameObject *pGOTarget, uint32 i)

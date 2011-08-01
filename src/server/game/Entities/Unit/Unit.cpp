@@ -10663,7 +10663,7 @@ uint32 Unit::SpellDamageBonus(Unit* victim, SpellEntry const* spellProto, uint32
             {
                 if ((*i)->GetSpellProto()->EquippedItemClass & spellProto->EquippedItemClass)
                     if (((*i)->GetSpellProto()->EquippedItemSubClassMask == 0) ||
-                        (ToPlayer() && ToPlayer()->HasItemFitToSpellRequirements((*i)->GetSpellProto())))
+                        ((*i)->GetSpellProto()->EquippedItemSubClassMask & spellProto->EquippedItemSubClassMask))
                         AddPctN(DoneTotalMod, (*i)->GetAmount());
             }
             else if (ToPlayer() && ToPlayer()->HasItemFitToSpellRequirements((*i)->GetSpellProto()))
@@ -12029,12 +12029,12 @@ void Unit::MeleeDamageBonus(Unit* victim, uint32 *pdamage, WeaponAttackType attT
                 {
                     if ((*i)->GetSpellProto()->EquippedItemClass & spellProto->EquippedItemClass)
                         if (((*i)->GetSpellProto()->EquippedItemSubClassMask == 0) ||
-                            (ToPlayer() && ToPlayer()->HasItemFitToSpellRequirements((*i)->GetSpellProto())))
+                            ((*i)->GetSpellProto()->EquippedItemSubClassMask & spellProto->EquippedItemSubClassMask))
                             AddPctN(DoneTotalMod, (*i)->GetAmount());
                 }
                 else if (ToPlayer() && ToPlayer()->HasItemFitToSpellRequirements((*i)->GetSpellProto()))
                     AddPctN(DoneTotalMod, (*i)->GetAmount());
-            }
+                }
         }
         else if (player)
         {

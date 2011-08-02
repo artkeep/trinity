@@ -16,7 +16,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AnticheatMgr.h"
 #include "Common.h"
 #include "DatabaseEnv.h"
 #include "WorldPacket.h"
@@ -6307,9 +6306,6 @@ void Spell::EffectKnockBack(SpellEffIndex effIndex)
 
 void Spell::EffectLeapBack(SpellEffIndex effIndex)
 {
-    //if (m_caster->ToPlayer())
-    //    sAnticheatMgr->DisableAnticheatDetection(m_caster->ToPlayer());
-
     float speedxy = float(m_spellInfo->EffectMiscValue[effIndex])/10;
     float speedz = float(damage/10);
     if (!speedxy)
@@ -6433,9 +6429,6 @@ void Spell::EffectSummonDeadPet(SpellEffIndex /*effIndex*/)
         return;
     if (damage < 0)
         return;
-
-    //if (m_caster->ToPlayer())
-    //   sAnticheatMgr->DisableAnticheatDetection(m_caster->ToPlayer());
 
     float x, y, z;
     _player->GetPosition(x, y, z);
@@ -7156,9 +7149,6 @@ void Spell::GetSummonPosition(uint32 i, Position &pos, float radius, uint32 coun
     // Summon if dest location not present near caster
     else
     {
-        //if (m_caster->ToPlayer())
-        //    sAnticheatMgr->DisableAnticheatDetection(m_caster->ToPlayer());
-
         float x, y, z;
         m_caster->GetClosePoint(x, y, z, 3.0f);
         pos.Relocate(x, y, z);

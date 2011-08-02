@@ -89,8 +89,38 @@ class spell_warr_improved_spell_reflection : public SpellScriptLoader
         }
 };
 
+class spell_warr_revenge : public SpellScriptLoader
+{
+    public:
+        spell_warr_revenge() : SpellScriptLoader("spell_warr_revenge") { }
+
+        class spell_warr_revenge_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_warr_revenge_SpellScript);
+
+            void HandleAfterHit()
+            {
+                if (Unit* caster = GetCaster())
+                    if (caster->ToPlayer())
+                        if(caster->ToPlayer()->HasAuraState(AURA_STATE_DEFENSE))
+                            caster->ToPlayer()-> ModifyAuraState(AURA_STATE_DEFENSE, false);
+            }
+
+            void Register()
+            {
+                AfterHit += SpellHitFn(spell_warr_revenge_SpellScript::HandleAfterHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_warr_revenge_SpellScript();
+        }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     new spell_warr_last_stand();
     new spell_warr_improved_spell_reflection();
+    new spell_warr_revenge();
 }

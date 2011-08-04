@@ -165,7 +165,7 @@ bool AchievementCriteriaData::IsValid(AchievementCriteriaEntry const* criteria)
         case ACHIEVEMENT_CRITERIA_DATA_TYPE_S_AURA:
         case ACHIEVEMENT_CRITERIA_DATA_TYPE_T_AURA:
         {
-            SpellEntry const* spellEntry = sSpellStore.LookupEntry(aura.spell_id);
+            SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(aura.spell_id);
             if (!spellEntry)
             {
                 sLog->outErrorDb("Table `achievement_criteria_data` (Entry: %u Type: %u) for data type %s (%u) has wrong spell id in value1 (%u), ignored.",
@@ -178,7 +178,7 @@ bool AchievementCriteriaData::IsValid(AchievementCriteriaEntry const* criteria)
                     criteria->ID, criteria->requiredType, (dataType == ACHIEVEMENT_CRITERIA_DATA_TYPE_S_AURA?"ACHIEVEMENT_CRITERIA_DATA_TYPE_S_AURA":"ACHIEVEMENT_CRITERIA_DATA_TYPE_T_AURA"), dataType, aura.effect_idx);
                 return false;
             }
-            if (!spellEntry->EffectApplyAuraName[aura.effect_idx])
+            if (!spellEntry->Effects[aura.effect_idx].ApplyAuraName)
             {
                 sLog->outErrorDb("Table `achievement_criteria_data` (Entry: %u Type: %u) for data type %s (%u) has non-aura spell effect (ID: %u Effect: %u), ignores.",
                     criteria->ID, criteria->requiredType, (dataType == ACHIEVEMENT_CRITERIA_DATA_TYPE_S_AURA?"ACHIEVEMENT_CRITERIA_DATA_TYPE_S_AURA":"ACHIEVEMENT_CRITERIA_DATA_TYPE_T_AURA"), dataType, aura.spell_id, aura.effect_idx);
@@ -490,20 +490,20 @@ void AchievementMgr::SaveToDB(SQLTransaction& trans)
             /// next new/changed record prefix
             else
             {
-                ssdel << ", ";
-                ssins << ", ";
+                ssdel << ',';
+                ssins << ',';
             }
 
             // new/changed record data
             ssdel << iter->first;
-            ssins << "("<<GetPlayer()->GetGUIDLow() << ", " << iter->first << ", " << uint64(iter->second.date) << ")";
+            ssins << '(' << GetPlayer()->GetGUIDLow() << ',' << iter->first << ',' << uint64(iter->second.date) << ')';
 
             /// mark as saved in db
             iter->second.changed = false;
         }
 
         if (need_execute)
-            ssdel << ")";
+            ssdel << ')';
 
         if (need_execute)
         {
@@ -534,7 +534,7 @@ void AchievementMgr::SaveToDB(SQLTransaction& trans)
                 }
                 /// next new/changed record prefix
                 else
-                    ssdel << ", ";
+                    ssdel << ',';
 
                 // new/changed record data
                 ssdel << iter->first;
@@ -551,10 +551,10 @@ void AchievementMgr::SaveToDB(SQLTransaction& trans)
                 }
                 /// next new/changed record prefix
                 else
-                    ssins << ", ";
+                    ssins << ',';
 
                 // new/changed record data
-                ssins << "(" << GetPlayer()->GetGUIDLow() << ", " << iter->first << ", " << iter->second.counter << ", " << iter->second.date << ")";
+                ssins << '(' << GetPlayer()->GetGUIDLow() << ',' << iter->first << ',' << iter->second.counter << ',' << iter->second.date << ')';
             }
 
             /// mark as updated in db
@@ -562,7 +562,7 @@ void AchievementMgr::SaveToDB(SQLTransaction& trans)
         }
 
         if (need_execute_del)                                // DELETE ... IN (.... _)_
-            ssdel << ")";
+            ssdel << ')';
 
         if (need_execute_del || need_execute_ins)
         {
@@ -583,7 +583,7 @@ void AchievementMgr::LoadFromDB(PreparedQueryResult achievementResult, PreparedQ
             Field* fields = achievementResult->Fetch();
             uint32 achievementid = fields[0].GetUInt16();
 
-            // don't must happen: cleanup at server startup in sAchievementMgr->LoadCompletedAchievements()
+            // must not happen: cleanup at server startup in sAchievementMgr->LoadCompletedAchievements()
             AchievementEntry const* achievement = sAchievementStore.LookupEntry(achievementid);
             if (!achievement)
                 continue;

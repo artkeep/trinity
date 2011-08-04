@@ -20,6 +20,7 @@
 #include "ScriptPCH.h"
 #include "OutdoorPvPWG.h"
 #include "OutdoorPvPMgr.h"
+#include "Vehicle.h"
 
 #define GOSSIP_HELLO_DEMO1  "Build catapult."
 #define GOSSIP_HELLO_DEMO2  "Build demolisher."
@@ -420,7 +421,7 @@ public:
     bool OnGossipHello(Player *pPlayer, GameObject * pGO)
     {
         if (GameObject* trigger = pGO->FindNearestGameObject(190375, 500)) // Wintergrasp Fortress Gate
-            if (Vehicle * veh = pPlayer->GetVehicle())
+            if (Vehicle* veh = pPlayer->GetVehicle())
             {
                 Position triggerPos;
                 trigger->GetPosition(&triggerPos);

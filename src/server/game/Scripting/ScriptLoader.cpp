@@ -24,8 +24,6 @@ void AddSC_example_gossip_codebox();
 void AddSC_example_misc();
 void AddSC_example_commandscript();
 
-//TeleNPC2
-void AddSC_npc_teleport();
 // Custom
 //NPC Transport Service
 void AddSC_npc_mount();	
@@ -409,8 +407,8 @@ void AddSC_boss_urom();
 void AddSC_boss_varos();
 void AddSC_instance_oculus();
 void AddSC_oculus();
-void AddSC_instance_eye_of_eternity();   //Eye Of Eternity
-void AddSC_boss_malygos();
+void AddSC_boss_malygos();              // The Nexus: Eye of Eternity
+void AddSC_instance_eye_of_eternity();
 void AddSC_boss_sartharion();            //Obsidian Sanctum
 void AddSC_instance_obsidian_sanctum();
 void AddSC_boss_bjarngrim();             //Ulduar Halls of Lightning
@@ -474,12 +472,10 @@ void AddSC_pit_of_saron();
 void AddSC_boss_garfrost();
 void AddSC_boss_ick();
 void AddSC_boss_tyrannus();
-void AddSC_instance_halls_of_reflection(); // Halls of Reflection
+void AddSC_instance_halls_of_reflection();   // Halls of Reflection
 void AddSC_halls_of_reflection();
 void AddSC_boss_falric();
 void AddSC_boss_marwyn();
-void AddSC_boss_lich_king_hr();
-
 void AddSC_boss_lord_marrowgar();       // Icecrown Citadel
 void AddSC_boss_lady_deathwhisper();
 void AddSC_boss_deathbringer_saurfang();
@@ -489,17 +485,15 @@ void AddSC_boss_professor_putricide();
 void AddSC_boss_blood_prince_council();
 void AddSC_boss_blood_queen_lana_thel();
 void AddSC_boss_valithria_dreamwalker();
-void AddSC_boss_lichking();
 void AddSC_boss_sindragosa();
 void AddSC_icecrown_citadel_teleport();
 void AddSC_instance_icecrown_citadel();
 void AddSC_icecrown_citadel();
-
-void AddSC_boss_baltharus();	//RubySanctum
-void AddSC_boss_halion();
-void AddSC_boss_ragefire();
-void AddSC_boss_zarithrian();
-void AddSC_instance_ruby_sanctum();
+void AddSC_instance_ruby_sanctum();      // Ruby Sanctum
+void AddSC_ruby_sanctum();
+void AddSC_boss_baltharus_the_warborn();
+void AddSC_boss_saviana_ragefire();
+void AddSC_boss_general_zarithrian();
 
 void AddSC_dalaran();
 void AddSC_borean_tundra();
@@ -637,7 +631,7 @@ void AddExampleScripts()
     AddSC_example_escort();
     AddSC_example_gossip_codebox();
     AddSC_example_misc();
-	AddSC_example_commandscript();
+    AddSC_example_commandscript();
 }
 
 void AddSpellScripts()
@@ -1083,7 +1077,6 @@ void AddNorthrendScripts()
     AddSC_boss_grand_champions();
     AddSC_instance_trial_of_the_champion();
     AddSC_trial_of_the_champion();
-
     AddSC_boss_anubarak_trial();        //Trial of the Crusader
     AddSC_boss_faction_champions();
     AddSC_boss_jaraxxus();
@@ -1091,7 +1084,6 @@ void AddNorthrendScripts()
     AddSC_boss_twin_valkyr();
     AddSC_boss_northrend_beasts();
     AddSC_instance_trial_of_the_crusader();
-
     AddSC_boss_krik_thir();             //Azjol-Nerub Azjol-Nerub
     AddSC_boss_hadronox();
     AddSC_boss_anub_arak();
@@ -1123,8 +1115,8 @@ void AddNorthrendScripts()
     AddSC_boss_varos();
     AddSC_instance_oculus();
     AddSC_oculus();
-    AddSC_instance_eye_of_eternity();   //Eye Of Eternity
-    AddSC_boss_malygos();
+    AddSC_boss_malygos();              // The Nexus: Eye of Eternity
+    AddSC_instance_eye_of_eternity();
     AddSC_boss_sartharion();            //Obsidian Sanctum
     AddSC_instance_obsidian_sanctum();
     AddSC_boss_bjarngrim();             //Ulduar Halls of Lightning
@@ -1137,7 +1129,6 @@ void AddNorthrendScripts()
     AddSC_boss_sjonnir();
     AddSC_instance_halls_of_stone();
     AddSC_halls_of_stone();
-
     AddSC_boss_auriaya();               //Ulduar Ulduar
     AddSC_boss_flame_leviathan();
     AddSC_boss_ignis();
@@ -1151,7 +1142,6 @@ void AddNorthrendScripts()
     AddSC_boss_hodir();
     AddSC_boss_freya();
     AddSC_instance_ulduar();
-
     AddSC_boss_keleseth();              //Utgarde Keep
     AddSC_boss_skarvald_dalronn();
     AddSC_boss_ingvar_the_plunderer();
@@ -1190,12 +1180,10 @@ void AddNorthrendScripts()
     AddSC_boss_garfrost();
     AddSC_boss_ick();
     AddSC_boss_tyrannus();
-    AddSC_instance_halls_of_reflection();    //Halls of Reflection
+    AddSC_instance_halls_of_reflection();   // Halls of Reflection
     AddSC_halls_of_reflection();
     AddSC_boss_falric();
     AddSC_boss_marwyn();
-    AddSC_boss_lich_king_hr();
-
     AddSC_boss_lord_marrowgar();        // Icecrown Citadel
     AddSC_boss_lady_deathwhisper();
     AddSC_boss_deathbringer_saurfang();
@@ -1205,17 +1193,16 @@ void AddNorthrendScripts()
     AddSC_boss_blood_prince_council();
     AddSC_boss_blood_queen_lana_thel();
     AddSC_boss_valithria_dreamwalker();
-    AddSC_boss_lichking();
     AddSC_boss_sindragosa();
     AddSC_icecrown_citadel_teleport();
     AddSC_instance_icecrown_citadel();
     AddSC_icecrown_citadel();
+    AddSC_instance_ruby_sanctum();      // Ruby Sanctum
+    AddSC_ruby_sanctum();
+    AddSC_boss_baltharus_the_warborn();
+    AddSC_boss_saviana_ragefire();
+    AddSC_boss_general_zarithrian();
 
-    AddSC_boss_baltharus();	//RubySanctum
-    AddSC_boss_halion();
-    AddSC_boss_ragefire();
-    AddSC_boss_zarithrian();
-    AddSC_instance_ruby_sanctum();
     AddSC_dalaran();
     AddSC_borean_tundra();
     AddSC_dragonblight();
@@ -1260,10 +1247,7 @@ void AddCustomScripts()
 {
 #ifdef SCRIPTS
     /* This is where custom scripts should be added. */
-    //TeleNPC2
-    AddSC_npc_teleport();
-    // Custom
-    AddSC_npc_mount();		
+    // Custom		
     AddSC_npcs_mini_boss();	
 #endif
 }

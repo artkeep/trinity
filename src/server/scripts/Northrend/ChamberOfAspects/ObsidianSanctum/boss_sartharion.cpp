@@ -17,8 +17,6 @@
 
 #include "ScriptPCH.h"
 #include "obsidian_sanctum.h"
-#include "SpellScript.h"
-#include "Spell.h"
 
 enum eEnums
 {
@@ -121,11 +119,6 @@ enum eEnums
     NPC_FLAME_TSUNAMI                           = 30616,    // for the flame waves
     NPC_LAVA_BLAZE                              = 30643,    // adds spawning from flame strike
 
-    //Pyrobuffet
-    SPELL_PYROBUFFET_TRIGGER_AURA               = 58907,    // applied at boss to cast triggered at players
-    SPELL_PYROBUFFET_DMG_AURA                   = 58903,    // triggered by aura at boss
-    NPC_SAFE_AREA                               = 30494,    // safe zone npc for Pyrobuffet
-
     //using these custom points for dragons start and end
     POINT_ID_INIT                               = 100,
     POINT_ID_LAND                               = 200,
@@ -213,49 +206,6 @@ Locations TwilightEggsSarth[] =
 };
 
 #define TWILIGHT_ACHIEVEMENTS     1
-
-/*
- * --- Spell: Pyrobuffet
- */
-
-class PyrobuffetTargetSelector
-{
-    public:
-        PyrobuffetTargetSelector() { }
-
-        bool operator()(Unit* unit)
-        {
-            return unit->FindNearestCreature(NPC_SAFE_AREA, 25);
-        }
-};
-
-class spell_pyrobuffet_target_check : public SpellScriptLoader
-{
-    public:
-        spell_pyrobuffet_target_check() : SpellScriptLoader("spell_pyrobuffet_target_check") { }
-
-        class spell_pyrobuffet_target_check_SpellScript : public SpellScript
-        {
-            PrepareSpellScript(spell_pyrobuffet_target_check_SpellScript);
-
-            void FilterTargets(std::list<Unit*>& unitList)
-            {
-                unitList.remove_if(PyrobuffetTargetSelector());
-            }
-
-            void Register()
-            {
-                OnUnitTargetSelect += SpellUnitTargetFn(spell_pyrobuffet_target_check_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_AREA_ENEMY_SRC);
-                OnUnitTargetSelect += SpellUnitTargetFn(spell_pyrobuffet_target_check_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_AREA_ENEMY_SRC);
-                OnUnitTargetSelect += SpellUnitTargetFn(spell_pyrobuffet_target_check_SpellScript::FilterTargets, EFFECT_2, TARGET_UNIT_AREA_ENEMY_SRC);
-            }
-        };
-
-        SpellScript* GetSpellScript() const
-        {
-            return new spell_pyrobuffet_target_check_SpellScript();
-        }
-};
 
 /*######
 ## Boss Sartharion
@@ -409,7 +359,6 @@ public:
             {
                 pInstance->SetData(TYPE_SARTHARION_EVENT, IN_PROGRESS);
                 FetchDragons();
-                DoCast(SPELL_PYROBUFFET_TRIGGER_AURA);
             }
         }
 
@@ -1811,8 +1760,6 @@ class achievement_twilight_zone : public AchievementCriteriaScript
 
 void AddSC_boss_sartharion()
 {
-    new spell_pyrobuffet_target_check();
-
     new boss_sartharion();
     new mob_vesperon();
     new mob_shadron();

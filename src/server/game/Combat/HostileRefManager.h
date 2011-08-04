@@ -25,7 +25,7 @@
 class Unit;
 class ThreatManager;
 class HostileReference;
-struct SpellEntry;
+class SpellInfo;
 
 //=================================================
 
@@ -42,7 +42,7 @@ class HostileRefManager : public RefManager<Unit, ThreatManager>
         // send threat to all my hateres for the pVictim
         // The pVictim is hated than by them as well
         // use for buffs and healing threat functionality
-        void threatAssist(Unit* victim, float baseThreat, SpellEntry const* threatSpell = NULL);
+        void threatAssist(Unit* victim, float baseThreat, SpellInfo const* threatSpell = NULL);
 
         void addTempThreat(float threat, bool apply);
 

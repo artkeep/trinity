@@ -97,12 +97,11 @@ public:
                 (GetHealthPct(0) >= 33 && GetHealthPct(damage) < 33))
             {
                 me->InterruptNonMeleeSpells(false);
-		//temporary disable
-		//DoCast(me, SPELL_INSANITY, false);
+                DoCast(me, SPELL_INSANITY, false);
             }
         }
 
-        void SpellHitTarget(Unit* target, const SpellEntry *spell)
+        void SpellHitTarget(Unit* target, const SpellInfo *spell)
         {
             if (spell->Id == SPELL_INSANITY)
             {

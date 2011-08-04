@@ -304,9 +304,7 @@ class boss_valithria_dreamwalker : public CreatureScript
 
             void Reset()
             {
-                _events.Reset();
-                //me->SetHealth(_spawnHealth);
-                me->SetHealth(me->GetMaxHealth() / 2);
+                me->SetHealth(_spawnHealth);
                 me->SetReactState(REACT_PASSIVE);
                 me->LoadCreaturesAddon(true);
                 // immune to percent heals
@@ -366,7 +364,7 @@ class boss_valithria_dreamwalker : public CreatureScript
 
             void DamageTaken(Unit* /*attacker*/, uint32& damage)
             {
-                if (me->HealthBelowPct(26))
+                if (me->HealthBelowPctDamaged(25, damage))
                 {
                     if (!_under25PercentTalkDone)
                     {
@@ -389,7 +387,7 @@ class boss_valithria_dreamwalker : public CreatureScript
                 }
             }
 
-            void SpellHit(Unit* /*caster*/, SpellEntry const* spell)
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_DREAM_SLIP)
                 {
@@ -399,8 +397,8 @@ class boss_valithria_dreamwalker : public CreatureScript
                     me->SetDisplayId(11686);
                     me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     me->DespawnOrUnsummon(4000);
-                    //if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_VALITHRIA_LICH_KING)))
-                    //    lichKing->CastSpell(lichKing, SPELL_SPAWN_CHEST, false);
+                    if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_VALITHRIA_LICH_KING)))
+                        lichKing->CastSpell(lichKing, SPELL_SPAWN_CHEST, false);
 
                     if (Creature* trigger = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_VALITHRIA_TRIGGER)))
                         me->Kill(trigger);
@@ -450,6 +448,7 @@ class boss_valithria_dreamwalker : public CreatureScript
                             Talk(SAY_VALITHRIA_BERSERK);
                             break;
                         case EVENT_DREAM_PORTAL:
+                            if (!IsHeroic())
                                 Talk(SAY_VALITHRIA_DREAM_PORTAL);
                             for (uint32 i = 0; i < _portalCount; ++i)
                                 DoCast(me, SUMMON_PORTAL);
@@ -695,7 +694,7 @@ class npc_risen_archmage : public CreatureScript
             void EnterCombat(Unit* /*target*/)
             {
                 me->FinishSpell(CURRENT_CHANNELED_SPELL, false);
-                if (me->GetDBTableGUIDLow() && _canCallEnterCombat && _instance->GetBossState(DATA_VALITHRIA_DREAMWALKER) != DONE)
+                if (me->GetDBTableGUIDLow() && _canCallEnterCombat)
                 {
                     std::list<Creature*> archmages;
                     RisenArchmageCheck check;

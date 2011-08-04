@@ -32,7 +32,7 @@
 //==============================================================
 
 // The hatingUnit is not used yet
-float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float threat, SpellSchoolMask schoolMask, SpellEntry const* threatSpell)
+float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float threat, SpellSchoolMask schoolMask, SpellInfo const* threatSpell)
 {
     if (threatSpell)
     {
@@ -42,7 +42,7 @@ float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float 
 
         // Energize is not affected by Mods
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; i++)
-            if (threatSpell->Effect[i] == SPELL_EFFECT_ENERGIZE || threatSpell->EffectApplyAuraName[i] == SPELL_AURA_PERIODIC_ENERGIZE)
+            if (threatSpell->Effects[i].Effect == SPELL_EFFECT_ENERGIZE || threatSpell->Effects[i].Amplitude == SPELL_AURA_PERIODIC_ENERGIZE)
                 return threat;
 
         if (Player* modOwner = hatedUnit->GetSpellModOwner())
@@ -52,7 +52,7 @@ float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float 
     return hatedUnit->ApplyTotalThreatModifier(threat, schoolMask);
 }
 
-bool ThreatCalcHelper::isValidProcess(Unit* hatedUnit, Unit* hatingUnit, SpellEntry const* threatSpell)
+bool ThreatCalcHelper::isValidProcess(Unit* hatedUnit, Unit* hatingUnit, SpellInfo const* threatSpell)
 {
     //function deals with adding threat and adding players and pets into ThreatList
     //mobs, NPCs, guards have ThreatList and HateOfflineList
@@ -392,7 +392,7 @@ void ThreatManager::clearReferences()
 
 //============================================================
 
-void ThreatManager::addThreat(Unit* victim, float threat, SpellSchoolMask schoolMask, SpellEntry const* threatSpell)
+void ThreatManager::addThreat(Unit* victim, float threat, SpellSchoolMask schoolMask, SpellInfo const* threatSpell)
 {
     if (!(ThreatCalcHelper::isValidProcess(victim, getOwner(), threatSpell)))
         return;
@@ -410,7 +410,7 @@ void ThreatManager::doAddThreat(Unit* victim, float threat)
         Unit* redirectTarget = victim->GetMisdirectionTarget();
         if (redirectTarget)
             if (Aura* glyphAura = redirectTarget->GetAura(63326)) // Glyph of Vigilance
-                reducedThreadPercent += SpellMgr::CalculateSpellEffectAmount(glyphAura->GetSpellProto(), EFFECT_0);
+                reducedThreadPercent += glyphAura->GetSpellInfo()->Effects[0].CalcValue();
 
         float reducedThreat = threat * reducedThreadPercent / 100.0f;
         threat -= reducedThreat;

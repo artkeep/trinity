@@ -32,7 +32,7 @@
 class Unit;
 class Creature;
 class ThreatManager;
-struct SpellEntry;
+class SpellInfo;
 
 #define THREAT_UPDATE_INTERVAL 1 * IN_MILLISECONDS    // Server should send threat update to client periodically each second
 
@@ -42,8 +42,9 @@ struct SpellEntry;
 class ThreatCalcHelper
 {
     public:
-        static float calcThreat(Unit* hatedUnit, Unit* hatingUnit, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellEntry const* threatSpell = NULL);
-        static bool isValidProcess(Unit* hatedUnit, Unit* hatingUnit, SpellEntry const* threatSpell = NULL);};
+        static float calcThreat(Unit* hatedUnit, Unit* hatingUnit, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellInfo const* threatSpell = NULL);
+        static bool isValidProcess(Unit* hatedUnit, Unit* hatingUnit, SpellInfo const* threatSpell = NULL);
+};
 
 //==============================================================
 class HostileReference : public Reference<Unit, ThreatManager>
@@ -195,7 +196,7 @@ class ThreatManager
 
         void clearReferences();
 
-        void addThreat(Unit* victim, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellEntry const* threatSpell = NULL);
+        void addThreat(Unit* victim, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellInfo const* threatSpell = NULL);
 
         void doAddThreat(Unit* victim, float threat);
 

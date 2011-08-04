@@ -128,7 +128,7 @@ void MailDraft::deleteIncludedItems(SQLTransaction& trans, bool inDB /*= false*/
 
 void MailDraft::SendReturnToSender(uint32 sender_acc, uint32 sender_guid, uint32 receiver_guid, SQLTransaction& trans)
 {
-    Player* receiver = sObjectMgr->GetPlayer(MAKE_NEW_GUID(receiver_guid, 0, HIGHGUID_PLAYER));
+    Player* receiver = ObjectAccessor::FindPlayer(MAKE_NEW_GUID(receiver_guid, 0, HIGHGUID_PLAYER));
 
     uint32 rc_account = 0;
     if (!receiver)
@@ -301,7 +301,7 @@ void WorldSession::SendExternalMails()
         uint32 itemId = fields[5].GetUInt32();
         uint32 itemCount = fields[6].GetUInt32();
 
-        Player* receiver = sObjectMgr->GetPlayer(receiver_guid);
+        Player* receiver = ObjectAccessor::FindPlayer(receiver_guid);
 
         mail = new MailDraft(subject, body);
 

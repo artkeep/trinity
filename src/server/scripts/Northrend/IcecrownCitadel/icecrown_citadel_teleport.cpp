@@ -53,7 +53,7 @@ class icecrown_citadel_teleport : public GameObjectScript
         {
             player->PlayerTalkClass->ClearMenus();
             player->CLOSE_GOSSIP_MENU();
-            SpellEntry const* spell = sSpellStore.LookupEntry(action);
+            SpellInfo const* spell = sSpellMgr->GetSpellInfo(action);
             if (!spell)
                 return false;
 
@@ -64,17 +64,7 @@ class icecrown_citadel_teleport : public GameObjectScript
             }
 
             if (sender == GOSSIP_SENDER_ICC_PORT)
-            {
-                //Preload the Lich King's platform before teleporting player to there
-                if (action == FROZEN_THRONE_TELEPORT)
-                    player->GetMap()->LoadGrid(530.3f, -2122.67f);
-
                 player->CastSpell(player, spell, true);
-
-                //Give him 2 tries after teleport, just in case if player will fall through the ground
-                if (action == FROZEN_THRONE_TELEPORT)
-                    TeleportPlayerToFrozenThrone(player);
-            }
 
             return true;
         }

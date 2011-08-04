@@ -21,6 +21,7 @@
 #include "Unit.h"
 #include "DBCStructure.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
 
 HostileRefManager::~HostileRefManager()
 {
@@ -32,16 +33,15 @@ HostileRefManager::~HostileRefManager()
 // The pVictim is hated than by them as well
 // use for buffs and healing threat functionality
 
-void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellEntry const* threatSpell)
+void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo const* threatSpell)
 {
     HostileReference* ref = getFirst();
-    float threat = ThreatCalcHelper::calcThreat(victim, NULL, baseThreat, (threatSpell ? GetSpellSchoolMask(threatSpell) : SPELL_SCHOOL_MASK_NORMAL), threatSpell);
+    float threat = ThreatCalcHelper::calcThreat(victim, NULL, baseThreat, (threatSpell ? threatSpell->GetSchoolMask() : SPELL_SCHOOL_MASK_NORMAL), threatSpell);
     threat /= getSize();
     while (ref)
     {
         if (ThreatCalcHelper::isValidProcess(victim, ref->getSource()->getOwner(), threatSpell))
             ref->getSource()->doAddThreat(victim, threat);
-
         ref = ref->next();
     }
 }

@@ -20,7 +20,6 @@
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "SpellAuras.h"
-#include "Group.h"
 #include "icecrown_citadel.h"
 
 enum ScriptTexts
@@ -378,7 +377,7 @@ class boss_deathbringer_saurfang : public CreatureScript
                 instance->HandleGameObject(instance->GetData64(GO_SAURFANG_S_DOOR), false);
             }
 
-            void SpellHitTarget(Unit* target, SpellEntry const* spell)
+            void SpellHitTarget(Unit* target, SpellInfo const* spell)
             {
                 switch (spell->Id)
                 {
@@ -626,7 +625,7 @@ class npc_high_overlord_saurfang_icc : public CreatureScript
                 }
             }
 
-            void SpellHit(Unit* /*caster*/, SpellEntry const* spell)
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_GRIP_OF_AGONY)
                 {
@@ -654,9 +653,9 @@ class npc_high_overlord_saurfang_icc : public CreatureScript
                         case POINT_CORPSE:
                             if (Creature* deathbringer = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_DEATHBRINGER_SAURFANG)))
                             {
-                                deathbringer->setDeathState(ALIVE);
                                 deathbringer->CastSpell(me, SPELL_RIDE_VEHICLE, true);  // for the packet logs.
                                 deathbringer->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                                deathbringer->setDeathState(ALIVE);
                             }
                             _events.ScheduleEvent(EVENT_OUTRO_HORDE_5, 1000);    // move
                             _events.ScheduleEvent(EVENT_OUTRO_HORDE_6, 4000);    // say
@@ -741,13 +740,6 @@ class npc_high_overlord_saurfang_icc : public CreatureScript
 
         bool OnGossipHello(Player* player, Creature* creature)
         {
-            if ((!player->GetGroup() || !player->GetGroup()->IsLeader(player->GetGUID())) && !player->isGameMaster())
-            {
-                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "I am not raid leader...", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
-                player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
-                return true;
-            }
-
             InstanceScript* instance = creature->GetInstanceScript();
             if (instance && instance->GetBossState(DATA_DEATHBRINGER_SAURFANG) != DONE)
             {
@@ -762,10 +754,6 @@ class npc_high_overlord_saurfang_icc : public CreatureScript
         {
             player->PlayerTalkClass->ClearMenus();
             player->CLOSE_GOSSIP_MENU();
-
-            if (action == GOSSIP_ACTION_INFO_DEF+2)
-                creature->MonsterSay("I'll wait for the raid leader.", LANG_UNIVERSAL, player->GetGUID());
-
             if (action == -ACTION_START_EVENT)
                 creature->AI()->DoAction(ACTION_START_EVENT);
 
@@ -840,7 +828,7 @@ class npc_muradin_bronzebeard_icc : public CreatureScript
                 }
             }
 
-            void SpellHit(Unit* /*caster*/, SpellEntry const* spell)
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_GRIP_OF_AGONY)
                 {
@@ -942,7 +930,7 @@ class npc_saurfang_event : public CreatureScript
                 _index = data;
             }
 
-            void SpellHit(Unit* /*caster*/, SpellEntry const* spell)
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_GRIP_OF_AGONY)
                 {
@@ -978,11 +966,11 @@ class spell_deathbringer_blood_link : public SpellScriptLoader
         {
             PrepareSpellScript(spell_deathbringer_blood_link_SpellScript);
 
-            bool Validate(SpellEntry const* /*spellInfo*/)
+            bool Validate(SpellInfo const* /*spellInfo*/)
             {
-                if (!sSpellStore.LookupEntry(SPELL_BLOOD_LINK_POWER))
+                if (!sSpellMgr->GetSpellInfo(SPELL_BLOOD_LINK_POWER))
                     return false;
-                if (!sSpellStore.LookupEntry(SPELL_BLOOD_POWER))
+                if (!sSpellMgr->GetSpellInfo(SPELL_BLOOD_POWER))
                     return false;
                 return true;
             }
@@ -1016,9 +1004,9 @@ class spell_deathbringer_blood_link_aura : public SpellScriptLoader
         {
             PrepareAuraScript(spell_deathbringer_blood_link_AuraScript);
 
-            bool Validate(SpellEntry const* /*spellInfo*/)
+            bool Validate(SpellInfo const* /*spellInfo*/)
             {
-                if (!sSpellStore.LookupEntry(SPELL_MARK_OF_THE_FALLEN_CHAMPION))
+                if (!sSpellMgr->GetSpellInfo(SPELL_MARK_OF_THE_FALLEN_CHAMPION))
                     return false;
                 return true;
             }
@@ -1108,9 +1096,9 @@ class spell_deathbringer_rune_of_blood : public SpellScriptLoader
         {
             PrepareSpellScript(spell_deathbringer_rune_of_blood_SpellScript);
 
-            bool Validate(SpellEntry const* /*spellInfo*/)
+            bool Validate(SpellInfo const* /*spellInfo*/)
             {
-                if (!sSpellStore.LookupEntry(SPELL_BLOOD_LINK_DUMMY))
+                if (!sSpellMgr->GetSpellInfo(SPELL_BLOOD_LINK_DUMMY))
                     return false;
                 return true;
             }
@@ -1143,9 +1131,9 @@ class spell_deathbringer_blood_nova : public SpellScriptLoader
         {
             PrepareSpellScript(spell_deathbringer_blood_nova_SpellScript);
 
-            bool Validate(SpellEntry const* /*spellInfo*/)
+            bool Validate(SpellInfo const* /*spellInfo*/)
             {
-                if (!sSpellStore.LookupEntry(SPELL_BLOOD_LINK_DUMMY))
+                if (!sSpellMgr->GetSpellInfo(SPELL_BLOOD_LINK_DUMMY))
                     return false;
                 return true;
             }

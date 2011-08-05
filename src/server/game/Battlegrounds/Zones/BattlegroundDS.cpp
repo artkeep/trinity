@@ -47,18 +47,8 @@ BattlegroundDS::~BattlegroundDS()
 
 }
 
-void BattlegroundDS::Update(uint32 diff)
+void BattlegroundDS::PostUpdateImpl(uint32 diff)
 {
-        Battleground::Update(diff);
-
-    if (GetStatus() == STATUS_IN_PROGRESS)
-    {
-        if (GetStartTime() >= 47*MINUTE*IN_MILLISECONDS) // after 47 minutes without one team loose the arena closes with no winner and no rating change
-		{
-			UpdateArenaWorldState();
-			CheckArenaAfterTimerConditions();
-		}
-    }
     if (getWaterFallTimer() < diff)
     {
         if (isWaterFallActive())
@@ -163,7 +153,7 @@ void BattlegroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    switch(Trigger)
+    switch (Trigger)
     {
         case 5347:
         case 5348:

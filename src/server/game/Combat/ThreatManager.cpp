@@ -42,7 +42,7 @@ float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float 
 
         // Energize is not affected by Mods
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; i++)
-            if (threatSpell->Effects[i].Effect == SPELL_EFFECT_ENERGIZE || threatSpell->Effects[i].Amplitude == SPELL_AURA_PERIODIC_ENERGIZE)
+            if (threatSpell->Effects[i].Effect == SPELL_EFFECT_ENERGIZE || threatSpell->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_ENERGIZE)
                 return threat;
 
         if (threatSpell->AttributesEx & SPELL_ATTR1_NO_THREAT)

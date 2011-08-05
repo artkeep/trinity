@@ -18,7 +18,7 @@ enum LikantropoSpells
 {
     ENRAGE                                                  = 48138,
     FRENZY                                                  = 48142,
-    MORTAL_WOUND                                            = 59265,
+    MORTAL_WOUND                                            = 48137,
     WORGEN_BITE                                             = 55266,
     WORGEN_CALL                                             = 53095,
     DECREPIT_FEVER                                          = 54098,
@@ -119,7 +119,7 @@ enum PerotharnSpells
 
 enum UznamSpells
 {
-    EARTHQUAKE                                              = 46240,
+    EARTHQUAKE                                              = 31903,
     WHIRLWIND                                               = 52027,
     SHOCK_OF_SORROW                                         = 50760,
     ENTROPIC_AURA                                           = 36784,
@@ -674,7 +674,7 @@ public:
             if (CleaveTimer <= uiDiff)
             {
                 DoCast(me->getVictim(), SPELL_CLEAVE);
-                CleaveTimer = 5000;
+                CleaveTimer = 10000;
             } else CleaveTimer -= uiDiff;
 
             // Ogni 20 sec fa un War Stomp che stunna ad area

@@ -29,8 +29,8 @@ HostileRefManager::~HostileRefManager()
 }
 
 //=================================================
-// send threat to all my hateres for the pVictim
-// The pVictim is hated than by them as well
+// send threat to all my hateres for the victim
+// The victim is hated than by them as well
 // use for buffs and healing threat functionality
 
 void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo const* threatSpell)
@@ -51,7 +51,7 @@ void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo c
 void HostileRefManager::addTempThreat(float threat, bool apply)
 {
     HostileReference* ref = getFirst();
-    while (ref != NULL)
+    while (ref)
     {
         if (apply)
         {
@@ -70,7 +70,7 @@ void HostileRefManager::addTempThreat(float threat, bool apply)
 void HostileRefManager::addThreatPercent(int32 percent)
 {
     HostileReference* ref = getFirst();
-    while (ref != NULL)
+    while (ref)
     {
         ref->addThreatPercent(percent);
         ref = ref->next();
@@ -83,7 +83,7 @@ void HostileRefManager::addThreatPercent(int32 percent)
 void HostileRefManager::setOnlineOfflineState(bool isOnline)
 {
     HostileReference* ref = getFirst();
-    while (ref != NULL)
+    while (ref)
     {
         ref->setOnlineOfflineState(isOnline);
         ref = ref->next();

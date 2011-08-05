@@ -1,8 +1,10 @@
 # output generic information about the core and buildtype chosen
 
-message("* Avangard revision   : ${rev_id_str} (${rev_hash_str})")
+message("")
+message("* Avangard rev. hash  : ${rev_hash}")
+message("* Avangard rev. date  : ${rev_date}")
 if( UNIX )
-  message("* Build binaries in      : ${CMAKE_BUILD_TYPE} mode")
+  message("* Avangard buildtype  : ${CMAKE_BUILD_TYPE}")
 endif()
 message("")
 

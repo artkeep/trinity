@@ -216,7 +216,7 @@ class WorldSession
 {
     friend class WardenBase;
     public:
-        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter);
+        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, bool isARecruiter);
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
@@ -397,6 +397,7 @@ class WorldSession
 
         // Recruit-A-Friend Handling
         uint32 GetRecruiterId() { return recruiterId; }
+        bool IsARecruiter() { return isRecruiter; }
 
     public:                                                 // opcodes handlers
 
@@ -964,6 +965,7 @@ class WorldSession
         bool   m_TutorialsChanged;
         AddonsList m_addonsList;
         uint32 recruiterId;
+        bool isRecruiter;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
 };
 #endif

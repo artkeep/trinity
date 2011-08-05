@@ -45,6 +45,9 @@ float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float 
             if (threatSpell->Effects[i].Effect == SPELL_EFFECT_ENERGIZE || threatSpell->Effects[i].Amplitude == SPELL_AURA_PERIODIC_ENERGIZE)
                 return threat;
 
+        if (threatSpell->AttributesEx & SPELL_ATTR1_NO_THREAT)
+            return 0.0f;
+
         if (Player* modOwner = hatedUnit->GetSpellModOwner())
             modOwner->ApplySpellMod(threatSpell->Id, SPELLMOD_THREAT, threat);
     }
@@ -252,19 +255,15 @@ void ThreatContainer::clearReferences()
 // Return the HostileReference of NULL, if not found
 HostileReference* ThreatContainer::getReferenceByTarget(Unit* victim)
 {
-    HostileReference* result = NULL;
+    if (!victim)
+        return NULL;
 
     uint64 guid = victim->GetGUID();
     for (std::list<HostileReference*>::const_iterator i = iThreatList.begin(); i != iThreatList.end(); ++i)
-    {
-        if ((*i)->getUnitGuid() == guid)
-        {
-            result = (*i);
-            break;
-        }
-    }
+        if ((*i) && (*i)->getUnitGuid() == guid)
+            return (*i);
 
-    return result;
+    return NULL;
 }
 
 //============================================================
@@ -292,9 +291,8 @@ void ThreatContainer::modifyThreatPercent(Unit* victim, int32 percent)
 void ThreatContainer::update()
 {
     if (iDirty && iThreatList.size() > 1)
-    {
         iThreatList.sort(Trinity::ThreatOrderPred());
-    }
+
     iDirty = false;
 }
 
@@ -338,14 +336,14 @@ HostileReference* ThreatContainer::selectNextVictim(Creature* attacker, HostileR
             }
         }
 
-        if (attacker->canCreatureAttack(target))            // skip non attackable currently targets
+        if (attacker->canCreatureAttack(target))           // skip non attackable currently targets
         {
             if (currentVictim)                              // select 1.3/1.1 better target in comparison current target
             {
                 // list sorted and and we check current target, then this is best case
                 if (currentVictim == currentRef || currentRef->getThreat() <= 1.1f * currentVictim->getThreat())
                 {
-                    currentRef = currentVictim;             // for second case
+                    currentRef = currentVictim;            // for second case
                     found = true;
                     break;
                 }
@@ -392,9 +390,9 @@ void ThreatManager::clearReferences()
 
 //============================================================
 
-void ThreatManager::addThreat(Unit* victim, float threat, SpellSchoolMask schoolMask, SpellInfo const* threatSpell)
+void ThreatManager::addThreat(Unit* victim, float threat, SpellSchoolMask schoolMask, SpellInfo const *threatSpell)
 {
-    if (!(ThreatCalcHelper::isValidProcess(victim, getOwner(), threatSpell)))
+    if (!ThreatCalcHelper::isValidProcess(victim, getOwner(), threatSpell))
         return;
 
     doAddThreat(victim, ThreatCalcHelper::calcThreat(victim, iOwner, threat, schoolMask, threatSpell));
@@ -402,11 +400,10 @@ void ThreatManager::addThreat(Unit* victim, float threat, SpellSchoolMask school
 
 void ThreatManager::doAddThreat(Unit* victim, float threat)
 {
+    uint32 reducedThreadPercent = victim->GetReducedThreatPercent();
     // must check > 0.0f, otherwise dead loop
-    if (threat > 0.0f && victim->GetReducedThreatPercent())
+    if (threat > 0.0f && reducedThreadPercent)
     {
-        uint32 reducedThreadPercent = victim->GetReducedThreatPercent();
-
         Unit* redirectTarget = victim->GetMisdirectionTarget();
         if (redirectTarget)
             if (Aura* glyphAura = redirectTarget->GetAura(63326)) // Glyph of Vigilance
@@ -428,7 +425,7 @@ void ThreatManager::_addThreat(Unit* victim, float threat)
     if (!ref)
         ref = iThreatOfflineContainer.addThreat(victim, threat);
 
-    if (!ref)                                               // there was no ref => create a new one
+    if (!ref) // there was no ref => create a new one
     {
                                                             // threat has to be 0 here
         HostileReference* hostileRef = new HostileReference(victim, this, 0);

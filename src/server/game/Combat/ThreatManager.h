@@ -20,7 +20,6 @@
 #define _THREATMANAGER
 
 #include "Common.h"
-#include "Util.h"
 #include "SharedDefines.h"
 #include "LinkedReference/Reference.h"
 #include "UnitEvents.h"
@@ -39,11 +38,10 @@ class SpellInfo;
 //==============================================================
 // Class to calculate the real threat based
 
-class ThreatCalcHelper
+struct ThreatCalcHelper
 {
-    public:
-        static float calcThreat(Unit* hatedUnit, Unit* hatingUnit, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellInfo const* threatSpell = NULL);
-        static bool isValidProcess(Unit* hatedUnit, Unit* hatingUnit, SpellInfo const* threatSpell = NULL);
+    static float calcThreat(Unit* hatedUnit, Unit* hatingUnit, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellInfo const* threatSpell = NULL);
+    static bool isValidProcess(Unit* hatedUnit, Unit* hatingUnit, SpellInfo const* threatSpell = NULL);
 };
 
 //==============================================================
@@ -158,6 +156,7 @@ class ThreatContainer
         void remove(HostileReference* hostileRef) { iThreatList.remove(hostileRef); }
         void addReference(HostileReference* hostileRef) { iThreatList.push_back(hostileRef); }
         void clearReferences();
+
         // Sort the list if necessary
         void update();
     public:
@@ -174,7 +173,7 @@ class ThreatContainer
 
         bool isDirty() const { return iDirty; }
 
-        bool empty() const { return(iThreatList.empty()); }
+        bool empty() const { return iThreatList.empty(); }
 
         HostileReference* getMostHated() { return iThreatList.empty() ? NULL : iThreatList.front(); }
 
@@ -217,6 +216,7 @@ class ThreatManager
         Unit* getHostilTarget();
 
         void tauntApply(Unit* taunter);
+
         void tauntFadeOut(Unit* taunter);
 
         void setCurrentVictim(HostileReference* hostileRef);
@@ -270,7 +270,8 @@ namespace Trinity
     {
         public:
             ThreatOrderPred(bool ascending = false) : m_ascending(ascending) {}
-            bool operator() (const HostileReference* a, const HostileReference* b) const
+
+            bool operator() (HostileReference const* a, HostileReference const* b) const
             {
                 return m_ascending ? a->getThreat() < b->getThreat() : a->getThreat() > b->getThreat();
             }

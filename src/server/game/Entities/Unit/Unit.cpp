@@ -3785,7 +3785,8 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit*
             }
 
             bool stealCharge = aura->GetSpellInfo()->AttributesEx7 & SPELL_ATTR7_DISPEL_CHARGES;
-            int32 dur = std::min(2 * MINUTE * IN_MILLISECONDS, aura->GetDuration());
+            // Cast duration to unsigned to prevent permanent aura's such as Righteous Fury being permanently added to caster
+            uint32 dur = std::min(2u * MINUTE * IN_MILLISECONDS, uint32(aura->GetDuration()));
 
             if (Aura* newAura = stealer->GetAura(aura->GetId(), aura->GetCasterGUID()))
             {
@@ -3793,7 +3794,7 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit*
                     newAura->ModCharges(1);
                 else
                     newAura->ModStackAmount(1);
-                newAura->SetDuration(dur);
+                newAura->SetDuration(int32(dur));
             }
             else
             {
@@ -3812,7 +3813,7 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit*
                         caster->GetSingleCastAuras().push_back(aura);
                     }
                     // FIXME: using aura->GetMaxDuration() maybe not blizzlike but it fixes stealing of spells like Innervate
-                    newAura->SetLoadedState(aura->GetMaxDuration(), dur, stealCharge ? 1 : aura->GetCharges(), 1, recalculateMask, &damage[0]);
+                    newAura->SetLoadedState(aura->GetMaxDuration(), int32(dur), stealCharge ? 1 : aura->GetCharges(), 1, recalculateMask, &damage[0]);
                     newAura->ApplyForTargets();
                 }
             }
@@ -8567,7 +8568,22 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                     // Soul Preserver
                     case 60510:
                     {
-                        trigger_spell_id = 60515;
+                        switch (getClass())
+                        {
+                            case CLASS_DRUID:
+                                trigger_spell_id = 60512;
+                                break;
+                            case CLASS_PALADIN:
+                                trigger_spell_id = 60513;
+                                break;
+                            case CLASS_PRIEST:
+                                trigger_spell_id = 60514;
+                                break;
+                            case CLASS_SHAMAN:
+                                trigger_spell_id = 60515;
+                                break;
+                        }
+
                         target = this;
                         break;
                     }
@@ -8724,6 +8740,23 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
                         basepoints0 = int32(CalculatePctN(procSpell->ManaCost, 35));
                         trigger_spell_id = 23571;
                         target = this;
+                        break;
+                    }
+                    case 30881: // Nature's Guardian Rank 1
+                    case 30883: // Nature's Guardian Rank 2
+                    case 30884: // Nature's Guardian Rank 3
+                    case 30885: // Nature's Guardian Rank 4
+                    case 30886: // Nature's Guardian Rank 5
+                    {
+                        if (HealthBelowPct(30))
+                        {
+                            basepoints0 = int32(auraSpellInfo->Effects[EFFECT_0].CalcValue() * GetMaxHealth() / 100.0f);
+                            target = this;
+                            trigger_spell_id = 31616;
+                            // TODO: Threat part
+                        }
+                        else
+                            return false;
                         break;
                     }
                     default:
@@ -8934,7 +8967,7 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
         case 72256:
             // this should be handled by targetAuraSpell, but because 72408 is not passive
             // one failed proc will remove the entire aura
-            CastSpell(NULL, trigger_spell_id, true, NULL, triggeredByAura);
+            CastSpell((Unit*)NULL, trigger_spell_id, true, NULL, triggeredByAura);
             return true;
         case 15337: // Improved Spirit Tap (Rank 1)
         case 15338: // Improved Spirit Tap (Rank 2)

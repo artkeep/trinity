@@ -3236,7 +3236,7 @@ void SpellMgr::LoadDbcDataCorrections()
             // 322-330 switch - effect changed to dummy, target entry not changed in client:(
             spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
             break;
-       case 12051: // Evocation - now we can interrupt this
+        case 12051: // Evocation - now we can interrupt this
             spellInfo->InterruptFlags |= SPELL_INTERRUPT_FLAG_INTERRUPT;
             break;
         case 42650: // Army of the Dead - now we can interrupt this

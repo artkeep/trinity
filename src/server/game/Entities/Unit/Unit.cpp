@@ -11993,8 +11993,7 @@ void Unit::MeleeDamageBonus(Unit* victim, uint32 *pdamage, WeaponAttackType attT
                 Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
 
                 if (item && !item->IsBroken() && item->IsFitToSpellRequirements((*i)->GetSpellInfo()))
-                    if ((*i)->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
-                        AddPctN(DoneTotalMod, (*i)->GetAmount());
+                    AddPctN(DoneTotalMod, (*i)->GetAmount());
             }
             else if (player->HasItemFitToSpellRequirements((*i)->GetSpellInfo()))
                 AddPctN(DoneTotalMod, (*i)->GetAmount());

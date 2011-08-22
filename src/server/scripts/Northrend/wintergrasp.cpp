@@ -37,7 +37,7 @@ bool OnGossipHello(Player* pPlayer, Creature* pCreature)
     if (pCreature->isQuestGiver())
         pPlayer->PrepareQuestMenu(pCreature->GetGUID());
 
-    if (pPlayer->isGameMaster() || pCreature->GetZoneScript() && pCreature->GetZoneScript()->GetData(pCreature->GetDBTableGUIDLow()))
+    if(pPlayer->isGameMaster() || pCreature->GetZoneScript() && pCreature->GetZoneScript()->GetData(pCreature->GetDBTableGUIDLow()))
     {
         if (pPlayer->HasAura(SPELL_CORPORAL))
             pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HELLO_DEMO1, GOSSIP_SENDER_MAIN,   GOSSIP_ACTION_INFO_DEF);
@@ -58,7 +58,7 @@ bool OnGossipHello(Player* pPlayer, Creature* pCreature)
 bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
 {
     pPlayer->CLOSE_GOSSIP_MENU();
-    if (pPlayer->isGameMaster() || pCreature->GetZoneScript() && pCreature->GetZoneScript()->GetData(pCreature->GetDBTableGUIDLow()))
+    if(pPlayer->isGameMaster() || pCreature->GetZoneScript() && pCreature->GetZoneScript()->GetData(pCreature->GetDBTableGUIDLow()))
     {
         switch(uiAction - GOSSIP_ACTION_INFO_DEF)
         {
@@ -88,7 +88,7 @@ bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint3
 
 enum eWintergraspBattleMage
 {
-    SPELL_PORTAL_VISUAL      = 60223,
+    SPELL_PORTAL_VISUAL        = 60223,
     GO_WINTERGRASP_PORTAL    = 193772
 };
 
@@ -152,7 +152,7 @@ public:
             if (OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197))
             {
                 // Get playerlist if there is.
-                if (pvpWG->isWarTime() && Check)
+                if (pvpWG->isWarTime() && Check == true)
                 {
                     Map::PlayerList const &PlayerList = me->GetMap()->GetPlayers();
                     for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
@@ -180,11 +180,11 @@ public:
                     }
                 }
 
-                if (!pvpWG->m_changeAlly) // If wg is switching (.wg switch)
+                if (pvpWG->m_changeAlly != true) // If wg is switching (.wg switch)
                 {
                     if (pvpWG->isWarTime())
                     {
-                        if (Player) //(false) If there isn't any player, then, don't cast the portal spell. Just summon gameobject.
+                        if (Player == true) //(false) If there isn't any player, then, don't cast the portal spell. Just summon gameobject.
                         {
                             if (uiPortalTimer <= diff)
                             {
@@ -210,13 +210,11 @@ public:
                                     uiPortalTimer = 1000;
                                     break;
                                 }
-                            }
-                            else
-                                uiPortalTimer -= diff;
+                            }else uiPortalTimer -= diff;
                         }
                         else
                         {
-                            if (Check2) // If the portal isn't exist
+                            if (Check2 == true) // If the portal isn't exist
                             {
                                 WintergraspPortal = me->SummonGameObject(GO_WINTERGRASP_PORTAL, 5686.974609f, 773.303711f, 647.753235f, 5.572729f, 0, 0, 0.324484f, -0.945891f, 0);
                                 Check2 = false;
@@ -313,7 +311,7 @@ public:
             if (OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197))
             {
                 // Get playerlist if there is.
-                if (pvpWG->isWarTime() && Check)
+                if (pvpWG->isWarTime() && Check == true)
                 {
                     Map::PlayerList const &PlayerList = me->GetMap()->GetPlayers();
                     for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
@@ -341,11 +339,11 @@ public:
                     }
                 }
 
-                if (!pvpWG->m_changeHorde) // If wg is switching (.wg switch)
+                if (pvpWG->m_changeHorde != true) // If wg is switching (.wg switch)
                 {
                     if (pvpWG->isWarTime())
                     {
-                        if (Player) //(false) If there isn't any player, then, don't cast the portal spell. Just summon gameobject.
+                        if (Player == true) //(false) If there isn't any player, then, don't cast the portal spell. Just summon gameobject.
                         {
                             if (uiPortalTimer <= diff)
                             {
@@ -370,13 +368,11 @@ public:
                                     uiPortalTimer = 1000;
                                     break;
                                 }
-                            }
-                            else
-                                uiPortalTimer -= diff;
+                            }else uiPortalTimer -= diff;
                         }
                         else
                         {
-                            if (Check2) // If the portal isn't exist
+                            if (Check2 == true) // If the portal isn't exist
                             {
                                 WintergraspPortal = me->SummonGameObject(GO_WINTERGRASP_PORTAL, 5686.974609f, 773.303711f, 647.753235f, 5.572729f, 0, 0, 0.324484f, -0.945891f, 0);
                                 Check2 = false;
@@ -421,7 +417,7 @@ public:
     bool OnGossipHello(Player *pPlayer, GameObject * pGO)
     {
         if (GameObject* trigger = pGO->FindNearestGameObject(190375, 500)) // Wintergrasp Fortress Gate
-            if (Vehicle* veh = pPlayer->GetVehicle())
+            if (Vehicle * veh = pPlayer->GetVehicle())
             {
                 Position triggerPos;
                 trigger->GetPosition(&triggerPos);

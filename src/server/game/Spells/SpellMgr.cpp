@@ -2867,10 +2867,6 @@ void SpellMgr::LoadSpellCustomAttr()
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_SHARE_DAMAGE;
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_IGNORE_ARMOR;
                 break;
-            case 24131: case 24134: case 24135: // Wyvern Sting (rank 1-3)
-                // something wrong and it applied as positive buff
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
-                break;
         }
 
         switch (spellInfo->SpellFamilyName)

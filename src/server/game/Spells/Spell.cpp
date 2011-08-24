@@ -5236,7 +5236,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     if (aura->IsPassive())
                         continue;
 
-                    if ((1<<aura->GetSpellInfo()->GetDispelMask()) & dispelMask)
+                    if ((aura->GetSpellInfo()->GetDispelMask()) & dispelMask)
                     {
                         // do not remove positive auras if friendly target
                         //               negative auras if non-friendly target

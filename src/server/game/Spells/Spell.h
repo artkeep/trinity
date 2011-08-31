@@ -35,33 +35,6 @@ class ByteBuffer;
 
 #define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILLISECONDS)
 
-enum SpellCastTargetFlags
-{
-    TARGET_FLAG_SELF            = 0x00000000,
-    TARGET_FLAG_UNUSED_1        = 0x00000001,               // not used
-    TARGET_FLAG_UNIT            = 0x00000002,               // pguid
-    TARGET_FLAG_UNIT_RAID       = 0x00000004,               // not sent, used to validate target (if raid member)
-    TARGET_FLAG_UNIT_PARTY      = 0x00000008,               // not sent, used to validate target (if party member)
-    TARGET_FLAG_ITEM            = 0x00000010,               // pguid
-    TARGET_FLAG_SOURCE_LOCATION = 0x00000020,               // pguid, 3 float
-    TARGET_FLAG_DEST_LOCATION   = 0x00000040,               // pguid, 3 float
-    TARGET_FLAG_UNIT_ENEMY      = 0x00000080,               // not sent, used to validate target (if enemy)
-    TARGET_FLAG_UNIT_ALLY       = 0x00000100,               // not sent, used to validate target (if ally)
-    TARGET_FLAG_CORPSE_ENEMY    = 0x00000200,               // pguid
-    TARGET_FLAG_UNIT_DEAD       = 0x00000400,               // not sent, used to validate target (if dead creature)
-    TARGET_FLAG_GAMEOBJECT      = 0x00000800,               // pguid, used with TARGET_GAMEOBJECT
-    TARGET_FLAG_TRADE_ITEM      = 0x00001000,               // pguid
-    TARGET_FLAG_STRING          = 0x00002000,               // string
-    TARGET_FLAG_GAMEOBJECT_ITEM = 0x00004000,               // not sent, used with TARGET_GAMEOBJECT_ITEM
-    TARGET_FLAG_CORPSE_ALLY     = 0x00008000,               // pguid
-    TARGET_FLAG_UNIT_MINIPET    = 0x00010000,               // pguid, used to validate target (if non combat pet)
-    TARGET_FLAG_GLYPH_SLOT      = 0x00020000,               // used in glyph spells
-    TARGET_FLAG_UNK19           = 0x00040000,               // sometimes appears with DEST_TARGET spells (may appear or not for a given spell)
-    TARGET_FLAG_UNUSED20        = 0x00080000,               // uint32 counter, loop { vec3 - screen position (?), guid }, not used so far
-    TARGET_FLAG_UNIT_PASSENGER  = 0x00100000,               // guessed, used to validate target (if vehicle passenger)
-};
-#define MAX_TARGET_FLAGS 21
-
 enum SpellCastFlags
 {
     CAST_FLAG_NONE               = 0x00000000,
@@ -125,8 +98,6 @@ class SpellCastTargets
         SpellCastTargets();
         ~SpellCastTargets();
 
-        SpellCastTargets& operator=(const SpellCastTargets &target);
-
         void Read(ByteBuffer& data, Unit* caster);
         void Write(ByteBuffer& data);
 
@@ -136,26 +107,15 @@ class SpellCastTargets
         uint64 GetUnitTargetGUID() const { return m_unitTargetGUID; }
         Unit* GetUnitTarget() const { return m_unitTarget; }
         void SetUnitTarget(Unit* target);
-
-        Position const* GetSrc() const;
-        void SetSrc(float x, float y, float z);
-        void SetSrc(Position const& pos);
-        void SetSrc(WorldObject const& wObj);
-        void ModSrc(Position const& pos);
-
-        WorldLocation const* GetDst() const;
-        void SetDst(float x, float y, float z, float orientation, uint32 mapId = MAPID_INVALID);
-        void SetDst(Position const& pos);
-        void SetDst(WorldObject const& wObj);
-        void SetDst(SpellCastTargets const& spellTargets);
-        void ModDst(Position const& pos);
+        void RemoveUnitTarget();
 
         uint64 GetGOTargetGUID() const { return m_GOTargetGUID; }
         GameObject* GetGOTarget() const { return m_GOTarget; }
         void SetGOTarget(GameObject* target);
+        void RemoveGOTarget();
 
         uint64 GetCorpseTargetGUID() const { return m_CorpseTargetGUID; }
-        void SetCorpseTarget(Corpse* corpse);
+        void RemoveCorpseTarget();
 
         uint64 GetItemTargetGUID() const { return m_itemTargetGUID; }
         Item* GetItemTarget() const { return m_itemTarget; }
@@ -163,6 +123,21 @@ class SpellCastTargets
         void SetItemTarget(Item* item);
         void SetTradeItemTarget(Player* caster);
         void UpdateTradeSlotItem();
+
+        Position const* GetSrc() const;
+        void SetSrc(float x, float y, float z);
+        void SetSrc(Position const& pos);
+        void SetSrc(WorldObject const& wObj);
+        void ModSrc(Position const& pos);
+        void RemoveSrc();
+
+        WorldLocation const* GetDst() const;
+        void SetDst(float x, float y, float z, float orientation, uint32 mapId = MAPID_INVALID);
+        void SetDst(Position const& pos);
+        void SetDst(WorldObject const& wObj);
+        void SetDst(SpellCastTargets const& spellTargets);
+        void ModDst(Position const& pos);
+        void RemoveDst();
 
         bool IsEmpty() const { return m_GOTargetGUID == 0 && m_unitTargetGUID == 0 && m_itemTarget == 0 && m_CorpseTargetGUID == 0; }
         bool HasSrc() const { return GetTargetMask() & TARGET_FLAG_SOURCE_LOCATION; }
@@ -411,7 +386,7 @@ class Spell
         SpellCastResult CheckRuneCost(uint32 runeCostID);
         SpellCastResult CheckCasterAuras() const;
 
-        int32 CalculateDamage(uint8 i, Unit* target) { return m_caster->CalculateSpellDamage(target, m_spellInfo, i, &m_spellValue->EffectBasePoints[i]); }
+        int32 CalculateDamage(uint8 i, Unit const* target) const { return m_caster->CalculateSpellDamage(target, m_spellInfo, i, &m_spellValue->EffectBasePoints[i]); }
 
         bool HaveTargetsForEffect(uint8 effect) const;
         void Delayed();
@@ -423,13 +398,14 @@ class Spell
         void WriteSpellGoTargets(WorldPacket * data);
         void WriteAmmoToPacket(WorldPacket * data);
 
+        void InitExplicitTargets(SpellCastTargets const& targets);
         void SelectSpellTargets();
         void SelectEffectTargets(uint32 i, SpellImplicitTargetInfo const& cur);
         void SelectTrajTargets();
 
         template<typename T> WorldObject* FindCorpseUsing();
 
-        bool CheckTarget(Unit* target, uint32 eff);
+        bool CheckEffectTarget(Unit const* target, uint32 eff) const;
         bool CanAutoCast(Unit* target);
         void CheckSrc() { if (!m_targets.HasSrc()) m_targets.SetSrc(*m_caster); }
         void CheckDst() { if (!m_targets.HasDst()) m_targets.SetDst(*m_caster); }
@@ -489,7 +465,7 @@ class Spell
 
         bool IsNeedSendToClient() const;
 
-        CurrentSpellTypes GetCurrentContainer();
+        CurrentSpellTypes GetCurrentContainer() const;
 
         Unit* GetCaster() const { return m_caster; }
         Unit* GetOriginalCaster() const { return m_originalCaster; }
@@ -498,13 +474,11 @@ class Spell
 
         void UpdatePointers();                              // must be used at call Spell code after time delay (non triggered spell cast/update spell call/etc)
 
-        bool CheckTargetCreatureType(Unit* target) const;
-
         void CleanupTargetList();
 
         void SetSpellValue(SpellValueMod mod, int32 value);
     protected:
-        bool HasGlobalCooldown();
+        bool HasGlobalCooldown() const;
         void TriggerGlobalCooldown();
         void CancelGlobalCooldown();
 
@@ -614,8 +588,7 @@ class Spell
         };
         std::list<ItemTargetInfo> m_UniqueItemInfo;
 
-        void AddUnitTarget(Unit* target, uint32 effIndex);
-        void AddUnitTarget(uint64 unitGUID, uint32 effIndex);
+        void AddUnitTarget(Unit* target, uint32 effIndex, bool checkIfValid = true);
         void AddGOTarget(GameObject* target, uint32 effIndex);
         void AddGOTarget(uint64 goGUID, uint32 effIndex);
         void AddItemTarget(Item* target, uint32 effIndex);
@@ -706,7 +679,6 @@ namespace Trinity
         const Unit* const i_source;
         uint32 i_entry;
         const Position * const i_pos;
-        bool i_requireDeadTarget;
         SpellInfo const* i_spellProto;
 
         SpellNotifierCreatureAndPlayer(Unit *source, std::list<Unit*> &data, float radius, SpellNotifyPushType type,
@@ -719,13 +691,11 @@ namespace Trinity
 
         template<class T> inline void Visit(GridRefManager<T>& m)
         {
-            i_requireDeadTarget = i_spellProto ? bool(i_spellProto->AttributesEx3 & SPELL_ATTR3_REQUIRE_DEAD_TARGET) : false;
-
             for (typename GridRefManager<T>::iterator itr = m.begin(); itr != m.end(); ++itr)
             {
                 Unit* target = (Unit*)itr->getSource();
 
-                if (!i_source->canSeeOrDetect(target, true))
+                if (i_spellProto->CheckTarget(i_source, target, true) != SPELL_CAST_OK)
                     continue;
 
                 switch (i_TargetType)
@@ -733,7 +703,10 @@ namespace Trinity
                     case SPELL_TARGETS_ENEMY:
                         if (target->isTotem())
                             continue;
-                        if (!target->isAttackableByAOE(i_spellProto))
+                        // can't be checked in SpellInfo::CheckTarget - needs more research
+                        if (target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE))
+                            continue;
+                        if (target->HasUnitState(UNIT_STAT_UNATTACKABLE))
                             continue;
                         if (i_source->IsControlledByPlayer())
                         {
@@ -750,12 +723,6 @@ namespace Trinity
                         if (target->isTotem())
                             continue;
                         if (!i_source->IsFriendlyTo(target))
-                            continue;
-                        if (target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE))
-                            continue;
-                        if (target->GetTypeId() == TYPEID_PLAYER && target->ToPlayer()->isGameMaster())
-                            continue;
-                        if (target->isAlive() == i_requireDeadTarget)
                             continue;
                         break;
                     case SPELL_TARGETS_ENTRY:

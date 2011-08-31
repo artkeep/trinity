@@ -19,17 +19,52 @@
 #define _SPELLINFO_H
 
 #include "SharedDefines.h"
+#include "Util.h"
+#include "DBCStructure.h"
 
 class Unit;
+class Player;
 class Spell;
 class SpellInfo;
 struct SpellChainNode;
 struct SpellTargetPosition;
 struct SpellDurationEntry;
+struct SpellModifier;
 struct SpellRangeEntry;
 struct SpellRadiusEntry;
 struct SpellEntry;
 struct SpellCastTimesEntry;
+
+enum SpellCastTargetFlags
+{
+    TARGET_FLAG_NONE            = 0x00000000,
+    TARGET_FLAG_UNUSED_1        = 0x00000001,               // not used
+    TARGET_FLAG_UNIT            = 0x00000002,               // pguid
+    TARGET_FLAG_UNIT_RAID       = 0x00000004,               // not sent, used to validate target (if raid member)
+    TARGET_FLAG_UNIT_PARTY      = 0x00000008,               // not sent, used to validate target (if party member)
+    TARGET_FLAG_ITEM            = 0x00000010,               // pguid
+    TARGET_FLAG_SOURCE_LOCATION = 0x00000020,               // pguid, 3 float
+    TARGET_FLAG_DEST_LOCATION   = 0x00000040,               // pguid, 3 float
+    TARGET_FLAG_UNIT_ENEMY      = 0x00000080,               // not sent, used to validate target (if enemy)
+    TARGET_FLAG_UNIT_ALLY       = 0x00000100,               // not sent, used to validate target (if ally)
+    TARGET_FLAG_CORPSE_ENEMY    = 0x00000200,               // pguid
+    TARGET_FLAG_UNIT_DEAD       = 0x00000400,               // not sent, used to validate target (if dead creature)
+    TARGET_FLAG_GAMEOBJECT      = 0x00000800,               // pguid, used with TARGET_GAMEOBJECT_TARGET
+    TARGET_FLAG_TRADE_ITEM      = 0x00001000,               // pguid
+    TARGET_FLAG_STRING          = 0x00002000,               // string
+    TARGET_FLAG_GAMEOBJECT_ITEM = 0x00004000,               // not sent, used with TARGET_GAMEOBJECT_ITEM_TARGET
+    TARGET_FLAG_CORPSE_ALLY     = 0x00008000,               // pguid
+    TARGET_FLAG_UNIT_MINIPET    = 0x00010000,               // pguid, used to validate target (if non combat pet)
+    TARGET_FLAG_GLYPH_SLOT      = 0x00020000,               // used in glyph spells
+    TARGET_FLAG_DEST_TARGET     = 0x00040000,               // sometimes appears with DEST_TARGET spells (may appear or not for a given spell)
+    TARGET_FLAG_UNUSED20        = 0x00080000,               // uint32 counter, loop { vec3 - screen position (?), guid }, not used so far
+    TARGET_FLAG_UNIT_PASSENGER  = 0x00100000,               // guessed, used to validate target (if vehicle passenger)
+
+    TARGET_FLAG_UNIT_MASK = TARGET_FLAG_UNIT | TARGET_FLAG_UNIT_RAID | TARGET_FLAG_UNIT_PARTY 
+        | TARGET_FLAG_UNIT_ENEMY | TARGET_FLAG_UNIT_ALLY | TARGET_FLAG_UNIT_DEAD | TARGET_FLAG_UNIT_MINIPET | TARGET_FLAG_UNIT_PASSENGER,
+    TARGET_FLAG_GAMEOBJECT_MASK = TARGET_FLAG_GAMEOBJECT | TARGET_FLAG_GAMEOBJECT_ITEM,
+    TARGET_FLAG_CORPSE_MASK = TARGET_FLAG_CORPSE_ALLY | TARGET_FLAG_CORPSE_ENEMY,
+};
 
 enum SpellEffectTargetTypes
 {
@@ -39,6 +74,65 @@ enum SpellEffectTargetTypes
     SPELL_REQUIRE_ITEM,
     SPELL_REQUIRE_CASTER,
     SPELL_REQUIRE_GOBJECT,
+};
+
+enum SpellTargetSelectionCategories
+{
+    TARGET_SELECT_CATEGORY_NYI,
+    TARGET_SELECT_CATEGORY_DEFAULT,
+    TARGET_SELECT_CATEGORY_CHANNEL,
+    TARGET_SELECT_CATEGORY_NEARBY,
+    TARGET_SELECT_CATEGORY_CONE,
+    TARGET_SELECT_CATEGORY_AREA,
+};
+
+enum SpellTargetReferenceTypes
+{
+    TARGET_REFERENCE_TYPE_NONE,
+    TARGET_REFERENCE_TYPE_CASTER,
+    TARGET_REFERENCE_TYPE_TARGET,
+    TARGET_REFERENCE_TYPE_LAST,
+    TARGET_REFERENCE_TYPE_SRC,
+    TARGET_REFERENCE_TYPE_DEST,
+};
+
+enum SpellTargetObjectTypes
+{
+    TARGET_OBJECT_TYPE_NONE,
+    TARGET_OBJECT_TYPE_SRC,
+    TARGET_OBJECT_TYPE_DEST,
+    TARGET_OBJECT_TYPE_UNIT,
+    TARGET_OBJECT_TYPE_UNIT_AND_DEST,
+    TARGET_OBJECT_TYPE_GOBJ,
+    TARGET_OBJECT_TYPE_GOBJ_ITEM,
+    TARGET_OBJECT_TYPE_ITEM,
+    TARGET_OBJECT_TYPE_CORPSE,
+};
+
+enum SpellTargetSelectionCheckTypes
+{
+    TARGET_SELECT_CHECK_DEFAULT,
+    TARGET_SELECT_CHECK_ENTRY,
+    TARGET_SELECT_CHECK_ENEMY,
+    TARGET_SELECT_CHECK_ALLY,
+    TARGET_SELECT_CHECK_PARTY,
+    TARGET_SELECT_CHECK_RAID,
+    TARGET_SELECT_CHECK_PASSENGER,
+};
+
+enum SpellTargetDirectionTypes
+{
+    TARGET_DIR_NONE,
+    TARGET_DIR_FRONT,
+    TARGET_DIR_BACK,
+    TARGET_DIR_RIGHT,
+    TARGET_DIR_LEFT,
+    TARGET_DIR_FRONT_RIGHT,
+    TARGET_DIR_BACK_RIGHT,
+    TARGET_DIR_BACK_LEFT,
+    TARGET_DIR_FRONT_LEFT,
+    TARGET_DIR_RANDOM,
+    TARGET_DIR_ENTRY,
 };
 
 enum SpellSelectTargetTypes
@@ -98,7 +192,6 @@ enum SpellCustomAttributes
     SPELL_ATTR0_CU_DIRECT_DAMAGE                 = 0x00000100,
     SPELL_ATTR0_CU_CHARGE                        = 0x00000200,
     SPELL_ATTR0_CU_PICKPOCKET                    = 0x00000400,
-    SPELL_ATTR0_CU_EXCLUDE_SELF                  = 0x00000800,
     SPELL_ATTR0_CU_NEGATIVE_EFF0                 = 0x00001000,
     SPELL_ATTR0_CU_NEGATIVE_EFF1                 = 0x00002000,
     SPELL_ATTR0_CU_NEGATIVE_EFF2                 = 0x00004000,
@@ -108,6 +201,8 @@ enum SpellCustomAttributes
 
     SPELL_ATTR0_CU_NEGATIVE                      = SPELL_ATTR0_CU_NEGATIVE_EFF0 | SPELL_ATTR0_CU_NEGATIVE_EFF1 | SPELL_ATTR0_CU_NEGATIVE_EFF2,
 };
+
+uint32 GetTargetFlagMask(SpellTargetObjectTypes objType);
 
 class SpellImplicitTargetInfo
 {
@@ -119,8 +214,15 @@ public:
 
     bool IsArea() const;
     SpellSelectTargetTypes GetType() const;
+    SpellTargetSelectionCategories GetSelectionCategory() const;
+    SpellTargetReferenceTypes GetReferenceType() const;
+    SpellTargetObjectTypes GetObjectType() const;
+    SpellTargetSelectionCheckTypes GetSelectionCheckType() const;
+    SpellTargetDirectionTypes GetDirectionType() const;
+    float CalcDirectionAngle() const;
 
     Targets GetTarget() const;
+    uint32 GetExplicitTargetMask(bool& srcSet, bool& dstSet) const;
 
     // temporarily avalible to public
     static bool IsPosition(uint32 targetType);
@@ -128,11 +230,19 @@ public:
 
 private:
     static bool InitStaticData();
-    static void InitAreaData();
     static void InitTypeData();
 
     static bool Init;
-    static bool Area[TOTAL_SPELL_TARGETS];
+
+    struct StaticData
+    {
+        SpellTargetObjectTypes ObjectType;    // type of object returned by target type
+        SpellTargetReferenceTypes ReferenceType; // defines which object is used as a reference when selecting target
+        SpellTargetSelectionCategories SelectionCategory;
+        SpellTargetSelectionCheckTypes SelectionCheckType; // defines selection criteria
+        SpellTargetDirectionTypes DirectionType; // direction for cone and dest targets
+    };
+    static StaticData _data[TOTAL_SPELL_TARGETS];
 };
 
 class SpellEffectInfo
@@ -184,12 +294,22 @@ public:
 
     SpellEffectTargetTypes GetRequiredTargetType() const;
 
+    SpellTargetObjectTypes GetImplicitTargetObjectType() const;
+    SpellTargetObjectTypes GetRequiredTargetObjectType() const;
+
 private:
     static bool InitStaticData();
     static void InitRequiredTargetTypeData();
 
     static bool Init;
     static SpellEffectTargetTypes RequiredTargetType[TOTAL_SPELL_EFFECTS];
+
+    struct StaticData
+    {
+        SpellTargetObjectTypes ImplicitObjectType; // defines if explicit target can be added to effect target list if there's no valid target type provided for effect
+        SpellTargetObjectTypes RequiredObjectType; // defines valid target object type for spell effect
+    };
+    static StaticData _data[TOTAL_SPELL_EFFECTS];
 };
 
 class SpellInfo
@@ -268,6 +388,7 @@ public:
     int32  AreaGroupId;
     uint32 SchoolMask;
     SpellEffectInfo Effects[MAX_SPELL_EFFECTS];
+    uint32 ExplicitTargetMask;
     SpellChainNode const* ChainEntry;
 
     SpellInfo(SpellEntry const* spellEntry);
@@ -306,6 +427,7 @@ public:
     bool IsRangedWeaponSpell() const;
     bool IsAutoRepeatRangedSpell() const;
 
+    bool IsAffectedBySpellMods() const;
     bool IsAffectedBySpellMod(SpellModifier* mod) const;
 
     bool CanPierceImmuneAura(SpellInfo const* aura) const;
@@ -318,6 +440,8 @@ public:
 
     SpellCastResult CheckShapeshift(uint32 form) const;
     SpellCastResult CheckLocation(uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player = NULL) const;
+    SpellCastResult CheckTarget(Unit const* caster, Unit const* target, bool implicit = true) const;
+    bool CheckTargetCreatureType(Unit const* target) const;
 
     SpellSchoolMask GetSchoolMask() const;
     uint32 GetAllEffectsMechanicMask() const;
@@ -325,6 +449,7 @@ public:
     Mechanics GetEffectMechanic(uint8 effIndex) const;
     uint32 GetDispelMask() const;
     static uint32 GetDispelMask(DispelType type);
+    uint32 GetExplicitTargetMask() const;
 
     AuraStateType GetAuraState() const;
     SpellSpecificType GetSpellSpecific() const;
@@ -352,6 +477,7 @@ public:
     bool IsHighRankOf(SpellInfo const* spellInfo) const;
 
     // loading helpers
+    uint32 _GetExplicitTargetMask() const;
     bool _IsPositiveEffect(uint8 effIndex, bool deep) const;
     bool _IsPositiveSpell() const;
     static bool _IsPositiveTarget(uint32 targetA, uint32 targetB);

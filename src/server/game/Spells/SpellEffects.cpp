@@ -2352,14 +2352,9 @@ void Spell::SpellDamageHeal(SpellEffIndex /*effIndex*/)
             addhealth = caster->SpellHealingBonus(unitTarget, m_spellInfo, addhealth, HEAL);
             if (AuraEffect * aurEff = unitTarget->GetAuraEffect(SPELL_AURA_PERIODIC_HEAL, SPELLFAMILY_SHAMAN, 0, 0, 0x10, m_originalCasterGUID))
             {
-                for (std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
-                    if (ihit->targetGUID == unitTarget->GetGUID() && ihit->primary)
-                    {
-                        addhealth = int32(addhealth * 1.25f);
-                        // consume aura
-                        unitTarget->RemoveAura(aurEff->GetBase());
-                        break;
-                    }
+                addhealth = int32(addhealth * 1.25f);
+                // consume aura
+                unitTarget->RemoveAura(aurEff->GetBase());
             }
         }
         // Death Pact - return pct of max health to caster

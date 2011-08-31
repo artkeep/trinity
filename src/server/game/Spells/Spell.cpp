@@ -925,7 +925,7 @@ void Spell::CleanupTargetList()
     m_delayMoment = 0;
 }
 
-void Spell::AddUnitTarget(Unit* pVictim, uint32 effIndex, bool isPrimary)
+void Spell::AddUnitTarget(Unit* pVictim, uint32 effIndex)
 {
     if (!m_spellInfo->Effects[effIndex].IsEffect())
         return;
@@ -1017,7 +1017,6 @@ void Spell::AddUnitTarget(Unit* pVictim, uint32 effIndex, bool isPrimary)
     else
         target.reflectResult = SPELL_MISS_NONE;
 
-    target.primary = isPrimary;
     // Add target to list
     m_UniqueTargetInfo.push_back(target);
 }
@@ -2509,7 +2508,7 @@ void Spell::SelectEffectTargets(uint32 i, SpellImplicitTargetInfo const& cur)
             CallScriptAfterUnitTargetSelectHandlers(unitList, SpellEffIndex(i));
 
             for (std::list<Unit*>::iterator itr = unitList.begin(); itr != unitList.end(); ++itr)
-                AddUnitTarget(*itr, i, itr == unitList.begin() ? 1 : 0);
+                AddUnitTarget(*itr, i);
         }
         else
             AddUnitTarget(target, i);

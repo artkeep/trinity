@@ -594,7 +594,6 @@ class Spell
             bool   crit:1;
             bool   scaleAura:1;
             int32  damage;
-            bool   primary:1;
         };
         std::list<TargetInfo> m_UniqueTargetInfo;
         uint8 m_channelTargetEffectMask;                        // Mask req. alive targets
@@ -615,7 +614,7 @@ class Spell
         };
         std::list<ItemTargetInfo> m_UniqueItemInfo;
 
-        void AddUnitTarget(Unit* target, uint32 effIndex, bool isPrimary = false);
+        void AddUnitTarget(Unit* target, uint32 effIndex);
         void AddUnitTarget(uint64 unitGUID, uint32 effIndex);
         void AddGOTarget(GameObject* target, uint32 effIndex);
         void AddGOTarget(uint64 goGUID, uint32 effIndex);

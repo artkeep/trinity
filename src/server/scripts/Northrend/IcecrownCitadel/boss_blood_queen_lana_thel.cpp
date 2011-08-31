@@ -263,7 +263,7 @@ class boss_blood_queen_lana_thel : public CreatureScript
                     Talk(SAY_KILL);
             }
 
-            void SetGUID(uint64 const guid, int32 type = 0)
+            void SetGUID(uint64 guid, int32 type = 0)
             {
                 switch (type)
                 {
@@ -661,7 +661,7 @@ class spell_blood_queen_bloodbolt : public SpellScriptLoader
 
             void FilterTargets(std::list<Unit*>& targets)
             {
-                uint32 targetCount = targets.size() / 3 + 1;
+                uint32 targetCount = (targets.size() + 2) / 3;
                 targets.remove_if(BloodboltHitCheck(static_cast<LanaThelAI*>(GetCaster()->GetAI())));
                 Trinity::RandomResizeList(targets, targetCount);
             }

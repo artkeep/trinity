@@ -2401,14 +2401,22 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit* victim, SpellInfo const* spell)
     }
 
     // Check for attack from behind
-    if (!victim->HasInArc(M_PI, this) && !victim->HasAuraType(SPELL_AURA_IGNORE_HIT_DIRECTION))
+    if (!victim->HasInArc(M_PI, this))
     {
-        // Can`t dodge from behind in PvP (but its possible in PvE)
-        if (victim->GetTypeId() == TYPEID_PLAYER)
-            canDodge = false;
-        // Can`t parry or block
-        canParry = false;
-        canBlock = false;
+        if (!victim->HasAuraType(SPELL_AURA_IGNORE_HIT_DIRECTION))
+        {
+            // Can`t dodge from behind in PvP (but its possible in PvE)
+            if (victim->GetTypeId() == TYPEID_PLAYER)
+                canDodge = false;
+            // Can`t parry or block
+            canParry = false;
+            canBlock = false;
+        }
+        else // Only deterrence as of 3.3.5
+        {
+            if (spell->AttributesCu & SPELL_ATTR0_CU_REQ_CASTER_BEHIND_TARGET)
+                canParry = false;
+        }
     }
     // Check creatures flags_extra for disable parry
     if (victim->GetTypeId() == TYPEID_UNIT)
@@ -6695,9 +6703,9 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
             // Misdirection
             if (dummySpell->Id == 34477)
             {
-                RemoveAura(dummySpell->Id, GetGUID(), 0, AURA_REMOVE_BY_DEFAULT);
-                CastSpell(this, 35079, true);
-                return true;
+                triggered_spell_id = 35079; // 4 sec buff on self
+                target = this;
+                break;
             }
             break;
         }
@@ -10533,7 +10541,7 @@ void Unit::EnergizeBySpell(Unit* victim, uint32 spellID, uint32 damage, Powers p
     // needs to be called after sending spell log
     victim->ModifyPower(powerType, damage);
 
-    SpellInfo const* spellInfo =  sSpellMgr->GetSpellInfo(spellID);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellID);
     victim->getHostileRefManager().threatAssist(this, float(damage) * 0.5f, spellInfo);
 }
 
@@ -11832,14 +11840,6 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) cons
                 ((*iter)->GetMiscValue() & spellInfo->GetSchoolMask()) &&                                        // Check school
                 !spellInfo->IsPositiveEffect(index))         
                 return true;
-    }
-
-    if (GetTypeId() == TYPEID_PLAYER && spellInfo->Id != 49560)
-    {
-        if (spellInfo->Effects[index].Effect == SPELL_EFFECT_ATTACK_ME)
-            return true;
-        if (spellInfo->Effects[index].ApplyAuraName == SPELL_AURA_MOD_TAUNT)
-            return true;
     }
 
     return false;

@@ -1968,7 +1968,7 @@ void SpellMgr::LoadSpellThreats()
 
     uint32 count = 0;
 
-    //                                                0      1
+    //                                                0      1        2       3
     QueryResult result = WorldDatabase.Query("SELECT entry, flatMod, pctMod, apPctMod FROM spell_threat");
     if (!result)
     {
@@ -1993,10 +1993,9 @@ void SpellMgr::LoadSpellThreats()
         ste.flatMod  = fields[1].GetInt16();
         ste.pctMod   = fields[2].GetFloat();
         ste.apPctMod = fields[3].GetFloat();
- 
-        mSpellThreatMap[entry] = ste;
 
-        ++count;
+        mSpellThreatMap[entry] = ste;
+        count++;
     } while (result->NextRow());
 
     sLog->outString(">> Loaded %u SpellThreatEntries in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
@@ -2675,7 +2674,7 @@ void SpellMgr::LoadSpellCustomAttr()
                 case SPELL_AURA_PERIODIC_ENERGIZE:
                 case SPELL_AURA_OBS_MOD_HEALTH:
                 case SPELL_AURA_OBS_MOD_POWER:
-                case SPELL_AURA_POWER_BURN_MANA:
+                case SPELL_AURA_POWER_BURN:
                     spellInfo->AttributesCu |= SPELL_ATTR0_CU_NO_INITIAL_THREAT;
                     break;
             }
@@ -3117,6 +3116,7 @@ void SpellMgr::LoadDbcDataCorrections()
             case 57761: // Fireball!
             case 39805: // Lightning Overload
             case 64823: // Item - Druid T8 Balance 4P Bonus
+            case 34477: // Misdirection
             case 44401: // Missile Barrage
                 spellInfo->procCharges = 1;
                 break;

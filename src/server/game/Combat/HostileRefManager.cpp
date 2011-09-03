@@ -42,6 +42,7 @@ void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo c
     {
         if (ThreatCalcHelper::isValidProcess(victim, ref->getSource()->getOwner(), threatSpell))
             ref->getSource()->doAddThreat(victim, threat);
+
         ref = ref->next();
     }
 }

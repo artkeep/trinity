@@ -63,19 +63,20 @@ uint32 OPvPCapturePointNA::GetAliveGuardsCount()
         case NA_NPC_GUARD_13:
         case NA_NPC_GUARD_14:
         case NA_NPC_GUARD_15:
-        {
-            if (Creature* cr = HashMapHolder<Creature>::Find(itr->second))
-            {
+            if (Creature const* const cr = HashMapHolder<Creature>::Find(itr->second))
                 if (cr->isAlive())
                     ++cnt;
-            }
-        }
-        break;
+            break;
         default:
             break;
         }
     }
     return cnt;
+}
+
+uint32 OPvPCapturePointNA::GetControllingFaction() const
+{
+    return m_ControllingFaction;
 }
 
 void OPvPCapturePointNA::SpawnNPCsForTeam(uint32 team)
@@ -197,7 +198,7 @@ void OPvPCapturePointNA::HandlePlayerLeave(Player* player)
     OPvPCapturePoint::HandlePlayerLeave(player);
 }
 
-OPvPCapturePointNA::OPvPCapturePointNA(OutdoorPvP *pvp) :
+OPvPCapturePointNA::OPvPCapturePointNA(OutdoorPvP* pvp) :
 OPvPCapturePoint(pvp), m_capturable(true), m_GuardsAlive(0), m_ControllingFaction(0),
 m_WyvernStateNorth(0), m_WyvernStateSouth(0), m_WyvernStateEast(0), m_WyvernStateWest(0),
 m_HalaaState(HALAA_N), m_RespawnTimer(NA_RESPAWN_TIME), m_GuardCheckTimer(NA_GUARD_CHECK_TIME)
@@ -223,7 +224,7 @@ bool OutdoorPvPNA::SetupOutdoorPvP()
 void OutdoorPvPNA::HandlePlayerEnterZone(Player* player, uint32 zone)
 {
     // add buffs
-    if (player->GetTeam() == m_obj->m_ControllingFaction)
+    if (player->GetTeam() == m_obj->GetControllingFaction())
         player->CastSpell(player, NA_CAPTURE_BUFF, true);
     OutdoorPvP::HandlePlayerEnterZone(player, zone);
 }

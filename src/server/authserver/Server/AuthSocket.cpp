@@ -147,11 +147,11 @@ typedef struct AuthHandler
 class PatcherRunnable: public ACE_Based::Runnable
 {
 public:
-    PatcherRunnable(class AuthSocket *);
+    PatcherRunnable(class AuthSocket* );
     void run();
 
 private:
-    AuthSocket * mySocket;
+    AuthSocket* mySocket;
 };
 
 typedef struct PATCH_INFO
@@ -959,7 +959,7 @@ bool AuthSocket::_HandleXferAccept()
     return true;
 }
 
-PatcherRunnable::PatcherRunnable(class AuthSocket * as)
+PatcherRunnable::PatcherRunnable(class AuthSocket* as)
 {
     mySocket = as;
 }
@@ -1027,7 +1027,7 @@ void Patcher::LoadPatchMD5(char *szFileName)
     // Try to open the patch file
     std::string path = "./patches/";
     path += szFileName;
-    FILE *pPatch = fopen(path.c_str(), "rb");
+    FILE* pPatch = fopen(path.c_str(), "rb");
     sLog->outDebug(LOG_FILTER_NETWORKIO, "Loading patch info from %s\n", path.c_str());
 
     if (!pPatch)

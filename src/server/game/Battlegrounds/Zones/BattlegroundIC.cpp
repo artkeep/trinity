@@ -292,7 +292,7 @@ bool BattlegroundIC::IsAllNodesConrolledByTeam(uint32 team) const
     return count == NODE_TYPE_WORKSHOP;
 }
 
-void BattlegroundIC::AddPlayer(Player *plr)
+void BattlegroundIC::AddPlayer(Player* plr)
 {
     Battleground::AddPlayer(plr);
     //create score and add it to map, default values are set in constructor
@@ -311,8 +311,11 @@ void BattlegroundIC::AddPlayer(Player *plr)
 
 void BattlegroundIC::RemovePlayer(Player* plr, uint64 /*guid*/, uint32 /*team*/)
 {
-    plr->RemoveAura(SPELL_QUARRY);
-    plr->RemoveAura(SPELL_OIL_REFINERY);
+    if (plr)
+    {
+        plr->RemoveAura(SPELL_QUARRY);
+        plr->RemoveAura(SPELL_OIL_REFINERY);
+    }
 }
 
 void BattlegroundIC::HandleAreaTrigger(Player* /*Source*/, uint32 /*Trigger*/)
@@ -476,7 +479,7 @@ void BattlegroundIC::RealocatePlayers(ICNodePointType nodeType)
     std::vector<uint64> ghost_list = m_ReviveQueue[m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+nodeType-2]];
     if (!ghost_list.empty())
     {
-        WorldSafeLocsEntry const *ClosestGrave = NULL;
+        WorldSafeLocsEntry const* ClosestGrave = NULL;
         for (std::vector<uint64>::const_iterator itr = ghost_list.begin(); itr != ghost_list.end(); ++itr)
         {
             Player* plr = ObjectAccessor::FindPlayer(*itr);

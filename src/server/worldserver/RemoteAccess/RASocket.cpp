@@ -187,7 +187,7 @@ int RASocket::check_access_level(const std::string& user)
         return -1;
     }
 
-    Field *fields = result->Fetch();
+    Field* fields = result->Fetch();
 
     if (fields[1].GetUInt32() < iMinLevel)
     {
@@ -213,7 +213,7 @@ int RASocket::check_password(const std::string& user, const std::string& pass)
     AccountMgr::normalizeString(safe_pass);
     LoginDatabase.EscapeString(safe_pass);
 
-    std::string hash = sAccountMgr->CalculateShaPassHash(safe_user, safe_pass);
+    std::string hash = AccountMgr::CalculateShaPassHash(safe_user, safe_pass);
 
     QueryResult check = LoginDatabase.PQuery(
             "SELECT 1 FROM account WHERE username = '%s' AND sha_pass_hash = '%s'",

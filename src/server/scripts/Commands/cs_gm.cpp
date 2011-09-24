@@ -25,6 +25,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "ObjectMgr.h"
 #include "Chat.h"
+#include "AccountMgr.h"
 
 class gm_commandscript : public CommandScript
 {
@@ -56,10 +57,11 @@ public:
     {
         if (!*args)
         {
-            if (handler->GetSession()->GetPlayer()->isGMChat())
-                handler->GetSession()->SendNotification(LANG_GM_CHAT_ON);
+            WorldSession* session = handler->GetSession();
+            if (!AccountMgr::IsPlayerAccount(session->GetSecurity()) && session->GetPlayer()->isGMChat())
+                session->SendNotification(LANG_GM_CHAT_ON);
             else
-                handler->GetSession()->SendNotification(LANG_GM_CHAT_OFF);
+                session->SendNotification(LANG_GM_CHAT_OFF);
             return true;
         }
 
@@ -120,7 +122,8 @@ public:
         for (HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
         {
             AccountTypes itr_sec = itr->second->GetSession()->GetSecurity();
-            if ((itr->second->isGameMaster() || (itr_sec > SEC_MODERATOR && itr_sec <= AccountTypes(sWorld->getIntConfig(CONFIG_GM_LEVEL_IN_GM_LIST)))) &&
+
+            if ((itr->second->isGameMaster() || (!AccountMgr::IsPlayerAccount(itr_sec) && itr_sec <= AccountTypes(sWorld->getIntConfig(CONFIG_GM_LEVEL_IN_GM_LIST)))) &&
                 (!handler->GetSession() || itr->second->IsVisibleGloballyFor(handler->GetSession()->GetPlayer())))
             {
                 if (first)
@@ -153,7 +156,8 @@ public:
     static bool HandleGMListFullCommand(ChatHandler* handler, const char* /*args*/)
     {
         ///- Get the accounts with GM Level >0
-        QueryResult result = LoginDatabase.Query("SELECT a.username, aa.gmlevel FROM account a, account_access aa WHERE a.id=aa.id AND aa.gmlevel > 1");
+        QueryResult result = LoginDatabase.PQuery("SELECT a.username, aa.gmlevel FROM account a, account_access aa WHERE a.id=aa.id AND aa.gmlevel >= %u", SEC_MODERATOR);
+
         if (result)
         {
             handler->SendSysMessage(LANG_GMLIST);
@@ -161,7 +165,7 @@ public:
             ///- Cycle through them. Display username and GM level
             do
             {
-                Field *fields = result->Fetch();
+                Field* fields = result->Fetch();
                 const char* name = fields[0].GetCString();
                 uint8 security = fields[1].GetUInt8();
                 uint8 max = ((16 - strlen(name)) / 2);
@@ -232,7 +236,7 @@ public:
             handler->GetSession()->SendNotification(LANG_GM_ON);
             handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
 #ifdef _DEBUG_VMAPS
-            VMAP::IVMapManager *vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
+            VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
             vMapManager->processCommand("stoplog");
 #endif
             return true;
@@ -244,7 +248,7 @@ public:
             handler->GetSession()->SendNotification(LANG_GM_OFF);
             handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
 #ifdef _DEBUG_VMAPS
-            VMAP::IVMapManager *vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
+            VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
             vMapManager->processCommand("startlog");
 #endif
             return true;

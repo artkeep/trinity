@@ -8,6 +8,38 @@
 enum
 {
     MAX_ENCOUNTERS		= 6,
+    // Baltharus the Warborn
+    NPC_BALTHARUS_THE_WARBORN               = 39751,
+    NPC_BALTHARUS_THE_WARBORN_CLONE         = 39899,
+    NPC_BALTHARUS_TARGET                    = 26712,
+
+    // General Zarithrian
+    NPC_GENERAL_ZARITHRIAN                  = 39746,
+    NPC_ONYX_FLAMECALLER                    = 39814,
+    NPC_ZARITHIAN_SPAWN_STALKER             = 39794,
+
+    // Saviana Ragefire
+    NPC_SAVIANA_RAGEFIRE                    = 39747,
+
+    // Halion
+    NPC_HALION                              = 39863,
+    NPC_HALION_TWILIGHT                     = 40142,
+    NPC_HALION_CONTROLLER                   = 40146,
+    NPC_LIVING_INFERNO                      = 40681,
+    NPC_LIVING_EMBER                        = 40683,
+    NPC_ORB_CARRIER                         = 40081,
+    NPC_ORB_ROTATION_FOCUS                  = 40091,
+    NPC_SHADOW_ORB_N                        = 40083,
+    NPC_SHADOW_ORB_S                        = 40100,
+    NPC_METEOR_STRIKE_MARK                  = 40029,
+    NPC_METEOR_STRIKE_NORTH                 = 40041,
+    NPC_METEOR_STRIKE_EAST                  = 40042,
+    NPC_METEOR_STRIKE_WEST                  = 40043,
+    NPC_METEOR_STRIKE_SOUTH                 = 40044,
+    NPC_METEOR_STRIKE_FLAME                 = 40055,
+
+    // Xerestrasza
+    NPC_XERESTRASZA                         = 40429,
 
     TYPE_EVENT			= 0,
     TYPE_RAGEFIRE		= 1,
@@ -24,7 +56,6 @@ enum
     TYPE_EVENT_NPC		= 51,
 
     NPC_HALION_REAL		= 39863, // Halion Physical Realm NPC
-    NPC_HALION_TWILIGHT	= 40142, // Halion Twilight Realm NPC
     NPC_HALION_CONTROL	= 40146,
 
     NPC_BALTHARUS		= 39751,
@@ -32,19 +63,12 @@ enum
     NPC_ZARITHIAN		= 39746,
     NPC_RAGEFIRE		= 39747,
 
-    NPC_XERESTRASZA		= 40429,
-
-    NPC_BALTHARUS_TARGET			= 26712,
-    NPC_ZARITHIAN_SPAWN_STALKER		= 39794,
 
     // Orb rotation
     NPC_SHADOW_PULSAR_N = 40083, //spinning orb N spawn
     NPC_SHADOW_PULSAR_S = 40100, //spinning orb S spawn
     NPC_SHADOW_PULSAR_E = 40468, //spinning orb E spawn
     NPC_SHADOW_PULSAR_W = 40469, //spinning orb W spawn
-    NPC_ORB_CARRIER					= 40081,
-    NPC_ORB_ROTATION_FOCUS			= 40091,
-
 
     GO_HALION_PORTAL_1				= 202794, //1327 ENTRY
     GO_HALION_PORTAL_2				= 202795, //1327 ENTRY

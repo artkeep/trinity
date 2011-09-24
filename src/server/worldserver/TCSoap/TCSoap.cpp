@@ -46,7 +46,7 @@ void TCSoapRunnable::run()
         sLog->outDebug(LOG_FILTER_NETWORKIO, "TCSoap: accepted connection from IP=%d.%d.%d.%d", (int)(soap.ip>>24)&0xFF, (int)(soap.ip>>16)&0xFF, (int)(soap.ip>>8)&0xFF, (int)soap.ip&0xFF);
         struct soap* thread_soap = soap_copy(&soap);// make a safe copy
 
-        ACE_Message_Block *mb = new ACE_Message_Block(sizeof(struct soap*));
+        ACE_Message_Block* mb = new ACE_Message_Block(sizeof(struct soap*));
         ACE_OS::memcpy(mb->wr_ptr(), &thread_soap, sizeof(struct soap*));
         process_message(mb);
     }
@@ -54,7 +54,7 @@ void TCSoapRunnable::run()
     soap_done(&soap);
 }
 
-void TCSoapRunnable::process_message(ACE_Message_Block *mb)
+void TCSoapRunnable::process_message(ACE_Message_Block* mb)
 {
     ACE_TRACE (ACE_TEXT ("SOAPWorkingThread::process_message"));
 
@@ -82,20 +82,20 @@ int ns1__executeCommand(soap* soap, char* command, char** result)
         return 401;
     }
 
-    uint32 accountId = sAccountMgr->GetId(soap->userid);
+    uint32 accountId = AccountMgr::GetId(soap->userid);
     if(!accountId)
     {
         sLog->outDebug(LOG_FILTER_NETWORKIO, "TCSoap: Client used invalid username '%s'", soap->userid);
         return 401;
     }
 
-    if(!sAccountMgr->CheckPassword(accountId, soap->passwd))
+    if(!AccountMgr::CheckPassword(accountId, soap->passwd))
     {
         sLog->outDebug(LOG_FILTER_NETWORKIO, "TCSoap: invalid password for account '%s'", soap->userid);
         return 401;
     }
 
-    if(sAccountMgr->GetSecurity(accountId) < SEC_ADMINISTRATOR)
+    if(AccountMgr::GetSecurity(accountId) < SEC_ADMINISTRATOR)
     {
         sLog->outDebug(LOG_FILTER_NETWORKIO, "TCSoap: %s's gmlevel is too low", soap->userid);
         return 403;

@@ -4967,10 +4967,6 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             trans->PAppend("DELETE FROM character_talent WHERE guid = '%u'", guid);
             trans->PAppend("DELETE FROM character_skills WHERE guid = '%u'", guid);
             trans->PAppend("DELETE FROM character_xp_rates WHERE guid = '%u'",guid);
-            /* World of Warcraft Armory */
-            trans->PAppend("DELETE FROM armory_character_stats WHERE guid = '%u'",guid);
-            trans->PAppend("DELETE FROM character_feed_log WHERE guid = '%u'",guid);
-            /* World of Warcraft Armory */
 
             CharacterDatabase.CommitTransaction(trans);
             break;

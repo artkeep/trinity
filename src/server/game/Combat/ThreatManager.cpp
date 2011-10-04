@@ -511,7 +511,7 @@ void ThreatManager::processThreatEvent(ThreatRefStatusChangeEvent* threatRefStat
 
     HostileReference* hostileRef = threatRefStatusChangeEvent->getReference();
 
-    switch(threatRefStatusChangeEvent->getType())
+    switch (threatRefStatusChangeEvent->getType())
     {
         case UEV_THREAT_REF_THREAT_CHANGE:
             if ((getCurrentVictim() == hostileRef && threatRefStatusChangeEvent->getFValue()<0.0f) ||

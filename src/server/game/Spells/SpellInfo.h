@@ -62,7 +62,7 @@ enum SpellCastTargetFlags
     TARGET_FLAG_UNUSED20        = 0x00080000,               // uint32 counter, loop { vec3 - screen position (?), guid }, not used so far
     TARGET_FLAG_UNIT_PASSENGER  = 0x00100000,               // guessed, used to validate target (if vehicle passenger)
 
-    TARGET_FLAG_UNIT_MASK = TARGET_FLAG_UNIT | TARGET_FLAG_UNIT_RAID | TARGET_FLAG_UNIT_PARTY 
+    TARGET_FLAG_UNIT_MASK = TARGET_FLAG_UNIT | TARGET_FLAG_UNIT_RAID | TARGET_FLAG_UNIT_PARTY
         | TARGET_FLAG_UNIT_ENEMY | TARGET_FLAG_UNIT_ALLY | TARGET_FLAG_UNIT_DEAD | TARGET_FLAG_UNIT_MINIPET | TARGET_FLAG_UNIT_PASSENGER,
     TARGET_FLAG_GAMEOBJECT_MASK = TARGET_FLAG_GAMEOBJECT | TARGET_FLAG_GAMEOBJECT_ITEM,
     TARGET_FLAG_CORPSE_MASK = TARGET_FLAG_CORPSE_ALLY | TARGET_FLAG_CORPSE_ENEMY,
@@ -152,7 +152,6 @@ enum SpellEffectImplicitTargetTypes
     EFFECT_IMPLICIT_TARGET_NONE = 0,
     EFFECT_IMPLICIT_TARGET_EXPLICIT,
     EFFECT_IMPLICIT_TARGET_CASTER,
-    EFFECT_IMPLICIT_TARGET_PET,
 };
 
 // Spell clasification
@@ -229,9 +228,7 @@ public:
     uint32 GetExplicitTargetMask(bool& srcSet, bool& dstSet) const;
 
     // temporarily avalible to public
-    static bool IsPosition(uint32 targetType);
     static SpellSelectTargetTypes Type[TOTAL_SPELL_TARGETS];
-
 private:
     static bool InitStaticData();
     static void InitTypeData();
@@ -296,6 +293,7 @@ public:
     bool HasRadius() const;
     float CalcRadius(Unit* caster = NULL, Spell* = NULL) const;
 
+    uint32 GetProvidedTargetMask() const;
     uint32 GetMissingTargetMask(bool srcSet = false, bool destSet = false, uint32 mask = 0) const;
 
     SpellEffectImplicitTargetTypes GetImplicitTargetType() const;

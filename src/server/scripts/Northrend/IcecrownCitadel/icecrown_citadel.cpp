@@ -1769,7 +1769,7 @@ class spell_icc_sprit_alarm : public SpellScriptLoader
 
             void Register()
             {
-                OnEffect += SpellEffectFn(spell_icc_sprit_alarm_SpellScript::HandleEvent, EFFECT_2, SPELL_EFFECT_SEND_EVENT);
+                OnEffectHit += SpellEffectFn(spell_icc_sprit_alarm_SpellScript::HandleEvent, EFFECT_2, SPELL_EFFECT_SEND_EVENT);
             }
         };
 
@@ -1828,7 +1828,7 @@ class spell_frost_giant_death_plague : public SpellScriptLoader
             void FilterTargets(std::list<Unit*>& unitList)
             {
                 // Select valid targets for jump
-                unitList.remove_if(DeathPlagueTargetSelector(GetCaster()));
+                unitList.remove_if (DeathPlagueTargetSelector(GetCaster()));
                 if (!unitList.empty())
                 {
                     Unit* target = SelectRandomContainerElement(unitList);
@@ -1852,7 +1852,7 @@ class spell_frost_giant_death_plague : public SpellScriptLoader
             {
                 OnUnitTargetSelect += SpellUnitTargetFn(spell_frost_giant_death_plague_SpellScript::CountTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ALLY);
                 OnUnitTargetSelect += SpellUnitTargetFn(spell_frost_giant_death_plague_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_SRC_AREA_ALLY);
-                OnEffect += SpellEffectFn(spell_frost_giant_death_plague_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnEffectHitTarget += SpellEffectFn(spell_frost_giant_death_plague_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_SCRIPT_EFFECT);
             }
 
             bool _failed;
@@ -1886,8 +1886,8 @@ class spell_icc_harvest_blight_specimen : public SpellScriptLoader
 
             void Register()
             {
-                OnEffect += SpellEffectFn(spell_icc_harvest_blight_specimen_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
-                OnEffect += SpellEffectFn(spell_icc_harvest_blight_specimen_SpellScript::HandleQuestComplete, EFFECT_1, SPELL_EFFECT_QUEST_COMPLETE);
+                OnEffectHitTarget += SpellEffectFn(spell_icc_harvest_blight_specimen_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnEffectHitTarget += SpellEffectFn(spell_icc_harvest_blight_specimen_SpellScript::HandleQuestComplete, EFFECT_1, SPELL_EFFECT_QUEST_COMPLETE);
             }
         };
 
@@ -1939,7 +1939,7 @@ class spell_svalna_revive_champion : public SpellScriptLoader
 
             void RemoveAliveTarget(std::list<Unit*>& unitList)
             {
-                unitList.remove_if(AliveCheck());
+                unitList.remove_if (AliveCheck());
                 Trinity::RandomResizeList(unitList, 2);
             }
 
@@ -1973,7 +1973,7 @@ class spell_svalna_remove_spear : public SpellScriptLoader
 
             void Register()
             {
-                OnEffect += SpellEffectFn(spell_svalna_remove_spear_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnEffectHitTarget += SpellEffectFn(spell_svalna_remove_spear_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 

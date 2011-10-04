@@ -57,7 +57,7 @@ m_effectsToApply(effMask), m_removeMode(AURA_REMOVE_NONE), m_needClientUpdate(fa
             Unit::VisibleAuraMap const* visibleAuras = GetTarget()->GetVisibleAuras();
             // lookup for free slots in units visibleAuras
             Unit::VisibleAuraMap::const_iterator itr = visibleAuras->find(0);
-            for (uint32 freeSlot = 0; freeSlot < MAX_AURAS; ++itr , ++freeSlot)
+            for (uint32 freeSlot = 0; freeSlot < MAX_AURAS; ++itr, ++freeSlot)
             {
                 if (itr == visibleAuras->end() || itr->first != freeSlot)
                 {
@@ -224,7 +224,7 @@ uint8 Aura::BuildEffectMaskForOwner(SpellInfo const* spellProto, uint8 avalibleE
     ASSERT(spellProto);
     ASSERT(owner);
     uint8 effMask = 0;
-    switch(owner->GetTypeId())
+    switch (owner->GetTypeId())
     {
         case TYPEID_UNIT:
         case TYPEID_PLAYER:
@@ -362,7 +362,7 @@ void Aura::_InitEffects(uint8 effMask, Unit* caster, int32 *baseAmount)
 Aura::~Aura()
 {
     // unload scripts
-    while(!m_loadedScripts.empty())
+    while (!m_loadedScripts.empty())
     {
         std::list<AuraScript*>::iterator itr = m_loadedScripts.begin();
         (*itr)->_Unload();
@@ -469,7 +469,7 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
 
     // fill up to date target list
     //       target, effMask
-    std::map<Unit* , uint8> targets;
+    std::map<Unit*, uint8> targets;
 
     FillTargetMap(targets, caster);
 
@@ -478,7 +478,7 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
     // mark all auras as ready to remove
     for (ApplicationMap::iterator appIter = m_applications.begin(); appIter != m_applications.end();++appIter)
     {
-        std::map<Unit* , uint8>::iterator existing = targets.find(appIter->second->GetTarget());
+        std::map<Unit*, uint8>::iterator existing = targets.find(appIter->second->GetTarget());
         // not found in current area - remove the aura
         if (existing == targets.end())
             targetsToRemove.push_back(appIter->second->GetTarget());
@@ -495,7 +495,7 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
     }
 
     // register auras for units
-    for (std::map<Unit* , uint8>::iterator itr = targets.begin(); itr!= targets.end();)
+    for (std::map<Unit*, uint8>::iterator itr = targets.begin(); itr!= targets.end();)
     {
         // aura mustn't be already applied on target
         if (AuraApplication * aurApp = GetApplicationOfTarget(itr->first->GetGUID()))
@@ -586,7 +586,7 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
         return;
 
     // apply aura effects for units
-    for (std::map<Unit* , uint8>::iterator itr = targets.begin(); itr!= targets.end();++itr)
+    for (std::map<Unit*, uint8>::iterator itr = targets.begin(); itr!= targets.end();++itr)
     {
         if (AuraApplication * aurApp = GetApplicationOfTarget(itr->first->GetGUID()))
         {
@@ -1105,7 +1105,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
         switch (GetSpellInfo()->SpellFamilyName)
         {
             case SPELLFAMILY_GENERIC:
-                switch(GetId())
+                switch (GetId())
                 {
                     case 32474: // Buffeting Winds of Susurrus
                         if (target->GetTypeId() == TYPEID_PLAYER)
@@ -1167,7 +1167,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                             caster->CastSpell(target, 61634, true);
                     }
                 }
-                switch(GetId())
+                switch (GetId())
                 {
                     case 12536: // Clearcasting
                     case 12043: // Presence of Mind
@@ -1213,7 +1213,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 }
                 break;
             case SPELLFAMILY_WARLOCK:
-                switch(GetId())
+                switch (GetId())
                 {
                     case 6358: // Seduction
                         if (!caster)
@@ -1339,10 +1339,10 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
     // mods at aura remove
     else
     {
-        switch(GetSpellInfo()->SpellFamilyName)
+        switch (GetSpellInfo()->SpellFamilyName)
         {
             case SPELLFAMILY_GENERIC:
-                switch(GetId())
+                switch (GetId())
                 {
                     case 61987: // Avenging Wrath
                         // Remove the immunity shield marker on Avenging Wrath removal if Forbearance is not present
@@ -1388,7 +1388,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 }
                 break;
             case SPELLFAMILY_MAGE:
-                switch(GetId())
+                switch (GetId())
                 {
                     case 66: // Invisibility
                         if (removeMode != AURA_REMOVE_BY_EXPIRE)
@@ -1472,7 +1472,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                             caster->CastSpell(target, spellId, true);
                     }
                 }
-                switch(GetId())
+                switch (GetId())
                 {
                     case 6358: // Seduction
                         // Interrupt cast if aura removed from target
@@ -1537,7 +1537,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                                 break;
 
                             int32 triggeredSpellId = 0;
-                            switch(target->getPowerType())
+                            switch (target->getPowerType())
                             {
                                 case POWER_MANA:
                                 {
@@ -1556,7 +1556,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         }
                     }
                 }
-                switch(GetId())
+                switch (GetId())
                 {
                     case 47788: // Guardian Spirit
                         if (removeMode != AURA_REMOVE_BY_EXPIRE)
@@ -1680,7 +1680,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     else
                     {
                         int32 basepoints0 = aurEff->GetAmount();
-                        target->CastCustomSpell(target, 31665, &basepoints0, NULL, NULL , true);
+                        target->CastCustomSpell(target, 31665, &basepoints0, NULL, NULL, true);
                     }
                 }
                 // Overkill
@@ -1695,7 +1695,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
             }
             break;
         case SPELLFAMILY_HUNTER:
-            switch(GetId())
+            switch (GetId())
             {
                 case 19574: // Bestial Wrath
                     // The Beast Within cast on owner if talent present
@@ -1714,7 +1714,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
             }
             break;
         case SPELLFAMILY_PALADIN:
-            switch(GetId())
+            switch (GetId())
             {
                 case 19746:
                 case 31821:
@@ -1783,7 +1783,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 Unit::AuraEffectList const& vDummyAuras = target->GetAuraEffectsByType(SPELL_AURA_DUMMY);
                 for (Unit::AuraEffectList::const_iterator itr = vDummyAuras.begin(); itr != vDummyAuras.end(); ++itr)
                 {
-                    switch((*itr)->GetId())
+                    switch ((*itr)->GetId())
                     {
                         // Improved Blood Presence
                         case 50365:
@@ -1835,7 +1835,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         {
                             // Not listed as any effect, only base points set
                             int32 basePoints0 = unholyPresenceAura->GetSpellInfo()->Effects[EFFECT_1].CalcValue();
-                            target->CastCustomSpell(target, 63622, &basePoints0 , &basePoints0, &basePoints0, true, 0, unholyPresenceAura);
+                            target->CastCustomSpell(target, 63622, &basePoints0, &basePoints0, &basePoints0, true, 0, unholyPresenceAura);
                         }
                         target->CastSpell(target, 49772, true);
                     }
@@ -2472,7 +2472,7 @@ void UnitAura::Remove(AuraRemoveMode removeMode)
     GetUnitOwner()->RemoveOwnedAura(this, removeMode);
 }
 
-void UnitAura::FillTargetMap(std::map<Unit* , uint8> & targets, Unit* caster)
+void UnitAura::FillTargetMap(std::map<Unit*, uint8> & targets, Unit* caster)
 {
     for (uint8 effIndex = 0; effIndex < MAX_SPELL_EFFECTS ; ++effIndex)
     {
@@ -2530,7 +2530,7 @@ void UnitAura::FillTargetMap(std::map<Unit* , uint8> & targets, Unit* caster)
 
         for (UnitList::iterator itr = targetList.begin(); itr!= targetList.end();++itr)
         {
-            std::map<Unit* , uint8>::iterator existing = targets.find(*itr);
+            std::map<Unit*, uint8>::iterator existing = targets.find(*itr);
             if (existing != targets.end())
                 existing->second |= 1<<effIndex;
             else
@@ -2557,7 +2557,7 @@ void DynObjAura::Remove(AuraRemoveMode removeMode)
     _Remove(removeMode);
 }
 
-void DynObjAura::FillTargetMap(std::map<Unit* , uint8> & targets, Unit* /*caster*/)
+void DynObjAura::FillTargetMap(std::map<Unit*, uint8> & targets, Unit* /*caster*/)
 {
     Unit* dynObjOwnerCaster = GetDynobjOwner()->GetCaster();
     float radius = GetDynobjOwner()->GetRadius();
@@ -2583,7 +2583,7 @@ void DynObjAura::FillTargetMap(std::map<Unit* , uint8> & targets, Unit* /*caster
 
         for (UnitList::iterator itr = targetList.begin(); itr!= targetList.end();++itr)
         {
-            std::map<Unit* , uint8>::iterator existing = targets.find(*itr);
+            std::map<Unit*, uint8>::iterator existing = targets.find(*itr);
             if (existing != targets.end())
                 existing->second |= 1<<effIndex;
             else

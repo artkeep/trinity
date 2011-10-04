@@ -227,7 +227,7 @@ class Object
 
         bool HasFlag(uint16 index, uint32 flag) const
         {
-            if (index >= m_valuesCount && !PrintIndexError(index , false)) return false;
+            if (index >= m_valuesCount && !PrintIndexError(index, false)) return false;
             return (m_uint32Values[index] & flag) != 0;
         }
 
@@ -244,7 +244,7 @@ class Object
 
         bool HasByteFlag(uint16 index, uint8 offset, uint8 flag) const
         {
-            ASSERT(index < m_valuesCount || PrintIndexError(index , false));
+            ASSERT(index < m_valuesCount || PrintIndexError(index, false));
             ASSERT(offset < 4);
             return (((uint8*)&m_uint32Values[index])[offset] & flag) != 0;
         }
@@ -278,7 +278,7 @@ class Object
 
         bool HasFlag64(uint16 index, uint64 flag) const
         {
-            ASSERT(index < m_valuesCount || PrintIndexError(index , false));
+            ASSERT(index < m_valuesCount || PrintIndexError(index, false));
             return (GetUInt64Value(index) & flag) != 0;
         }
 
@@ -294,7 +294,7 @@ class Object
         virtual bool hasQuest(uint32 /* quest_id */) const { return false; }
         virtual bool hasInvolvedQuest(uint32 /* quest_id */) const { return false; }
         virtual void BuildUpdate(UpdateDataMapType&) {}
-        void BuildFieldsUpdate(Player* , UpdateDataMapType &) const;
+        void BuildFieldsUpdate(Player*, UpdateDataMapType &) const;
 
         // FG: some hacky helpers
         void ForceValuesUpdateAtIndex(uint32);

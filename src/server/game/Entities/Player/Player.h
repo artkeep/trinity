@@ -2394,11 +2394,6 @@ class Player : public Unit, public GridObject<Player>
         void SendCinematicStart(uint32 CinematicSequenceId);
         void SendMovieStart(uint32 MovieId);
 
-        /* World of Warcraft Armory */
-        void CreateWowarmoryFeed(uint32 type, uint32 data, uint32 item_guid, uint32 item_quality);
-        void InitWowarmoryFeeds();
-        /* World of Warcraft Armory */
-
         uint32 kill_xp_rate;
         uint32 quest_xp_rate;
         uint32 explore_xp_rate;

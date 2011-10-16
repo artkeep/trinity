@@ -382,7 +382,7 @@ void GameObject::Update(uint32 diff)
                             if (poolid)
                                 sPoolMgr->UpdatePool<GameObject>(poolid, GetDBTableGUIDLow());
                             else
-                                GetMap()->Add(this);
+                                GetMap()->AddToMap(this);
                             break;
                     }
                 }
@@ -553,14 +553,12 @@ void GameObject::Update(uint32 diff)
 
             loot.clear();
 
-            if (GetOwnerGUID())
+            //! If this is summoned by a spell with ie. SPELL_EFFECT_SUMMON_OBJECT_WILD, with or without owner, we check respawn criteria based on spell
+            //! The GetOwnerGUID() check is mostly for compatibility with hacky scripts - 99% of the time summoning should be done trough spells.
+            if (GetSpellId() || GetOwnerGUID())
             {
-                if (Unit* owner = GetOwner())
-                {
-                    owner->RemoveGameObject(this, false);
-                    SetRespawnTime(0);
-                    Delete();
-                }
+                SetRespawnTime(0);
+                Delete();
                 return;
             }
 
@@ -612,7 +610,7 @@ void GameObject::Refresh()
         return;
 
     if (isSpawned())
-        GetMap()->Add(this);
+        GetMap()->AddToMap(this);
 }
 
 void GameObject::AddUniqueUse(Player* player)
@@ -627,6 +625,8 @@ void GameObject::Delete()
     if (GetOwnerGUID())
         if (Unit* owner = GetOwner())
             owner->RemoveGameObject(this, false);
+        else    //! Owner not in world anymore
+            SetOwnerGUID(0);
 
     ASSERT (!GetOwnerGUID());
     SendObjectDeSpawnAnim(GetGUID());
@@ -858,9 +858,9 @@ void GameObject::SaveRespawnTime()
         sObjectMgr->SaveGORespawnTime(m_DBTableGuid, GetInstanceId(), m_respawnTime);
 }
 
-bool GameObject::isAlwaysVisibleFor(WorldObject const* seer) const
+bool GameObject::IsAlwaysVisibleFor(WorldObject const* seer) const
 {
-    if (WorldObject::isAlwaysVisibleFor(seer))
+    if (WorldObject::IsAlwaysVisibleFor(seer))
         return true;
 
     if (IsTransport())
@@ -869,16 +869,16 @@ bool GameObject::isAlwaysVisibleFor(WorldObject const* seer) const
     return false;
 }
 
-bool GameObject::isVisibleForInState(WorldObject const* seer) const
+bool GameObject::IsInvisibleDueToDespawn() const
 {
-    if (!WorldObject::isVisibleForInState(seer))
-        return false;
+    if (WorldObject::IsInvisibleDueToDespawn())
+        return true;
 
     // Despawned
     if (!isSpawned())
-        return false;
+        return true;
 
-    return true;
+    return false;
 }
 
 void GameObject::Respawn()
@@ -890,9 +890,9 @@ void GameObject::Respawn()
     }
 }
 
-bool GameObject::ActivateToQuest(Player* pTarget) const
+bool GameObject::ActivateToQuest(Player* target) const
 {
-    if (pTarget->HasQuestForGO(GetEntry()))
+    if (target->HasQuestForGO(GetEntry()))
         return true;
 
     if (!sObjectMgr->IsGameObjectForQuests(GetEntry()))
@@ -903,13 +903,13 @@ bool GameObject::ActivateToQuest(Player* pTarget) const
         // scan GO chest with loot including quest items
         case GAMEOBJECT_TYPE_CHEST:
         {
-            if (LootTemplates_Gameobject.HaveQuestLootForPlayer(GetGOInfo()->GetLootId(), pTarget))
+            if (LootTemplates_Gameobject.HaveQuestLootForPlayer(GetGOInfo()->GetLootId(), target))
             {
                 //TODO: fix this hack
                 //look for battlegroundAV for some objects which are only activated after mine gots captured by own team
                 if (GetEntry() == BG_AV_OBJECTID_MINE_N || GetEntry() == BG_AV_OBJECTID_MINE_S)
-                    if (Battleground* bg = pTarget->GetBattleground())
-                        if (bg->GetTypeID(true) == BATTLEGROUND_AV && !(((BattlegroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(), pTarget->GetTeam())))
+                    if (Battleground* bg = target->GetBattleground())
+                        if (bg->GetTypeID(true) == BATTLEGROUND_AV && !(((BattlegroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(), target->GetTeam())))
                             return false;
                 return true;
             }
@@ -917,13 +917,13 @@ bool GameObject::ActivateToQuest(Player* pTarget) const
         }
         case GAMEOBJECT_TYPE_GENERIC:
         {
-            if (GetGOInfo()->_generic.questID == -1 || pTarget->GetQuestStatus(GetGOInfo()->_generic.questID) == QUEST_STATUS_INCOMPLETE)
+            if (GetGOInfo()->_generic.questID == -1 || target->GetQuestStatus(GetGOInfo()->_generic.questID) == QUEST_STATUS_INCOMPLETE)
                 return true;
             break;
         }
         case GAMEOBJECT_TYPE_GOOBER:
         {
-            if (GetGOInfo()->goober.questId == -1 || pTarget->GetQuestStatus(GetGOInfo()->goober.questId) == QUEST_STATUS_INCOMPLETE)
+            if (GetGOInfo()->goober.questId == -1 || target->GetQuestStatus(GetGOInfo()->goober.questId) == QUEST_STATUS_INCOMPLETE)
                 return true;
             break;
         }
@@ -1226,15 +1226,13 @@ void GameObject::Use(Unit* user)
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
             SetLootState(GO_ACTIVATED);
 
-            uint32 time_to_restore = info->GetAutoCloseTime();
-
             // this appear to be ok, however others exist in addition to this that should have custom (ex: 190510, 188692, 187389)
-            if (time_to_restore && info->goober.customAnim)
+            if (info->goober.customAnim)
                 SendCustomAnim(GetGoAnimProgress());
             else
                 SetGoState(GO_STATE_ACTIVE);
 
-            m_cooldownTime = time(NULL) + time_to_restore;
+            m_cooldownTime = time(NULL) + info->GetAutoCloseTime();
 
             // cast this spell later if provided
             spellId = info->goober.spellId;
@@ -1555,11 +1553,8 @@ void GameObject::Use(Unit* user)
                     switch (info->entry)
                     {
                         case 179785:                        // Silverwing Flag
-                            // check if it's correct bg
-                            if (bg->IsRandom() ? bg->GetTypeID(true) : bg->GetTypeID(false) == BATTLEGROUND_WS)
-                                bg->EventPlayerClickedOnFlag(player, this);
-                            break;
                         case 179786:                        // Warsong Flag
+                            // check if it's correct bg
                             if (bg->IsRandom() ? bg->GetTypeID(true) : bg->GetTypeID(false) == BATTLEGROUND_WS)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
@@ -1675,7 +1670,7 @@ void GameObject::SendCustomAnim(uint32 anim)
 
 bool GameObject::IsInRange(float x, float y, float z, float radius) const
 {
-    GameObjectDisplayInfoEntry const* info = sGameObjectDisplayInfoStore.LookupEntry(GetUInt32Value(GAMEOBJECT_DISPLAYID));
+    GameObjectDisplayInfoEntry const* info = sGameObjectDisplayInfoStore.LookupEntry(m_goInfo->displayId);
     if (!info)
         return IsWithinDist3d(x, y, z, radius);
 

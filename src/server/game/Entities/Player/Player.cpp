@@ -508,13 +508,10 @@ inline void KillRewarder::_RewardXP(Player* player, float rate)
     }
     if (xp)
     {
-        // 4.2.2.1. Apply auras modifying rewarded XP (SPELL_AURA_MOD_XP_PCT).
+        // 4.2.2. Apply auras modifying rewarded XP (SPELL_AURA_MOD_XP_PCT).
         Unit::AuraEffectList const& auras = player->GetAuraEffectsByType(SPELL_AURA_MOD_XP_PCT);
         for (Unit::AuraEffectList::const_iterator i = auras.begin(); i != auras.end(); ++i)
             AddPctN(xp, (*i)->GetAmount());
-
-        // 4.2.2.2. Apply rates from character_xp_rates
-        xp *= player->kill_xp_rate;
 
         // 4.2.3. Give XP to player.
         player->GiveXP(xp, _victim, _groupRate);
@@ -1189,9 +1186,6 @@ bool Player::Create(uint32 guidlow, CharacterCreateInfo* createInfo)
         }
     }
     // all item positions resolved
-
-    // insert player into character_xp_rates with default values
-    CharacterDatabase.PExecute("INSERT INTO character_xp_rates (guid) VALUES ('%u')", guidlow);
 
     return true;
 }
@@ -4966,7 +4960,6 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             trans->PAppend("DELETE FROM character_queststatus_daily WHERE guid = '%u'", guid);
             trans->PAppend("DELETE FROM character_talent WHERE guid = '%u'", guid);
             trans->PAppend("DELETE FROM character_skills WHERE guid = '%u'", guid);
-            trans->PAppend("DELETE FROM character_xp_rates WHERE guid = '%u'",guid);
 
             CharacterDatabase.CommitTransaction(trans);
             break;
@@ -6891,7 +6884,7 @@ void Player::CheckAreaExploreAndOutdoor()
                 uint32 XP = 0;
                 if (diff < -5)
                 {
-                    XP = uint32(sObjectMgr->GetBaseXP(getLevel()+5)*sWorld->getRate(RATE_XP_EXPLORE)*explore_xp_rate);
+                    XP = uint32(sObjectMgr->GetBaseXP(getLevel()+5)*sWorld->getRate(RATE_XP_EXPLORE));
                 }
                 else if (diff > 5)
                 {
@@ -6901,11 +6894,11 @@ void Player::CheckAreaExploreAndOutdoor()
                     else if (exploration_percent < 0)
                         exploration_percent = 0;
 
-                    XP = uint32(sObjectMgr->GetBaseXP(p->area_level)*exploration_percent/100*sWorld->getRate(RATE_XP_EXPLORE)*explore_xp_rate);
+                    XP = uint32(sObjectMgr->GetBaseXP(p->area_level)*exploration_percent/100*sWorld->getRate(RATE_XP_EXPLORE));
                 }
                 else
                 {
-                    XP = uint32(sObjectMgr->GetBaseXP(p->area_level)*sWorld->getRate(RATE_XP_EXPLORE)*explore_xp_rate);
+                    XP = uint32(sObjectMgr->GetBaseXP(p->area_level)*sWorld->getRate(RATE_XP_EXPLORE));
                 }
                 if(GetSession()->IsPremium())
                 XP *= sWorld->getRate(RATE_XP_EXPLORE_PREMIUM);
@@ -15045,7 +15038,7 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
     bool rewarded = (rewItr != m_RewardedQuests.end());
 
     // Not give XP in case already completed once repeatable quest
-    uint32 XP = rewarded ? 0 : uint32(pQuest->XPValue(this)*sWorld->getRate(RATE_XP_QUEST)*quest_xp_rate);
+    uint32 XP = rewarded ? 0 : uint32(pQuest->XPValue(this)*sWorld->getRate(RATE_XP_QUEST));
 
     // handle SPELL_AURA_MOD_XP_QUEST_PCT auras
     Unit::AuraEffectList const& ModXPPctAuras = GetAuraEffectsByType(SPELL_AURA_MOD_XP_QUEST_PCT);
@@ -16452,45 +16445,6 @@ void Player::_LoadDeclinedNames(PreparedQueryResult result)
         m_declinedname->name[i] = (*result)[i].GetString();
 }
 
-void Player::_LoadExpRates(PreparedQueryResult result)
-{     
-    if (result)
-    {
-        Field* fields = result->Fetch();
-
-        time_t start_time   = (time_t)fields[0].GetUInt64();
-        time_t end_time     = (time_t)fields[1].GetUInt64();
-        kill_xp_rate        = fields[2].GetUInt32();
-        quest_xp_rate       = fields[3].GetUInt32();
-        explore_xp_rate     = fields[4].GetUInt32();
-
-        time_t currenttime = time(NULL);
-        if( start_time < currenttime && currenttime < end_time ) 
-        {
-            // bonus is legal, player gets db values even if they are 1 1 1 !
-            kill_xp_rate            = fields[2].GetUInt32();
-            quest_xp_rate           = fields[3].GetUInt32();
-            explore_xp_rate         = fields[4].GetUInt32();
-        }
-        else
-        {
-            // bonus is illegal, player gets default values
-            CharacterDatabase.PExecute("UPDATE character_xp_rates SET kill_xp_rate = '1', quest_xp_rate = '1', explore_xp_rate = '1', start_time = '0000-00-00 00:00:00', end_time = '0000-00-00 00:00:00' where guid = '%u'",GetGUIDLow());
-            kill_xp_rate = 1;
-            quest_xp_rate = 1;
-            explore_xp_rate = 1;
-        } 
-    }
-    else
-    {
-        sLog->outError("Player (GUID %u) not found in table `character_xp_rates`, will use default values",GetGUIDLow());
-        CharacterDatabase.PExecute("INSERT INTO character_xp_rates (guid) VALUES ('%u')",GetGUIDLow());
-        kill_xp_rate = 1;
-        quest_xp_rate = 1;
-        explore_xp_rate = 1;
-    }
-}
-
 void Player::_LoadArenaTeamInfo(PreparedQueryResult result)
 {
     // arenateamid, played_week, played_season, personal_rating
@@ -17273,9 +17227,6 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     m_achievementMgr.CheckAllAchievementCriteria();
 
     _LoadEquipmentSets(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
-
-    // load data from table character_xp_rates
-    _LoadExpRates(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADXPRATE));
 
     return true;
 }

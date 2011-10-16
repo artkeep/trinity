@@ -75,7 +75,6 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PREPARE_STATEMENT(CHAR_LOAD_PLAYER_BANNED, "SELECT guid FROM character_banned WHERE guid = ? AND active = 1", CONNECTION_ASYNC)
     PREPARE_STATEMENT(CHAR_LOAD_PLAYER_QUESTSTATUSREW, "SELECT quest FROM character_queststatus_rewarded WHERE guid = ?", CONNECTION_ASYNC)
     PREPARE_STATEMENT(CHAR_LOAD_ACCOUNT_INSTANCELOCKTIMES, "SELECT instanceId, releaseTime FROM account_instance_times WHERE accountId = ?", CONNECTION_ASYNC)
-    PREPARE_STATEMENT(CHAR_LOAD_PLAYER_XPRATES, "SELECT UNIX_TIMESTAMP(start_time), UNIX_TIMESTAMP(end_time), kill_xp_rate, quest_xp_rate, explore_xp_rate FROM character_xp_rates WHERE guid = ?", CONNECTION_ASYNC);
     // End LoginQueryHolder content
 
     PREPARE_STATEMENT(CHAR_LOAD_PLAYER_ACTIONS_SPEC, "SELECT button, action, type FROM character_action WHERE guid = ? AND spec = ? ORDER BY button", CONNECTION_SYNCH)

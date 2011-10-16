@@ -14992,14 +14992,8 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
     uint32 quest_id = pQuest->GetQuestId();
 
     for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
-        if (uint32 qItem = pQuest->ReqItemId[i])
-        {
-            bool questItem = false;
-            if (Item* pItem = GetItemByEntry(qItem))
-                if (pItem->GetTemplate()->Bonding == BIND_QUEST_ITEM)
-                    questItem = true;
-            DestroyItemCount(qItem, questItem ? 9999 : pQuest->ReqItemCount[i], true);
-        }
+        if (pQuest->ReqItemId[i])
+            DestroyItemCount(pQuest->ReqItemId[i], pQuest->ReqItemCount[i], true);
 
     for (uint8 i = 0; i < QUEST_SOURCE_ITEM_IDS_COUNT; ++i)
     {
@@ -15622,12 +15616,6 @@ bool Player::TakeQuestSourceItem(uint32 questId, bool msg)
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
     if (quest)
     {
-        for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
-            if (uint32 qItem = quest->ReqItemId[i])
-                if (Item* pItem = GetItemByEntry(qItem))
-                    if (pItem->GetTemplate()->Bonding == BIND_QUEST_ITEM)
-                        DestroyItemCount(qItem, 9999, true);
-
         uint32 srcItemId = quest->GetSrcItemId();
         ItemTemplate const* item = sObjectMgr->GetItemTemplate(srcItemId);
         bool destroyItem = true;

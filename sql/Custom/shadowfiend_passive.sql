@@ -1,1 +1,1 @@
-UPDATE creature_template_addon SET auras = '28305' WHERE entry = 19668;
+UPDATE creature_template_addon SET auras = '34429 28305' WHERE entry = 19668;

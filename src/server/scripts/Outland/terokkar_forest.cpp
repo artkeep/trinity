@@ -1070,15 +1070,14 @@ public:
             float x, y, z;
             me->GetPosition(x, y, z);
 
-            CellPair pair(Trinity::ComputeCellPair(x, y));
+            CellCoord pair(Trinity::ComputeCellCoord(x, y));
             Cell cell(pair);
-            cell.data.Part.reserved = ALL_DISTRICT;
             cell.SetNoCreate();
 
             Trinity::AllCreaturesOfEntryInRange check(me, NPC_RESEARCHER, 25);
             Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me,m_lResearchersList, check);
             TypeContainerVisitor<Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange>, GridTypeMapContainer> cSearcher(searcher);
-            cell.Visit(pair, cSearcher, *(me->GetMap()));
+            cell.Visit(pair, cSearcher, *me->GetMap(), *me, 25);
 
             if (!m_lResearchersList.empty())
                 SetFormation();

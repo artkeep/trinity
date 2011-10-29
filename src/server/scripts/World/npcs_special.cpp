@@ -1595,7 +1595,7 @@ public:
 /*####
 ## npc_brewfest_reveler
 ####*/
-
+/*
 class npc_brewfest_reveler : public CreatureScript
 {
 public:
@@ -1619,6 +1619,7 @@ public:
         return new npc_brewfest_revelerAI(creature);
     }
 };
+*/
 
 /*####
 ## npc_winter_reveler
@@ -2941,7 +2942,7 @@ void AddSC_npcs_special()
     new npc_steam_tonk;
     new npc_tonk_mine;
     new npc_winter_reveler;
-    new npc_brewfest_reveler;
+    //new npc_brewfest_reveler;
     new npc_snake_trap;
     new npc_mirror_image;
     new npc_ebon_gargoyle;

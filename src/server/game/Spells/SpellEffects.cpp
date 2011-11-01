@@ -7232,10 +7232,11 @@ void Spell::EffectTitanGrip(SpellEffIndex /*effIndex*/)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
         return;
 
-    if (unitTarget && unitTarget->GetTypeId() == TYPEID_PLAYER)
+    if (m_caster->GetTypeId() == TYPEID_PLAYER)
     {
-        Player *plr = unitTarget->ToPlayer();
+        Player *plr = m_caster->ToPlayer();
         plr->SetCanTitanGrip(true);
+
         if (plr->HasTwoHandWeaponInOneHand() && !plr->HasAura(49152))
             plr->CastSpell(plr, 49152, true);
     }

@@ -11283,9 +11283,6 @@ uint32 Unit::SpellCriticalHealingBonus(SpellInfo const* spellProto, uint32 damag
     if (victim)
         crit_mod += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_CRIT_PERCENT_VERSUS, victim->GetCreatureTypeMask());
 
-    if (crit_bonus > 0)
-        damage += crit_bonus;
-
     if (crit_mod != 0)
         AddPctF(crit_bonus, crit_mod);
 

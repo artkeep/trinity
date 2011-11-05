@@ -1,3 +1,6 @@
+-- Fix Summon Infernal spell. Thanks inordon fod idea
+UPDATE `creature_template` SET flags_extra = 0 WHERE `entry` = 89; 
+
 -- DKs Blood Tap spell fix
 DELETE FROM `spell_script_names` WHERE `spell_id`=45529;
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES (45529, 'spell_dk_blood_tap');
@@ -7,10 +10,17 @@ UPDATE `instance_template` SET `script`='instance_blackrock_spire' WHERE `map`=2
 UPDATE `creature_template` SET `ScriptName`='npc_rookey_whelp' WHERE entry=10161;
 UPDATE `gameobject_template` SET `ScriptName`='go_rookey_egg' WHERE entry=175124;
 
--- Seals of the Pure fix
-DELETE FROM spell_bonus_data WHERE entry IN (25742);
-INSERT INTO `spell_bonus_data` (`entry`, `direct_bonus`, `dot_bonus`, `ap_bonus`, `ap_dot_bonus`, `comments`) VALUES
-('25742','0','0','0','0','Paladin - Seal of Righteousness Dummy Proc');
+-- Nature's Grasp fix
+DELETE FROM `spell_proc_event` WHERE `entry` IN (16689,16810,16811,16812,16813,17329,27009,53312);
+INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`procFlags`,`procEx`,`ppmRate`,`CustomChance`,`Cooldown`) VALUES
+(16689,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 1)
+(16810,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 2)
+(16811,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 3)
+(16812,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 4)
+(16813,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 5)
+(17329,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 6)
+(27009,0,0,0,0,0,0,0,0,100,1), -- Nature's Grasp (Rank 7)
+(53312,0,0,0,0,0,0,0,0,100,1);-- Nature's Grasp (Rank 8)
 
 -- fix Reign of the Unliving (normal and heroic) proc only from crit
 DELETE FROM `spell_proc_event` WHERE entry IN (67712, 67758);
@@ -31,19 +41,6 @@ INSERT INTO `spell_proc_event` VALUES (71865, 0x01, 0x0A, 0x00000000, 0x00000000
 -- (71868) Item - Icecrown 25 Heroic Healer Weapon Proc 
 DELETE FROM `spell_proc_event` WHERE `entry` IN (71868); 
 INSERT INTO `spell_proc_event` VALUES (71868, 0x01, 0x0A, 0x00000000, 0x00000000, 0x00000000, 0x00044000, 0x00000018, 0, 1, 0); 
--- (71871) Item - Icecrown 25 Normal Tank Weapon Proc 
-DELETE FROM `spell_proc_event` WHERE `entry` IN (71871); 
-INSERT INTO `spell_proc_event` VALUES (71871, 0x01, 0x0A, 0x00000000, 0x00000000, 0x00000000, 0x00000014, 0x00000018, 0, 37, 30); 
--- (71873) Item - Icecrown 25 Heroic Tank Weapon Proc 
-DELETE FROM `spell_proc_event` WHERE `entry` IN (71873); 
-INSERT INTO `spell_proc_event` VALUES (71873, 0x01, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000014, 0x00000018, 0, 37, 35);
-
--- The Valiant's Challenge
-UPDATE `creature_template` SET `ScriptName` = 'npc_squire_danny' WHERE `entry` = 33518;
-UPDATE `creature_template` SET `KillCredit1` = 33708 WHERE `entry` = 33707;
-UPDATE `creature_template` SET `ScriptName` = 'npc_argent_champion' WHERE `entry` = 33707;
-DELETE FROM `creature_template_addon` WHERE `entry` = 33707;
-INSERT INTO `creature_template_addon` (`entry`, `mount`) VALUES ('33707', '14337');
 
 -- Fizzcrank Recon Pilot
 DELETE FROM `creature_ai_scripts` WHERE creature_id = 25841;
@@ -78,14 +75,9 @@ UPDATE `instance_encounters` SET `creditEntry` = '23980' WHERE `entry` IN ('575'
 -- [Dungeon Finder] Fix CoS reward
 UPDATE `instance_encounters` SET `creditType`=0, `creditEntry`=26533 WHERE `entry` IN (296, 300);
 
+
 -- fix for YTDB after "guards don't evade..." commit
 UPDATE `creature_template` SET `Unit_flags` = 36864 WHERE `entry` = 3296;
-
--- Isle of Conquest bosses aggro through wall fix
-UPDATE `creature_template` SET `unit_flags` = 256 WHERE `entry` = 34924;
-UPDATE `creature_template` SET `unit_flags` = 256 WHERE `entry` = 34922;
-UPDATE `creature_template` SET `unit_flags` = 256 WHERE `entry` = 34918;
-UPDATE `creature_template` SET `unit_flags` = 256 WHERE `entry` = 34919;
 
 -- another fix for YTDB for unit_flags 
 UPDATE `creature_template` SET `unit_flags` = 0 WHERE `entry` = 16844;
@@ -118,10 +110,16 @@ UPDATE quest_template SET prevQuestID = 24657 where ExclusiveGroup = 24658;
 -- Cinderglacier
 UPDATE `spell_proc_event` SET `SpellFamilyName` = '15', `SpellFamilyMask0` = 0x42002, `SpellFamilyMask1` = 0x6, `SpellFamilyMask2` = 0x80 WHERE `entry` = 53386;
 
+-- Druid Berserk fix
+DELETE FROM `spell_script_names` WHERE `spell_id`=50334 AND `ScriptName`='spell_dru_berserk';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(50334, 'spell_dru_berserk');
+
 -- Fix spell 66926 for quest "They Grow Up So Fast"
 DELETE FROM `spell_script_names` WHERE `spell_id`=66926;
 INSERT INTO `spell_script_names` VALUES
 (66926, 'spell_gen_venomhide_check');
+
 
 -- fix some quests in Borean Tundra
 UPDATE creature_template SET scriptname = 'vehicle_wyrmrest_skytalon' WHERE entry = 32535;
@@ -151,14 +149,6 @@ INSERT INTO `creature_model_info` (`modelid`, `bounding_radius`, `combat_reach`,
 
 -- Fix Battleground Demolisher (http://www.wowhead.com/npc=28781) HP
 UPDATE `creature_template` SET `exp` = 0 WHERE `entry` = 32796;
-
--- Fix Isle of Conquest
-DELETE FROM npc_spellclick_spells WHERE npc_entry IN (35413, 35419, 35431, 35433);
-INSERT INTO npc_spellclick_spells (`npc_entry`, `spell_id`, `quest_start`, `quest_start_active`, `quest_end`, `cast_flags`, `aura_required`, `aura_forbidden`, `user_type`) VALUES
-(35413, 60968, 0, 0, 0, 1, 0, 0, 0),
-(35419, 68503, 0, 0, 0, 1, 0, 0, 0),
-(35431, 46598, 0, 0, 0, 1, 0, 0, 0),
-(35433, 46598, 0, 0, 0, 1, 0, 0, 0); 
 
 -- Bloodworm AI
 DELETE FROM `creature_ai_scripts` WHERE `creature_id` = 28017;
@@ -269,6 +259,9 @@ INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `Spell
 (34859, 0, 6, 6144, 4, 4096, 0, 2, 0, 0, 0), -- rank2
 (34860, 0, 6, 6144, 4, 4096, 0, 2, 0, 0, 0); -- rank3
 
+-- Fixed spell Wyvern Sting
+DELETE FROM `spell_linked_spell` WHERE `comment` = 'Wyvern Sting';
+
 -- Fixed talent Threat of Thassarian of Death Knights
 UPDATE `spell_proc_event` SET `SpellFamilyMask0`=`SpellFamilyMask0`|0x00000001 WHERE `entry` IN (66192,66191,65661);
 
@@ -279,17 +272,21 @@ INSERT INTO `spell_linked_spell` VALUES
 (5215,54661,0,'Prowl Sanctuary Effect'),
 (1784,54661,0,'Stealth Sanctuary Effect');
 
--- Blood reserve proc
-DELETE FROM `spell_proc_event` WHERE `entry` IN (64568);
-INSERT INTO `spell_proc_event` VALUES (64568, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x001A22A8, 0x00000000, 0, 100, 3);
-
--- Hackfix bosses from Isle of Conquest
-UPDATE `creature_template` SET `unit_flags` = 0  WHERE `entry` in (34924,35403, 34922,35405);
-UPDATE `creature_template` SET `faction_A` = 35, `faction_H` = 35 WHERE `entry` in (34924,35403);
-UPDATE `creature_template` SET `faction_A` = 35, `faction_H` = 35 WHERE `entry` in (34922,35405);
+-- Fixed shaman's talent Elemental Focus
+UPDATE `spell_proc_event` SET `SpellFamilyMask0` = `SpellFamilyMask0` &~ 192 WHERE `entry` = 16164;
 
 -- Fix bug with cannons movement in Strange of Ancients
 UPDATE `creature_template` SET `speed_run` = 0  WHERE `entry` in (27894, 32795);
+
+-- Fixed spell Anti-Magic Zone
+UPDATE `creature_template` SET `modelid1` = 11686, `unit_flags` = 33554432 WHERE `modelid1` = 4590 AND `entry` = 28306;
+
+-- Fix Druid Enrage spell
+DELETE FROM `spell_ranks` WHERE `first_spell_id` = 1178;
+INSERT INTO `spell_ranks` VALUES (1178,1178,1),(1178,9635,2);
+
+-- Fixed warlock's talent Empowered Imp
+UPDATE `spell_proc_event` set `procFlags` = 0x00010004 WHERE `entry` = 54278;
 
 -- Fixed talent Scent of Blood for death knights
 DELETE FROM `spell_proc_event` WHERE `entry` IN (49004,49508,49509);
@@ -297,6 +294,17 @@ INSERT INTO `spell_proc_event` (`entry`,`procEx`) VALUES
 (49004,0x00000033),
 (49508,0x00000033),
 (49509,0x00000033);
+
+-- Fixed paladin's talent Blessing of Sanctuary
+DELETE FROM `spell_dbc` WHERE `id` = 20912;
+INSERT INTO `spell_dbc` (`Id`,`CastingTimeIndex`,`DurationIndex`,`RangeIndex`,`Effect1`,`EffectBasePoints1`,`EffectImplicitTargetA1`,`EffectApplyAuraName1`,`EffectMiscValue1`,`SpellFamilyName`,`Comment`) VALUES
+(20912,1,21,1,6,-3,1,87,127,10,'Blessing of Sanctuary Helper (SERVERSIDE)');
+-- Blessing of Sanctuary vs Vigilance
+UPDATE `spell_group` SET `spell_id` = 68066 WHERE `id` = 1091 and `spell_id` = 47930;
+UPDATE `spell_group` SET `spell_id` = 20912 WHERE `id` = 1092 and `spell_id` = 20911;
+
+-- Fixed mage's talent Hot Streak
+UPDATE `spell_proc_event` SET `SpellFamilyMask1`=`SpellFamilyMask1`|0x00010000 WHERE `entry` IN (44445,44446,44448);
 
 -- Fix Spring Fling achievement
 UPDATE `creature_template` SET `ScriptName` = 'npc_spring_rabbit' WHERE `entry` = 32791;
@@ -641,40 +649,6 @@ INSERT INTO `creature_loot_template` (`entry`, `item`, `ChanceOrQuestChance`, `l
 (36829, 43297, 0.8, 1, 0, 1, 1),
 (38090, 43297, 1.6949, 1, 0, 1, 1);
 
--- Ashbringer sound effect fix
-DELETE FROM `spell_script_names` WHERE `spell_id`=28441;
-INSERT INTO `spell_script_names` VALUES
-(28441,'spell_item_ashbringer');
-
--- NPC Pusillin (14354) script
-DELETE FROM `script_texts` WHERE `npc_entry` = 14354;
-INSERT INTO `script_texts` (`npc_entry`,`entry`,`content_default`,`sound`,`type`,`language`,`emote`,`comment`) VALUES 
-(14354, -1901000,'If your want the key, you\'ll have to catch me!',0,0,0,0,'Pusillin 1'),
-(14354, -1901002,'Why would you ever want to harm me!? Come. Friends we can be!',0,0,0,0,'pusillin 3'),
-(14354, -1901001,'Chase me if you dare! I run without a care',0,0,0,0,'pusillin 2'),
-(14354, -1901003,'DIE?! You make Pusillin cry!',0,0,0,0,'pusillin 4'),
-(14354, -1901004,'Say hello to my little friends!',0,0,0,0,'pusillin 5');
-DELETE FROM `script_waypoint` WHERE `entry` = 14354;
-INSERT INTO `script_waypoint` (`entry`,`pointid`,`location_x`,`location_y`,`location_z`,`waittime`,`point_comment`) VALUES
-(14354,0,83.389,-198.429,-3.95,0,'pusillin 1'),
-(14354,1,-161.875,-199.876,-4.159,0,'pusillin 2'),
-(14354,2,-153.733,-271.985,-4.147,0,'pusillin 3'),
-(14354,3,-133.801,-349.232,-4.067,0,'pusillin 4'),
-(14354,4,110.114,-355.008,-4.115,0,'pusillin 5'),
-(14354,5,111.454,-468.53,-2.71,0,'pusillin 6'),
-(14354,6,112,-513.661,-6.91,0,'pusillin 7'),
-(14354,7,110.34,-538.94,-11.07,0,'pusillin 8'),
-(14354,8,68.37,-546.36,-15.24,0,'pusillin 9'),
-(14354,9,49.46,-564.84,-19.41,0,'pusillin 10'),
-(14354,10,50.29,-641.51,-25.14,0,'pusillin 11'),
-(14354,11,31.16,-696.35,-25.16,0,'pusillin 12'),
-(14354,12,2.65,-695.88,-25.16,0,'pusillin 13'),
-(14354,13,3,-671.75,-12.64,0,'pusillin 14'),
-(14354,14,10.38,-665.57,-12.64,0,'pusillin 15'),
-(14354,15,8.11,-673.06,-12.64,0,'pusillin 16'),
-(14354,16,11.46,-708.44,-12.64,0,'pusillin 17');
-UPDATE `creature` SET `spawntimesecs` = 300 WHERE `guid` = 84377;
-UPDATE `creature_template` SET `ScriptName` = 'npc_pusillin', `speed_run` = 2.14286 WHERE `entry` =14354;
 
 -- Grizzly Hills Outdoor PVP script
 delete from outdoorpvp_template where typeid in (8);
@@ -723,3 +697,22 @@ INSERT INTO `spell_script_names` VALUES
 DELETE FROM `spell_script_names` WHERE `spell_id`= 47496;
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (47496, 'spell_dk_ghoul_explode');
+
+-- Scripts/UtgardePinnacle: Fixed harpoon
+DELETE FROM `conditions` WHERE `SourceEntry` = 56578 AND `ConditionValue2` = 26693;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`,`SourceEntry`,`ConditionTypeOrReference`,`ConditionValue1`,`ConditionValue2`) VALUES 
+(13, 56578, 18, 1, 26693);
+
+-- Fixed spells 71871 & 71873
+DELETE FROM `spell_proc_event` WHERE `entry` IN (71871); 
+DELETE FROM `spell_proc_event` WHERE `entry` IN (71873); 
+
+-- prevent bagouse +300spd for players from this mob http://www.wowhead.com/npc=26828
+DELETE FROM `disables` WHERE `sourceType`=0 and `entry` = 51804;
+INSERT INTO `disables` (`sourceType` , `entry` , `flags` , `comment`) VALUES 
+('0', '51804', '8', 'Power Siphon'); 
+
+-- Fix Paladin Righteous Defense spell (28.10.2011)
+DELETE FROM `spell_script_names` WHERE `ScriptName`='spell_pal_righteous_defense';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(31789,'spell_pal_righteous_defense');

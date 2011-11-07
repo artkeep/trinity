@@ -3538,6 +3538,12 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_TARGET_ANY;
                 spellInfo->Effect[1] = 0;
                 break;
+            case 68282: // Charge (ToC mount)
+                spellInfo->Effect[0] = SPELL_EFFECT_SCHOOL_DAMAGE;
+                spellInfo->Effect[1] = SPELL_EFFECT_CHARGE;
+                spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_TARGET_ENEMY;
+                spellInfo->EffectBasePoints[0] = 20*1000;
+            break;
             case 71614: // Ice Lock
                 spellInfo->Mechanic = MECHANIC_STUN;
                 break;

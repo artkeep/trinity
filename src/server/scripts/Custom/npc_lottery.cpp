@@ -22,13 +22,14 @@ SD%Complete: 100%
 SDComment: //
 SDCategory: Custom
 EndScriptData 
+ */
 
 #include "ScriptPCH.h"
 
 /*######
 ## npc_lotto
 ######*/
-/*
+
 #define GOSSIP_BUY_TICKET           "Купить билет"
 #define TICKET_COST                 1000000
 #define EVENT_LOTTO           132
@@ -173,5 +174,3 @@ void AddSC_npc_lottery()
 {
     new npc_lotto;
 }
-
-*/

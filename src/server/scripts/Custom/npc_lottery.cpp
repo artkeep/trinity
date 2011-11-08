@@ -68,7 +68,7 @@ public:
         {
             case GOSSIP_ACTION_INFO_DEF:
                 pPlayer->ModifyMoney(-TICKET_COST);
-                QueryResult result = ExtraDatabase.Query("SELECT MAX(id) FROM lotto_tickets");
+                QueryResult result = CharacterDatabase.Query("SELECT MAX(id) FROM lotto_tickets");
                 uint32 id = result->Fetch()->GetUInt32();
                 CharacterDatabase.PExecute("INSERT INTO lotto_tickets (id,name,guid) VALUES (%u,'%s',%u);", id+1, pPlayer->GetName(), pPlayer->GetGUIDLow());
                 char msg[500];

@@ -253,6 +253,7 @@ void GameEventMgr::LoadFromDB()
             }
 
             pGameEvent.description  = fields[6].GetString();
+            pGameEvent.announce = fields[8].GetUInt32();
 
             ++count;
         }
@@ -1084,7 +1085,10 @@ void GameEventMgr::ApplyNewEvent(uint16 event_id)
         case 0:                                             // disable
             break;
         case 1:                                             // announce events
-            sWorld->SendWorldText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
+            if (mGameEvent[event_id].announce != 1)
+                sWorld->SendWorldText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
+            else
+                sWorld->SendGMText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
             break;
     }
 

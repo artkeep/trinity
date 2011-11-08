@@ -119,7 +119,7 @@ public:
                         uint32 guid = fields[1].GetUInt32();
                         uint32 reward = TICKET_COST / (1 << position) * maxTickets;
 
-                        CharacterDatabase.PQuery.PExecute("INSERT INTO `lotto_extractions` (winner,guid,position,reward) VALUES ('%s',%u,%u,%u);",name,guid,position,reward);
+                        CharacterDatabase.PExecute("INSERT INTO `lotto_extractions` (winner,guid,position,reward) VALUES ('%s',%u,%u,%u);",name,guid,position,reward);
 
                         // Send reward by mail
                         Player *pPlayer = sObjectMgr->GetPlayerByLowGUID(guid);
@@ -149,7 +149,7 @@ public:
                     while (result->NextRow());
 
                     // Delete tickets after extraction
-                    CharacterDatabase.PQuery.PExecute("DELETE FROM lotto_tickets;");
+                    CharacterDatabase.PExecute("DELETE FROM lotto_tickets;");
                 }
             }
             else

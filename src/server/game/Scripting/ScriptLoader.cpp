@@ -29,6 +29,7 @@ void AddSC_example_commandscript();
 void AddSC_npc_mount();	
 void AddSC_npc_lottery();
 void AddSC_npcs_mini_boss();
+void AddSC_guildmaster();
 
 // spells
 void AddSC_deathknight_spell_scripts();
@@ -1255,5 +1256,6 @@ void AddCustomScripts()
     // Custom		
     AddSC_npcs_mini_boss();
     AddSC_npc_lottery();
+    AddSC_guildmaster();
 #endif
 }

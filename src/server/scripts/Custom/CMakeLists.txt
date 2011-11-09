@@ -14,6 +14,7 @@ set(scripts_STAT_SRCS
   Custom/argent_tournament.cpp
   Custom/npcs_mini_boss.cpp
   Custom/npc_lottery.cpp
+  Custom/guildhouse.cpp
 )
 
 message("  -> Prepared: Custom")

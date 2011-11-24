@@ -66,7 +66,7 @@ struct GameEventData
     GameEventConditionMap conditions;  // conditions to finish
     std::set<uint16 /*gameevent id*/> prerequisite_events;  // events that must be completed before starting this event
     std::string description;
-    uint32 announce;
+    uint8 announce;
 
     bool isValid() const { return length > 0 || state > GAMEEVENT_NORMAL; }
 };

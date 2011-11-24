@@ -204,7 +204,7 @@ void GameEventMgr::LoadFromDB()
     {
         uint32 oldMSTime = getMSTime();
 
-        QueryResult result = WorldDatabase.Query("SELECT eventEntry, UNIX_TIMESTAMP(start_time), UNIX_TIMESTAMP(end_time), occurence, length, holiday, description, world_event FROM game_event");
+        QueryResult result = WorldDatabase.Query("SELECT eventEntry, UNIX_TIMESTAMP(start_time), UNIX_TIMESTAMP(end_time), occurence, length, holiday, description, world_event, announce FROM game_event");
         if (!result)
         {
             mGameEvent.clear();
@@ -253,7 +253,7 @@ void GameEventMgr::LoadFromDB()
             }
 
             pGameEvent.description  = fields[6].GetString();
-            pGameEvent.announce = fields[8].GetUInt32();
+            pGameEvent.announce = fields[8].GetUInt8();
 
             ++count;
         }
@@ -1085,15 +1085,21 @@ void GameEventMgr::ApplyNewEvent(uint16 event_id)
         case 0:                                             // disable
             break;
         case 1:                                             // announce events
-            if (mGameEvent[event_id].announce != 1)
+            if (mGameEvent[event_id].announce == 1)
+                        {
                 sWorld->SendWorldText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
+                        }
             else
-                sWorld->SendGMText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
-            break;
+                        {
+                sWorld->SendGMText(LANG_MOTD_CURRENT, mGameEvent[event_id].description.c_str());
+                        sLog->outBasic("GameEvent %u \"%s\" started for gm.", event_id, mGameEvent[event_id].description.c_str());
+                        }
+                        break;
+                       
     }
-
+ 
     sLog->outDetail("GameEvent %u \"%s\" started.", event_id, mGameEvent[event_id].description.c_str());
-
+ 
     // spawn positive event tagget objects
     GameEventSpawn(event_id);
     // un-spawn negative event tagged objects

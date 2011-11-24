@@ -360,6 +360,15 @@ class ChatHandler
         void HandleCharacterLevel(Player* player, uint64 player_guid, uint32 oldlevel, uint32 newlevel);
         void HandleLearnSkillRecipesHelper(Player* player, uint32 skill_id);
 
+		//VIP
+		bool HandleVipBankCommand(const char* args);
+		bool HandleVipRepairitemsCommand(const char* args);
+		bool HandleVipResetTalentsCommand(const char* args);
+		bool HandleVipUnAuraCommand(const char* args);
+		bool HandleVipTaxiCommand(const char* args);
+		bool HandleVipSaveCommand(const char* args);
+		bool HandleVipWhispersCommand(const char* args);
+
         // Stores informations about a deleted character
         struct DeletedInfo
         {

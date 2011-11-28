@@ -3,22 +3,22 @@
 
 extern WorldDatabaseWorkerPool WorldDatabase;
 
-#define MSG_GOSSIP_TELE          "РўРµР»РµРїРѕСЂС‚РёСЂРѕРІР°С‚СЃСЏ РІ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј"
-#define MSG_GOSSIP_BUY           "РљСѓРїРёС‚СЊ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј (10000 Р·РѕР»РѕС‚Р°)"
-#define MSG_GOSSIP_SELL          "РџСЂРѕРґР°С‚СЊ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј (1000 Р·РѕР»РѕС‚Р°)"
-#define MSG_GOSSIP_NEXTPAGE      "Р”Р°Р»СЊС€Рµ -->"
-#define MSG_INCOMBAT             "Р’С‹ РЅРµ РјРѕР¶РµС‚Рµ С‚РµР»РµРїРѕСЂС‚РёСЂРѕРІР°С‚СЃСЏ РїРѕРєР° РЅР°С…РѕРґРёС‚РµСЃСЊ РІ Р±РѕСЋ."
-#define MSG_NOGUILDHOUSE         "РЈ РІР°С€РµР№ Р“РёР»СЊРґРёРё РЅРµС‚Сѓ Р“РёР»СЊРґРµР№СЃРєРѕРіРѕ РґРѕРјР°"
-#define MSG_NOFREEGH             "Рљ СЃРѕР¶Р°Р»РµРЅРёСЋ РІСЃРµ РґРѕРјР° Р·Р°РЅСЏС‚С‹"
-#define MSG_ALREADYHAVEGH        "РЈ РІР°СЃ РµСЃС‚СЊ СѓР¶Рµ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј."
-#define MSG_NOTENOUGHMONEY       "РЈ РІР°СЃ РЅРµС‚Сѓ %u Р·РѕР»РѕС‚Р° РґР»СЏ РїРѕРєСѓРїРєРё."
-#define MSG_GHOCCUPIED           "Р­С‚РѕС‚ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј Р·Р°РЅСЏС‚"
-#define MSG_CONGRATULATIONS      "РџРѕР·РґСЂР°РІР»СЏРµРј! Р’С‹ СЃС‚Р°Р»Рё РѕР±Р»Р°РґР°С‚РµР»РµРј Р“РёР»СЊРґРµР№СЃРєРѕРіРѕ РґРѕРјР°."
-#define MSG_SOLD                 "Р’С‹ РїСЂРѕРґР°Р»Рё СЃРІРѕР№ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј, С‚РµРїРµСЂСЊ РІС‹ РјРѕР¶РµС‚Рµ РєСѓРїРёС‚СЊ РЅРѕРІС‹Р№"
-#define MSG_NOTINGUILD           "РќСѓР¶РЅРѕ РЅР°С…РѕРґРёС‚СЃСЏ РІ Р“РёР»СЊРґРёРё"
-#define MSG_NO_TOKEN             "Р’С‹ РґРѕР»Р¶РЅС‹ РёРјРµС‚СЊ Golden Token РґР»СЏ РїСЂРѕСЃРјРѕС‚СЂР° СЃРїРёСЃРєР° Р“РёР»СЊРґРµР№СЃРєРёС… РґРѕРјРѕРІ"
+#define MSG_GOSSIP_TELE          "Телепортироваться в ГильдХаус"
+#define MSG_GOSSIP_BUY           "Купить ГильдХаус (10000 золота)"
+#define MSG_GOSSIP_SELL          "Продать ГильдХаус (5000 золота)"
+#define MSG_GOSSIP_NEXTPAGE      "Следующая -->"
+#define MSG_INCOMBAT             "Вы находитесь в бою!"
+#define MSG_NOGUILDHOUSE         "Ваша гильдия не имеет ГильдХауса!"
+#define MSG_NOFREEGH             "К сожалению, все ГильдХаусы заняты."
+#define MSG_ALREADYHAVEGH        "Извините, но у вас уже есть ГильдХаус (%s)."
+#define MSG_NOTENOUGHMONEY       "Не хватает денег. Нужно %u золота чтобы купить ГильдХаус."
+#define MSG_GHOCCUPIED           "К сожалению, этот ГильдХаус уже занят."
+#define MSG_CONGRATULATIONS      "Поздравляем! Вы сейчас в ГильдХаусе."
+#define MSG_SOLD                 "Вы продали ГильдХаус. Вот ваше %u золото."
+#define MSG_NOTINGUILD           "Вы не состоите в гильдии. Вступите или создайте гильдию."
+#define MSG_NO_TOKEN             "У вас должен быть Golden Token для просмотра списка Гильдхаусов."
 
-#define CODE_SELL "РџСЂРѕРґР°С‚СЊ"
+#define CODE_SELL "SELL"
 #define MSG_CODEBOX_SELL "Type \"" CODE_SELL "\" into the field to confirm that you want to sell your GuildHouse."
 
 #define OFFSET_GH_ID_TO_ACTION 1500
@@ -45,8 +45,8 @@ extern WorldDatabaseWorkerPool WorldDatabase;
 #define ICON_GOSSIP_TABARD 8
 #define ICON_GOSSIP_XSWORDS 9
 
-#define COST_GH_BUY 100000000 //1000 g.
-#define COST_GH_SELL 50000000 //500 g.
+#define COST_GH_BUY 100000000 //10000 g.
+#define COST_GH_SELL 50000000 //5000 g.
 
 #define GOSSIP_COUNT_MAX 10
 
@@ -86,7 +86,7 @@ void teleportPlayerToGuildHouse(Player *player, Creature *_creature)
  {
  //if player has no guild
  _creature->MonsterWhisper(MSG_NOTINGUILD, player->GetGUID());
- sprintf(str,"РњРЅРµ Р¶Р°Р»СЊ %u РІС‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ РІ Р“РёР»СЊРґРёРё!", player->GetName());
+ sprintf(str,"Мне жаль %u вы должны состоять в гильдии!", player->GetName());
  return;
  }
 
@@ -166,7 +166,7 @@ bool showBuyList(Player *player, Creature *_creature, uint32 showFromId = 0)
  }
  } else {
  _creature->MonsterSay(MSG_NO_TOKEN, LANG_UNIVERSAL, player->GetGUID());
- sprintf(str,"Р’С‹ РґРѕР»Р¶РЅС‹ РёРјРµС‚СЊ Golden Token РґР»СЏ РїСЂРѕСЃРјРѕС‚СЂР° СЃРїРёСЃРєР° Р“РёР»СЊРґРµР№СЃРєРёС… РґРѕРјРѕРІ.");
+ sprintf(str,"У вас должен быть Golden token для просмотра списка.");
  player->CLOSE_GOSSIP_MENU();
  }
 
@@ -230,7 +230,7 @@ void buyGuildhouse(Player *player, Creature *_creature, uint32 guildhouseId)
 
  if (result)
  player->ModifyMoney(-COST_GH_BUY);
- player->DestroyItemCount(30, 1, true, false);
+ player->DestroyItemCount(20880, 1, true, false);
  _creature->MonsterSay(MSG_CONGRATULATIONS, LANG_UNIVERSAL, player->GetGUID());
 }
 
@@ -301,8 +301,8 @@ class guildmaster : public CreatureScript
 
  case ACTION_SELL_GUILDHOUSE_OPT:
  player->CLOSE_GOSSIP_MENU();
- player->ADD_GOSSIP_ITEM(0, "Р”Р°, РїСЂРѕРґР°С‚СЊ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_YES);
- player->ADD_GOSSIP_ITEM(0, "РќРµС‚, Р·Р°РєСЂС‹С‚СЊ", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_NO);
+ player->ADD_GOSSIP_ITEM(0, "Да, Продать Гильдхаус", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_YES);
+ player->ADD_GOSSIP_ITEM(0, "Нет, закрыть окно", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_NO);
  player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
  break;
  
@@ -345,7 +345,7 @@ class guildmaster : public CreatureScript
  {
  if (isPlayerHasGuildhouse(player, _creature))
  {
- player->ADD_GOSSIP_ITEM(0, "РџСЂРѕРґР°С‚СЊ Р“РёР»СЊРґРµР№СЃРєРёР№ РґРѕРј", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_OPT);
+ player->ADD_GOSSIP_ITEM(0, "Продать", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_OPT);
  }
  else
  {

@@ -6,3 +6,4 @@ INSERT INTO `command` VALUES ('vipresettalents', 0, 'Вы должны имет�
 INSERT INTO `command` VALUES ('vipwhispers', 0, 'Вы должны иметь статус VIP');
 INSERT INTO `command` VALUES ('vipsave', 0, 'Вы должны иметь статус VIP');
 INSERT INTO `command` VALUES ('viptaxi', 0, 'Вы должны иметь статус VIP');
+INSERT INTO `command` VALUES ('viphome', 0, 'Вы должны иметь статус VIP');

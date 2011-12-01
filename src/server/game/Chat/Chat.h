@@ -368,6 +368,7 @@ class ChatHandler
 		bool HandleVipTaxiCommand(const char* args);
 		bool HandleVipSaveCommand(const char* args);
 		bool HandleVipWhispersCommand(const char* args);
+		bool HandleVipHomeCommand(const char* args);
 
         // Stores informations about a deleted character
         struct DeletedInfo

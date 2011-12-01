@@ -930,3 +930,40 @@ bool ChatHandler::HandleVipWhispersCommand(const char* args)
     SetSentErrorMessage(true);
     return false;
 }
+
+//VIPHOME
+bool ChatHandler::HandleVipHomeCommand(const char* /*args*/)
+{
+		if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+    Player* chr = m_session->GetPlayer();
+
+    if (chr->isInFlight())
+    {
+        SendSysMessage(LANG_YOU_IN_FLIGHT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (chr->isInCombat())
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if ((chr->isDead()) || (chr->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST)))
+    {
+    // if player is dead and stuck, send ghost to graveyard
+    chr->RepopAtGraveyard();
+    return true;
+    }
+
+    // cast spell Stuck
+    chr->CastSpell(chr, 7355, false);
+	chr->RemoveSpellCooldown(7355, true);
+    return true;
+}

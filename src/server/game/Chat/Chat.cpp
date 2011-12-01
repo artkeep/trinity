@@ -421,6 +421,7 @@ ChatCommand* ChatHandler::getCommandTable()
 		{ "viptaxi",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipTaxiCommand>,         "", NULL },
 		{ "vipsave",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipSaveCommand>,         "", NULL },
 		{ "vipwhispers",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipWhispersCommand>,         "", NULL },
+		{ "viphome",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipHomeCommand>,         "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
     // cache for commands, needed because some commands are loaded dynamically through ScriptMgr

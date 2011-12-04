@@ -8119,7 +8119,7 @@ void Player::_ApplyWeaponDependentAuraMods(Item* item, WeaponAttackType attackTy
 void Player::_ApplyWeaponDependentAuraCritMod(Item* item, WeaponAttackType attackType, AuraEffect const* aura, bool apply)
 {
     // generic not weapon specific case processes in aura code
-    if (aura->GetSpellInfo()->EquippedItemClass == -1)
+    if (aura->GetSpellInfo()->EquippedItemClass == -1 || !CanUseAttackType(attackType))
         return;
 
     BaseModGroup mod = BASEMOD_END;

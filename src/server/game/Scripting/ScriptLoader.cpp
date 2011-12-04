@@ -27,6 +27,9 @@ void AddSC_example_commandscript();
 // Custom
 //NPC Transport Service
 void AddSC_npc_mount();	
+void AddSC_npc_lottery();
+void AddSC_npcs_mini_boss();
+void AddSC_guildmaster();
 
 // spells
 void AddSC_deathknight_spell_scripts();
@@ -1246,16 +1249,13 @@ void AddBattlegroundScripts()
 #endif
 }
 
-#ifdef SCRIPTS
-/* This is where custom scripts' loading functions should be declared. */
-void AddSC_npcs_mini_boss();
-#endif
-
 void AddCustomScripts()
 {
 #ifdef SCRIPTS
     /* This is where custom scripts should be added. */
     // Custom		
-    AddSC_npcs_mini_boss();	
+    AddSC_npcs_mini_boss();
+    AddSC_npc_lottery();
+    AddSC_guildmaster();
 #endif
 }

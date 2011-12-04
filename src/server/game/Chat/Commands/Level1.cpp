@@ -766,3 +766,204 @@ bool ChatHandler::HandleGroupSummonCommand(const char* args)
 
     return true;
 }
+//VipBank
+bool ChatHandler::HandleVipBankCommand(const char* /*args*/)
+{
+
+	if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+	m_session->SendShowBank(m_session->GetPlayer()->GetGUID());
+	
+	return true;
+}
+// Vip repair items
+bool ChatHandler::HandleVipRepairitemsCommand(const char* /*args*/)
+{
+
+	if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+	Player *player = m_session->GetPlayer();
+
+    // Repair items
+    player->DurabilityRepairAll(false, 0, false);
+
+    PSendSysMessage(LANG_YOU_REPAIR_ITEMS, GetNameLink(player).c_str());
+
+    return true;
+}
+
+//Vip reset talents
+bool ChatHandler::HandleVipResetTalentsCommand(const char* /*args*/)
+{
+	if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+	Player *player = m_session->GetPlayer();
+    
+    player->resetTalents(true);
+    player->SendTalentsInfoData(false);
+    ChatHandler(player).SendSysMessage(LANG_RESET_TALENTS);
+    
+    return true;
+}
+
+// Vip debuff command
+bool ChatHandler::HandleVipUnAuraCommand(const char* /*args*/)
+{
+	if (!m_session->IsPremium())
+	{
+		return false;
+	}
+		
+	Player *player = m_session->GetPlayer();
+
+    player->RemoveAurasDueToSpell(15007);
+	player->RemoveAurasDueToSpell(26013);
+	player->RemoveAurasDueToSpell(71041);
+    player->RemoveSpellCooldown(71328,true);
+
+    return true;
+}
+
+//Vip taxicheat
+//Enable On\OFF all taxi paths
+bool ChatHandler::HandleVipTaxiCommand(const char* args)
+{
+
+	if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+	Player *player = m_session->GetPlayer();
+	std::string argstr = (char*)args;
+	
+    if (argstr == "on")
+    {
+        player->SetTaxiCheater(true);
+        PSendSysMessage(LANG_YOU_GIVE_TAXIS, GetNameLink(player).c_str());
+        return true;
+    }
+
+    if (argstr == "off")
+    {
+        player->SetTaxiCheater(false);
+        PSendSysMessage(LANG_YOU_REMOVE_TAXIS, GetNameLink(player).c_str());
+        return true;
+    }
+
+    SendSysMessage(LANG_USE_BOL);
+    SetSentErrorMessage(true);
+    return false;
+}
+//VIPSAVE
+bool ChatHandler::HandleVipSaveCommand(const char* /*args*/)
+{
+		if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+    Player* player = m_session->GetPlayer();
+
+    // save GM account without delay and output message
+    if (!AccountMgr::IsPlayerAccount(m_session->IsPremium()))
+    {
+        if (Player* target = getSelectedPlayer())
+            target->SaveToDB();
+        else
+            player->SaveToDB();
+        SendSysMessage(LANG_PLAYER_SAVED);
+        return true;
+    }
+
+    // save if the player has last been saved over 20 seconds ago
+    uint32 save_interval = sWorld->getIntConfig(CONFIG_INTERVAL_SAVE);
+    if (save_interval == 0 || (save_interval > 20*IN_MILLISECONDS && player->GetSaveTimer() <= save_interval - 20*IN_MILLISECONDS))
+        player->SaveToDB();
+
+    return true;
+}
+//VIP WHISPERS
+bool ChatHandler::HandleVipWhispersCommand(const char* args)
+
+{
+	if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+    if (!*args)
+    {
+        PSendSysMessage(LANG_COMMAND_WHISPERACCEPTING, m_session->GetPlayer()->isAcceptWhispers() ?  GetTrinityString(LANG_ON) : GetTrinityString(LANG_OFF));
+        return true;
+    }
+
+    std::string argstr = (char*)args;
+    // whisper on
+    if (argstr == "on")
+    {
+        m_session->GetPlayer()->SetAcceptWhispers(true);
+        SendSysMessage(LANG_COMMAND_WHISPERON);
+        return true;
+    }
+
+    // whisper off
+    if (argstr == "off")
+    {
+        // Remove all players from the Gamemaster's whisper whitelist
+        m_session->GetPlayer()->ClearWhisperWhiteList();
+        m_session->GetPlayer()->SetAcceptWhispers(false);
+        SendSysMessage(LANG_COMMAND_WHISPEROFF);
+        return true;
+    }
+
+    SendSysMessage(LANG_USE_BOL);
+    SetSentErrorMessage(true);
+    return false;
+}
+
+//VIPHOME
+bool ChatHandler::HandleVipHomeCommand(const char* /*args*/)
+{
+		if (!m_session->IsPremium())
+	{
+		return false;
+	}
+
+    Player* chr = m_session->GetPlayer();
+
+    if (chr->isInFlight())
+    {
+        SendSysMessage(LANG_YOU_IN_FLIGHT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (chr->isInCombat())
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if ((chr->isDead()) || (chr->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST)))
+    {
+    // if player is dead and stuck, send ghost to graveyard
+    chr->RepopAtGraveyard();
+    return true;
+    }
+
+    // cast spell Stuck
+    chr->CastSpell(chr, 7355, false);
+	chr->RemoveSpellCooldown(7355, true);
+    return true;
+}

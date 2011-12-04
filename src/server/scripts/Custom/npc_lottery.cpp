@@ -16,22 +16,23 @@
  */
 
 /* ScriptData
-SDName: BloodyWars Lottery
+SDName: Lottery
 SDAuthor: PrinceCreed
 SD%Complete: 100%
 SDComment: //
 SDCategory: Custom
 EndScriptData 
+ */
 
 #include "ScriptPCH.h"
 
 /*######
 ## npc_lotto
 ######*/
-/*
-#define GOSSIP_BUY_TICKET           "Купить билет"
+
+#define GOSSIP_BUY_TICKET           "РљСѓРїРёС‚СЊ Р±РёР»РµС‚ Р·Р° 100 Р·РѕР»РѕС‚С‹С…"
 #define TICKET_COST                 1000000
-#define EVENT_LOTTO           132
+#define EVENT_LOTTO           73
 
 class npc_lotto : public CreatureScript
 {
@@ -42,10 +43,10 @@ public:
     {
         if (pPlayer && !pPlayer->isGameMaster())
         {
-            QueryResult result = ExtraDatabase.PQuery("SELECT id FROM lotto_tickets WHERE guid=%u", pPlayer->GetGUIDLow());
+            QueryResult result = CharacterDatabase.PQuery("SELECT id FROM lotto_tickets WHERE guid=%u", pPlayer->GetGUIDLow());
             if (result)
             {
-                pPlayer->SEND_GOSSIP_MENU(100001, pCreature->GetGUID());
+                pPlayer->SEND_GOSSIP_MENU(100000, pCreature->GetGUID());
                 return false;
             }
 
@@ -67,11 +68,11 @@ public:
         {
             case GOSSIP_ACTION_INFO_DEF:
                 pPlayer->ModifyMoney(-TICKET_COST);
-                QueryResult result = ExtraDatabase.Query("SELECT MAX(id) FROM lotto_tickets");
+                QueryResult result = CharacterDatabase.Query("SELECT MAX(id) FROM lotto_tickets");
                 uint32 id = result->Fetch()->GetUInt32();
-                ExtraDatabase.PExecute("INSERT INTO lotto_tickets (id,name,guid) VALUES (%u,'%s',%u);", id+1, pPlayer->GetName(), pPlayer->GetGUIDLow());
+                CharacterDatabase.PExecute("INSERT INTO lotto_tickets (id,name,guid) VALUES (%u,'%s',%u);", id+1, pPlayer->GetName(), pPlayer->GetGUIDLow());
                 char msg[500];
-                sprintf(msg, "Удачи, $N. Номер вашего билет %i", id+1);
+                sprintf(msg, "РЈРґР°С‡Рё, $N. РќРѕРјРµСЂ РІР°С€РµРіРѕ Р±РёР»РµС‚ %i", id+1);
                 pCreature->MonsterWhisper(msg, pPlayer->GetGUID());
                 break;
         }
@@ -88,24 +89,24 @@ public:
     {
         npc_lottoAI(Creature* pCreature) : ScriptedAI(pCreature) 
         {
-            SayTimer = 1800*IN_MILLISECONDS;
+            SayTimer = 6000000;
         }
         
-        uint32 SayTimer;
+        int32 SayTimer;
 
         void UpdateAI(const uint32 diff)
         {
-            if (IsEventActive(EVENT_LOTTO))
+           if (IsEventActive(EVENT_LOTTO))
             {
                 if (me->IsVisible())
                 {
                     me->SetVisible(false);
-                    QueryResult result = ExtraDatabase.Query("SELECT MAX(id) FROM lotto_tickets");
+                    QueryResult result = CharacterDatabase.Query("SELECT MAX(id) FROM lotto_tickets");
                     uint32 maxTickets = result->Fetch()->GetUInt32();
                     if (!maxTickets)
                         return;
 
-                    result = ExtraDatabase.Query("SELECT name, guid FROM `lotto_tickets` ORDER BY RAND() LIMIT 3;");
+                    result = CharacterDatabase.Query("SELECT name, guid FROM `lotto_tickets` ORDER BY RAND() LIMIT 3;");
                     uint32 position = 0;
 
                     do
@@ -118,12 +119,12 @@ public:
                         uint32 guid = fields[1].GetUInt32();
                         uint32 reward = TICKET_COST / (1 << position) * maxTickets;
 
-                        ExtraDatabase.PExecute("INSERT INTO `lotto_extractions` (winner,guid,position,reward) VALUES ('%s',%u,%u,%u);",name,guid,position,reward);
+                        CharacterDatabase.PExecute("INSERT INTO `lotto_extractions` (winner,guid,position,reward) VALUES ('%s',%u,%u,%u);",name,guid,position,reward);
 
                         // Send reward by mail
                         Player *pPlayer = sObjectMgr->GetPlayerByLowGUID(guid);
                         SQLTransaction trans = CharacterDatabase.BeginTransaction();
-                        MailDraft("Лотерея", "Поздравляем! Вы выйграли!")
+                        MailDraft("Р›РѕС‚РµСЂРµСЏ", "РџРѕР·РґСЂР°РІР»СЏРµРј! Р’С‹ РІС‹Р№РіСЂР°Р»Рё!")
                             .AddMoney(reward)
                             .SendMailTo(trans, MailReceiver(pPlayer, GUID_LOPART(guid)), MailSender(MAIL_NORMAL, 0, MAIL_STATIONERY_GM));
                         CharacterDatabase.CommitTransaction(trans);
@@ -133,35 +134,34 @@ public:
                         switch (position)
                         {
                             case 1:
-                                sWorld->SendWorldText(LANG_EVENTMESSAGE, "| Призы |");
-                                sprintf(msg, "| 1 - %s выиграл %i золота!",name,reward/10000);
+                                sWorld->SendGMText(LANG_EVENTMESSAGE, "| РџСЂРёР·С‹ ");
+                                sprintf(msg, "| 1 - %s РІС‹РёРіСЂР°Р» %i Р·РѕР»РѕС‚Р°!",name,reward/10000);
                                 break;
                             case 2:
-                                sprintf(msg, "| 2 - %s выиграл %i золота!",name,reward/10000);
+                                sprintf(msg, "| 2 - %s РІС‹РёРіСЂР°Р» %i Р·РѕР»РѕС‚Р°!",name,reward/10000);
                                 break;
                             case 3:
-                                sprintf(msg, "| 3 - %s выиграл %i золота!",name,reward/10000);
+                                sprintf(msg, "| 3 - %s РІС‹РёРіСЂР°Р» %i Р·РѕР»РѕС‚Р°!",name,reward/10000);
                                 break;
                         }
-                        sWorld->SendWorldText(LANG_EVENTMESSAGE, msg);
+                        sWorld->SendGMText(LANG_EVENTMESSAGE, msg);
                     }
                     while (result->NextRow());
 
                     // Delete tickets after extraction
-                    ExtraDatabase.PExecute("DELETE FROM lotto_tickets;");
+                    CharacterDatabase.PExecute("DELETE FROM lotto_tickets;");
                 }
             }
             else
             {
                 if (!me->IsVisible())
                     me->SetVisible(true);
-                    
-                if (SayTimer <= diff)
+                if (SayTimer <= (int32)diff)
                 {
-                    me->MonsterSay("Билеты лотереи! Всего лишь 100 золотых, чтобы стать миллионером!", 0, NULL);
-                    SayTimer = 1800*IN_MILLISECONDS;
+                    me->MonsterYell("Р‘РёР»РµС‚С‹ Р»РѕС‚РµСЂРµРё! Р’СЃРµРіРѕ Р»РёС€СЊ 100 Р·РѕР»РѕС‚С‹С…, С‡С‚РѕР±С‹ СЃС‚Р°С‚СЊ РјРёР»Р»РёРѕРЅРµСЂРѕРј!", 0, NULL);
+                    SayTimer = 6000000;
                 }
-                else SayTimer -= diff;
+                else SayTimer -= (int32)diff;
             }
         }
     };
@@ -173,5 +173,3 @@ void AddSC_npc_lottery()
 {
     new npc_lotto;
 }
-
-*/

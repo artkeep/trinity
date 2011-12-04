@@ -342,12 +342,9 @@ ChatCommand* ChatHandler::getCommandTable()
         { "reset",          SEC_ADMINISTRATOR,  true,  NULL,                                           "", resetCommandTable    },
         { "instance",       SEC_ADMINISTRATOR,  true,  NULL,                                           "", instanceCommandTable },
         { "server",         SEC_ADMINISTRATOR,  true,  NULL,                                           "", serverCommandTable   },
-
         { "channel",        SEC_ADMINISTRATOR, true, NULL,                                             "", channelCommandTable  },
-
         { "pet",            SEC_GAMEMASTER,     false, NULL,                                           "", petCommandTable },
         { "ticket",         SEC_MODERATOR,      false,  NULL,                                          "", ticketCommandTable },
-
         { "aura",           SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleAuraCommand>,                "", NULL },
         { "unaura",         SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleUnAuraCommand>,              "", NULL },
         { "nameannounce",   SEC_MODERATOR,      true,  OldHandler<&ChatHandler::HandleNameAnnounceCommand>,        "", NULL },
@@ -416,9 +413,17 @@ ChatCommand* ChatHandler::getCommandTable()
         //{ "bindsight",      SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleBindSightCommand>,           "", NULL },
         //{ "unbindsight",    SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleUnbindSightCommand>,         "", NULL },
         { "playall",        SEC_GAMEMASTER,  false, OldHandler<&ChatHandler::HandlePlayAllCommand>,             "", NULL },
+	   // VIP
+	   	{ "vipbank",        SEC_PLAYER,  false, OldHandler<&ChatHandler::HandleVipBankCommand>,             "", NULL },
+        { "viprepair",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipRepairitemsCommand>,         "", NULL },
+		{ "vipresettalents",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipResetTalentsCommand>,         "", NULL },
+		{ "vipdebuff",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipUnAuraCommand>,         "", NULL },
+		{ "viptaxi",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipTaxiCommand>,         "", NULL },
+		{ "vipsave",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipSaveCommand>,         "", NULL },
+		{ "vipwhispers",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipWhispersCommand>,         "", NULL },
+		{ "viphome",    	SEC_PLAYER,  true,  OldHandler<&ChatHandler::HandleVipHomeCommand>,         "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
-
     // cache for commands, needed because some commands are loaded dynamically through ScriptMgr
     // cache is never freed and will show as a memory leak in diagnostic tools
     // can't use vector as vector storage is implementation-dependent, eg, there can be alignment gaps between elements

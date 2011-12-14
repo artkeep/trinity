@@ -2279,7 +2279,7 @@ bool SpellInfo::_IsPositiveEffect(uint8 effIndex, bool deep) const
             break;
         case SPELLFAMILY_ROGUE:
             // Envenom
-            if (SpellFamilyFlags[1] & 0x8)
+            if (Id == 57993)
                 return true;
             // Slice and Dice
             else if (SpellFamilyFlags[0] & 0x40000)

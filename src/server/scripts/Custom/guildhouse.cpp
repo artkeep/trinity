@@ -338,22 +338,22 @@ class guildmaster : public CreatureScript
 
  bool OnGossipHello(Player *player, Creature *_creature)
  {
-    //player->ADD_GOSSIP_ITEM(ICON_GOSSIP_BALOON, MSG_GOSSIP_TELE, GOSSIP_SENDER_MAIN, ACTION_TELE);
+    player->ADD_GOSSIP_ITEM(ICON_GOSSIP_BALOON, MSG_GOSSIP_TELE, GOSSIP_SENDER_MAIN, ACTION_TELE);
 
-    //if (isPlayerGuildLeader(player))
-    //{
-    //    if (isPlayerHasGuildhouse(player, _creature))
-    //    {
-    //        player->ADD_GOSSIP_ITEM(ICON_GOSSIP_BALOON, "Продать", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_OPT);
-    //    }
-    //    else
-    //    {
-    //        //show additional menu for guild leader
-    //        player->ADD_GOSSIP_ITEM(ICON_GOSSIP_GOLD, MSG_GOSSIP_BUY, GOSSIP_SENDER_MAIN, ACTION_SHOW_BUYLIST);
-    //    }
-    //}
+    if (isPlayerGuildLeader(player))
+    {
+        if (isPlayerHasGuildhouse(player, _creature))
+        {
+            player->ADD_GOSSIP_ITEM(ICON_GOSSIP_BALOON, "Продать", GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE_OPT);
+        }
+        else
+        {
+            //show additional menu for guild leader
+            player->ADD_GOSSIP_ITEM(ICON_GOSSIP_GOLD, MSG_GOSSIP_BUY, GOSSIP_SENDER_MAIN, ACTION_SHOW_BUYLIST);
+        }
+    }
 
-    //player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
+    player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
     return true;
  }
 

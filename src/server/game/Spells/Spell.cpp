@@ -5089,7 +5089,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 bool dispelAura = false;
 
                 // Create dispel mask by dispel type
-                uint32 dispelMask;
+                uint32 dispelMask = 0;
                 for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
                     if (m_spellInfo->Effects[j].Effect == SPELL_EFFECT_DISPEL)
                         dispelMask |= SpellInfo::GetDispelMask(DispelType(m_spellInfo->Effects[j].MiscValue));
@@ -5103,6 +5103,10 @@ SpellCastResult Spell::CheckCast(bool strict)
                 {
                     Aura* aura = itr->second;
 
+                    AuraApplication * aurApp = aura->GetApplicationOfTarget(target->GetGUID());
+                    if (!aurApp)
+                        continue;
+
                     // don't try to remove passive auras
                     if (aura->IsPassive())
                         continue;
@@ -5111,7 +5115,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     {
                         // do not remove positive auras if friendly target
                         //               negative auras if non-friendly target
-                        if (aura->GetSpellInfo()->IsPositive() == target->IsFriendlyTo(m_caster))
+                        if (aurApp->IsPositive() == target->IsFriendlyTo(m_caster))
                             continue;
 
                         dispelAura = true;

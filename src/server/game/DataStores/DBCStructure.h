@@ -723,7 +723,7 @@ struct CinematicSequencesEntry
 struct CreatureDisplayInfoEntry
 {
     uint32      Displayid;                                  // 0        m_ID
-                                                            // 1        m_modelID
+    uint32      ModelId;                                    // 1        m_modelID
                                                             // 2        m_soundID
     uint32      ExtendedDisplayInfoID;                      // 3        m_extendedDisplayInfoID -> CreatureDisplayInfoExtraEntry::DisplayExtraId
     float       scale;                                      // 4        m_creatureModelScale
@@ -768,6 +768,28 @@ struct CreatureFamilyEntry
     char*   Name[16];                                       // 10-25    m_name_lang
                                                             // 26 string flags
                                                             // 27       m_iconFile
+};
+
+struct CreatureModelDataEntry
+{
+    uint32 Id;
+    //uint32 Flags;
+    //char* ModelPath[16]
+    //uint32 Unk1;
+    float Scale;                                             // Used in calculation of unit collision data
+    //int32 Unk2
+    //int32 Unk3
+    //uint32 Unk4
+    //uint32 Unk5
+    //float Unk6
+    //uint32 Unk7
+    //float Unk8
+    //uint32 Unk9
+    //uint32 Unk10
+    //float CollisionWidth;
+    float CollisionHeight;
+    float MountHeight;                                       // Used in calculation of unit collision data when mounted
+    //float Unks[11]
 };
 
 #define MAX_CREATURE_SPELL_DATA_SLOT 4
@@ -1933,9 +1955,10 @@ struct VehicleSeatEntry
                                                             // 46-57 added in 3.1, floats mostly
 
     bool CanEnterOrExit() const { return m_flags & VEHICLE_SEAT_FLAG_CAN_ENTER_OR_EXIT; }
-    bool CanSwitchFromSeat() const { return m_flags & VEHICLE_SEAT_FLAG_B_CANSWITCH; }
+    bool CanSwitchFromSeat() const { return m_flags & VEHICLE_SEAT_FLAG_CAN_SWITCH; }
     bool IsUsableByOverride() const { return (m_flags & VEHICLE_SEAT_FLAG_UNCONTROLLED)
-                                    || (m_flagsB & (VEHICLE_SEAT_FLAG_B_USABLE_FORCED | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_2 | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_3)); }
+                                    || (m_flagsB & (VEHICLE_SEAT_FLAG_B_USABLE_FORCED | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_2 |
+                                        VEHICLE_SEAT_FLAG_B_USABLE_FORCED_3 | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_4)); }
     bool IsEjectable() const { return m_flagsB & VEHICLE_SEAT_FLAG_B_EJECTABLE; }
 };
 

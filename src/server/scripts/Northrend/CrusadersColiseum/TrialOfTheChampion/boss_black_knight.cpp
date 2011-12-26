@@ -62,8 +62,10 @@ enum eSpells
 
     SPELL_BLACK_KNIGHT_RES  = 67693,
 
-    SPELL_LEAP	            = 67749,
-    SPELL_LEAP_H            = 67880
+    SPELL_LEAP              = 67749,
+    SPELL_LEAP_H            = 67880,
+
+    SPELL_KILL_CREDIT       = 68663
 };
 
 enum eModels
@@ -410,6 +412,8 @@ public:
             {
                 pInstance->SetData(BOSS_BLACK_KNIGHT, DONE);
             }
+
+            DoCast(me, SPELL_KILL_CREDIT);
         }
     };
 };

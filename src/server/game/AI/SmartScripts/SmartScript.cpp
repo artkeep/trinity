@@ -224,7 +224,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             {
                 for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
                 {
-                    if (IsPlayer(*itr))
+                    if (IsUnit(*itr))
                     {
                         (*itr)->SendPlaySound(e.action.sound.sound, e.action.sound.range > 0 ? true : false);
                         sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_SOUND: target: %s (GuidLow: %u), sound: %u, onlyself: %u",
@@ -994,7 +994,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                         (*itr)->ToUnit()->Mount(e.action.morphOrMount.model);
                 }
                 else
-                    (*itr)->ToUnit()->Unmount();
+                    (*itr)->ToUnit()->Dismount();
             }
 
             delete targets;
@@ -1490,10 +1490,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                         if (IsSmart(target))
                             CAST_AI(SmartAI, target->AI())->SetScript9(e, e.action.timedActionList.id, GetLastInvoker());
                     }
-                    else if (GameObject* target = (*itr)->ToGameObject())
+                    else if (GameObject* goTarget = (*itr)->ToGameObject())
                     {
-                        if (IsSmartGO(target))
-                            CAST_AI(SmartGameObjectAI, target->AI())->SetScript9(e, e.action.timedActionList.id, GetLastInvoker());
+                        if (IsSmartGO(goTarget))
+                            CAST_AI(SmartGameObjectAI, goTarget->AI())->SetScript9(e, e.action.timedActionList.id, GetLastInvoker());
                     }
                 }
 
@@ -1607,10 +1607,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                         if (IsSmart(target))
                             CAST_AI(SmartAI, target->AI())->SetScript9(e, id, GetLastInvoker());
                     }
-                    else if (GameObject* target = (*itr)->ToGameObject())
+                    else if (GameObject* goTarget = (*itr)->ToGameObject())
                     {
-                        if (IsSmartGO(target))
-                            CAST_AI(SmartGameObjectAI, target->AI())->SetScript9(e, id, GetLastInvoker());
+                        if (IsSmartGO(goTarget))
+                            CAST_AI(SmartGameObjectAI, goTarget->AI())->SetScript9(e, id, GetLastInvoker());
                     }
                 }
 
@@ -1637,10 +1637,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                         if (IsSmart(target))
                             CAST_AI(SmartAI, target->AI())->SetScript9(e, id, GetLastInvoker());
                     }
-                    else if (GameObject* target = (*itr)->ToGameObject())
+                    else if (GameObject* goTarget = (*itr)->ToGameObject())
                     {
-                        if (IsSmartGO(target))
-                            CAST_AI(SmartGameObjectAI, target->AI())->SetScript9(e, id, GetLastInvoker());
+                        if (IsSmartGO(goTarget))
+                            CAST_AI(SmartGameObjectAI, goTarget->AI())->SetScript9(e, id, GetLastInvoker());
                     }
                 }
 
@@ -1786,8 +1786,8 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             if (!GetBaseObject())
                 return;
 
-            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_SEND_GOSSIP_MENU: gossipMenuId %d, gossip_option_id %d",
-                e.action.sendGossipMenu.gossipMenuId, e.action.sendGossipMenu.gossipOptionId);
+            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_SEND_GOSSIP_MENU: gossipMenuId %d, gossipNpcTextId %d",
+                e.action.sendGossipMenu.gossipMenuId, e.action.sendGossipMenu.gossipNpcTextId);
 
             ObjectList* targets = GetTargets(e, unit);
             if (!targets)
@@ -1801,7 +1801,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     else
                         player->PlayerTalkClass->ClearMenus();
 
-                    player->SEND_GOSSIP_MENU(e.action.sendGossipMenu.gossipOptionId, GetBaseObject()->GetGUID());
+                    player->SEND_GOSSIP_MENU(e.action.sendGossipMenu.gossipNpcTextId, GetBaseObject()->GetGUID());
                 }
 
             delete targets;
@@ -2298,10 +2298,10 @@ void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, ui
             if (!me || !me->isInCombat())
                 return;
 
-            Unit* unit = DoSelectLowestHpFriendly((float)e.event.friendlyHealt.radius, e.event.friendlyHealt.hpDeficit);
-            if (!unit)
+            Unit* target = DoSelectLowestHpFriendly((float)e.event.friendlyHealt.radius, e.event.friendlyHealt.hpDeficit);
+            if (!target)
                 return;
-            ProcessAction(e, unit);
+            ProcessAction(e, target);
             RecalcTimer(e, e.event.friendlyHealt.repeatMin, e.event.friendlyHealt.repeatMax);
             break;
         }
@@ -2593,6 +2593,14 @@ void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, ui
             if (e.event.dummy.spell != var0 || e.event.dummy.effIndex != var1)
                 return;
             ProcessAction(e, unit, var0, var1);
+            break;
+        }
+        case SMART_EVENT_GAME_EVENT_START:
+        case SMART_EVENT_GAME_EVENT_END:
+        {
+            if (e.event.gameEvent.gameEventId != var0)
+                return;
+            ProcessAction(e, NULL, var0);
             break;
         }
         default:
@@ -2996,7 +3004,9 @@ void SmartScript::SetScript9(SmartScriptHolder& e, uint32 entry)
         mResumeActionList = e.action.timedActionList.dontResume ? false : true;
         InitTimer((*i));
     }
-}Unit* SmartScript::GetLastInvoker()
+}
+
+Unit* SmartScript::GetLastInvoker()
 {
     return ObjectAccessor::FindUnit(mLastInvoker);
 }

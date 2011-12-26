@@ -156,7 +156,7 @@ namespace Trinity
             return baseGain;
         }
 
-        inline uint32 Gain(Player* pl, Unit* u)
+        inline uint32 Gain(Player* player, Unit* u)
         {
             uint32 gain;
 
@@ -167,7 +167,7 @@ namespace Trinity
                 gain = 0;
             else
             {
-                gain = BaseGain(pl->getLevel(), u->getLevel(), GetContentLevelsForMapAndZone(u->GetMapId(), u->GetZoneId()));
+                gain = BaseGain(player->getLevel(), u->getLevel(), GetContentLevelsForMapAndZone(u->GetMapId(), u->GetZoneId()));
 
                 if (gain != 0 && u->GetTypeId() == TYPEID_UNIT && ((Creature*)u)->isElite())
                 {
@@ -177,11 +177,13 @@ namespace Trinity
                     else
                         gain *= 2;
                 }
-        float premium_rate = pl->GetSession()->IsPremium() ? sWorld->getRate(RATE_XP_KILL_PREMIUM) : 1.0f;
 
-            gain = uint32(gain * sWorld->getRate(RATE_XP_KILL)*premium_rate);
-          }
-            sScriptMgr->OnGainCalculation(gain, pl, u);
+                float premium_rate = player->GetSession()->IsPremium() ? sWorld->getRate(RATE_XP_KILL_PREMIUM) : 1.0f;
+
+                gain = uint32(gain * sWorld->getRate(RATE_XP_KILL)*premium_rate);
+            }
+
+            sScriptMgr->OnGainCalculation(gain, player, u);
             return gain;
         }
 

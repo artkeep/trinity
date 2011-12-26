@@ -644,23 +644,24 @@ void Spell::InitExplicitTargets(SpellCastTargets const& targets)
         // try to select correct unit target if not provided by client or by serverside cast
         if (neededTargets & (TARGET_FLAG_UNIT_MASK))
         {
-            Unit* target = NULL;
+            Unit* unit = NULL;
             // try to use player selection as a target
             if (Player* playerCaster = m_caster->ToPlayer())
             {
                 // selection has to be found and to be valid target for the spell
                 if (Unit* selectedUnit = ObjectAccessor::GetUnit(*m_caster, playerCaster->GetSelection()))
                     if (m_spellInfo->CheckExplicitTarget(m_caster, selectedUnit) == SPELL_CAST_OK)
-                        target = selectedUnit;
+                        unit = selectedUnit;
             }
             // try to use attacked unit as a target
             else if ((m_caster->GetTypeId() == TYPEID_UNIT) && neededTargets & (TARGET_FLAG_UNIT_ENEMY | TARGET_FLAG_UNIT))
-                target = m_caster->getVictim();
-            // didn't find anything - let's use self as target
-            if (!target && neededTargets & (TARGET_FLAG_UNIT_RAID | TARGET_FLAG_UNIT_PARTY | TARGET_FLAG_UNIT_ALLY))
-                target = m_caster;
+                unit = m_caster->getVictim();
 
-            m_targets.SetUnitTarget(target);
+            // didn't find anything - let's use self as target
+            if (!unit && neededTargets & (TARGET_FLAG_UNIT_RAID | TARGET_FLAG_UNIT_PARTY | TARGET_FLAG_UNIT_ALLY))
+                unit = m_caster;
+
+            m_targets.SetUnitTarget(unit);
         }
     }
 
@@ -1229,11 +1230,11 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
 
     if (spellHitTarget)
     {
-        SpellMissInfo missInfo = DoSpellHitOnUnit(spellHitTarget, mask, target->scaleAura);
-        if (missInfo != SPELL_MISS_NONE)
+        SpellMissInfo missInfo2 = DoSpellHitOnUnit(spellHitTarget, mask, target->scaleAura);
+        if (missInfo2 != SPELL_MISS_NONE)
         {
-            if (missInfo != SPELL_MISS_MISS)
-                m_caster->SendSpellMiss(unit, m_spellInfo->Id, missInfo);
+            if (missInfo2 != SPELL_MISS_MISS)
+                m_caster->SendSpellMiss(unit, m_spellInfo->Id, missInfo2);
             m_damage = 0;
             spellHitTarget = NULL;
         }
@@ -2086,7 +2087,7 @@ uint32 Spell::SelectEffectTargets(uint32 i, SpellImplicitTargetInfo const& cur)
                     float max_dis = m_spellInfo->GetMaxRange(true);
                     float dis = (float)rand_norm() * (max_dis - min_dis) + min_dis;
                     float x, y, z, angle;
-                    angle = (float)rand_norm() * static_cast<float>(M_PI * 70.0f / 180.0f) - static_cast<float>(M_PI * 35.0f / 180.0f);
+                    angle = (float)rand_norm() * static_cast<float>(M_PI * 35.0f / 180.0f) - static_cast<float>(M_PI * 17.5f / 180.0f);
                     m_caster->GetClosePoint(x, y, z, DEFAULT_WORLD_OBJECT_SIZE, dis, angle);
                     m_targets.SetDst(x, y, z, m_caster->GetOrientation());
                     break;
@@ -3330,6 +3331,12 @@ void Spell::handle_immediate()
             m_caster->AddInterruptMask(m_spellInfo->ChannelInterruptFlags);
             SendChannelStart(duration);
         }
+        else if (duration == -1)
+        {
+            m_spellState = SPELL_STATE_CASTING;
+            m_caster->AddInterruptMask(m_spellInfo->ChannelInterruptFlags);
+            SendChannelStart(duration);
+        }
     }
 
     PrepareTargetProcessing();
@@ -3354,7 +3361,6 @@ void Spell::handle_immediate()
     // handle ammo consumption for Hunter's volley spell
     if (m_spellInfo->IsRangedWeaponSpell() && m_spellInfo->IsChanneled())
         TakeAmmo();
-
 
     if (m_spellState != SPELL_STATE_CASTING)
         finish(true);                                       // successfully finish spell cast (not last in case autorepeat or channel spell)
@@ -3554,9 +3560,9 @@ void Spell::update(uint32 difftime)
     {
         case SPELL_STATE_PREPARING:
         {
-            if (m_timer)
+            if (m_timer > 0)
             {
-                if (difftime >= m_timer)
+                if (difftime >= (uint32)m_timer)
                     m_timer = 0;
                 else
                     m_timer -= difftime;
@@ -3565,10 +3571,11 @@ void Spell::update(uint32 difftime)
             if (m_timer == 0 && !IsNextMeleeSwingSpell() && !IsAutoRepeat())
                 // don't CheckCast for instant spells - done in spell::prepare, skip duplicate checks, needed for range checks for example
                 cast(!m_casttime);
-        } break;
+            break;
+        }
         case SPELL_STATE_CASTING:
         {
-            if (m_timer > 0)
+            if (m_timer)
             {
                 // check if there are alive targets left
                 if (!UpdateChanneledTargetList())
@@ -3578,10 +3585,13 @@ void Spell::update(uint32 difftime)
                     finish();
                 }
 
-                if (difftime >= m_timer)
-                    m_timer = 0;
-                else
-                    m_timer -= difftime;
+                if (m_timer > 0)
+                {
+                    if (difftime >= (uint32)m_timer)
+                        m_timer = 0;
+                    else
+                        m_timer -= difftime;
+                }
             }
 
             if (m_timer == 0)
@@ -3623,10 +3633,10 @@ void Spell::update(uint32 difftime)
 
                 finish();
             }
-        } break;
+            break;
+        }
         default:
-        {
-        }break;
+            break;
     }
 }
 
@@ -3742,9 +3752,9 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
     switch (result)
     {
         case SPELL_FAILED_REQUIRES_SPELL_FOCUS:
-            data << uint32(spellInfo->RequiresSpellFocus);
+            data << uint32(spellInfo->RequiresSpellFocus);  // SpellFocusObject.dbc id
             break;
-        case SPELL_FAILED_REQUIRES_AREA:
+        case SPELL_FAILED_REQUIRES_AREA:                    // AreaTable.dbc id
             // hardcode areas limitation case
             switch (spellInfo->Id)
             {
@@ -3785,7 +3795,7 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
         case SPELL_FAILED_TOO_MANY_OF_ITEM:
         {
              uint32 item = 0;
-             for (int8 x = 0;x < 3; x++)
+             for (int8 x = 0; x < 3; x++)
                  if (spellInfo->Effects[x].ItemType)
                      item = spellInfo->Effects[x].ItemType;
              ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(item);
@@ -3854,7 +3864,7 @@ void Spell::SendSpellStart()
     data << uint8(m_cast_count);                            // pending spell cast?
     data << uint32(m_spellInfo->Id);                        // spellId
     data << uint32(castFlags);                              // cast flags
-    data << uint32(m_timer);                                // delay?
+    data << int32(m_timer);                                 // delay?
 
     m_targets.Write(data);
 
@@ -3953,7 +3963,7 @@ void Spell::SendSpellGo()
         }
     }
 
-    if (castFlags & CAST_FLAG_UNKNOWN_18)                   // unknown wotlk
+    if (castFlags & CAST_FLAG_UNKNOWN_18)
     {
         data << float(0);
         data << uint32(0);
@@ -3962,7 +3972,7 @@ void Spell::SendSpellGo()
     if (castFlags & CAST_FLAG_AMMO)
         WriteAmmoToPacket(&data);
 
-    if (castFlags & CAST_FLAG_UNKNOWN_20)                   // unknown wotlk
+    if (castFlags & CAST_FLAG_UNKNOWN_20)
     {
         data << uint32(0);
         data << uint32(0);
@@ -4223,9 +4233,6 @@ void Spell::SendChannelUpdate(uint32 time)
         m_caster->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
     }
 
-    if (m_caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
     WorldPacket data(MSG_CHANNEL_UPDATE, 8+4);
     data.append(m_caster->GetPackGUID());
     data << uint32(time);
@@ -4428,9 +4435,9 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
     if (m_caster->GetTypeId() != TYPEID_PLAYER)
         return SPELL_CAST_OK;
 
-    Player* plr = (Player*)m_caster;
+    Player* player = (Player*)m_caster;
 
-    if (plr->getClass() != CLASS_DEATH_KNIGHT)
+    if (player->getClass() != CLASS_DEATH_KNIGHT)
         return SPELL_CAST_OK;
 
     SpellRuneCostEntry const* src = sSpellRuneCostStore.LookupEntry(runeCostID);
@@ -4454,8 +4461,8 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
 
     for (uint32 i = 0; i < MAX_RUNES; ++i)
     {
-        RuneType rune = plr->GetCurrentRune(i);
-        if ((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
+        RuneType rune = player->GetCurrentRune(i);
+        if ((player->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
             runeCost[rune]--;
     }
 
@@ -5834,7 +5841,8 @@ SpellCastResult Spell::CheckRange(bool strict)
 
     if (m_spellInfo->RangeEntry)
     {
-        // self cast is used for triggered spells, no range checking needed
+        // check needed by 68766 51693 - both spells are cast on enemies and have 0 max range
+        // these are triggered by other spells - possibly we should omit range check in that case?
         if (m_spellInfo->RangeEntry->ID == 1)
             return SPELL_CAST_OK;
 
@@ -6451,7 +6459,7 @@ void Spell::Delayed() // only called in DealDamage()
 
     AddPctN(delaytime, -delayReduce);
 
-    if (int32(m_timer) + delaytime > m_casttime)
+    if (m_timer + delaytime > m_casttime)
     {
         delaytime = m_casttime - m_timer;
         m_timer = m_casttime;
@@ -6486,7 +6494,7 @@ void Spell::DelayedChannel()
 
     AddPctN(delaytime, -delayReduce);
 
-    if (int32(m_timer) <= delaytime)
+    if (m_timer <= delaytime)
     {
         delaytime = m_timer;
         m_timer = 0;
@@ -6987,7 +6995,7 @@ void Spell::SelectTrajTargets()
     if (!dist2d)
         return;
 
-    float dz = m_targets.GetDst()->m_positionZ - m_targets.GetSrc()->m_positionZ;
+    float srcToDestDelta = m_targets.GetDst()->m_positionZ - m_targets.GetSrc()->m_positionZ;
 
     UnitList unitList;
     SearchAreaTarget(unitList, dist2d, PUSH_IN_THIN_LINE, SPELL_TARGETS_ANY);
@@ -6997,8 +7005,9 @@ void Spell::SelectTrajTargets()
     unitList.sort(Trinity::ObjectDistanceOrderPred(m_caster));
 
     float b = tangent(m_targets.GetElevation());
-    float a = (dz - dist2d * b) / (dist2d * dist2d);
-    if (a > -0.0001f) a = 0;
+    float a = (srcToDestDelta - dist2d * b) / (dist2d * dist2d);
+    if (a > -0.0001f)
+        a = 0;
     DEBUG_TRAJ(sLog->outError("Spell::SelectTrajTargets: a %f b %f", a, b);)
 
     float bestDist = m_spellInfo->GetMaxRange(false);
@@ -7026,9 +7035,14 @@ void Spell::SelectTrajTargets()
         }
 
 #define CHECK_DIST {\
-    DEBUG_TRAJ(sLog->outError("Spell::SelectTrajTargets: dist %f, height %f.", dist, height);)\
-    if (dist > bestDist) continue;\
-    if (dist < objDist2d + size && dist > objDist2d - size) { bestDist = dist; break; }\
+            DEBUG_TRAJ(sLog->outError("Spell::SelectTrajTargets: dist %f, height %f.", dist, height);)\
+            if (dist > bestDist)\
+                continue;\
+            if (dist < objDist2d + size && dist > objDist2d - size)\
+            {\
+                bestDist = dist;\
+                break;\
+            }\
         }
 
         if (!a)
@@ -7216,7 +7230,7 @@ bool Spell::CallScriptEffectHandlers(SpellEffIndex effIndex, SpellEffectHandleMo
                 break;
             default:
                 ASSERT(false);
-                break;
+                return false;
         }
         (*scritr)->_PrepareScriptCall(hookType);
         for (; effItr != effEndItr ; ++effItr)

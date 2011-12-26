@@ -682,7 +682,8 @@ class World
         uint32 pvp_ranks[HKRANKMAX];
 
         /// Are we in the middle of a shutdown?
-        bool IsShutdowning() const { return m_ShutdownTimer > 0; }
+        bool IsShuttingDown() const { return m_ShutdownTimer > 0; }
+        uint32 GetShutDownTimeLeft() const { return m_ShutdownTimer; }
         void ShutdownServ(uint32 time, uint32 options, uint8 exitcode);
         void ShutdownCancel();
         void ShutdownMsg(bool show = false, Player* player = NULL);
@@ -788,9 +789,9 @@ class World
 
         void SendWintergraspState();
 
-        const CharacterNameData* GetCharacterNameData(uint32 guid) const;
-        void AddCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race, uint8 playerClass);
-        void UpdateCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race = RACE_NONE);
+        CharacterNameData const* GetCharacterNameData(uint32 guid) const;
+        void AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass);
+        void UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 gender = GENDER_NONE, uint8 race = RACE_NONE);
         void DeleteCharaceterNameData(uint32 guid) { _characterNameDataMap.erase(guid); }
 
         uint32 GetCleaningFlags() const { return m_CleaningFlags; }

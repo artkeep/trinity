@@ -82,7 +82,7 @@ Object::Object() : m_PackGUID(sizeof(uint64)+1)
 WorldObject::~WorldObject()
 {
     // this may happen because there are many !create/delete
-    if (m_isWorldObject && m_currMap)
+    if (IsWorldObject() && m_currMap)
     {
         if (GetTypeId() == TYPEID_CORPSE)
         {
@@ -780,13 +780,13 @@ void Object::ClearUpdateMask(bool remove)
     }
 }
 
-void Object::BuildFieldsUpdate(Player* pl, UpdateDataMapType& data_map) const
+void Object::BuildFieldsUpdate(Player* player, UpdateDataMapType& data_map) const
 {
-    UpdateDataMapType::iterator iter = data_map.find(pl);
+    UpdateDataMapType::iterator iter = data_map.find(player);
 
     if (iter == data_map.end())
     {
-        std::pair<UpdateDataMapType::iterator, bool> p = data_map.insert(UpdateDataMapType::value_type(pl, UpdateData()));
+        std::pair<UpdateDataMapType::iterator, bool> p = data_map.insert(UpdateDataMapType::value_type(player, UpdateData()));
         ASSERT(p.second);
         iter = p.first;
     }
@@ -1221,8 +1221,8 @@ void MovementInfo::OutDebug()
         sLog->outString("splineElevation: %f", splineElevation);
 }
 
-WorldObject::WorldObject(): WorldLocation(),
-m_isWorldObject(false), m_name(""), m_isActive(false), m_zoneScript(NULL),
+WorldObject::WorldObject(bool isWorldObject): WorldLocation(),
+m_isWorldObject(isWorldObject), m_name(""), m_isActive(false), m_zoneScript(NULL),
 m_transport(NULL), m_currMap(NULL), m_InstanceId(0),
 m_phaseMask(PHASEMASK_NORMAL), m_notifyflags(0), m_executed_notifies(0)
 {
@@ -1236,6 +1236,17 @@ void WorldObject::SetWorldObject(bool on)
         return;
 
     GetMap()->AddObjectToSwitchList(this, on);
+}
+
+bool WorldObject::IsWorldObject() const
+{
+    if (m_isWorldObject)
+        return true;
+
+    if (ToCreature() && ToCreature()->m_isTempWorldObject)
+        return true;
+
+    return false;
 }
 
 void WorldObject::setActive(bool on)
@@ -1273,6 +1284,8 @@ void WorldObject::setActive(bool on)
 
 void WorldObject::CleanupsBeforeDelete(bool /*finalCleanup*/)
 {
+    if (IsInWorld())
+        RemoveFromWorld();
 }
 
 void WorldObject::_Create(uint32 guidlow, HighGuid guidhigh, uint32 phaseMask)
@@ -1650,7 +1663,7 @@ bool WorldObject::canSeeOrDetect(WorldObject const* obj, bool ignoreStealth, boo
     bool corpseVisibility = false;
     if (distanceCheck)
     {
-        if (const Player* thisPlayer = ToPlayer())
+        if (Player const* thisPlayer = ToPlayer())
         {
             if (thisPlayer->isDead() && thisPlayer->GetHealth() > 0 && // Cheap way to check for ghost state
                 !(obj->m_serverSideVisibility.GetValue(SERVERSIDE_VISIBILITY_GHOST) & m_serverSideVisibility.GetValue(SERVERSIDE_VISIBILITY_GHOST) & GHOST_VISIBILITY_GHOST))
@@ -1683,9 +1696,9 @@ bool WorldObject::canSeeOrDetect(WorldObject const* obj, bool ignoreStealth, boo
     if (!corpseVisibility && !(obj->m_serverSideVisibility.GetValue(SERVERSIDE_VISIBILITY_GHOST) & m_serverSideVisibilityDetect.GetValue(SERVERSIDE_VISIBILITY_GHOST)))
     {
         // Alive players can see dead players in some cases, but other objects can't do that
-        if (const Player* thisPlayer = ToPlayer())
+        if (Player const* thisPlayer = ToPlayer())
         {
-            if (const Player* objPlayer = obj->ToPlayer())
+            if (Player const* objPlayer = obj->ToPlayer())
             {
                 if (thisPlayer->GetTeam() != objPlayer->GetTeam() || !thisPlayer->IsGroupVisibleFor(objPlayer))
                     return false;
@@ -2026,7 +2039,6 @@ void WorldObject::SendMessageToSet(WorldPacket* data, bool self)
     SendMessageToSetInRange(data, GetVisibilityRange(), self);
 }
 
-
 void WorldObject::SendMessageToSetInRange(WorldPacket* data, float dist, bool /*self*/)
 {
     Trinity::MessageDistDeliverer notifier(this, data, dist);
@@ -2060,7 +2072,7 @@ void WorldObject::SetMap(Map* map)
     m_currMap = map;
     m_mapId = map->GetId();
     m_InstanceId = map->GetInstanceId();
-    if (m_isWorldObject)
+    if (IsWorldObject())
         m_currMap->AddWorldObject(this);
 }
 
@@ -2068,7 +2080,7 @@ void WorldObject::ResetMap()
 {
     ASSERT(m_currMap);
     ASSERT(!IsInWorld());
-    if (m_isWorldObject)
+    if (IsWorldObject())
         m_currMap->RemoveWorldObject(this);
     m_currMap = NULL;
     //maybe not for corpse
@@ -2158,10 +2170,10 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
     switch (mask)
     {
         case UNIT_MASK_SUMMON:
-            summon = new TempSummon(properties, summoner);
+            summon = new TempSummon(properties, summoner, false);
             break;
         case UNIT_MASK_GUARDIAN:
-            summon = new Guardian(properties, summoner);
+            summon = new Guardian(properties, summoner, false);
             break;
         case UNIT_MASK_PUPPET:
             summon = new Puppet(properties, summoner);
@@ -2170,7 +2182,7 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
             summon = new Totem(properties, summoner);
             break;
         case UNIT_MASK_MINION:
-            summon = new Minion(properties, summoner);
+            summon = new Minion(properties, summoner, false);
             break;
         default:
             return NULL;
@@ -2733,19 +2745,19 @@ void WorldObject::DestroyForNearbyPlayers()
     VisitNearbyWorldObject(GetVisibilityRange(), searcher);
     for (std::list<Player*>::const_iterator iter = targets.begin(); iter != targets.end(); ++iter)
     {
-        Player* plr = (*iter);
+        Player* player = (*iter);
 
-        if (plr == this)
+        if (player == this)
             continue;
 
-        if (!plr->HaveAtClient(this))
+        if (!player->HaveAtClient(this))
             continue;
 
-        if (isType(TYPEMASK_UNIT) && ((Unit*)this)->GetCharmerGUID() == plr->GetGUID()) // TODO: this is for puppet
+        if (isType(TYPEMASK_UNIT) && ((Unit*)this)->GetCharmerGUID() == player->GetGUID()) // TODO: this is for puppet
             continue;
 
-        DestroyForPlayer(plr);
-        plr->m_clientGUIDs.erase(GetGUID());
+        DestroyForPlayer(player);
+        player->m_clientGUIDs.erase(GetGUID());
     }
 }
 
@@ -2813,13 +2825,13 @@ struct WorldObjectChangeAccumulator
         }
     }
 
-    void BuildPacket(Player* plr)
+    void BuildPacket(Player* player)
     {
         // Only send update once to a player
-        if (plr_list.find(plr->GetGUID()) == plr_list.end() && plr->HaveAtClient(&i_object))
+        if (plr_list.find(player->GetGUID()) == plr_list.end() && player->HaveAtClient(&i_object))
         {
-            i_object.BuildFieldsUpdate(plr, i_updateDatas);
-            plr_list.insert(plr->GetGUID());
+            i_object.BuildFieldsUpdate(player, i_updateDatas);
+            plr_list.insert(player->GetGUID());
         }
     }
 

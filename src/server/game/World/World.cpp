@@ -1435,7 +1435,7 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading pet default spells additional to levelup spells...");
     sSpellMgr->LoadPetDefaultSpells();
 
-    sLog->outString("Loading Creature Template Addon Data...");
+    sLog->outString("Loading Creature Addon Data...");
     sObjectMgr->LoadCreatureAddons();                            // must be after LoadCreatureTemplates() and LoadCreatures()
 
     sLog->outString("Loading Creature Respawn Data...");         // must be after PackInstances()
@@ -2750,7 +2750,10 @@ void World::InitRandomBGResetTime()
 void World::ResetDailyQuests()
 {
     sLog->outDetail("Daily quests reset for all characters.");
-    CharacterDatabase.Execute("DELETE FROM character_queststatus_daily");
+
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_QUEST_STATUS_DAILY);
+    CharacterDatabase.Execute(stmt);
+
     for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         if (itr->second->GetPlayer())
             itr->second->GetPlayer()->ResetDailyQuestStatus();
@@ -2955,7 +2958,7 @@ void World::LoadCharacterNameData()
     sLog->outString("Loaded name data for %u characters", count);
 }
 
-void World::AddCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race, uint8 playerClass)
+void World::AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass)
 {
     CharacterNameData& data = _characterNameDataMap[guid];
     data.m_name = name;
@@ -2964,18 +2967,22 @@ void World::AddCharacterNameData(uint32 guid, const std::string& name, uint8 gen
     data.m_class = playerClass;
 }
 
-void World::UpdateCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race)
+void World::UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 gender /*= GENDER_NONE*/, uint8 race /*= RACE_NONE*/)
 {
     std::map<uint32, CharacterNameData>::iterator itr = _characterNameDataMap.find(guid);
     if (itr == _characterNameDataMap.end())
         return;
+
     itr->second.m_name = name;
-    itr->second.m_gender = gender;
-    if(race != RACE_NONE)
+
+    if (gender != GENDER_NONE)
+        itr->second.m_gender = gender;
+
+    if (race != RACE_NONE)
         itr->second.m_race = race;
 }
 
-const CharacterNameData* World::GetCharacterNameData(uint32 guid) const
+CharacterNameData const* World::GetCharacterNameData(uint32 guid) const
 {
     std::map<uint32, CharacterNameData>::const_iterator itr = _characterNameDataMap.find(guid);
     if (itr != _characterNameDataMap.end())

@@ -44,6 +44,7 @@ void ObjectGridEvacuator::Visit(CreatureMapType &m)
 }
 
 // for loading world object at grid loading (Corpses)
+//TODO: to implement npc on transport, also need to load npcs at grid loading
 class ObjectWorldLoader
 {
     public:
@@ -77,7 +78,7 @@ template<> void ObjectGridLoader::SetObjectCell(Creature* obj, CellCoord const& 
 template <class T>
 void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* map, T *obj)
 {
-    obj->GetGridRef().link(&m, obj);
+    obj->AddToGrid(m);
     ObjectGridLoader::SetObjectCell(obj, cell);
     obj->AddToWorld();
     if (obj->isActiveObject())
@@ -126,44 +127,35 @@ void LoadHelper(CellCorpseSet const& cell_corpses, CellCoord &cell, CorpseMapTyp
         // in that case map == currMap
         obj->SetMap(map);
 
+        if (obj->IsInGrid())
+        {
+            obj->AddToWorld();
+            continue;
+        }
+
         AddObjectHelper(cell, m, count, map, obj);
     }
 }
 
 void ObjectGridLoader::Visit(GameObjectMapType &m)
 {
-    uint32 x = (i_cell.GridX()*MAX_NUMBER_OF_CELLS) + i_cell.CellX();
-    uint32 y = (i_cell.GridY()*MAX_NUMBER_OF_CELLS) + i_cell.CellY();
-    CellCoord cellCoord(x, y);
-    uint32 cell_id = (cellCoord.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cellCoord.x_coord;
-
-    CellObjectGuids const& cell_guids = sObjectMgr->GetCellObjectGuids(i_map->GetId(), i_map->GetSpawnMode(), cell_id);
-
+    CellCoord cellCoord = i_cell.GetCellCoord();
+    CellObjectGuids const& cell_guids = sObjectMgr->GetCellObjectGuids(i_map->GetId(), i_map->GetSpawnMode(), cellCoord.GetId());
     LoadHelper(cell_guids.gameobjects, cellCoord, m, i_gameObjects, i_map);
 }
 
-void
-ObjectGridLoader::Visit(CreatureMapType &m)
+void ObjectGridLoader::Visit(CreatureMapType &m)
 {
-    uint32 x = (i_cell.GridX()*MAX_NUMBER_OF_CELLS) + i_cell.CellX();
-    uint32 y = (i_cell.GridY()*MAX_NUMBER_OF_CELLS) + i_cell.CellY();
-    CellCoord cellCoord(x, y);
-    uint32 cell_id = (cellCoord.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cellCoord.x_coord;
-
-    CellObjectGuids const& cell_guids = sObjectMgr->GetCellObjectGuids(i_map->GetId(), i_map->GetSpawnMode(), cell_id);
-
+    CellCoord cellCoord = i_cell.GetCellCoord();
+    CellObjectGuids const& cell_guids = sObjectMgr->GetCellObjectGuids(i_map->GetId(), i_map->GetSpawnMode(), cellCoord.GetId());
     LoadHelper(cell_guids.creatures, cellCoord, m, i_creatures, i_map);
 }
 
 void ObjectWorldLoader::Visit(CorpseMapType &m)
 {
-    uint32 x = (i_cell.GridX()*MAX_NUMBER_OF_CELLS) + i_cell.CellX();
-    uint32 y = (i_cell.GridY()*MAX_NUMBER_OF_CELLS) + i_cell.CellY();
-    CellCoord cellCoord(x, y);
-    uint32 cell_id = (cellCoord.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cellCoord.x_coord;
-
+    CellCoord cellCoord = i_cell.GetCellCoord();
     // corpses are always added to spawn mode 0 and they are spawned by their instance id
-    CellObjectGuids const& cell_guids = sObjectMgr->GetCellObjectGuids(i_map->GetId(), 0, cell_id);
+    CellObjectGuids const& cell_guids = sObjectMgr->GetCellObjectGuids(i_map->GetId(), 0, cellCoord.GetId());
     LoadHelper(cell_guids.corpses, cellCoord, m, i_corpses, i_map);
 }
 
@@ -205,6 +197,11 @@ void ObjectGridUnloader::Visit(GridRefManager<T> &m)
         // if option set then object already saved at this moment
         if (!sWorld->getBoolConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATELY))
             obj->SaveRespawnTime();
+        //Some creatures may summon other temp summons in CleanupsBeforeDelete()
+        //So we need this even after cleaner (maybe we can remove cleaner)
+        //Example: Flame Leviathan Turret 33139 is summoned when a creature is deleted
+        //TODO: Check if that script has the correct logic. Do we really need to summons something before deleting?
+        obj->CleanupsBeforeDelete();
         ///- object will get delinked from the manager when deleted
         delete obj;
     }
@@ -225,23 +222,18 @@ void ObjectGridStoper::Visit(CreatureMapType &m)
     }
 }
 
-void ObjectGridCleaner::Visit(CreatureMapType &m)
-{
-    for (CreatureMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
-        iter->getSource()->CleanupsBeforeDelete();
-}
-
 template<class T>
 void ObjectGridCleaner::Visit(GridRefManager<T> &m)
 {
     for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-        iter->getSource()->RemoveFromWorld();
+        iter->getSource()->CleanupsBeforeDelete();
 }
 
 template void ObjectGridUnloader::Visit(CreatureMapType &);
 template void ObjectGridUnloader::Visit(GameObjectMapType &);
 template void ObjectGridUnloader::Visit(DynamicObjectMapType &);
 template void ObjectGridUnloader::Visit(CorpseMapType &);
+template void ObjectGridCleaner::Visit(CreatureMapType &);
 template void ObjectGridCleaner::Visit<GameObject>(GameObjectMapType &);
 template void ObjectGridCleaner::Visit<DynamicObject>(DynamicObjectMapType &);
 template void ObjectGridCleaner::Visit<Corpse>(CorpseMapType &);

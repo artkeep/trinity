@@ -65,7 +65,7 @@ enum SpellAuraInterruptFlags
     AURA_INTERRUPT_FLAG_MOVE                = 0x00000008,   // 3    removed by any movement
     AURA_INTERRUPT_FLAG_TURNING             = 0x00000010,   // 4    removed by any turning
     AURA_INTERRUPT_FLAG_JUMP                = 0x00000020,   // 5    removed by entering combat
-    AURA_INTERRUPT_FLAG_NOT_MOUNTED         = 0x00000040,   // 6    removed by unmounting
+    AURA_INTERRUPT_FLAG_NOT_MOUNTED         = 0x00000040,   // 6    removed by dismounting
     AURA_INTERRUPT_FLAG_NOT_ABOVEWATER      = 0x00000080,   // 7    removed by entering water
     AURA_INTERRUPT_FLAG_NOT_UNDERWATER      = 0x00000100,   // 8    removed by leaving water
     AURA_INTERRUPT_FLAG_NOT_SHEATHED        = 0x00000200,   // 9    removed by unsheathing
@@ -1311,7 +1311,7 @@ class Unit : public WorldObject
         void CombatStopWithPets(bool includingCast = false);
         void StopAttackFaction(uint32 faction_id);
         Unit* SelectNearbyTarget(float dist = NOMINAL_MELEE_RANGE) const;
-        void SendMeleeAttackStop(Unit* victim);
+        void SendMeleeAttackStop(Unit* victim = NULL);
         void SendMeleeAttackStart(Unit* pVictim);
 
         void AddUnitState(uint32 f) { m_state |= f; }
@@ -1347,6 +1347,7 @@ class Unit : public WorldObject
         void SetArmor(int32 val) { SetResistance(SPELL_SCHOOL_NORMAL, val); }
 
         uint32 GetResistance(SpellSchools school) const { return GetUInt32Value(UNIT_FIELD_RESISTANCES+school); }
+        uint32 GetResistance(SpellSchoolMask mask) const;
         void SetResistance(SpellSchools school, int32 val) { SetStatInt32Value(UNIT_FIELD_RESISTANCES+school, val); }
 
         uint32 GetHealth()    const { return GetUInt32Value(UNIT_FIELD_HEALTH); }
@@ -1441,7 +1442,7 @@ class Unit : public WorldObject
         bool IsMounted() const { return HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT); }
         uint32 GetMountID() const { return GetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID); }
         void Mount(uint32 mount, uint32 vehicleId = 0, uint32 creatureEntry = 0);
-        void Unmount();
+        void Dismount();
 
         uint16 GetMaxSkillValueForLevel(Unit const* target = NULL) const { return (target ? getLevelForTarget(target) : getLevel()) * 5; }
         void DealDamageMods(Unit* pVictim, uint32 &damage, uint32* absorb);
@@ -1518,7 +1519,7 @@ class Unit : public WorldObject
             {
                 value = soft_cap + ((value - soft_cap) / 2);
             }
-        
+
             return value;
         }
         uint32 GetUnitMeleeSkill(Unit const* target = NULL) const { return (target ? getLevelForTarget(target) : getLevel()) * 5; }
@@ -1731,8 +1732,8 @@ class Unit : public WorldObject
         //Player* GetMoverSource() const;
         Player* m_movedPlayer;
         SharedVisionList const& GetSharedVisionList() { return m_sharedVision; }
-        void AddPlayerToVision(Player* plr);
-        void RemovePlayerFromVision(Player* plr);
+        void AddPlayerToVision(Player* player);
+        void RemovePlayerFromVision(Player* player);
         bool HasSharedVision() const { return !m_sharedVision.empty(); }
         void RemoveBindSightAuras();
         void RemoveCharmAuras();
@@ -2233,7 +2234,7 @@ class Unit : public WorldObject
         }
 
     protected:
-        explicit Unit ();
+        explicit Unit (bool isWorldObject);
 
         UnitAI* i_AI, *i_disabledAI;
 

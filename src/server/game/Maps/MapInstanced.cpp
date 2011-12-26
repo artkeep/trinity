@@ -110,7 +110,7 @@ void MapInstanced::UnloadAll()
 - create the instance if it's not created already
 - the player is not actually added to the instance (only in InstanceMap::Add)
 */
-Map* MapInstanced::CreateInstance(const uint32 mapId, Player* player)
+Map* MapInstanced::CreateInstanceForPlayer(const uint32 mapId, Player* player)
 {
     if (GetId() != mapId || !player)
         return NULL;
@@ -124,7 +124,7 @@ Map* MapInstanced::CreateInstance(const uint32 mapId, Player* player)
         // the instance id is set in battlegroundid
         NewInstanceId = player->GetBattlegroundId();
         if (!NewInstanceId) return NULL;
-        map = _FindMap(NewInstanceId);
+        map = FindInstanceMap(NewInstanceId);
         if (!map)
             if (Battleground* NewBattleground = player->GetBattleground())
                 map = CreateBattleground(NewInstanceId, NewBattleground);
@@ -152,7 +152,7 @@ Map* MapInstanced::CreateInstance(const uint32 mapId, Player* player)
         {
             // solo/perm/group
             NewInstanceId = pSave->GetInstanceId();
-            map = _FindMap(NewInstanceId);
+            map = FindInstanceMap(NewInstanceId);
             // it is possible that the save exists but the map doesn't
             if (!map)
                 map = CreateInstance(NewInstanceId, pSave, pSave->GetDifficulty());
@@ -164,7 +164,11 @@ Map* MapInstanced::CreateInstance(const uint32 mapId, Player* player)
             NewInstanceId = sMapMgr->GenerateInstanceId();
 
             Difficulty diff = player->GetGroup() ? player->GetGroup()->GetDifficulty(IsRaid()) : player->GetDifficulty(IsRaid());
-            map = CreateInstance(NewInstanceId, NULL, diff);
+            //Seems it is now possible, but I do not know if it should be allowed
+            //ASSERT(!FindInstanceMap(NewInstanceId));
+            map = FindInstanceMap(NewInstanceId);
+            if (!map)
+                map = CreateInstance(NewInstanceId, NULL, diff);
         }
     }
 
@@ -174,7 +178,7 @@ Map* MapInstanced::CreateInstance(const uint32 mapId, Player* player)
 InstanceMap* MapInstanced::CreateInstance(uint32 InstanceId, InstanceSave* save, Difficulty difficulty)
 {
     // load/create a map
-    ACE_GUARD_RETURN(ACE_Thread_Mutex, Guard, Lock, NULL);
+    TRINITY_GUARD(ACE_Thread_Mutex, Lock);
 
     // make sure we have a valid map id
     const MapEntry* entry = sMapStore.LookupEntry(GetId());
@@ -208,7 +212,7 @@ InstanceMap* MapInstanced::CreateInstance(uint32 InstanceId, InstanceSave* save,
 BattlegroundMap* MapInstanced::CreateBattleground(uint32 InstanceId, Battleground* bg)
 {
     // load/create a map
-    ACE_GUARD_RETURN(ACE_Thread_Mutex, Guard, Lock, NULL);
+    TRINITY_GUARD(ACE_Thread_Mutex, Lock);
 
     sLog->outDebug(LOG_FILTER_MAPS, "MapInstanced::CreateBattleground: map bg %d for %d created.", InstanceId, GetId());
 

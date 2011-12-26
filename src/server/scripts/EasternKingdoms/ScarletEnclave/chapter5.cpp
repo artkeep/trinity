@@ -497,9 +497,9 @@ public:
             SetEscortPaused(bOnHold);
         }
 
-        void WaypointReached(uint32 i)
+        void WaypointReached(uint32 wpId)
         {
-            switch (i)
+            switch (wpId)
             {
                 case 0:
                     me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
@@ -526,13 +526,13 @@ public:
                     NPCChangeTarget(uiOrbazGUID);
                     NPCChangeTarget(uiThassarianGUID);
 
-                    me->Unmount();
+                    me->Dismount();
                     me->CastSpell(me, SPELL_THE_MIGHT_OF_MOGRAINE, true); // need to fix, on player only
 
                     if (Creature* temp = Unit::GetCreature(*me, uiKoltiraGUID))
-                        temp->Unmount();
+                        temp->Dismount();
                     if (Creature* temp = Unit::GetCreature(*me, uiThassarianGUID))
-                        temp->Unmount();
+                        temp->Dismount();
 
                     bIsBattle = true;
                     break;
@@ -1173,8 +1173,8 @@ public:
                                 temp->SetSpeed(MOVE_RUN, 3.0f); // workarounds, make Tirion still running
                                 temp->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
                                 temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[2].x, LightofDawnLoc[2].y, LightofDawnLoc[2].z);
-                                if (Creature* temp = Unit::GetCreature(*me, uiLichKingGUID))
-                                    temp->Relocate(LightofDawnLoc[28].x, LightofDawnLoc[28].y, LightofDawnLoc[28].z); // workarounds, he should kick back by Tirion, but here we relocate him
+                                if (Creature* lktemp = Unit::GetCreature(*me, uiLichKingGUID))
+                                    lktemp->Relocate(LightofDawnLoc[28].x, LightofDawnLoc[28].y, LightofDawnLoc[28].z); // workarounds, he should kick back by Tirion, but here we relocate him
                             }
                             JumpToNextStep(1500);
                             break;

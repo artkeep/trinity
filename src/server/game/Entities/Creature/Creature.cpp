@@ -137,7 +137,7 @@ bool ForcedDespawnDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
     return true;
 }
 
-Creature::Creature(): Unit(), MapCreature(),
+Creature::Creature(bool isWorldObject): Unit(isWorldObject), MapCreature(),
 lootForPickPocketed(false), lootForBody(false), m_groupLootTimer(0), lootingGroupLowGUID(0),
 m_PlayerDamageReq(0), m_lootMoney(0), m_lootRecipient(0), m_lootRecipientGroup(0), m_corpseRemoveTime(0), m_respawnTime(0),
 m_respawnDelay(300), m_corpseDelay(60), m_respawnradius(0.0f), m_reactState(REACT_AGGRESSIVE),
@@ -160,6 +160,7 @@ m_creatureInfo(NULL), m_creatureData(NULL), m_formation(NULL)
 
     ResetLootMode(); // restore default loot mode
     TriggerJustRespawned = false;
+    m_isTempWorldObject = false;
 }
 
 Creature::~Creature()
@@ -799,15 +800,10 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
     LastUsedScriptID = GetCreatureInfo()->ScriptID;
 
     // TODO: Replace with spell, handle from DB
-    if (isSpiritHealer())
+    if (isSpiritHealer() || isSpiritGuide())
     {
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
         m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
-    }
-    else if (isSpiritGuide())
-    {
-        m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST | GHOST_VISIBILITY_ALIVE);
-        m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST | GHOST_VISIBILITY_ALIVE);
     }
 
     if (Entry == VISUAL_WAYPOINT)
@@ -1262,7 +1258,7 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 vehId, uint3
     return true;
 }
 
-bool Creature::LoadFromDB(uint32 guid, Map* map)
+bool Creature::LoadCreatureFromDB(uint32 guid, Map* map, bool addToMap)
 {
     CreatureData const* data = sObjectMgr->GetCreatureData(guid);
 
@@ -1331,6 +1327,8 @@ bool Creature::LoadFromDB(uint32 guid, Map* map)
 
     m_creatureData = data;
 
+    if (addToMap && !GetMap()->AddToMap(this))
+        return false;
     return true;
 }
 
@@ -1454,14 +1452,14 @@ bool Creature::canStartAttack(Unit const* who, bool force) const
     return IsWithinLOSInMap(who);
 }
 
-float Creature::GetAttackDistance(Unit const* pl) const
+float Creature::GetAttackDistance(Unit const* player) const
 {
     float aggroRate = sWorld->getRate(RATE_CREATURE_AGGRO);
     if (aggroRate == 0)
         return 0.0f;
 
-    uint32 playerlevel   = pl->getLevelForTarget(this);
-    uint32 creaturelevel = getLevelForTarget(pl);
+    uint32 playerlevel   = player->getLevelForTarget(this);
+    uint32 creaturelevel = getLevelForTarget(player);
 
     int32 leveldif       = int32(playerlevel) - int32(creaturelevel);
 
@@ -1482,7 +1480,7 @@ float Creature::GetAttackDistance(Unit const* pl) const
         RetDistance += GetTotalAuraModifier(SPELL_AURA_MOD_DETECT_RANGE);
 
         // detected range auras
-        RetDistance += pl->GetTotalAuraModifier(SPELL_AURA_MOD_DETECTED_RANGE);
+        RetDistance += player->GetTotalAuraModifier(SPELL_AURA_MOD_DETECTED_RANGE);
     }
 
     // "Minimum Aggro Radius for a mob seems to be combat range (5 yards)"

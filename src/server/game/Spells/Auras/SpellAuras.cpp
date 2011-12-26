@@ -587,7 +587,14 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
         else
         {
             // owner has to be in world, or effect has to be applied to self
-            ASSERT((!GetOwner()->IsInWorld() && GetOwner() == itr->first) || GetOwner()->IsInMap(itr->first));
+            if (!GetOwner()->IsSelfOrInSameMap(itr->first))
+            {
+                //TODO: There is a crash caused by shadowfiend load addon
+                sLog->outCrash("Aura %u: Owner %s (map %u) is not in the same map as target %s (map %u).", GetSpellInfo()->Id,
+                    GetOwner()->GetName(), GetOwner()->IsInWorld() ? GetOwner()->GetMap()->GetId() : uint32(-1),
+                    itr->first->GetName(), itr->first->IsInWorld() ? itr->first->GetMap()->GetId() : uint32(-1));
+                ASSERT(false);
+            }
             itr->first->_CreateAuraApplication(this, itr->second);
             ++itr;
         }
@@ -1410,6 +1417,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         if (removeMode != AURA_REMOVE_BY_EXPIRE)
                             break;
                         target->CastSpell(target, 32612, true, NULL, GetEffect(1));
+                        target->CombatStop();
                         break;
                     case 74396: // Fingers of Frost
                         // Remove the IGNORE_AURASTATE aura

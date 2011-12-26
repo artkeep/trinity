@@ -321,35 +321,12 @@ class boss_freya : public CreatureScript
                 DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2), me);
             }
 
-            void DamageTaken(Unit* /*who*/, uint32& damage)
+            void DamageTaken(Unit* who, uint32& damage)
             {
                 if (damage >= me->GetHealth())
                 {
                     damage = 0;
-                    DoScriptText(SAY_DEATH, me);
-                    me->SetReactState(REACT_PASSIVE);
-                    _JustDied();
-                    me->RemoveAllAuras();
-                    me->AttackStop();
-                    me->setFaction(35);
-                    me->DeleteThreatList();
-                    me->CombatStop(true);
-                    me->DespawnOrUnsummon(7500);
-                    me->CastSpell(me, SPELL_KNOCK_ON_WOOD_CREDIT, true);
-
-                    Creature* Elder[3];
-                    for (uint8 n = 0; n < 3; ++n)
-                    {
-                        Elder[n] = ObjectAccessor::GetCreature(*me, instance->GetData64(BOSS_BRIGHTLEAF + n));
-                        if (Elder[n] && Elder[n]->isAlive())
-                        {
-                            Elder[n]->RemoveAllAuras();
-                            Elder[n]->AttackStop();
-                            Elder[n]->CombatStop(true);
-                            Elder[n]->DeleteThreatList();
-                            Elder[n]->GetAI()->DoAction(ACTION_ELDER_FREYA_KILLED);
-                        }
-                    }
+                    JustDied(who);
                 }
             }
 
@@ -549,7 +526,7 @@ class boss_freya : public CreatureScript
             {
                 uint8 n = 0;
 
-                // Handling recieved data
+                // Handling received data
                 for (uint8 i = 0; i < 5; ++i)                                    // We have created "instances" for keeping informations about last 6 death lashers - needed because of respawning
                 {
                     deforestation[i][0] = deforestation[(i + 1)][0];             // Time
@@ -613,7 +590,7 @@ class boss_freya : public CreatureScript
                 waveCount++;
             }
 
-            void JustDied(Unit* who)
+            void JustDied(Unit* /*who*/)
             {
                 //! Freya's chest is dynamically spawned on death by different spells.
                 const uint32 summonSpell[2][4] = 
@@ -625,7 +602,30 @@ class boss_freya : public CreatureScript
 
                 me->CastSpell((Unit*)NULL, summonSpell[me->GetMap()->GetDifficulty()][elderCount], true);
 
+                DoScriptText(SAY_DEATH, me);
+                me->SetReactState(REACT_PASSIVE);
                 _JustDied();
+                me->RemoveAllAuras();
+                me->AttackStop();
+                me->setFaction(35);
+                me->DeleteThreatList();
+                me->CombatStop(true);
+                me->DespawnOrUnsummon(7500);
+                me->CastSpell(me, SPELL_KNOCK_ON_WOOD_CREDIT, true);
+
+                Creature* Elder[3];
+                for (uint8 n = 0; n < 3; ++n)
+                {
+                    Elder[n] = ObjectAccessor::GetCreature(*me, instance->GetData64(BOSS_BRIGHTLEAF + n));
+                    if (Elder[n] && Elder[n]->isAlive())
+                    {
+                        Elder[n]->RemoveAllAuras();
+                        Elder[n]->AttackStop();
+                        Elder[n]->CombatStop(true);
+                        Elder[n]->DeleteThreatList();
+                        Elder[n]->GetAI()->DoAction(ACTION_ELDER_FREYA_KILLED);
+                    }
+                }
             }
 
             void JustSummoned(Creature* summoned)

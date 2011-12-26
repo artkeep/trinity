@@ -98,7 +98,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto,
                 return DIMINISHING_CONTROLLED_ROOT;
             // Dragon's Breath
             else if (spellproto->SpellFamilyFlags[0] & 0x800000)
-                return DIMINISHING_DISORIENT;
+                return DIMINISHING_DRAGONS_BREATH;
             break;
         }
         case SPELLFAMILY_WARRIOR:
@@ -169,7 +169,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto,
         }
         case SPELLFAMILY_HUNTER:
         {
-            // Hunter's mark
+            // Hunter's Mark
             if ((spellproto->SpellFamilyFlags[0] & 0x400) && spellproto->SpellIconID == 538)
                 return DIMINISHING_LIMITONLY;
             // Scatter Shot (own diminishing)
@@ -323,20 +323,20 @@ bool IsDiminishingReturnsGroupDurationLimited(DiminishingGroup group)
 {
     switch (group)
     {
-        case DIMINISHING_CONTROLLED_STUN:
-        case DIMINISHING_STUN:
-        case DIMINISHING_ENTRAPMENT:
-        case DIMINISHING_CONTROLLED_ROOT:
-        case DIMINISHING_ROOT:
-        case DIMINISHING_FEAR:
-        case DIMINISHING_MIND_CONTROL:
-        case DIMINISHING_DISORIENT:
-        case DIMINISHING_CYCLONE:
         case DIMINISHING_BANISH:
-        case DIMINISHING_LIMITONLY:
-        case DIMINISHING_OPENING_STUN:
+        case DIMINISHING_CONTROLLED_STUN:
+        case DIMINISHING_CONTROLLED_ROOT:
+        case DIMINISHING_CYCLONE:
+        case DIMINISHING_DISORIENT:
+        case DIMINISHING_ENTRAPMENT:
+        case DIMINISHING_FEAR:
         case DIMINISHING_HORROR:
+        case DIMINISHING_MIND_CONTROL:
+        case DIMINISHING_OPENING_STUN:
+        case DIMINISHING_ROOT:
+        case DIMINISHING_STUN:
         case DIMINISHING_SLEEP:
+        case DIMINISHING_LIMITONLY:
             return true;
         default:
             return false;
@@ -353,7 +353,7 @@ SpellMgr::~SpellMgr()
 }
 
 /// Some checks for spells, to prevent adding deprecated/broken spells for trainers, spell book, etc
-bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* pl, bool msg)
+bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* player, bool msg)
 {
     // not exist
     if (!spellInfo)
@@ -380,8 +380,8 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* pl, bool msg)
                     {
                         if (msg)
                         {
-                            if (pl)
-                                ChatHandler(pl).PSendSysMessage("Craft spell %u not have create item entry.", spellInfo->Id);
+                            if (player)
+                                ChatHandler(player).PSendSysMessage("Craft spell %u not have create item entry.", spellInfo->Id);
                             else
                                 sLog->outErrorDb("Craft spell %u not have create item entry.", spellInfo->Id);
                         }
@@ -394,8 +394,8 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* pl, bool msg)
                 {
                     if (msg)
                     {
-                        if (pl)
-                            ChatHandler(pl).PSendSysMessage("Craft spell %u create not-exist in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Effects[i].ItemType);
+                        if (player)
+                            ChatHandler(player).PSendSysMessage("Craft spell %u create not-exist in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Effects[i].ItemType);
                         else
                             sLog->outErrorDb("Craft spell %u create not-exist in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Effects[i].ItemType);
                     }
@@ -408,12 +408,12 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* pl, bool msg)
             case SPELL_EFFECT_LEARN_SPELL:
             {
                 SpellInfo const* spellInfo2 = sSpellMgr->GetSpellInfo(spellInfo->Effects[i].TriggerSpell);
-                if (!IsSpellValid(spellInfo2, pl, msg))
+                if (!IsSpellValid(spellInfo2, player, msg))
                 {
                     if (msg)
                     {
-                        if (pl)
-                            ChatHandler(pl).PSendSysMessage("Spell %u learn to broken spell %u, and then...", spellInfo->Id, spellInfo->Effects[i].TriggerSpell);
+                        if (player)
+                            ChatHandler(player).PSendSysMessage("Spell %u learn to broken spell %u, and then...", spellInfo->Id, spellInfo->Effects[i].TriggerSpell);
                         else
                             sLog->outErrorDb("Spell %u learn to invalid spell %u, and then...", spellInfo->Id, spellInfo->Effects[i].TriggerSpell);
                     }
@@ -432,8 +432,8 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* pl, bool msg)
             {
                 if (msg)
                 {
-                    if (pl)
-                        ChatHandler(pl).PSendSysMessage("Craft spell %u have not-exist reagent in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagent[j]);
+                    if (player)
+                        ChatHandler(player).PSendSysMessage("Craft spell %u have not-exist reagent in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagent[j]);
                     else
                         sLog->outErrorDb("Craft spell %u have not-exist reagent in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagent[j]);
                 }
@@ -1007,7 +1007,7 @@ SpellThreatEntry const* SpellMgr::GetSpellThreatEntry(uint32 spellID) const
     else
     {
         uint32 firstSpell = GetFirstSpellInChain(spellID);
-        SpellThreatMap::const_iterator itr = mSpellThreatMap.find(firstSpell);
+        itr = mSpellThreatMap.find(firstSpell);
         if (itr != mSpellThreatMap.end())
             return &itr->second;
     }
@@ -2846,6 +2846,13 @@ void SpellMgr::LoadSpellCustomAttr()
             case 48689:
             case 48690:
             case 48691:
+            case 6785: // Ravage
+            case 6787:
+            case 9866:
+            case 9867:
+            case 27005:
+            case 48578:
+            case 48579:
             case 21987: // Lash of Pain
             case 23959: // Test Stab R50
             case 24825: // Test Backstab
@@ -2990,6 +2997,10 @@ void SpellMgr::LoadDbcDataCorrections()
                 break;
             case 31447: // Mark of Kaz'rogal (needs target selection script)
             case 31298: // Sleep (needs target selection script)
+            case 51904: // Summon Ghouls On Scarlet Crusade (this should use conditions table, script for this spell needs to be fixed)
+            case 2895:  // Wrath of Air Totem rank 1 (Aura)
+            case 68933: // Wrath of Air Totem rank 2 (Aura)
+            case 29200: // Purify Helboar Meat
                 spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
                 spellInfo->EffectImplicitTargetB[0] = 0;
                 break;
@@ -3122,7 +3133,8 @@ void SpellMgr::LoadDbcDataCorrections()
             case 50312: // Unholy Frenzy
                 spellInfo->MaxAffectedTargets = 15;
                 break;
-            case 38794: case 33711: //Murmur's Touch
+            case 33711: //Murmur's Touch
+            case 38794:
                 spellInfo->MaxAffectedTargets = 1;
                 spellInfo->EffectTriggerSpell[0] = 33760;
                 break;
@@ -3171,9 +3183,6 @@ void SpellMgr::LoadDbcDataCorrections()
             case 51852: // The Eye of Acherus (no spawn in phase 2 in db)
                 spellInfo->EffectMiscValue[0] |= 1;
                 break;
-            case 51904: // Summon Ghouls On Scarlet Crusade (this should use conditions table, script for this spell needs to be fixed)
-                spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
-                break;
             case 29809: // Desecration Arm - 36 instead of 37 - typo? :/
                 spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_7_YARDS;
                 break;
@@ -3214,6 +3223,9 @@ void SpellMgr::LoadDbcDataCorrections()
             case 64904: // Hymn of Hope
                 spellInfo->EffectApplyAuraName[EFFECT_1] = SPELL_AURA_MOD_INCREASE_ENERGY_PERCENT;
                 break;
+            case 19465: // Improved Stings (Rank 2)
+                spellInfo->EffectImplicitTargetA[EFFECT_2] = TARGET_UNIT_CASTER;
+                break;
             case 30421: // Nether Portal - Perseverence
                 spellInfo->EffectBasePoints[2] += 30000;
                 break;
@@ -3236,7 +3248,7 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->AttributesEx |= SPELL_ATTR1_NO_THREAT;
                 break;
             case 41913: // Parasitic Shadowfiend Passive
-                spellInfo->EffectApplyAuraName[0] = 4; // proc debuff, and summon infinite fiends
+                spellInfo->EffectApplyAuraName[0] = SPELL_AURA_DUMMY; // proc debuff, and summon infinite fiends
                 break;
             case 27892: // To Anchor 1
             case 27928: // To Anchor 1
@@ -3290,11 +3302,6 @@ void SpellMgr::LoadDbcDataCorrections()
             case 6474: // Earthbind Totem (instant pulse)
                 spellInfo->AttributesEx5 |= SPELL_ATTR5_START_PERIODIC_AT_APPLY;
                 break;
-            case 2895:  // Wrath of Air Totem rank 1 (Aura)
-            case 68933: // Wrath of Air Totem rank 2 (Aura)
-                spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_CASTER;
-                spellInfo->EffectImplicitTargetB[0] = 0;
-                break;
             case 52109: // Flametongue Totem rank 1 (Aura)
             case 52110: // Flametongue Totem rank 2 (Aura)
             case 52111: // Flametongue Totem rank 3 (Aura)
@@ -3313,7 +3320,7 @@ void SpellMgr::LoadDbcDataCorrections()
             case 53244: // Marked for Death (Rank 3)
             case 53245: // Marked for Death (Rank 4)
             case 53246: // Marked for Death (Rank 5)
-                spellInfo->EffectSpellClassMask[0] = flag96(423937, 276955137, 2049);
+                spellInfo->EffectSpellClassMask[0] = flag96(0x00067801, 0x10820001, 0x00000801);
                 break;
             case 70728: // Exploit Weakness (needs target selection script)
             case 70840: // Devious Minds (needs target selection script)
@@ -3329,6 +3336,10 @@ void SpellMgr::LoadDbcDataCorrections()
                         // SpellFamilyFlags[0] & 0x00000040 in SPELLFAMILY_DEATHKNIGHT is currently unused (3.3.5a)
                         // this needs research on modifier applying rules, does not seem to be in Attributes fields
                 spellInfo->EffectSpellClassMask[0] = flag96(0x00000040, 0x00000000, 0x00000000);
+                break;
+            case 63163: // Apply Enchanted Bridle (Argent Tournament)
+                spellInfo->EffectDieSides[0] = 0; // was 1, that should probably mean seat 0, but instead it's treated as spell 1
+                spellInfo->EffectBasePoints[0] = 52391; // Ride Vehicle (forces seat 0)
                 break;
             case 19970: // Entangling Roots (Rank 6) -- Nature's Grasp Proc
             case 19971: // Entangling Roots (Rank 5) -- Nature's Grasp Proc

@@ -527,9 +527,11 @@ template<class T>
 class GridObject
 {
     public:
-        GridReference<T> &GetGridRef() { return m_gridRef; }
-    protected:
-        GridReference<T> m_gridRef;
+        bool IsInGrid() const { return _gridRef.isValid(); }
+        void AddToGrid(GridRefManager<T>& m) { ASSERT(!IsInGrid()); _gridRef.link(&m, (T*)this); }
+        void RemoveFromGrid() { ASSERT(IsInGrid()); _gridRef.unlink(); }
+    private:
+        GridReference<T> _gridRef;
 };
 
 template <class T_VALUES, class T_FLAGS, class FLAG_TYPE, uint8 ARRAY_SIZE>
@@ -559,7 +561,7 @@ class FlaggedValuesArray32
 class WorldObject : public Object, public WorldLocation
 {
     protected:
-        explicit WorldObject();
+        explicit WorldObject(bool isWorldObject); //note: here it means if it is in grid object list or world object list
     public:
         virtual ~WorldObject();
 
@@ -664,12 +666,17 @@ class WorldObject : public Object, public WorldLocation
         }
         float GetDistanceZ(const WorldObject* obj) const;
 
+        bool IsSelfOrInSameMap(const WorldObject* obj) const
+        {
+            if (this == obj)
+                return true;
+            return IsInMap(obj);
+        }
         bool IsInMap(const WorldObject* obj) const
         {
             if (obj)
                 return IsInWorld() && obj->IsInWorld() && (GetMap() == obj->GetMap()) && InSamePhase(obj);
-            else
-                return false;
+            return false;
         }
         bool IsWithinDist3d(float x, float y, float z, float dist) const
             { return IsInDist(x, y, z, dist + GetObjectSize()); }
@@ -800,6 +807,9 @@ class WorldObject : public Object, public WorldLocation
         bool isActiveObject() const { return m_isActive; }
         void setActive(bool isActiveObject);
         void SetWorldObject(bool apply);
+        bool IsPermanentWorldObject() const { return m_isWorldObject; }
+        bool IsWorldObject() const;
+
         template<class NOTIFIER> void VisitNearbyObject(float const& radius, NOTIFIER& notifier) const { if (IsInWorld()) GetMap()->VisitAll(GetPositionX(), GetPositionY(), radius, notifier); }
         template<class NOTIFIER> void VisitNearbyGridObject(float const& radius, NOTIFIER& notifier) const { if (IsInWorld()) GetMap()->VisitGrid(GetPositionX(), GetPositionY(), radius, notifier); }
         template<class NOTIFIER> void VisitNearbyWorldObject(float const& radius, NOTIFIER& notifier) const { if (IsInWorld()) GetMap()->VisitWorld(GetPositionX(), GetPositionY(), radius, notifier); }
@@ -812,7 +822,6 @@ class WorldObject : public Object, public WorldLocation
         double rand_chance() const                  { return GetMap()->mtRand.randExc(100.0);}
 #endif
 
-        bool m_isWorldObject;
         uint32  LastUsedScriptID;
 
         // Transports
@@ -830,6 +839,7 @@ class WorldObject : public Object, public WorldLocation
     protected:
         std::string m_name;
         bool m_isActive;
+        const bool m_isWorldObject;
         ZoneScript* m_zoneScript;
 
         // transports

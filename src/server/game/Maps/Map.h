@@ -244,9 +244,9 @@ class Map : public GridRefManager<NGridType>
             return false;
         }
 
-        virtual bool AddToMap(Player*);
-        virtual void RemoveFromMap(Player*, bool);
-        template<class T> void AddToMap(T *);
+        virtual bool AddPlayerToMap(Player*);
+        virtual void RemovePlayerFromMap(Player*, bool);
+        template<class T> bool AddToMap(T *);
         template<class T> void RemoveFromMap(T *, bool);
 
         void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
@@ -296,7 +296,7 @@ class Map : public GridRefManager<NGridType>
 
         // some calls like isInWater should not use vmaps due to processor power
         // can return INVALID_HEIGHT if under z+2 z coord not found height
-        float GetHeight(float x, float y, float z, bool pCheckVMap=true, float maxSearchDist=DEFAULT_HEIGHT_SEARCH) const;
+        float GetHeight(float x, float y, float z, bool checkVMap = true, float maxSearchDist = DEFAULT_HEIGHT_SEARCH) const;
 
         ZLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, LiquidData* data = 0) const;
 
@@ -405,7 +405,7 @@ class Map : public GridRefManager<NGridType>
 
         void RemoveFromActive(Creature* obj);
 
-        template<class T> void SwitchGridContainers(T* obj, bool active);
+        void SwitchGridContainers(Creature* creature, bool toWorldContainer);
         template<class NOTIFIER> void VisitAll(const float &x, const float &y, float radius, NOTIFIER &notifier);
         template<class NOTIFIER> void VisitFirstFound(const float &x, const float &y, float radius, NOTIFIER &notifier);
         template<class NOTIFIER> void VisitWorld(const float &x, const float &y, float radius, NOTIFIER &notifier);
@@ -526,9 +526,6 @@ class Map : public GridRefManager<NGridType>
             void AddToGrid(T* object, Cell const& cell);
 
         template<class T>
-            void RemoveFromGrid(T* object, Cell const& cell);
-
-        template<class T>
             void DeleteFromWorld(T*);
 
         template<class T>
@@ -570,14 +567,14 @@ class InstanceMap : public Map
     public:
         InstanceMap(uint32 id, time_t, uint32 InstanceId, uint8 SpawnMode, Map* _parent);
         ~InstanceMap();
-        bool AddToMap(Player*);
-        void RemoveFromMap(Player*, bool);
+        bool AddPlayerToMap(Player*);
+        void RemovePlayerFromMap(Player*, bool);
         void Update(const uint32);
         void CreateInstanceData(bool load);
         bool Reset(uint8 method);
         uint32 GetScriptId() { return i_script_id; }
         InstanceScript* GetInstanceScript() { return i_data; }
-        void PermBindAllPlayers(Player* player);
+        void PermBindAllPlayers(Player* source);
         void UnloadAll();
         bool CanEnter(Player* player);
         void SendResetWarnings(uint32 timeLeft) const;
@@ -600,8 +597,8 @@ class BattlegroundMap : public Map
         BattlegroundMap(uint32 id, time_t, uint32 InstanceId, Map* _parent, uint8 spawnMode);
         ~BattlegroundMap();
 
-        bool AddToMap(Player*);
-        void RemoveFromMap(Player*, bool);
+        bool AddPlayerToMap(Player*);
+        void RemovePlayerFromMap(Player*, bool);
         bool CanEnter(Player* player);
         void SetUnload();
         //void UnloadAll(bool pForce);

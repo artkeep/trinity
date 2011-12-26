@@ -84,8 +84,8 @@ bool ChatHandler::HandleStartCommand(const char* /*args*/)
 
 bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
 {
-    uint32 PlayersNum = sWorld->GetPlayerCount();
-    uint32 MaxPlayersNum = sWorld->GetMaxPlayerCount();
+    uint32 playersNum = sWorld->GetPlayerCount();
+    uint32 maxPlayersNum = sWorld->GetMaxPlayerCount();
     uint32 activeClientsNum = sWorld->GetActiveSessionCount();
     uint32 queuedClientsNum = sWorld->GetQueuedSessionCount();
     uint32 maxActiveClientsNum = sWorld->GetMaxActiveSessionCount();
@@ -93,10 +93,15 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     std::string uptime = secsToTimeString(sWorld->GetUptime());
     uint32 updateTime = sWorld->GetUpdateTime();
 
-    PSendSysMessage(LANG_CONNECTED_PLAYERS, PlayersNum, MaxPlayersNum, queuedClientsNum, maxQueuedClientsNum);
+    PSendSysMessage(LANG_CONNECTED_PLAYERS, playersNum, maxPlayersNum, queuedClientsNum, maxQueuedClientsNum);
     SendSysMessage(_FULLVERSION);
+    PSendSysMessage(LANG_CONNECTED_PLAYERS, playersNum, maxPlayersNum);
+    PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, uptime.c_str());
-    PSendSysMessage("Update time diff: %u.", updateTime);
+    PSendSysMessage(LANG_UPDATE_DIFF, updateTime);
+    //! Can't use sWorld->ShutdownMsg here in case of console command
+    if (sWorld->IsShuttingDown())
+        PSendSysMessage(LANG_SHUTDOWN_TIMELEFT, secsToTimeString(sWorld->GetShutDownTimeLeft()).c_str());
 
     return true;
 }
@@ -118,7 +123,7 @@ bool ChatHandler::HandleDismountCommand(const char* /*args*/)
         return false;
     }
 
-    m_session->GetPlayer()->Unmount();
+    m_session->GetPlayer()->Dismount();
     m_session->GetPlayer()->RemoveAurasByType(SPELL_AURA_MOUNTED);
     return true;
 }

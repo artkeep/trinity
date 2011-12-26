@@ -537,24 +537,23 @@ void WorldSession::HandleAddFriendOpcode(WorldPacket & recv_data)
     if (!normalizePlayerName(friendName))
         return;
 
-    CharacterDatabase.EscapeString(friendName);            // prevent SQL injection - normal name must not be changed by this call
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: %s asked to add friend : '%s'", GetPlayer()->GetName(), friendName.c_str());
 
-    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: %s asked to add friend : '%s'",
-        GetPlayer()->GetName(), friendName.c_str());
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_GET_GUID_RACE_ACC_BY_NAME);
+
+    stmt->setString(0, friendName);
 
     _addFriendCallback.SetParam(friendNote);
-    _addFriendCallback.SetFutureResult(
-        CharacterDatabase.AsyncPQuery("SELECT guid, race, account FROM characters WHERE name = '%s'", friendName.c_str())
-        );
+    _addFriendCallback.SetFutureResult(CharacterDatabase.AsyncQuery(stmt));
 }
 
-void WorldSession::HandleAddFriendOpcodeCallBack(QueryResult result, std::string friendNote)
+void WorldSession::HandleAddFriendOpcodeCallBack(PreparedQueryResult result, std::string friendNote)
 {
     if (!GetPlayer())
         return;
 
     uint64 friendGuid;
-    uint32 friendAcctid;
+    uint32 friendAccountId;
     uint32 team;
     FriendsResult friendResult;
 
@@ -563,11 +562,13 @@ void WorldSession::HandleAddFriendOpcodeCallBack(QueryResult result, std::string
 
     if (result)
     {
-        friendGuid = MAKE_NEW_GUID((*result)[0].GetUInt32(), 0, HIGHGUID_PLAYER);
-        team = Player::TeamForRace((*result)[1].GetUInt8());
-        friendAcctid = (*result)[2].GetUInt32();
+        Field* fields = result->Fetch();
 
-        if (!AccountMgr::IsPlayerAccount(GetSecurity()) || sWorld->getBoolConfig(CONFIG_ALLOW_GM_FRIEND) || AccountMgr::IsPlayerAccount(AccountMgr::GetSecurity(friendAcctid, realmID)))
+        friendGuid = MAKE_NEW_GUID(fields[0].GetUInt32(), 0, HIGHGUID_PLAYER);
+        team = Player::TeamForRace(fields[1].GetUInt8());
+        friendAccountId = fields[2].GetUInt32();
+
+        if (!AccountMgr::IsPlayerAccount(GetSecurity()) || sWorld->getBoolConfig(CONFIG_ALLOW_GM_FRIEND) || AccountMgr::IsPlayerAccount(AccountMgr::GetSecurity(friendAccountId, realmID)))
         {
             if (friendGuid)
             {
@@ -619,22 +620,24 @@ void WorldSession::HandleAddIgnoreOpcode(WorldPacket & recv_data)
 {
     sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_ADD_IGNORE");
 
-    std::string IgnoreName = GetTrinityString(LANG_FRIEND_IGNORE_UNKNOWN);
+    std::string ignoreName = GetTrinityString(LANG_FRIEND_IGNORE_UNKNOWN);
 
-    recv_data >> IgnoreName;
+    recv_data >> ignoreName;
 
-    if (!normalizePlayerName(IgnoreName))
+    if (!normalizePlayerName(ignoreName))
         return;
 
-    CharacterDatabase.EscapeString(IgnoreName);            // prevent SQL injection - normal name must not be changed by this call
-
     sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: %s asked to Ignore: '%s'",
-        GetPlayer()->GetName(), IgnoreName.c_str());
+        GetPlayer()->GetName(), ignoreName.c_str());
 
-    _addIgnoreCallback = CharacterDatabase.AsyncPQuery("SELECT guid FROM characters WHERE name = '%s'", IgnoreName.c_str());
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_GET_GUID_BY_NAME);
+
+    stmt->setString(0, ignoreName);
+
+    _addIgnoreCallback = CharacterDatabase.AsyncQuery(stmt);
 }
 
-void WorldSession::HandleAddIgnoreOpcodeCallBack(QueryResult result)
+void WorldSession::HandleAddIgnoreOpcodeCallBack(PreparedQueryResult result)
 {
     if (!GetPlayer())
         return;
@@ -712,9 +715,12 @@ void WorldSession::HandleBugOpcode(WorldPacket & recv_data)
     sLog->outDebug(LOG_FILTER_NETWORKIO, "%s", type.c_str());
     sLog->outDebug(LOG_FILTER_NETWORKIO, "%s", content.c_str());
 
-    CharacterDatabase.EscapeString(type);
-    CharacterDatabase.EscapeString(content);
-    CharacterDatabase.PExecute ("INSERT INTO bugreport (type, content) VALUES('%s', '%s')", type.c_str(), content.c_str());
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_ADD_BUG_REPORT);
+
+    stmt->setString(0, type);
+    stmt->setString(1, content);
+
+    CharacterDatabase.Execute(stmt);
 }
 
 void WorldSession::HandleReclaimCorpseOpcode(WorldPacket &recv_data)
@@ -1186,18 +1192,18 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
 
     _player->SetSelection(guid);
 
-    Player* plr = ObjectAccessor::FindPlayer(guid);
-    if (!plr)                                                // wrong player
+    Player* player = ObjectAccessor::FindPlayer(guid);
+    if (!player)                                                // wrong player
         return;
 
     uint32 talent_points = 0x47;
-    uint32 guid_size = plr->GetPackGUID().wpos();
+    uint32 guid_size = player->GetPackGUID().wpos();
     WorldPacket data(SMSG_INSPECT_TALENT, guid_size+4+talent_points);
-    data.append(plr->GetPackGUID());
+    data.append(player->GetPackGUID());
 
     if (sWorld->getBoolConfig(CONFIG_TALENTS_INSPECTING) || _player->isGameMaster())
     {
-        plr->BuildPlayerTalentsInfoData(&data);
+        player->BuildPlayerTalentsInfoData(&data);
     }
     else
     {
@@ -1206,7 +1212,7 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
         data << uint8(0);                                   // talentGroupIndex
     }
 
-    plr->BuildEnchantmentsInfoData(&data);
+    player->BuildEnchantmentsInfoData(&data);
     SendPacket(&data);
 }
 
@@ -1287,15 +1293,15 @@ void WorldSession::HandleWhoisOpcode(WorldPacket& recv_data)
         return;
     }
 
-    Player* plr = sObjectAccessor->FindPlayerByName(charname.c_str());
+    Player* player = sObjectAccessor->FindPlayerByName(charname.c_str());
 
-    if (!plr)
+    if (!player)
     {
         SendNotification(LANG_PLAYER_NOT_EXIST_OR_OFFLINE, charname.c_str());
         return;
     }
 
-    uint32 accid = plr->GetSession()->GetAccountId();
+    uint32 accid = player->GetSession()->GetAccountId();
 
     QueryResult result = LoginDatabase.PQuery("SELECT username, email, last_ip FROM account WHERE id=%u", accid);
     if (!result)
@@ -1603,7 +1609,7 @@ void WorldSession::HandleCancelMountAuraOpcode(WorldPacket & /*recv_data*/)
         return;
     }
 
-    _player->Unmount();
+    _player->Dismount();
     _player->RemoveAurasByType(SPELL_AURA_MOUNTED);
 }
 

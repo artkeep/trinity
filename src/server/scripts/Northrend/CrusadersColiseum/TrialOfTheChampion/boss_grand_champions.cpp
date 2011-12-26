@@ -857,7 +857,7 @@ public:
                             Player* pPlayer = itr->getSource();
                             if (pPlayer && !pPlayer->isGameMaster() && me->IsInRange(pPlayer,5.0f,30.0f,false))
                             {
-                                DoCast(pTarget,SPELL_MULTI_SHOT);
+                                DoCast(pPlayer,SPELL_MULTI_SHOT);
                                 break;
                             }
                         }

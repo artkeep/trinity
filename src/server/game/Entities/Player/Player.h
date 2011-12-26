@@ -395,10 +395,10 @@ enum PlayerFlags
     PLAYER_FLAGS_NO_XP_GAIN        = 0x02000000,
     PLAYER_FLAGS_UNK26             = 0x04000000,
     PLAYER_FLAGS_UNK27             = 0x08000000,
-    PLAYER_FLAGS_UNK28             = 0x01000000,
-    PLAYER_FLAGS_UNK29             = 0x02000000,
-    PLAYER_FLAGS_UNK30             = 0x04000000,
-    PLAYER_FLAGS_UNK31             = 0x08000000,
+    PLAYER_FLAGS_UNK28             = 0x10000000,
+    PLAYER_FLAGS_UNK29             = 0x20000000,
+    PLAYER_FLAGS_UNK30             = 0x40000000,
+    PLAYER_FLAGS_UNK31             = 0x80000000,
 };
 
 #define PLAYER_TITLE_MASK_ALLIANCE_PVP             \
@@ -799,7 +799,7 @@ enum PlayerChatTag
     CHAT_TAG_AFK        = 0x01,
     CHAT_TAG_DND        = 0x02,
     CHAT_TAG_GM         = 0x04,
-    CHAT_TAG_UNK        = 0x08, // Probably battleground commentator
+    CHAT_TAG_COM        = 0x08, // Commentator
     CHAT_TAG_DEV        = 0x10,
 };
 
@@ -1116,13 +1116,10 @@ class Player : public Unit, public GridObject<Player>
         void RemoveFromWorld();
 
         bool TeleportTo(uint32 mapid, float x, float y, float z, float orientation, uint32 options = 0);
-        void TeleportOutOfMap(Map* oldMap);
-
         bool TeleportTo(WorldLocation const &loc, uint32 options = 0)
         {
             return TeleportTo(loc.GetMapId(), loc.GetPositionX(), loc.GetPositionY(), loc.GetPositionZ(), loc.GetOrientation(), options);
         }
-
         bool TeleportToBGEntryPoint();
 
         void SetSummonPoint(uint32 mapid, float x, float y, float z)
@@ -1139,7 +1136,7 @@ class Player : public Unit, public GridObject<Player>
 
         void Update(uint32 time);
 
-        static bool BuildEnumData(QueryResult result, WorldPacket* data);
+        static bool BuildEnumData(PreparedQueryResult result, WorldPacket* data);
 
         void SetInWater(bool apply);
 
@@ -1442,10 +1439,11 @@ class Player : public Unit, public GridObject<Player>
         void IncompleteQuest(uint32 quest_id);
         void RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, bool announce = true);
         void FailQuest(uint32 quest_id);
-        bool SatisfyQuestSkillOrClass(Quest const* qInfo, bool msg);
+        bool SatisfyQuestSkill(Quest const* qInfo, bool msg) const;
         bool SatisfyQuestLevel(Quest const* qInfo, bool msg);
         bool SatisfyQuestLog(bool msg);
         bool SatisfyQuestPreviousQuest(Quest const* qInfo, bool msg);
+        bool SatisfyQuestClass(Quest const* qInfo, bool msg) const;
         bool SatisfyQuestRace(Quest const* qInfo, bool msg);
         bool SatisfyQuestReputation(Quest const* qInfo, bool msg);
         bool SatisfyQuestStatus(Quest const* qInfo, bool msg);
@@ -1525,7 +1523,7 @@ class Player : public Unit, public GridObject<Player>
         void SendQuestReward(Quest const* quest, uint32 XP, Object* questGiver);
         void SendQuestFailed(uint32 questId, InventoryResult reason = EQUIP_ERR_OK);
         void SendQuestTimerFailed(uint32 quest_id);
-        void SendCanTakeQuestResponse(uint32 msg);
+        void SendCanTakeQuestResponse(uint32 msg) const;
         void SendQuestConfirmAccept(Quest const* quest, Player* pReceiver);
         void SendPushToPartyResponse(Player* player, uint32 msg);
         void SendQuestUpdateAddItem(Quest const* quest, uint32 item_idx, uint16 count);
@@ -1562,7 +1560,7 @@ class Player : public Unit, public GridObject<Player>
         /***                   SAVE SYSTEM                     ***/
         /*********************************************************/
 
-        void SaveToDB();
+        void SaveToDB(bool create = false);
         void SaveInventoryAndGoldToDB(SQLTransaction& trans);                    // fast save function for item/money cheating preventing
         void SaveGoldToDB(SQLTransaction& trans);
 
@@ -2333,6 +2331,7 @@ class Player : public Unit, public GridObject<Player>
             m_mover = target;
             m_mover->m_movedPlayer = this;
         }
+
         void SetSeer(WorldObject* target) { m_seer = target; }
         void SetViewpoint(WorldObject* target, bool apply);
         WorldObject* GetViewpoint() const;
@@ -2371,7 +2370,7 @@ class Player : public Unit, public GridObject<Player>
 
         bool IsNeverVisible() const;
 
-        bool IsVisibleGloballyFor(Player* pl) const;
+        bool IsVisibleGloballyFor(Player* player) const;
 
         void SendInitialVisiblePackets(Unit* target);
         void UpdateObjectVisibility(bool forced = true);
@@ -2525,6 +2524,41 @@ class Player : public Unit, public GridObject<Player>
         void ClearWhisperWhiteList() { WhisperList.clear(); }
         void AddWhisperWhiteList(uint64 guid) { WhisperList.push_back(guid); }
         bool IsInWhisperWhiteList(uint64 guid);
+
+        //! Return collision height sent to client
+        float GetCollisionHeight(bool mounted)
+        {
+            if (mounted)
+            {
+                CreatureDisplayInfoEntry const* mountDisplayInfo = sCreatureDisplayInfoStore.LookupEntry(GetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID));
+                if (!mountDisplayInfo)
+                    return GetCollisionHeight(false);
+
+                CreatureModelDataEntry const* mountModelData = sCreatureModelDataStore.LookupEntry(mountDisplayInfo->ModelId);
+                if (!mountModelData)
+                    return GetCollisionHeight(false);
+
+                CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(GetNativeDisplayId());
+                ASSERT(displayInfo);
+                CreatureModelDataEntry const* modelData = sCreatureModelDataStore.LookupEntry(displayInfo->ModelId);
+                ASSERT(modelData);
+
+                float scaleMod = GetFloatValue(OBJECT_FIELD_SCALE_X); // 99% sure about this
+
+                return scaleMod * mountModelData->MountHeight + modelData->CollisionHeight * 0.5f;
+            }
+            else
+            {
+                //! Dismounting case - use basic default model data
+                CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(GetNativeDisplayId());
+                ASSERT(displayInfo);
+                CreatureModelDataEntry const* modelData = sCreatureModelDataStore.LookupEntry(displayInfo->ModelId);
+                ASSERT(modelData);
+
+                return modelData->CollisionHeight;
+            }
+            //! TODO: Need a proper calculation for collision height when mounted
+        }
 
     protected:
         // Gamemaster whisper whitelist

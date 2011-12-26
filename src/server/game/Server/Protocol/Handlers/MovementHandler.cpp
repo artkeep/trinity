@@ -68,11 +68,11 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     if (GetPlayer()->IsInWorld())
     {
         sLog->outCrash("Player (Name %s) is still in world when teleported from map %u to new map %u", GetPlayer()->GetName(), oldMap->GetId(), loc.GetMapId());
-        oldMap->RemoveFromMap(GetPlayer(), false);
+        oldMap->RemovePlayerFromMap(GetPlayer(), false);
     }
 
     // relocate the player to the teleport destination
-    Map* newMap = sMapMgr->CreateMap(loc.GetMapId(), GetPlayer(), 0);
+    Map* newMap = sMapMgr->CreateMap(loc.GetMapId(), GetPlayer());
     // the CanEnter checks are done in TeleporTo but conditions may change
     // while the player is in transit, for example the map may get full
     if (!newMap || !newMap->CanEnter(GetPlayer()))
@@ -88,7 +88,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     GetPlayer()->SetMap(newMap);
 
     GetPlayer()->SendInitialPacketsBeforeAddToMap();
-    if (!GetPlayer()->GetMap()->AddToMap(GetPlayer()))
+    if (!GetPlayer()->GetMap()->AddPlayerToMap(GetPlayer()))
     {
         sLog->outError("WORLD: failed to teleport player %s (%d) to map %d because of unknown reason!", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), loc.GetMapId());
         GetPlayer()->ResetMap();
@@ -299,7 +299,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
         // if we boarded a transport, add us to it
         if (plMover && !plMover->GetTransport())
         {
-            // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
+            // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just dismount if the guid can be found in the transport list
             for (MapManager::TransportSet::const_iterator iter = sMapMgr->m_Transports.begin(); iter != sMapMgr->m_Transports.end(); ++iter)
             {
                 if ((*iter)->GetGUID() == movementInfo.t_guid)
@@ -373,7 +373,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
                 if (plMover->isAlive())
                 {
                     plMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, GetPlayer()->GetMaxHealth());
-                    // pl can be alive if GM/etc
+                    // player can be alive if GM/etc
                     // change the death state to CORPSE to prevent the death timer from
                     // starting in the next player update
                     if (!plMover->isAlive())

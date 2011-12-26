@@ -120,6 +120,7 @@ class NGrid
         void ResetTimeTracker(time_t interval) { i_GridInfo.ResetTimeTracker(interval); }
         void UpdateTimeTracker(time_t diff) { i_GridInfo.UpdateTimeTracker(diff); }
 
+        /*
         template<class SPECIFIC_OBJECT> void AddWorldObject(const uint32 x, const uint32 y, SPECIFIC_OBJECT *obj)
         {
             GetGridType(x, y).AddWorldObject(obj);
@@ -139,6 +140,7 @@ class NGrid
         {
             GetGridType(x, y).RemoveGridObject(obj);
         }
+        */
 
         // Visit all Grids (cells) in NGrid (grid)
         template<class T, class TT>
@@ -156,12 +158,26 @@ class NGrid
             GetGridType(x, y).Visit(visitor);
         }
 
-        unsigned int ActiveObjectsInGrid(void) const
+        //This gets the player count in grid
+        //I disable this to avoid confusion (active object usually means something else)
+        /*
+        uint32 GetActiveObjectCountInGrid() const
         {
-            unsigned int count=0;
-            for (unsigned int x=0; x < N; ++x)
-                for (unsigned int y=0; y < N; ++y)
+            uint32 count = 0;
+            for (uint32 x = 0; x < N; ++x)
+                for (uint32 y = 0; y < N; ++y)
                     count += i_cells[x][y].ActiveObjectsInGrid();
+            return count;
+        }
+        */
+
+        template<class T>
+        uint32 GetWorldObjectCountInNGrid() const
+        {
+            uint32 count = 0;
+            for (uint32 x = 0; x < N; ++x)
+                for (uint32 y = 0; y < N; ++y)
+                    count += i_cells[x][y].template GetWorldObjectCountInGrid<T>();
             return count;
         }
 

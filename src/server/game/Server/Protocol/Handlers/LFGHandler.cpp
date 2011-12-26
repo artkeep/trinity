@@ -205,14 +205,14 @@ void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket& /*recv_data
                 ItemTemplate const* iProto = NULL;
                 for (uint8 i = 0; i < QUEST_REWARDS_COUNT; ++i)
                 {
-                    if (!qRew->RewItemId[i])
+                    if (!qRew->RewardItemId[i])
                         continue;
 
-                    iProto = sObjectMgr->GetItemTemplate(qRew->RewItemId[i]);
+                    iProto = sObjectMgr->GetItemTemplate(qRew->RewardItemId[i]);
 
-                    data << uint32(qRew->RewItemId[i]);
+                    data << uint32(qRew->RewardItemId[i]);
                     data << uint32(iProto ? iProto->DisplayInfoID : 0);
-                    data << uint32(qRew->RewItemCount[i]);
+                    data << uint32(qRew->RewardItemIdCount[i]);
                 }
             }
         }
@@ -419,8 +419,8 @@ void WorldSession::SendLfgRoleCheckUpdate(const LfgRoleCheck* pRoleCheck)
         data << uint64(guid);                              // Guid
         data << uint8(roles > 0);                          // Ready
         data << uint32(roles);                             // Roles
-        Player* plr = ObjectAccessor::FindPlayer(guid);
-        data << uint8(plr ? plr->getLevel() : 0);          // Level
+        Player* player = ObjectAccessor::FindPlayer(guid);
+        data << uint8(player ? player->getLevel() : 0);          // Level
 
         for (LfgRolesMap::const_iterator it = pRoleCheck->roles.begin(); it != pRoleCheck->roles.end(); ++it)
         {
@@ -432,8 +432,8 @@ void WorldSession::SendLfgRoleCheckUpdate(const LfgRoleCheck* pRoleCheck)
             data << uint64(guid);                          // Guid
             data << uint8(roles > 0);                      // Ready
             data << uint32(roles);                         // Roles
-            plr = ObjectAccessor::FindPlayer(guid);
-            data << uint8(plr ? plr->getLevel() : 0);      // Level
+            player = ObjectAccessor::FindPlayer(guid);
+            data << uint8(player ? player->getLevel() : 0);      // Level
         }
     }
     SendPacket(&data);
@@ -495,14 +495,14 @@ void WorldSession::SendLfgPlayerReward(uint32 rdungeonEntry, uint32 sdungeonEntr
         ItemTemplate const* iProto = NULL;
         for (uint8 i = 0; i < QUEST_REWARDS_COUNT; ++i)
         {
-            if (!qRew->RewItemId[i])
+            if (!qRew->RewardItemId[i])
                 continue;
 
-            iProto = sObjectMgr->GetItemTemplate(qRew->RewItemId[i]);
+            iProto = sObjectMgr->GetItemTemplate(qRew->RewardItemId[i]);
 
-            data << uint32(qRew->RewItemId[i]);
+            data << uint32(qRew->RewardItemId[i]);
             data << uint32(iProto ? iProto->DisplayInfoID : 0);
-            data << uint32(qRew->RewItemCount[i]);
+            data << uint32(qRew->RewardItemIdCount[i]);
         }
     }
     SendPacket(&data);

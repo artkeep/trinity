@@ -130,7 +130,7 @@ public:
                 me->SetHealth(0);
                 me->InterruptNonMeleeSpells(true);
                 me->RemoveAllAuras();
-                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                 me->GetMotionMaster()->MovementExpired(false);
                 me->GetMotionMaster()->MoveIdle();
                 me->SetStandState(UNIT_STAND_STATE_DEAD);
@@ -152,7 +152,7 @@ public:
         {
             bIsUndead = true;
             bEventInProgress = false;
-            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             me->UpdateEntry(MOB_INGVAR_UNDEAD);
             me->SetInCombatWith(me->getVictim());
             me->GetMotionMaster()->MoveChase(me->getVictim());
@@ -173,7 +173,11 @@ public:
             DoScriptText(YELL_DEAD_2, me);
 
             if (instance)
+            {
+                // Ingvar has MOB_INGVAR_UNDEAD id in this moment, so we have to update encounter state for his original id
+                instance->UpdateEncounterState(ENCOUNTER_CREDIT_KILL_CREATURE, MOB_INGVAR_HUMAN, me);
                 instance->SetData(DATA_INGVAR_EVENT, DONE);
+            }
         }
 
         void KilledUnit(Unit* /*victim*/)

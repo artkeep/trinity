@@ -109,7 +109,7 @@ class ChatHandler
         uint32    extractSpellIdFromLink(char* text);
         uint64    extractGuidFromLink(char* text);
         GameTele const* extractGameTeleFromLink(char* text);
-        bool GetPlayerGroupAndGUIDByName(const char* cname, Player* &plr, Group* &group, uint64 &guid, bool offline = false);
+        bool GetPlayerGroupAndGUIDByName(const char* cname, Player* &player, Group* &group, uint64 &guid, bool offline = false);
         std::string extractPlayerNameFromLink(char* text);
         // select by arg (name/link) or in-game selection online/offline player
         bool extractPlayerTarget(char* args, Player** player, uint64* player_guid = NULL, std::string* player_name = NULL);
@@ -156,8 +156,8 @@ class ChatHandler
         bool HandleCastTargetCommand(const char *args);
         bool HandleCastDestCommand(const char *args);
 
-        bool HandleCharacterCustomizeCommand(const char * args);
-        bool HandleCharacterChangeFactionCommand(const char * args);
+        bool HandleCharacterCustomizeCommand(const char* args);
+        bool HandleCharacterChangeFactionCommand(const char* args);
         bool HandleCharacterChangeRaceCommand(const char * args);
         bool HandleCharacterDeletedDeleteCommand(const char* args);
         bool HandleCharacterDeletedListCommand(const char* args);
@@ -165,7 +165,7 @@ class ChatHandler
         bool HandleCharacterDeletedOldCommand(const char* args);
         bool HandleCharacterEraseCommand(const char* args);
         bool HandleCharacterLevelCommand(const char* args);
-        bool HandleCharacterRenameCommand(const char * args);
+        bool HandleCharacterRenameCommand(const char* args);
         bool HandleCharacterReputationCommand(const char* args);
         bool HandleCharacterTitlesCommand(const char* args);
 

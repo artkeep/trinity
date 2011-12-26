@@ -42,7 +42,6 @@ class AuraEffect
         void GetTargetList(std::list<Unit*> & targetList) const;
         void GetApplicationList(std::list<AuraApplication*> & applicationList) const;
         SpellModifier* GetSpellModifier() const { return m_spellmod; }
-        bool HasSpellClassMask() const { return m_spellInfo->Effects[m_effIndex].SpellClassMask; }
 
         SpellInfo const* GetSpellInfo() const { return m_spellInfo; }
         uint32 GetId() const { return m_spellInfo->Id; }
@@ -81,6 +80,7 @@ class AuraEffect
         bool IsPeriodic() const { return m_isPeriodic; }
         void SetPeriodic(bool isPeriodic) { m_isPeriodic = isPeriodic; }
         bool IsAffectedOnSpell(SpellInfo const* spell) const;
+        bool HasSpellClassMask() const { return m_spellInfo->Effects[m_effIndex].SpellClassMask; }
 
         void SendTickImmune(Unit* target, Unit* caster) const;
         void PeriodicTick(AuraApplication * aurApp, Unit* caster) const;

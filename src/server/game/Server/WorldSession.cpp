@@ -57,12 +57,12 @@ bool MapSessionFilter::Process(WorldPacket* packet)
     if (opHandle.packetProcessing == PROCESS_THREADUNSAFE)
         return false;
 
-    Player* plr = m_pSession->GetPlayer();
-    if (!plr)
+    Player* player = m_pSession->GetPlayer();
+    if (!player)
         return false;
 
     //in Map::Update() we do not process packets where player is not in world!
-    return plr->IsInWorld();
+    return player->IsInWorld();
 }
 
 //we should process ALL packets when player is not in world/logged in
@@ -79,12 +79,12 @@ bool WorldSessionFilter::Process(WorldPacket* packet)
         return true;
 
     //no player attached? -> our client! ^^
-    Player* plr = m_pSession->GetPlayer();
-    if (!plr)
+    Player* player = m_pSession->GetPlayer();
+    if (!player)
         return true;
 
     //lets process all packets for non-in-the-world player
-    return (plr->IsInWorld() == false);
+    return (player->IsInWorld() == false);
 }
 
 /// WorldSession constructor
@@ -226,7 +226,18 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
     WorldPacket* packet = NULL;
-    while (m_Socket && !m_Socket->IsClosed() && _recvQueue.next(packet, updater))
+    //! Delete packet after processing by default
+    bool deletePacket = true;
+    //! To prevent infinite loop
+    WorldPacket* firstDelayedPacket = NULL;
+    //! If _recvQueue.peek() == firstDelayedPacket it means that in this Update call, we've processed all
+    //! *properly timed* packets, and we're now at the part of the queue where we find
+    //! delayed packets that were re-enqueued due to improper timing. To prevent an infinite
+    //! loop caused by re-enqueueing the same packets over and over again, we stop updating this session
+    //! and continue updating others. The re-enqueued packets will be handled in the next Update call for this session.
+    while (m_Socket && !m_Socket->IsClosed() &&
+            !_recvQueue.empty() && _recvQueue.peek(true) != firstDelayedPacket &&
+            _recvQueue.next(packet, updater))
     {
         if (packet->GetOpcode() >= NUM_MSG_TYPES)
         {
@@ -244,8 +255,21 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
                         if (!_player)
                         {
                             // skip STATUS_LOGGEDIN opcode unexpected errors if player logout sometime ago - this can be network lag delayed packets
+                            //! If player didn't log out a while ago, it means packets are being sent while the server does not recognize
+                            //! the client to be in world yet. We will re-add the packets to the bottom of the queue and process them later.
                             if (!m_playerRecentlyLogout)
-                                LogUnexpectedOpcode(packet, "STATUS_LOGGEDIN", "the player has not logged in yet");
+                            {
+                                //! Prevent infinite loop
+                                if (!firstDelayedPacket)
+                                    firstDelayedPacket = packet;
+                                //! Because checking a bool is faster than reallocating memory
+                                deletePacket = false;
+                                QueuePacket(packet);
+                                //! Log
+                                sLog->outDebug(LOG_FILTER_NETWORKIO, "Re-enqueueing packet with opcode %s (0x%.4X) with with status STATUS_LOGGEDIN. "
+                                    "Player is currently not in world yet.", opHandle.name, packet->GetOpcode());
+                            }
+
                         }
                         else if (_player->IsInWorld())
                         {
@@ -262,7 +286,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
                                 "the player has not logged in yet and not recently logout");
                         else
                         {
-                            // not expected _player or must checked in packet hanlder
+                            // not expected _player or must checked in packet handler
                             sScriptMgr->OnPacketReceive(m_Socket, WorldPacket(*packet));
                             (this->*opHandle.handler)(*packet);
                             if (sLog->IsOutDebug() && packet->rpos() < packet->wpos())
@@ -312,7 +336,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
                         break;
                 }
             }
-            catch(ByteBufferException &)
+            catch (ByteBufferException &)
             {
                 sLog->outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i. Skipped packet.",
                         packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
@@ -324,7 +348,8 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
             }
         }
 
-        delete packet;
+        if (deletePacket)
+            delete packet;
     }
 
     ProcessQueryCallbacks();
@@ -351,6 +376,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
         if (!m_Socket)
             return false;                                       //Will remove this session from the world session map
     }
+
     return true;
 }
 
@@ -501,7 +527,7 @@ void WorldSession::LogoutPlayer(bool Save)
         _player->CleanupsBeforeDelete();
         sLog->outChar("Account: %d (IP: %s) Logout Character:[%s] (GUID: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName(), _player->GetGUIDLow());
         Map* _map = _player->GetMap();
-        _map->RemoveFromMap(_player, true);
+        _map->RemovePlayerFromMap(_player, true);
         SetPlayer(NULL);                                    // deleted in Remove call
 
         ///- Send the 'logout complete' packet to the client
@@ -510,7 +536,13 @@ void WorldSession::LogoutPlayer(bool Save)
 
         ///- Since each account can only have one online character at any given time, ensure all characters for active account are marked as offline
         //No SQL injection as AccountId is uint32
-        CharacterDatabase.PExecute("UPDATE characters SET online = 0 WHERE account = '%u'", GetAccountId());
+
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ACCOUNT_ONLINE);
+
+        stmt->setUInt32(0, GetAccountId());
+
+        CharacterDatabase.Execute(stmt);
+
         sLog->outDebug(LOG_FILTER_NETWORKIO, "SESSION: Sent SMSG_LOGOUT_COMPLETE Message");
     }
 
@@ -971,9 +1003,9 @@ void WorldSession::SendAddonsInfo()
     SendPacket(&data);
 }
 
-void WorldSession::SetPlayer(Player* plr)
+void WorldSession::SetPlayer(Player* player)
 {
-    _player = plr;
+    _player = player;
 
     // set m_GUID that can be used while player loggined and later until m_playerRecentlyLogout not reset
     if (_player)
@@ -989,7 +1021,7 @@ void WorldSession::InitializeQueryCallbackParameters()
 
 void WorldSession::ProcessQueryCallbacks()
 {
-    QueryResult result;
+    PreparedQueryResult result;
 
     //! HandleCharEnumOpcode
     if (_charEnumCallback.ready())
@@ -1001,9 +1033,8 @@ void WorldSession::ProcessQueryCallbacks()
 
     if (_charCreateCallback.IsReady())
     {
-        PreparedQueryResult pResult;
-        _charCreateCallback.GetResult(pResult);
-        HandleCharCreateCallback(pResult, _charCreateCallback.GetParam());
+        _charCreateCallback.GetResult(result);
+        HandleCharCreateCallback(result, _charCreateCallback.GetParam());
         // Don't call FreeResult() here, the callback handler will do that depending on the events in the callback chain
     }
 

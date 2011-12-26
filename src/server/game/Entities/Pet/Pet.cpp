@@ -33,7 +33,7 @@
 
 #define PET_XP_FACTOR 0.05f
 
-Pet::Pet(Player* owner, PetType type) : Guardian(NULL, owner),
+Pet::Pet(Player* owner, PetType type) : Guardian(NULL, owner, true),
 m_usedTalentCount(0), m_removed(false), m_owner(owner),
 m_happinessTimer(7500), m_petType(type), m_duration(0),
 m_auraRaidUpdateMask(0), m_loading(false), m_declinedname(NULL)
@@ -50,8 +50,6 @@ m_auraRaidUpdateMask(0), m_loading(false), m_declinedname(NULL)
 
     m_name = "Pet";
     m_regenTimer = PET_FOCUS_REGEN_INTERVAL;
-
-    m_isWorldObject = true;
 }
 
 Pet::~Pet()
@@ -382,29 +380,29 @@ void Pet::SavePetToDB(PetSaveMode mode)
     // current/stable/not_in_slot
     if (mode >= PET_SAVE_AS_CURRENT)
     {
-        uint32 owner = GUID_LOPART(GetOwnerGUID());
+        uint32 ownerLowGUID = GUID_LOPART(GetOwnerGUID());
         std::string name = m_name;
         CharacterDatabase.EscapeString(name);
-        SQLTransaction trans = CharacterDatabase.BeginTransaction();
+        trans = CharacterDatabase.BeginTransaction();
         // remove current data
-        trans->PAppend("DELETE FROM character_pet WHERE owner = '%u' AND id = '%u'", owner, m_charmInfo->GetPetNumber());
+        trans->PAppend("DELETE FROM character_pet WHERE owner = '%u' AND id = '%u'", ownerLowGUID, m_charmInfo->GetPetNumber());
 
         // prevent duplicate using slot (except PET_SAVE_NOT_IN_SLOT)
         if (mode <= PET_SAVE_LAST_STABLE_SLOT)
             trans->PAppend("UPDATE character_pet SET slot = '%u' WHERE owner = '%u' AND slot = '%u'",
-                PET_SAVE_NOT_IN_SLOT, owner, uint32(mode));
+                PET_SAVE_NOT_IN_SLOT, ownerLowGUID, uint32(mode));
 
         // prevent existence another hunter pet in PET_SAVE_AS_CURRENT and PET_SAVE_NOT_IN_SLOT
-        if (getPetType() == HUNTER_PET && (mode == PET_SAVE_AS_CURRENT||mode > PET_SAVE_LAST_STABLE_SLOT))
+        if (getPetType() == HUNTER_PET && (mode == PET_SAVE_AS_CURRENT || mode > PET_SAVE_LAST_STABLE_SLOT))
             trans->PAppend("DELETE FROM character_pet WHERE owner = '%u' AND (slot = '%u' OR slot > '%u')",
-                owner, PET_SAVE_AS_CURRENT, PET_SAVE_LAST_STABLE_SLOT);
+                ownerLowGUID, PET_SAVE_AS_CURRENT, PET_SAVE_LAST_STABLE_SLOT);
         // save pet
         std::ostringstream ss;
         ss  << "INSERT INTO character_pet (id, entry,  owner, modelid, level, exp, Reactstate, slot, name, renamed, curhealth, curmana, curhappiness, abdata, savetime, CreatedBySpell, PetType) "
             << "VALUES ("
             << m_charmInfo->GetPetNumber() << ','
             << GetEntry() << ','
-            << owner << ','
+            << ownerLowGUID << ','
             << GetNativeDisplayId() << ','
             << uint32(getLevel()) << ','
             << GetUInt32Value(UNIT_FIELD_PETEXPERIENCE) << ','
@@ -908,6 +906,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
                         SetCreateHealth(40*petlevel);
                         SetCreateMana(28 + 10*petlevel);
                     }
+                    SetBonusDamage(m_owner->SpellBaseDamageBonus(SPELL_SCHOOL_MASK_FIRE) * 0.5f);
                     SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel * 4 - petlevel));
                     SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel * 4 + petlevel));
                     break;

@@ -7211,9 +7211,9 @@ void Spell::EffectActivateRune(SpellEffIndex effIndex)
     {
         for (uint32 j = 0; j < MAX_RUNES && count > 0; ++j)
         {
-            if (plr->GetRuneCooldown(j) && plr->GetCurrentRune(j) == RUNE_BLOOD)
+            if (player->GetRuneCooldown(j) && player->GetCurrentRune(j) == RUNE_BLOOD)
             {
-                plr->SetRuneCooldown(j, 0);
+                player->SetRuneCooldown(j, 0);
                 --count;
             }
         }
@@ -7231,7 +7231,7 @@ void Spell::EffectActivateRune(SpellEffIndex effIndex)
                 player->SetRuneCooldown(i, 0);
         }
     }
-    plr->ResyncRunes(MAX_RUNES);
+    player->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::EffectCreateTamedPet(SpellEffIndex effIndex)

@@ -280,10 +280,10 @@ void BattlegroundEY::UpdatePointStatuses()
                 }
 
                 // hack fix for Fel Reaver Ruins
-                if (point == FEL_REAVER && m_PointOwnedByTeam[point] == plr->GetTeam())
-                    if (m_FlagState && GetFlagPickerGUID() == plr->GetGUID())
-                        if (plr->GetDistance2d(2044,1730) < 2)
-                            EventPlayerCapturedFlag(plr, BG_EY_OBJECT_FLAG_FEL_REAVER);
+                if (point == FEL_REAVER && m_PointOwnedByTeam[point] == player->GetTeam())
+                    if (m_FlagState && GetFlagPickerGUID() == player->GetGUID())
+                        if (player->GetDistance2d(2044,1730) < 2)
+                            EventPlayerCapturedFlag(player, BG_EY_OBJECT_FLAG_FEL_REAVER);
             }
         }
     }

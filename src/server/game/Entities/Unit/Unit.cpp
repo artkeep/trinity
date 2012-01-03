@@ -6795,8 +6795,7 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                         return false;
                 }
                 else if (damage > 0)
-                    if(!this->HasAura(58597))
-                        triggered_spell_id = 58597;
+                    triggered_spell_id = 58597;
 
                 // Item - Paladin T8 Holy 4P Bonus
                 if (Unit* caster = triggeredByAura->GetCaster())

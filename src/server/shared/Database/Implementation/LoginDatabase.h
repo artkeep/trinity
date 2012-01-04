@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +37,7 @@ typedef DatabaseWorkerPool<LoginDatabaseConnection> LoginDatabaseWorkerPool;
 enum LoginDatabaseStatements
 {
     /*  Naming standard for defines:
-        {DB}_{SET/DEL/ADD/REP}_{Summary of data changed}
+        {DB}_{SEL/INS/UPD/DEL/REP}_{Summary of data changed}
         When updating more than one field, consider looking at the calling function
         name for a suiting suffix.
     */
@@ -70,12 +70,19 @@ enum LoginDatabaseStatements
     LOGIN_ADD_REALM_CHARS,
     LOGIN_DEL_OLD_BANS,
     LOGIN_DEL_OLD_IP_BANS,
-    LOGIN_UPDATE_EXPANSION,
-    LOGIN_UPDATE_ACCOUNT_LOCK,
-    LOGIN_ADD_LOG,
-    LOGIN_UPDATE_USERNAME,
-    LOGIN_UPDATE_PASSWORD,
-    LOGIN_UPDATE_MUTE_TIME,
+    LOGIN_UPD_EXPANSION,
+    LOGIN_UPD_ACCOUNT_LOCK,
+    LOGIN_INS_LOG,
+    LOGIN_UPD_USERNAME,
+    LOGIN_UPD_PASSWORD,
+    LOGIN_UPD_MUTE_TIME,
+    LOGIN_UPD_LAST_IP,
+    LOGIN_UPD_ACCOUNT_ONLINE,
+    LOGIN_UPD_UPTIME_PLAYERS,
+    LOGIN_DEL_OLD_LOGS,
+    LOGIN_DEL_ACCOUNT_ACCESS,
+    LOGIN_DEL_ACCOUNT_ACCESS_BY_REALM,
+    LOGIN_INS_ACCOUNT_ACCESS,
 
     MAX_LOGINDATABASE_STATEMENTS,
 };

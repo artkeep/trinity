@@ -1,6 +1,53 @@
-/* Copyright (C) 2010 by /dev/rsa for ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-* This program is free software licensed under GPL version 2
-* Please see the included DOCS/LICENSE.TXT for more information */
+/*
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef RUBY_SANCTUM_H_
+#define RUBY_SANCTUM_H_
+
+#include "SpellScript.h"
+#include "Map.h"
+#include "Creature.h"
+
+#define RSScriptName "instance_ruby_sanctum"
+uint32 const EncounterCount = 4;
+
+Position const HalionControllerSpawnPos = {3156.037f, 533.2656f, 72.97205f, 0.0f};
+
+enum DataTypes
+{
+    // Encounter States/Boss GUIDs
+    DATA_BALTHARUS_THE_WARBORN              = 0,
+    DATA_GENERAL_ZARITHRIAN                 = 1,
+    DATA_SAVIANA_RAGEFIRE                   = 2,
+    DATA_HALION                             = 3,
+
+    // Etc
+    DATA_XERESTRASZA                        = 4,
+    DATA_CRYSTAL_CHANNEL_TARGET             = 5,
+    DATA_BALTHARUS_SHARED_HEALTH            = 6,
+    DATA_ZARITHIAN_SPAWN_STALKER_1          = 7,
+    DATA_ZARITHIAN_SPAWN_STALKER_2          = 8,
+    DATA_HALION_CONTROLLER                  = 9,
+    DATA_BURNING_TREE_1                     = 10,
+    DATA_BURNING_TREE_2                     = 11,
+    DATA_BURNING_TREE_3                     = 12,
+    DATA_BURNING_TREE_4                     = 13,
+    DATA_FLAME_RING                         = 14,
+};
 
 #ifndef DEF_RUBY_SANCTUM_H
 #define DEF_RUBY_SANCTUM_H

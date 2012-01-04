@@ -7994,13 +7994,6 @@ bool Unit::HandleModDamagePctTakenAuraProc(Unit* victim, uint32 /*damage*/, Aura
             }
             break;
         }
-        case SPELLFAMILY_WARRIOR:
-        {
-            // Recklessness - prevent double proc
-            if (dummySpell->Id == 1719)
-                return false;
-            break;
-        }
     }
     // processed charge only counting case
     if (!triggered_spell_id)

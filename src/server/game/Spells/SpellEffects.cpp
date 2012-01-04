@@ -6457,6 +6457,9 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
         // not all charge effects used in negative spells
         if (!m_spellInfo->IsPositive() && m_caster->GetTypeId() == TYPEID_PLAYER)
             m_caster->Attack(unitTarget, true);
+
+        if (m_caster->GetTypeId() == TYPEID_PLAYER)
+            static_cast<Player*>(m_caster)->m_anti_BeginFallZ=INVALID_HEIGHT;
     }
 }
 

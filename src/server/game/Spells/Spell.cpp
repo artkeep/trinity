@@ -724,7 +724,8 @@ void Spell::SelectSpellTargets()
         // some spell effects use explicit target as a default target added to target map (like SPELL_EFFECT_LEARN_SPELL)
         // some spell effects add target to target map only when target type specified (like SPELL_EFFECT_WEAPON)
         // some spell effects don't add anything to target map (confirmed with sniffs) (like SPELL_EFFECT_DESTROY_ALL_TOTEMS)
-        SelectEffectTypeImplicitTargets(i);
+        if (!targetA && !targetB)
+            SelectEffectTypeImplicitTargets(i);
 
         if (m_spellInfo->IsChanneled())
         {

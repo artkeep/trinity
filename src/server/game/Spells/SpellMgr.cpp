@@ -3292,9 +3292,6 @@ void SpellMgr::LoadDbcDataCorrections()
             case 63675: // Improved Devouring Plague
                 spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
                 break;
-            case 33206: // Pain Suppression
-                spellInfo->AttributesEx5 &= ~SPELL_ATTR5_USABLE_WHILE_STUNNED;
-                break;
             case 56278: // Read Pronouncement, missing EffectApplyAuraName
                 spellInfo->Effect[0] = SPELL_EFFECT_DUMMY;
                 break;

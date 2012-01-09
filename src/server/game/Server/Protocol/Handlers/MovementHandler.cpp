@@ -598,7 +598,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
         }
 
         if(delta > 100.0f &&
-            ((movementInfo.flags & MOVEMENTFLAG_ONTRANSPORT) == 0 || (GetPlayer()->GetZoneId() != 2257 && GetPlayer()->GetAreaId() != 3992 && GetPlayer()->GetAreaId() != 3988 && GetPlayer()->GetAreaId() != 2618 && GetPlayer()->GetZoneId() != 4384)))
+            ((movementInfo.flags & MOVEMENTFLAG_ONTRANSPORT) == 0 && (GetPlayer()->GetZoneId() != 2257 && GetPlayer()->GetAreaId() != 3992 && GetPlayer()->GetAreaId() != 3988 && GetPlayer()->GetAreaId() != 2618 && GetPlayer()->GetZoneId() != 4384)))
         {
             GetPlayer()->Anti__CheatOccurred("Tele hack",delta,opcode,
                 GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType() /*Val1*/,

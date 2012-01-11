@@ -1,8 +1,6 @@
 ﻿#include "ScriptPCH.h"
 #include <cstring>
 
-extern WorldDatabaseWorkerPool WorldDatabase;
-
 #define MSG_GOSSIP_TELE          "Телепортироваться в ГильдХаус"
 #define MSG_GOSSIP_BUY           "Купить ГильдХаус (10000 золота)"
 #define MSG_GOSSIP_SELL          "Продать ГильдХаус (5000 золота)"
@@ -284,6 +282,7 @@ public:
     bool OnGossipSelect(Player *player, Creature *_creature, uint32 sender, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
+
         if (sender != GOSSIP_SENDER_MAIN)
             return false;
 

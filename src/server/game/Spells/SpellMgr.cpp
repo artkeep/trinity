@@ -3164,11 +3164,6 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->procCharges = 2;
                 spellInfo->StackAmount = 0;
                 break;
-            case 35098: // Rapid Killing
-            case 35099:
-                // just a temp solution to make Rapid Recuperation proc from this
-                spellInfo->AttributesEx2 |= SPELL_ATTR2_TRIGGERED_CAN_TRIGGER_PROC;
-                break;
             case 28200: // Ascendance (Talisman of Ascendance trinket)
                 spellInfo->procCharges = 6;
                 break;

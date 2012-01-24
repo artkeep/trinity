@@ -4358,15 +4358,15 @@ void Spell::TakePower()
     bool hit = true;
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
     {
-        if (m_spellInfo->PowerType == POWER_RAGE || m_spellInfo->PowerType == POWER_ENERGY ||
-            m_spellInfo->PowerType == POWER_RUNE || m_spellInfo->PowerType == POWER_RUNIC_POWER)
+        if (powerType == POWER_RAGE || powerType == POWER_ENERGY || powerType == POWER_RUNE)
             if (uint64 targetGUID = m_targets.GetUnitTargetGUID())
                 for (std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
                     if (ihit->targetGUID == targetGUID)
                     {
-                        if (ihit->missCondition != SPELL_MISS_NONE && ihit->missCondition != SPELL_MISS_IMMUNE)
-                        {
+                        if (ihit->missCondition != SPELL_MISS_NONE && ihit->missCondition != SPELL_MISS_MISS/* && ihit->targetGUID != m_caster->GetGUID()*/)
                             hit = false;
+                        if (ihit->missCondition != SPELL_MISS_NONE)
+                        {
                             //lower spell cost on fail (by talent aura)
                             if (Player* modOwner = m_caster->ToPlayer()->GetSpellModOwner())
                                 modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_SPELL_COST_REFUND_ON_FAIL, m_powerCost);
@@ -4397,10 +4397,10 @@ void Spell::TakePower()
         return;
     }
 
-    if (hit || m_spellInfo->AttributesEx & SPELL_ATTR1_REQ_COMBO_POINTS1)
+    if (hit)
         m_caster->ModifyPower(powerType, -m_powerCost);
     else
-        m_caster->ModifyPower(powerType, -m_powerCost/5);
+        m_caster->ModifyPower(powerType, -irand(0, m_powerCost/4));
 
     // Set the five second timer
     if (powerType == POWER_MANA && m_powerCost > 0)

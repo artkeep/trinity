@@ -6809,7 +6809,7 @@ void Player::CheckAreaExploreAndOutdoor()
     if (!isAlive())
         return;
 
-    if (isInFlight())
+    if (isInFlight() || !GetMap())
         return;
 
     bool isOutdoor;

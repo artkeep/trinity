@@ -206,21 +206,7 @@ public:
                    Summon();
                 }
 
-                if (m_uiSummonTimer < uiDiff) 
-                {
-                        ++SummonCount;
-                        if(SummonCount > 4) 
-                        {
-                            m_pInstance->SetData(TYPE_FALRIC, IN_PROGRESS);
-                            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                            me->SetInCombatWithZone();
-                        }
-                        else CallFallSoldier();
-                        m_uiSummonTimer = 60000;
-                } else m_uiSummonTimer -= uiDiff;
-            }
-
-            if (!UpdateVictim())
+            if (me->HasUnitState(UNIT_STATE_CASTING))
                 return;
 
             if(m_uiStrikeTimer < uiDiff)

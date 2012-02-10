@@ -536,7 +536,13 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
 
         bool addUnit = true;
         // check target immunities
-        if (itr->first->IsImmunedToSpell(GetSpellInfo())
+        for (uint8 effIndex = 0; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
+        {
+            if (itr->first->IsImmunedToSpellEffect(GetSpellInfo(), effIndex))
+                itr->second &= ~(1 << effIndex);
+        }
+        if (!itr->second
+            || itr->first->IsImmunedToSpell(GetSpellInfo())
             || !CanBeAppliedOn(itr->first))
             addUnit = false;
 
@@ -1661,28 +1667,12 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
             break;
         case SPELLFAMILY_DRUID:
             // Enrage
-            if (GetSpellInfo()->SpellFamilyFlags[0] & 0x80000)
+            if ((GetSpellInfo()->SpellFamilyFlags[0] & 0x80000) && GetSpellInfo()->SpellIconID == 961)
             {
-                if (target->HasAura(70726)) // Druid T10 Feral 4P Bonus
-                {
+                if (target->HasAura(70726)) // Item - Druid T10 Feral 4P Bonus
                     if (apply)
                         target->CastSpell(target, 70725, true);
-                }
-                else // armor reduction implemented here
-                    if (AuraEffect * auraEff = target->GetAuraEffectOfRankedSpell(1178, 0))
-                    {
-                        int32 value = auraEff->GetAmount();
-                        int32 mod;
-                        switch (auraEff->GetId())
-                        {
-                            case 1178: mod = 27; break;
-                            case 9635: mod = 16; break;
-                        }
-                        mod = value / 100 * mod;
-                        value = value + (apply ? -mod : mod);
-                        auraEff->ChangeAmount(value);
-                    }
-                //break;
+                break;
             }
             break;
         case SPELLFAMILY_ROGUE:
@@ -2028,7 +2018,7 @@ bool Aura::CanStackWith(Aura const* existingAura) const
                 case SPELL_AURA_OBS_MOD_HEALTH:
                 case SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE:
                     // periodic auras which target areas are not allowed to stack this way (replenishment for example)
-                    if (m_spellInfo->Effects[i].IsArea() || existingSpellInfo->Effects[i].IsArea())
+                    if (m_spellInfo->Effects[i].IsTargetingArea() || existingSpellInfo->Effects[i].IsTargetingArea())
                         break;
                     return true;
                 default:
@@ -2136,6 +2126,13 @@ bool Aura::IsProcTriggeredOnEvent(AuraApplication* aurApp, ProcEventInfo& eventI
     if (!sSpellMgr->CanSpellTriggerProcOnEvent(*procEntry, eventInfo))
         return false;
 
+    // TODO:
+    // - do checks using conditions table for eventInfo->GetActor() and eventInfo->GetActionTarget()
+    // - add DoCheckProc() AuraScript hook
+    // to allow additional requirements for procs
+    // this is needed because this is the last moment in which you can prevent aura charge drop on proc
+    // and possibly a way to prevent default checks (if there're going to be any)
+
     // Check if current equipment meets aura requirements
     // do that only for passive spells
     // TODO: this needs to be unified for all kinds of auras
@@ -2196,11 +2193,14 @@ float Aura::CalcProcChance(SpellProcEntry const& procEntry, ProcEventInfo& event
 
 void Aura::TriggerProcOnEvent(AuraApplication* aurApp, ProcEventInfo& eventInfo)
 {
-    // TODO: script hooks here (allowing prevention of selected effects)
+    // TODO: OnProc hook here
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         if (aurApp->HasEffect(i))
+            // TODO: OnEffectProc hook here (allowing prevention of selected effects)
             GetEffect(i)->HandleProc(aurApp, eventInfo);
-    // TODO: script hooks here
+            // TODO: AfterEffectProc hook here 
+
+    // TODO: AfterProc hook here
 
     // Remove aura if we've used last charge to proc
     if (IsUsingCharges() && !GetCharges())
@@ -2246,6 +2246,30 @@ bool Aura::CallScriptCheckAreaTargetHandlers(Unit* target)
         (*scritr)->_FinishScriptCall();
     }
     return true;
+}
+
+void Aura::CallScriptDispel(DispelInfo* dispelInfo)
+{
+    for (std::list<AuraScript*>::iterator scritr = m_loadedScripts.begin(); scritr != m_loadedScripts.end() ; ++scritr)
+    {
+        (*scritr)->_PrepareScriptCall(AURA_SCRIPT_HOOK_DISPEL);
+        std::list<AuraScript::AuraDispelHandler>::iterator hookItrEnd = (*scritr)->OnDispel.end(), hookItr = (*scritr)->OnDispel.begin();
+        for (; hookItr != hookItrEnd ; ++hookItr)
+            (*hookItr).Call(*scritr, dispelInfo);
+        (*scritr)->_FinishScriptCall();
+    }
+}
+
+void Aura::CallScriptAfterDispel(DispelInfo* dispelInfo)
+{
+    for (std::list<AuraScript*>::iterator scritr = m_loadedScripts.begin(); scritr != m_loadedScripts.end() ; ++scritr)
+    {
+        (*scritr)->_PrepareScriptCall(AURA_SCRIPT_HOOK_AFTER_DISPEL);
+        std::list<AuraScript::AuraDispelHandler>::iterator hookItrEnd = (*scritr)->AfterDispel.end(), hookItr = (*scritr)->AfterDispel.begin();
+        for (; hookItr != hookItrEnd ; ++hookItr)
+            (*hookItr).Call(*scritr, dispelInfo);
+        (*scritr)->_FinishScriptCall();
+    }
 }
 
 bool Aura::CallScriptEffectApplyHandlers(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes mode)
@@ -2505,7 +2529,7 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8> & targets, Unit* caster)
         {
             float radius = GetSpellInfo()->Effects[effIndex].CalcRadius(caster);
 
-            if (!GetUnitOwner()->HasUnitState(UNIT_STAT_ISOLATED))
+            if (!GetUnitOwner()->HasUnitState(UNIT_STATE_ISOLATED))
             {
                 switch (GetSpellInfo()->Effects[effIndex].Effect)
                 {

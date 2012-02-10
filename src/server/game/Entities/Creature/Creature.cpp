@@ -48,6 +48,8 @@
 #include "Vehicle.h"
 #include "SpellAuraEffects.h"
 #include "Group.h"
+#include "MoveSplineInit.h"
+#include "MoveSpline.h"
 // apply implementation of the singletons
 
 TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
@@ -143,7 +145,7 @@ m_PlayerDamageReq(0), m_lootMoney(0), m_lootRecipient(0), m_lootRecipientGroup(0
 m_respawnDelay(300), m_corpseDelay(60), m_respawnradius(0.0f), m_reactState(REACT_AGGRESSIVE),
 m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0), m_AlreadyCallAssistance(false),
 m_AlreadySearchedAssistance(false), m_regenHealth(true), m_AI_locked(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_creatureInfo(NULL), m_creatureData(NULL), m_formation(NULL)
+m_creatureInfo(NULL), m_creatureData(NULL), m_formation(NULL), m_path_id(0)
 {
     m_regenTimer = CREATURE_REGEN_INTERVAL;
     m_valuesCount = UNIT_END;
@@ -332,6 +334,7 @@ bool Creature::InitEntry(uint32 Entry, uint32 /*team*/, const CreatureData* data
     SetSpeed(MOVE_FLIGHT, 1.0f);    // using 1.0 rate
 
     SetFloatValue(OBJECT_FIELD_SCALE_X, cinfo->scale);
+    SetLevitate(canFly());
 
     // checked at loading
     m_defaultMovementType = MovementGeneratorType(cinfo->MovementType);
@@ -435,6 +438,17 @@ void Creature::Update(uint32 diff)
             m_vehicleKit->Reset();
     }
 
+    if (IsInWater())
+    {
+        if (canSwim())
+            AddUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
+    }
+    else
+    {
+        if (canWalk())
+            RemoveUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
+    }
+
     switch (m_deathState)
     {
         case JUST_ALIVED:
@@ -472,9 +486,7 @@ void Creature::Update(uint32 diff)
         }
         case CORPSE:
         {
-            m_Events.Update(diff);
-            _UpdateSpells(diff);
-
+            Unit::Update(diff);
             // deathstate changed on spells update, prevent problems
             if (m_deathState != CORPSE)
                 break;
@@ -577,9 +589,6 @@ void Creature::Update(uint32 diff)
             m_regenTimer = CREATURE_REGEN_INTERVAL;
             break;
         }
-        case DEAD_FALLING:
-            GetMotionMaster()->UpdateMotion(diff);
-            break;
         default:
             break;
     }
@@ -688,7 +697,7 @@ void Creature::DoFleeToGetAssistance()
         if (!creature)
             //SetFeared(true, getVictim()->GetGUID(), 0, sWorld->getIntConfig(CONFIG_CREATURE_FAMILY_FLEE_DELAY));
             //TODO: use 31365
-            SetControlled(true, UNIT_STAT_FLEEING);
+            SetControlled(true, UNIT_STATE_FLEEING);
         else
             GetMotionMaster()->MoveSeekAssistance(creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ());
     }
@@ -727,7 +736,7 @@ void Creature::Motion_Initialize()
         i_motionMaster.Initialize();
     }
     else if (m_formation->isFormed())
-        i_motionMaster.MoveIdle(MOTION_SLOT_IDLE); //wait the order of leader
+        i_motionMaster.MoveIdle(); //wait the order of leader
     else
         i_motionMaster.Initialize();
 }
@@ -957,7 +966,8 @@ void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, uint3
 
         m_startMove = getMSTime();
         m_moveTime = time;*/
-    SendMonsterMove(x, y, z, time);
+    float speed = GetDistance(x, y, z) / ((float)time * 0.001f);
+    MonsterMoveWithSpeed(x, y, z, speed);
 }
 
 Player* Creature::GetLootRecipient() const
@@ -1295,7 +1305,7 @@ bool Creature::LoadCreatureFromDB(uint32 guid, Map* map, bool addToMap)
         m_deathState = DEAD;
         if (canFly())
         {
-            float tz = map->GetHeight(data->posX, data->posY, data->posZ, false);
+            float tz = map->GetHeight(GetPhaseMask(), data->posX, data->posY, data->posZ, false);
             if (data->posZ - tz > 0.1f)
                 Relocate(data->posX, data->posY, tz);
         }
@@ -1419,7 +1429,7 @@ bool Creature::canStartAttack(Unit const* who, bool force) const
     if (isCivilian())
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE))
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC))
         return false;
         
     // Do not attack non-combat pets
@@ -1523,11 +1533,8 @@ void Creature::setDeathState(DeathState s)
         if (m_formation && m_formation->getLeader() == this)
             m_formation->FormationReset(true);
 
-        if (ZoneScript* zoneScript = GetZoneScript())
-            zoneScript->OnCreatureDeath(this);
-
-        if ((canFly() || IsFlying()) && FallGround())
-            return;
+        if ((canFly() || IsFlying()))
+            i_motionMaster.MoveFall();
 
         Unit::setDeathState(CORPSE);
     }
@@ -1539,13 +1546,13 @@ void Creature::setDeathState(DeathState s)
         SetLootRecipient(NULL);
         ResetPlayerDamageReq();
         CreatureTemplate const* cinfo = GetCreatureInfo();
-        AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+        SetWalk(true);
         if (GetCreatureInfo()->InhabitType & INHABIT_AIR)
             AddUnitMovementFlag(MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_FLYING);
         if (GetCreatureInfo()->InhabitType & INHABIT_WATER)
             AddUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
         SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
-        ClearUnitState(uint32(UNIT_STAT_ALL_STATE));
+        ClearUnitState(uint32(UNIT_STATE_ALL_STATE));
         SetMeleeDamageSchool(SpellSchools(cinfo->dmgschool));
         LoadCreaturesAddon(true);
         Motion_Initialize();
@@ -1553,24 +1560,6 @@ void Creature::setDeathState(DeathState s)
             SetPhaseMask(GetCreatureData()->phaseMask, false);
         Unit::setDeathState(ALIVE);
     }
-}
-
-bool Creature::FallGround()
-{
-    // Let's abort after we called this function one time
-    if (getDeathState() == DEAD_FALLING)
-        return false;
-
-    float x, y, z;
-    GetPosition(x, y, z);
-    // use larger distance for vmap height search than in most other cases
-    float ground_Z = GetMap()->GetHeight(x, y, z, true, MAX_FALL_DISTANCE);
-    if (fabs(ground_Z - z) < 0.1f)
-        return false;
-
-    GetMotionMaster()->MoveFall(ground_Z, EVENT_FALL_GROUND);
-    Unit::setDeathState(DEAD_FALLING);
-    return true;
 }
 
 void Creature::Respawn(bool force)
@@ -1592,7 +1581,7 @@ void Creature::Respawn(bool force)
         if (m_DBTableGuid)
             sObjectMgr->RemoveCreatureRespawnTime(m_DBTableGuid, GetInstanceId());
 
-        sLog->outStaticDebug("Respawning...");
+        sLog->outStaticDebug("Respawning creature %s (GuidLow: %u, Full GUID: " UI64FMTD " Entry: %u)", GetName(), GetGUIDLow(), GetGUID(), GetEntry());
         m_respawnTime = 0;
         lootForPickPocketed = false;
         lootForBody         = false;
@@ -1660,7 +1649,20 @@ bool Creature::IsImmunedToSpell(SpellInfo const* spellInfo)
     if (!spellInfo)
         return false;
 
-    if (GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->Mechanic - 1)))
+    // Spells that don't have effectMechanics.
+    if (!spellInfo->HasAnyEffectMechanic() && GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->Mechanic - 1)))
+        return true;
+
+    // This check must be done instead of 'if (GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->Mechanic - 1)))' for not break
+    // the check of mechanic immunity on DB (tested) because GetCreatureInfo()->MechanicImmuneMask and m_spellImmune[IMMUNITY_MECHANIC] don't have same data.
+    bool immunedToAllEffects = true;
+    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        if (!IsImmunedToSpellEffect(spellInfo, i))
+        {
+            immunedToAllEffects = false;
+            break;
+        }
+    if (immunedToAllEffects)
         return true;
 
     return Unit::IsImmunedToSpell(spellInfo);
@@ -1919,7 +1921,7 @@ bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /
     if (isCivilian())
         return false;
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_PASSIVE))
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_NPC))
         return false;
 
     // skip fighting creature
@@ -1961,7 +1963,7 @@ bool Creature::_IsTargetAcceptable(const Unit* target) const
         || (m_vehicle && (IsOnVehicle(target) || m_vehicle->GetBase()->IsOnVehicle(target))))
         return false;
 
-    if (target->HasUnitState(UNIT_STAT_DIED))
+    if (target->HasUnitState(UNIT_STATE_DIED))
     {
         // guards can detect fake death
         if (isGuard() && target->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH))
@@ -2420,4 +2422,26 @@ bool Creature::IsDungeonBoss() const
 {
     CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(GetEntry());
     return cinfo && (cinfo->flags_extra & CREATURE_FLAG_EXTRA_DUNGEON_BOSS);
+}
+
+void Creature::SetWalk(bool enable)
+{
+    if (enable)
+        AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+    else
+        RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+    WorldPacket data(enable ? SMSG_SPLINE_MOVE_SET_WALK_MODE : SMSG_SPLINE_MOVE_SET_RUN_MODE, 9);
+    data.append(GetPackGUID());
+    SendMessageToSet(&data, true);
+}
+
+void Creature::SetLevitate(bool enable)
+{
+    if (enable)
+        AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+    else
+        RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+    WorldPacket data(enable ? SMSG_SPLINE_MOVE_GRAVITY_DISABLE : SMSG_SPLINE_MOVE_GRAVITY_ENABLE, 9);
+    data.append(GetPackGUID());
+    SendMessageToSet(&data, true);
 }

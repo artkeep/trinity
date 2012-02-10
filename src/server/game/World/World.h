@@ -168,6 +168,8 @@ enum WorldBoolConfigs
     CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE,
     CONFIG_PDUMP_NO_PATHS,
     CONFIG_PDUMP_NO_OVERWRITE,
+    CONFIG_QUEST_IGNORE_AUTO_ACCEPT,
+    CONFIG_QUEST_IGNORE_AUTO_COMPLETE,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -809,6 +811,7 @@ class World
 
         uint32 GetCleaningFlags() const { return m_CleaningFlags; }
         void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
+        void   ResetEventSeasonalQuests(uint16 event_id);
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters

@@ -475,7 +475,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                         //Melee current victim if flag not set
                         if (!(action.cast.castFlags & CAST_NO_MELEE_IF_OOM))
                         {
-                            if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == TARGETED_MOTION_TYPE)
+                            if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE)
                             {
                                 m_AttackDistance = 0.0f;
                                 m_AttackAngle = 0.0f;
@@ -483,7 +483,6 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                                 me->GetMotionMaster()->MoveChase(me->getVictim(), m_AttackDistance, m_AttackAngle);
                             }
                         }
-
                     }
                     else
                     {
@@ -578,7 +577,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 {
                     if (action.combat_movement.melee)
                     {
-                        me->AddUnitState(UNIT_STAT_MELEE_ATTACKING);
+                        me->AddUnitState(UNIT_STATE_MELEE_ATTACKING);
                         me->SendMeleeAttackStart(victim);
                     }
                     if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE)
@@ -592,10 +591,10 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                     Unit* victim = me->getVictim();
                     if (action.combat_movement.melee && victim)
                     {
-                        me->ClearUnitState(UNIT_STAT_MELEE_ATTACKING);
+                        me->ClearUnitState(UNIT_STATE_MELEE_ATTACKING);
                         me->SendMeleeAttackStop(victim);
                     }
-                    if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == TARGETED_MOTION_TYPE)
+                    if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE)
                         me->GetMotionMaster()->MoveIdle();
                 }
             }

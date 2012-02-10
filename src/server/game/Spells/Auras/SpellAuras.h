@@ -186,6 +186,9 @@ class Aura
         bool CanStackWith(Aura const* existingAura) const;
 
         // Proc system
+        // this subsystem is not yet in use - the core of it is functional, but still some research has to be done 
+        // and some dependant problems fixed before it can replace old proc system (for example cooldown handling)
+        // currently proc system functionality is implemented in Unit::ProcDamageAndSpell
         bool IsProcOnCooldown() const;
         void AddProcCooldown(uint32 msec);
         bool IsUsingCharges() const { return m_isUsingCharges; }
@@ -198,6 +201,8 @@ class Aura
         // AuraScript
         void LoadScripts();
         bool CallScriptCheckAreaTargetHandlers(Unit* target);
+        void CallScriptDispel(DispelInfo* dispelInfo);
+        void CallScriptAfterDispel(DispelInfo* dispelInfo);
         bool CallScriptEffectApplyHandlers(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes mode);
         bool CallScriptEffectRemoveHandlers(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes mode);
         void CallScriptAfterEffectApplyHandlers(AuraEffect const* aurEff, AuraApplication const* aurApp, AuraEffectHandleModes mode);

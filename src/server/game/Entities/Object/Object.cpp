@@ -45,6 +45,8 @@
 #include "TemporarySummon.h"
 #include "Totem.h"
 #include "OutdoorPvPMgr.h"
+#include "MovementPacketBuilder.h"
+#include "DynamicTree.h"
 
 uint32 GuidHigh2TypeId(uint32 guid_hi)
 {
@@ -312,78 +314,17 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags) const
 
         *data << ((Unit*)this)->GetSpeed(MOVE_WALK);
         *data << ((Unit*)this)->GetSpeed(MOVE_RUN);
-        *data << ((Unit*)this)->GetSpeed(MOVE_SWIM_BACK);
-        *data << ((Unit*)this)->GetSpeed(MOVE_SWIM);
         *data << ((Unit*)this)->GetSpeed(MOVE_RUN_BACK);
+        *data << ((Unit*)this)->GetSpeed(MOVE_SWIM);
+        *data << ((Unit*)this)->GetSpeed(MOVE_SWIM_BACK);
         *data << ((Unit*)this)->GetSpeed(MOVE_FLIGHT);
         *data << ((Unit*)this)->GetSpeed(MOVE_FLIGHT_BACK);
         *data << ((Unit*)this)->GetSpeed(MOVE_TURN_RATE);
         *data << ((Unit*)this)->GetSpeed(MOVE_PITCH_RATE);
 
-        const Player* player = ToPlayer();
-
         // 0x08000000
-        if (player && player->isInFlight())
-        {
-            uint32 flags3 = SPLINEFLAG_GLIDE;
-
-            *data << uint32(flags3);                        // splines flag?
-
-            if (flags3 & 0x20000)                            // may be orientation
-            {
-                *data << (float)0;
-            }
-            else
-            {
-                if (flags3 & 0x8000)                         // probably x, y, z coords there
-                {
-                    *data << (float)0;
-                    *data << (float)0;
-                    *data << (float)0;
-                }
-
-                if (flags3 & 0x10000)                        // probably guid there
-                {
-                    *data << uint64(0);
-                }
-            }
-
-            FlightPathMovementGenerator *fmg =
-                (FlightPathMovementGenerator*)(player->GetMotionMaster()->top());
-            TaxiPathNodeList const& path = fmg->GetPath();
-
-            float x, y, z;
-            player->GetPosition(x, y, z);
-
-            uint32 inflighttime = uint32(path.GetPassedLength(fmg->GetCurrentNode(), x, y, z) * 32);
-            uint32 traveltime = uint32(path.GetTotalLength() * 32);
-
-            *data << uint32(inflighttime);                  // passed move time?
-            *data << uint32(traveltime);                    // full move time?
-            *data << uint32(0);                             // ticks count?
-
-            *data << float(0);                              // added in 3.1
-            *data << float(0);                              // added in 3.1
-            *data << float(0);                              // added in 3.1
-
-            *data << uint32(0);                             // added in 3.1
-
-            uint32 poscount = uint32(path.size());
-            *data << uint32(poscount);                      // points count
-
-            for (uint32 i = 0; i < poscount; ++i)
-            {
-                *data << float(path[i].x);
-                *data << float(path[i].y);
-                *data << float(path[i].z);
-            }
-
-            *data << uint8(0);                              // added in 3.0.8
-
-            *data << float(path[poscount-1].x);
-            *data << float(path[poscount-1].y);
-            *data << float(path[poscount-1].z);
-        }
+        if (((Unit*)this)->m_movementInfo.GetMovementFlags() & MOVEMENTFLAG_SPLINE_ENABLED)
+            Movement::PacketBuilder::WriteCreate(*((Unit*)this)->movespline, *data);
     }
     else
     {
@@ -487,7 +428,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags) const
     // 0x200
     if (flags & UPDATEFLAG_ROTATION)
     {
-        *data << uint64(((GameObject*)this)->GetRotation());
+        *data << int64(((GameObject*)this)->GetRotation());
     }
 }
 
@@ -1370,15 +1311,19 @@ bool WorldObject::IsWithinLOSInMap(const WorldObject* obj) const
 
     float ox, oy, oz;
     obj->GetPosition(ox, oy, oz);
-    return(IsWithinLOS(ox, oy, oz));
+    return IsWithinLOS(ox, oy, oz);
 }
 
 bool WorldObject::IsWithinLOS(float ox, float oy, float oz) const
 {
-    float x, y, z;
+    /*float x, y, z;
     GetPosition(x, y, z);
     VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
-    return vMapManager->isInLineOfSight(GetMapId(), x, y, z+2.0f, ox, oy, oz+2.0f);
+    return vMapManager->isInLineOfSight(GetMapId(), x, y, z+2.0f, ox, oy, oz+2.0f);*/
+    if (IsInWorld())
+        return GetMap()->isInLineOfSight(GetPositionX(), GetPositionY(), GetPositionZ()+2.f, ox, oy, oz+2.f, GetPhaseMask());
+
+    return true;
 }
 
 bool WorldObject::GetDistanceOrder(WorldObject const* obj1, WorldObject const* obj2, bool is3D /* = true */) const
@@ -1600,9 +1545,73 @@ void WorldObject::GetRandomPoint(const Position &pos, float distance, float &ran
 
 void WorldObject::UpdateGroundPositionZ(float x, float y, float &z) const
 {
-    float new_z = GetBaseMap()->GetHeight(x, y, z, true);
+    float new_z = GetBaseMap()->GetHeight(GetPhaseMask(), x, y, z, true);
     if (new_z > INVALID_HEIGHT)
         z = new_z+ 0.05f;                                   // just to be sure that we are not a few pixel under the surface
+}
+
+void WorldObject::UpdateAllowedPositionZ(float x, float y, float &z) const
+{
+    switch (GetTypeId())
+    {
+        case TYPEID_UNIT:
+        {
+            // non fly unit don't must be in air
+            // non swim unit must be at ground (mostly speedup, because it don't must be in water and water level check less fast
+            if (!ToCreature()->canFly())
+            {
+                bool canSwim = ToCreature()->canSwim();
+                float ground_z = z;
+                float max_z = canSwim
+                    ? GetBaseMap()->GetWaterOrGroundLevel(x, y, z, &ground_z, !ToUnit()->HasAuraType(SPELL_AURA_WATER_WALK))
+                    : ((ground_z = GetBaseMap()->GetHeight(GetPhaseMask(), x, y, z, true)));
+                if (max_z > INVALID_HEIGHT)
+                {
+                    if (z > max_z)
+                        z = max_z;
+                    else if (z < ground_z)
+                        z = ground_z;
+                }
+            }
+            else
+            {
+                float ground_z = GetBaseMap()->GetHeight(GetPhaseMask(), x, y, z, true);
+                if (z < ground_z)
+                    z = ground_z;
+            }
+            break;
+        }
+        case TYPEID_PLAYER:
+        {
+            // for server controlled moves playr work same as creature (but it can always swim)
+            if (!ToPlayer()->canFly())
+            {
+                float ground_z = z;
+                float max_z = GetBaseMap()->GetWaterOrGroundLevel(x, y, z, &ground_z, !ToUnit()->HasAuraType(SPELL_AURA_WATER_WALK));
+                if (max_z > INVALID_HEIGHT)
+                {
+                    if (z > max_z)
+                        z = max_z;
+                    else if (z < ground_z)
+                        z = ground_z;
+                }
+            }
+            else
+            {
+                float ground_z = GetBaseMap()->GetHeight(GetPhaseMask(), x, y, z, true);
+                if (z < ground_z)
+                    z = ground_z;
+            }
+            break;
+        }
+        default:
+        {
+            float ground_z = GetBaseMap()->GetHeight(GetPhaseMask(), x, y, z, true);
+            if(ground_z > INVALID_HEIGHT)
+                z = ground_z;
+            break;
+        }
+    }
 }
 
 bool Position::IsPositionValid() const
@@ -1813,11 +1822,15 @@ bool WorldObject::CanDetectStealthOf(WorldObject const* obj) const
 
         // Level difference: 5 point / level, starting from level 1.
         // There may be spells for this and the starting points too, but
-        //   not in the DBCs of the client.
+        // not in the DBCs of the client.
         detectionValue += int32(getLevelForTarget(obj) - 1) * 5;
 
         // Apply modifiers
         detectionValue += m_stealthDetect.GetValue(StealthType(i));
+        if (obj->isType(TYPEMASK_GAMEOBJECT))
+            if (Unit* owner = ((GameObject*)obj)->GetOwner())
+                detectionValue -= int32(owner->getLevelForTarget(this) - 1) * 5;
+
         detectionValue -= obj->m_stealth.GetValue(StealthType(i));
 
         // Calculate max distance
@@ -2043,7 +2056,8 @@ void Unit::BuildHeartBeatMsg(WorldPacket* data) const
 
 void WorldObject::SendMessageToSet(WorldPacket* data, bool self)
 {
-    SendMessageToSetInRange(data, GetVisibilityRange(), self);
+    if (IsInWorld())
+        SendMessageToSetInRange(data, GetVisibilityRange(), self);
 }
 
 void WorldObject::SendMessageToSetInRange(WorldPacket* data, float dist, bool /*self*/)
@@ -2463,7 +2477,7 @@ namespace Trinity
 
                 float x, y, z;
 
-                if (!c->isAlive() || c->HasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED) ||
+                if (!c->isAlive() || c->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED | UNIT_STATE_DISTRACTED) ||
                     !c->GetMotionMaster()->GetDestination(x, y, z))
                 {
                     x = c->GetPositionX();
@@ -2531,7 +2545,7 @@ void WorldObject::GetNearPoint(WorldObject const* /*searcher*/, float &x, float 
 {
     GetNearPoint2D(x, y, distance2d+searcher_size, absAngle);
     z = GetPositionZ();
-    UpdateGroundPositionZ(x, y, z);
+    UpdateAllowedPositionZ(x, y, z);
 
     /*
     // if detection disabled, return first point
@@ -2670,8 +2684,8 @@ void WorldObject::MovePositionToFirstCollision(Position &pos, float dist, float 
 
     destx = pos.m_positionX + dist * cos(angle);
     desty = pos.m_positionY + dist * sin(angle);
-    ground = GetMap()->GetHeight(destx, desty, MAX_HEIGHT, true);
-    floor = GetMap()->GetHeight(destx, desty, pos.m_positionZ, true);
+    ground = GetMap()->GetHeight(GetPhaseMask(), destx, desty, MAX_HEIGHT, true);
+    floor = GetMap()->GetHeight(GetPhaseMask(), destx, desty, pos.m_positionZ, true);
     destz = fabs(ground - pos.m_positionZ) <= fabs(floor - pos.m_positionZ) ? ground : floor;
 
     bool col = VMAP::VMapFactory::createOrGetVMapManager()->getObjectHitPos(GetMapId(), pos.m_positionX, pos.m_positionY, pos.m_positionZ+0.5f, destx, desty, destz+0.5f, destx, desty, destz, -0.5f);
@@ -2694,8 +2708,8 @@ void WorldObject::MovePositionToFirstCollision(Position &pos, float dist, float 
         {
             destx -= step * cos(angle);
             desty -= step * sin(angle);
-            ground = GetMap()->GetHeight(destx, desty, MAX_HEIGHT, true);
-            floor = GetMap()->GetHeight(destx, desty, pos.m_positionZ, true);
+            ground = GetMap()->GetHeight(GetPhaseMask(), destx, desty, MAX_HEIGHT, true);
+            floor = GetMap()->GetHeight(GetPhaseMask(), destx, desty, pos.m_positionZ, true);
             destz = fabs(ground - pos.m_positionZ) <= fabs(floor - pos.m_positionZ) ? ground : floor;
         }
         // we have correct destz now

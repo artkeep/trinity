@@ -95,7 +95,7 @@ m_inQueue(false), m_playerLoading(false), m_playerLogout(false),
 m_playerRecentlyLogout(false), m_playerSave(false),
 m_sessionDbcLocale(sWorld->GetAvailableDbcLocale(locale)),
 m_sessionDbLocaleIndex(locale),
-m_latency(0), m_TutorialsChanged(false), recruiterId(recruiter), isRecruiter(isARecruiter), m_Warden(NULL)
+m_latency(0), m_TutorialsChanged(false), recruiterId(recruiter), isRecruiter(isARecruiter), m_Warden(NULL), timeLastWhoCommand(0)
 {
     if (sock)
     {

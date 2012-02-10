@@ -609,6 +609,7 @@ enum LootState
 };
 
 class Unit;
+class GameObjectModel;
 
 // 5 sec for bobber catch
 #define FISHING_BOBBER_READY_TIME 5
@@ -703,17 +704,21 @@ class GameObject : public WorldObject, public GridObject<GameObject>
         GameobjectTypes GetGoType() const { return GameobjectTypes(GetByteValue(GAMEOBJECT_BYTES_1, 1)); }
         void SetGoType(GameobjectTypes type) { SetByteValue(GAMEOBJECT_BYTES_1, 1, type); }
         GOState GetGoState() const { return GOState(GetByteValue(GAMEOBJECT_BYTES_1, 0)); }
-        void SetGoState(GOState state) { SetByteValue(GAMEOBJECT_BYTES_1, 0, state); }
+        void SetGoState(GOState state);
         uint8 GetGoArtKit() const { return GetByteValue(GAMEOBJECT_BYTES_1, 2); }
         void SetGoArtKit(uint8 artkit);
         uint8 GetGoAnimProgress() const { return GetByteValue(GAMEOBJECT_BYTES_1, 3); }
         void SetGoAnimProgress(uint8 animprogress) { SetByteValue(GAMEOBJECT_BYTES_1, 3, animprogress); }
         static void SetGoArtKit(uint8 artkit, GameObject* go, uint32 lowguid = 0);
+        
+        void SetPhaseMask(uint32 newPhaseMask, bool update);
+        void EnableCollision(bool enable);
 
         void Use(Unit* user);
 
         LootState getLootState() const { return m_lootState; }
-        void SetLootState(LootState s) { m_lootState = s; }
+        // Note: unit is only used when s = GO_ACTIVATED
+        void SetLootState(LootState s, Unit* unit = NULL);
 
         uint16 GetLootMode() { return m_LootMode; }
         bool HasLootMode(uint16 lootMode) { return m_LootMode & lootMode; }
@@ -747,7 +752,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
         bool hasQuest(uint32 quest_id) const;
         bool hasInvolvedQuest(uint32 quest_id) const;
         bool ActivateToQuest(Player* target) const;
-        void UseDoorOrButton(uint32 time_to_restore = 0, bool alternative = false);
+        void UseDoorOrButton(uint32 time_to_restore = 0, bool alternative = false, Unit* user = NULL);
                                                             // 0 = use `gameobject`.`spawntimesecs`
         void ResetDoorOrButton();
 
@@ -790,6 +795,9 @@ class GameObject : public WorldObject, public GridObject<GameObject>
 
         std::string GetAIName() const;
         bool IsTemporary;
+        void SetDisplayId(uint32 displayid);
+        
+        GameObjectModel * m_model;
     protected:
         bool AIM_Initialize();
         uint32      m_spellId;
@@ -819,6 +827,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
     private:
         void RemoveFromOwner();
         void SwitchDoorOrButton(bool activate, bool alternative = false);
+        void UpdateModel();                                 // updates model in case displayId were changed
 
         //! Object distance/size - overridden from Object::_IsWithinDist. Needs to take in account proper GO size.
         bool _IsWithinDist(WorldObject const* obj, float dist2compare, bool /*is3D*/) const

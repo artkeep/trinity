@@ -512,13 +512,16 @@ class Creature : public Unit, public GridObject<Creature>, public MapCreature
 
         uint8 getLevelForTarget(WorldObject const* target) const; // overwrite Unit::getLevelForTarget for boss level support
 
-        bool IsInEvadeMode() const { return HasUnitState(UNIT_STAT_EVADE); }
+        bool IsInEvadeMode() const { return HasUnitState(UNIT_STATE_EVADE); }
 
         bool AIM_Initialize(CreatureAI* ai = NULL);
         void Motion_Initialize();
 
         void AI_SendMoveToPacket(float x, float y, float z, uint32 time, uint32 MovementFlags, uint8 type);
         CreatureAI* AI() const { return (CreatureAI*)i_AI; }
+
+        void SetWalk(bool enable);
+        void SetLevitate(bool enable);
 
         uint32 GetShieldBlockValue() const                  //dunno mob block value
         {
@@ -573,7 +576,6 @@ class Creature : public Unit, public GridObject<Creature>, public MapCreature
         const char* GetNameForLocaleIdx(LocaleConstant locale_idx) const;
 
         void setDeathState(DeathState s);                   // override virtual Unit::setDeathState
-        bool FallGround();
 
         bool LoadFromDB(uint32 guid, Map* map) { return LoadCreatureFromDB(guid, map, false); }
         bool LoadCreatureFromDB(uint32 guid, Map* map, bool addToMap = true);

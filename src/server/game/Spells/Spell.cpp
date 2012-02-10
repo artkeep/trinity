@@ -1421,13 +1421,17 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
     }
 }
 
-SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, const uint32 effectMask, bool scaleAura)
+SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleAura)
 {
     if (!unit || !effectMask)
         return SPELL_MISS_EVADE;
 
-    // Recheck immune (only for delayed spells)
-    if (m_spellInfo->Speed && (unit->IsImmunedToDamage(m_spellInfo) || unit->IsImmunedToSpell(m_spellInfo)))
+    // For delayed spells immunity may be applied between missile launch and hit - check immunity for that case
+    // disable effects to which unit is immune
+    for (uint32 effectNumber = 0; effectNumber < MAX_SPELL_EFFECTS; ++effectNumber)
+        if (effectMask & (1 << effectNumber) && unit->IsImmunedToSpellEffect(m_spellInfo, effectNumber))
+            effectMask &= ~(1 << effectNumber);
+    if (!effectMask || (m_spellInfo->Speed && (unit->IsImmunedToDamage(m_spellInfo) || unit->IsImmunedToSpell(m_spellInfo))))
         return SPELL_MISS_IMMUNE;
 
     PrepareScriptHitHandlers();
@@ -1467,7 +1471,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, const uint32 effectMask, bool 
                 return SPELL_MISS_EVADE;
 
             // assisting case, healing and resurrection
-            if (unit->HasUnitState(UNIT_STAT_ATTACK_PLAYER))
+            if (unit->HasUnitState(UNIT_STATE_ATTACK_PLAYER))
             {
                 m_caster->SetContestedPvP();
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -2933,20 +2937,6 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
 
     InitExplicitTargets(*targets);
 
-    if (Player* plrCaster = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself())
-    {
-        //check for special spell conditions
-        ConditionList conditions = sConditionMgr->GetConditionsForNotGroupedEntry(CONDITION_SOURCE_TYPE_SPELL, m_spellInfo->Id);
-        if (!conditions.empty())
-            if (!sConditionMgr->IsPlayerMeetToConditions(plrCaster, conditions))
-            {
-                //SendCastResult(SPELL_FAILED_DONT_REPORT);
-                SendCastResult(plrCaster, m_spellInfo, m_cast_count, SPELL_FAILED_DONT_REPORT);
-                finish(false);
-                return;
-            }
-    }
-
     // Fill aura scaling information
     if (m_caster->IsControlledByPlayer() && !m_spellInfo->IsPassive() && m_spellInfo->SpellLevel && !m_spellInfo->IsChanneled() && !(_triggeredCastFlags & TRIGGERED_IGNORE_AURA_SCALING))
     {
@@ -3292,8 +3282,8 @@ void Spell::cast(bool skipCheck)
         m_spellState = SPELL_STATE_DELAYED;
         SetDelayStart(0);
 
-        if (m_caster->HasUnitState(UNIT_STAT_CASTING) && !m_caster->IsNonMeleeSpellCasted(false, false, true))
-            m_caster->ClearUnitState(UNIT_STAT_CASTING);
+        if (m_caster->HasUnitState(UNIT_STATE_CASTING) && !m_caster->IsNonMeleeSpellCasted(false, false, true))
+            m_caster->ClearUnitState(UNIT_STATE_CASTING);
     }
     else
     {
@@ -3659,8 +3649,8 @@ void Spell::finish(bool ok)
     if (m_spellInfo->IsChanneled())
         m_caster->UpdateInterruptMask();
 
-    if (m_caster->HasUnitState(UNIT_STAT_CASTING) && !m_caster->IsNonMeleeSpellCasted(false, false, true))
-        m_caster->ClearUnitState(UNIT_STAT_CASTING);
+    if (m_caster->HasUnitState(UNIT_STATE_CASTING) && !m_caster->IsNonMeleeSpellCasted(false, false, true))
+        m_caster->ClearUnitState(UNIT_STATE_CASTING);
 
     // Unsummon summon as possessed creatures on spell cancel
     if (m_spellInfo->IsChanneled() && m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -4824,6 +4814,14 @@ SpellCastResult Spell::CheckCast(bool strict)
             return SPELL_FAILED_DONT_REPORT;
     }
 
+    // check spell caster's conditions from database
+    if (Player* plrCaster = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself())
+    {
+        ConditionList conditions = sConditionMgr->GetConditionsForNotGroupedEntry(CONDITION_SOURCE_TYPE_SPELL, m_spellInfo->Id);
+        if (!conditions.empty() && !sConditionMgr->IsPlayerMeetToConditions(plrCaster, conditions))
+            return SPELL_FAILED_DONT_REPORT;
+    }
+
     // Don't check explicit target for passive spells (workaround) (check should be skipped only for learn case)
     // those spells may have incorrect target entries or not filled at all (for example 15332)
     // such spells when learned are not targeting anyone using targeting system, they should apply directly to caster instead
@@ -4865,6 +4863,16 @@ SpellCastResult Spell::CheckCast(bool strict)
                         return SPELL_FAILED_TARGET_AURASTATE;
             }
         }
+    }
+
+    //Check for line of sight for spells with dest
+    if (m_targets.HasDst())
+    {
+        float x, y, z;
+        m_targets.GetDst()->GetPosition(x, y, z);
+
+        if (!(m_spellInfo->AttributesEx2 & SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOS(x, y, z))
+            return SPELL_FAILED_LINE_OF_SIGHT;
     }
 
     // check pet presence
@@ -5161,7 +5169,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     if (strict && m_caster->IsScriptOverriden(m_spellInfo, 6953))
                         m_caster->RemoveMovementImpairingAuras();
                 }
-                if (m_caster->HasUnitState(UNIT_STAT_ROOT))
+                if (m_caster->HasUnitState(UNIT_STATE_ROOT))
                     return SPELL_FAILED_ROOTED;
 
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -5409,7 +5417,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
 
                 Unit* target = m_targets.GetUnitTarget();
-                if (m_caster == target && m_caster->HasUnitState(UNIT_STAT_ROOT))
+                if (m_caster == target && m_caster->HasUnitState(UNIT_STATE_ROOT))
                 {
                     if (m_caster->GetTypeId() == TYPEID_PLAYER)
                         return SPELL_FAILED_ROOTED;
@@ -5480,7 +5488,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     {
                         float x, y, z;
                         m_caster->GetPosition(x, y, z);
-                        float ground_Z = m_caster->GetMap()->GetHeight(x, y, z);
+                        float ground_Z = m_caster->GetMap()->GetHeight(m_caster->GetPhaseMask(), x, y, z);
                         if (fabs(ground_Z - z) < 0.1f)
                             return SPELL_FAILED_DONT_REPORT;
                         break;
@@ -5590,6 +5598,9 @@ SpellCastResult Spell::CheckCast(bool strict)
             }
             case SPELL_AURA_PERIODIC_MANA_LEECH:
             {
+                if (m_spellInfo->Effects[i].IsTargetingArea())
+                    break;
+
                 if (!m_targets.GetUnitTarget())
                     return SPELL_FAILED_BAD_IMPLICIT_TARGETS;
 
@@ -5641,7 +5652,7 @@ SpellCastResult Spell::CheckCast(bool strict)
 
 SpellCastResult Spell::CheckPetCast(Unit* target)
 {
-    if (m_caster->HasUnitState(UNIT_STAT_CASTING) && !(_triggeredCastFlags & TRIGGERED_IGNORE_CAST_IN_PROGRESS))              //prevent spellcast interruption by another spellcast
+    if (m_caster->HasUnitState(UNIT_STATE_CASTING) && !(_triggeredCastFlags & TRIGGERED_IGNORE_CAST_IN_PROGRESS))              //prevent spellcast interruption by another spellcast
         return SPELL_FAILED_SPELL_IN_PROGRESS;
 
     // dead owner (pets still alive when owners ressed?)
@@ -6816,7 +6827,7 @@ void Spell::HandleLaunchPhase()
             continue;
 
         // do not consume ammo anymore for Hunter's volley spell
-        if (IsTriggered() && m_spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER && m_spellInfo->IsAOE())
+        if (IsTriggered() && m_spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER && m_spellInfo->IsTargetingArea())
             usesAmmo = false;
 
         if (usesAmmo)
@@ -6867,7 +6878,7 @@ void Spell::DoAllEffectOnLaunchTarget(TargetInfo& targetInfo, float* multiplier)
 
             if (m_damage > 0)
             {
-                if (m_spellInfo->Effects[i].IsArea())
+                if (m_spellInfo->Effects[i].IsTargetingArea())
                 {
                     m_damage = int32(float(m_damage) * unit->GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_AOE_DAMAGE_AVOIDANCE, m_spellInfo->SchoolMask));
                     if (m_caster->GetTypeId() == TYPEID_UNIT)

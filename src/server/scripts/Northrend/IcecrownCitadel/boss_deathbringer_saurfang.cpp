@@ -279,7 +279,7 @@ class boss_deathbringer_saurfang : public CreatureScript
 
                 events.Reset();
                 events.SetPhase(PHASE_COMBAT);
-                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                 if (!_introDone)
                 {
                     DoCast(me, SPELL_GRIP_OF_AGONY);
@@ -314,7 +314,7 @@ class boss_deathbringer_saurfang : public CreatureScript
 
             void AttackStart(Unit* victim)
             {
-                if (me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE))
+                if (me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC))
                     return;
 
                 ScriptedAI::AttackStart(victim);
@@ -324,7 +324,7 @@ class boss_deathbringer_saurfang : public CreatureScript
             {
                 ScriptedAI::EnterEvadeMode();
                 if (_introDone)
-                    me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                    me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
             }
 
             void JustReachedHome()
@@ -403,7 +403,7 @@ class boss_deathbringer_saurfang : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->HasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -434,7 +434,7 @@ class boss_deathbringer_saurfang : public CreatureScript
                         case EVENT_INTRO_FINISH:
                             events.SetPhase(PHASE_COMBAT);
                             _introDone = true;
-                            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                             break;
                         case EVENT_SUMMON_BLOOD_BEAST:
                             for (uint32 i10 = 0; i10 < 2; ++i10)
@@ -608,7 +608,7 @@ class npc_high_overlord_saurfang_icc : public CreatureScript
                         me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
                         me->SendMovementFlagUpdate();
                         me->Relocate(me->GetPositionX(), me->GetPositionY(), 539.2917f);
-                        me->SendMonsterMove(me->GetPositionX(), me->GetPositionY(), 539.2917f, SPLINEFLAG_FALLING, 0, 0.0f);
+                        me->MonsterMoveWithSpeed(me->GetPositionX(), me->GetPositionY(), 539.2917f, 0.0f);
                         for (std::list<Creature*>::iterator itr = _guardList.begin(); itr != _guardList.end(); ++itr)
                             (*itr)->AI()->DoAction(ACTION_DESPAWN);
                         break;
@@ -815,7 +815,7 @@ class npc_muradin_bronzebeard_icc : public CreatureScript
                         me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
                         me->SendMovementFlagUpdate();
                         me->Relocate(me->GetPositionX(), me->GetPositionY(), 539.2917f);
-                        me->SendMonsterMove(me->GetPositionX(), me->GetPositionY(), 539.2917f, SPLINEFLAG_FALLING, 0, 0.0f);
+                        me->MonsterMoveWithSpeed(me->GetPositionX(), me->GetPositionY(), 539.2917f, 0.0f);
                         for (std::list<Creature*>::iterator itr = _guardList.begin(); itr != _guardList.end(); ++itr)
                             (*itr)->AI()->DoAction(ACTION_DESPAWN);
                         break;

@@ -228,7 +228,6 @@ class SmartScript
         SmartAIEventList mEvents;
         SmartAIEventList mInstallEvents;
         SmartAIEventList mTimedActionList;
-        bool mResumeActionList;
         Creature* me;
         uint64 meOrigGUID;
         GameObject* go;
@@ -237,7 +236,6 @@ class SmartScript
         SmartScriptType mScriptType;
         uint32 mEventPhase;
 
-        uint32 mInvinceabilityHpLevel;
         UNORDERED_MAP<int32, int32> mStoredDecimals;
         uint32 mPathId;
         SmartAIEventList mStoredEvents;

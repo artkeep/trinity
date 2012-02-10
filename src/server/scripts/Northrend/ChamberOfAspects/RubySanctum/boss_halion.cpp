@@ -310,7 +310,7 @@ class boss_halion : public CreatureScript
                 if (!(events.GetPhaseMask() & PHASE_ONE_MASK))
                     me->SetHealth(instance->GetData(DATA_HALION_SHARED_HEALTH));
 
-                if ((!UpdateVictim() && (events.GetPhaseMask() & (PHASE_ONE_MASK | PHASE_THREE_MASK))) || me->HasUnitState(UNIT_STAT_CASTING))
+                if ((!UpdateVictim() && (events.GetPhaseMask() & (PHASE_ONE_MASK | PHASE_THREE_MASK))) || me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 // Events won't be updated under phase two.
@@ -479,7 +479,7 @@ class boss_twilight_halion : public CreatureScript
             {
                 me->SetHealth(_instance->GetData(DATA_HALION_SHARED_HEALTH));
 
-                if (!UpdateVictim() || me->HasUnitState(UNIT_STAT_CASTING))
+                if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 events.Update(diff);
@@ -1070,7 +1070,7 @@ class npc_orb_carrier : public CreatureScript
                 //! However, refreshing it looks bad, so just cast the spell if
                 //! we are not channeling it. Targeting will be handled by
                 //! conditions.
-                if (!me->HasUnitState(UNIT_STAT_CASTING))
+                if (!me->HasUnitState(UNIT_STATE_CASTING))
                     DoCast(me, SPELL_TRACK_ROTATION, false);
             }
 

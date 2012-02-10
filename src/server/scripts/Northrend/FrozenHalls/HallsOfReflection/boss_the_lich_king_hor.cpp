@@ -107,7 +107,8 @@ public:
                     if(Creature* pLider = ((Creature*)Unit::GetUnit((*me), m_pInstance->GetData64(DATA_ESCAPE_LIDER))))
                     {
                         pLider->CastSpell(pLider, SPELL_SILENCE, false);
-                        pLider->SendMonsterMove(pLider->GetPositionX(), pLider->GetPositionY(), pLider->GetPositionZ() + 4, VICTIMSTATE_HIT, pLider->isInCombat(), 3000);
+                        float speed = me->GetDistance(pLider->GetPositionX(),  pLider->GetPositionY(), pLider->GetPositionZ()) / ((float)3000 * 0.001f);
+                        pLider->MonsterMoveWithSpeed(pLider->GetPositionX(), pLider->GetPositionY(), pLider->GetPositionZ() + 4, speed);
                     }
                     me->setActive(false);
                     break;

@@ -36,7 +36,6 @@ enum DeathKnightSpells
     DK_SPELL_WILL_OF_THE_NECROPOLIS_TALENT_R1   = 49189,
     DK_SPELL_WILL_OF_THE_NECROPOLIS_AURA_R1     = 52284,
     DK_SPELL_BLOOD_PRESENCE                     = 48266,
-    DK_SPELL_BLOOD_TAP                          = 45529,
     DK_SPELL_IMPROVED_BLOOD_PRESENCE_TRIGGERED  = 63611,
     DK_SPELL_UNHOLY_PRESENCE                    = 48265,
     DK_SPELL_IMPROVED_UNHOLY_PRESENCE_TRIGGERED = 63622,
@@ -560,50 +559,6 @@ class spell_dk_will_of_the_necropolis : public SpellScriptLoader
         }
 };
 
-// 45529 Blood Tap
-class spell_dk_blood_tap : public SpellScriptLoader
-{
-public:
-    spell_dk_blood_tap() : SpellScriptLoader("spell_dk_blood_tap") { }
-
-    class spell_dk_blood_tap_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(spell_dk_blood_tap_SpellScript)
-        bool Validate(SpellEntry const * /*spellEntry*/)
-        {
-            if (!sSpellStore.LookupEntry(DK_SPELL_BLOOD_TAP))
-                return false;
-            return true;
-        }
-
-        void HandleDummy(SpellEffIndex /*effIndex*/)
-        {
-            Unit* caster = GetCaster();
-            for (uint32 i = 0; i < MAX_RUNES; ++i)
-            {
-                if (caster->ToPlayer()->GetBaseRune(i) == RUNE_BLOOD && caster->ToPlayer()->GetRuneCooldown(i) != 0)
-                {
-                    caster->ToPlayer()->SetRuneCooldown(i, 0);
-                    caster->ToPlayer()->ResyncRunes(MAX_RUNES);
-                    return;
-                }
-            }
-        }
-
-        void Register()
-        {
-            OnEffectHitTarget += SpellEffectFn(spell_dk_blood_tap_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_ACTIVATE_RUNE);
-        }
-    
-            
-    };
-
-    SpellScript* GetSpellScript() const
-    {
-        return new spell_dk_blood_tap_SpellScript();
-    }
-};
-
 // 50365, 50371 Improved Blood Presence
 class spell_dk_improved_blood_presence : public SpellScriptLoader
 {
@@ -714,7 +669,6 @@ void AddSC_deathknight_spell_scripts()
     new spell_dk_spell_deflection();
     new spell_dk_blood_boil();
     new spell_dk_will_of_the_necropolis();
-    new spell_dk_blood_tap();
     new spell_dk_improved_blood_presence();
     new spell_dk_improved_unholy_presence();
 }

@@ -1,24 +1,23 @@
 /*
  * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef __BATTLEGROUNDDS_H
 #define __BATTLEGROUNDDS_H
-
-#include "Unit.h"
 
 class Battleground;
 
@@ -44,10 +43,15 @@ enum BattlegroundDSObjects
 };
 
 enum BattlegroundDSData
-{
-    BG_DS_WATERFALL_TIMER_MIN                    = 35000,
+{ // These values are NOT blizzlike... need the correct data!
+    BG_DS_WATERFALL_TIMER_MIN                    = 30000,
     BG_DS_WATERFALL_TIMER_MAX                    = 60000,
-    BG_DS_WATERFALL_DURATION                     = 30000,
+    BG_DS_WATERFALL_WARNING_DURATION             = 7000,
+    BG_DS_WATERFALL_DURATION                     = 10000,
+
+    BG_DS_WATERFALL_STATUS_WARNING               = 1, // Water starting to fall, but no LoS Blocking nor movement blocking
+    BG_DS_WATERFALL_STATUS_ON                    = 2, // LoS and Movement blocking active
+    BG_DS_WATERFALL_STATUS_OFF                   = 3,
 };
 
 class BattlegroundDSScore : public BattlegroundScore
@@ -77,18 +81,14 @@ class BattlegroundDS : public Battleground
         void HandleKillPlayer(Player* player, Player* killer);
         bool HandlePlayerUnderMap(Player* player);
     private:
-        uint32 m_waterTimer;
-        bool m_waterfallActive;
-
-        bool m_knockbackCheck;
-        uint32 m_knockback;
-        void KnockBackPlayer(Unit *pPlayer, float angle, float horizontalSpeed, float verticalSpeed);
+        uint32 _waterfallTimer;
+        uint8 _waterfallStatus;
 
         virtual void PostUpdateImpl(uint32 diff);
     protected:
-        bool isWaterFallActive() { return m_waterfallActive; };
-        void setWaterFallActive(bool active) { m_waterfallActive = active; };
-        void setWaterFallTimer(uint32 timer) { m_waterTimer = timer; };
-        uint32 getWaterFallTimer() { return m_waterTimer; };
+        uint32 getWaterFallStatus() { return _waterfallStatus; };
+        void setWaterFallStatus(uint32 status) { _waterfallStatus = status; };
+        void setWaterFallTimer(uint32 timer) { _waterfallTimer = timer; };
+        uint32 getWaterFallTimer() { return _waterfallTimer; };
 };
 #endif

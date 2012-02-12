@@ -27,6 +27,7 @@
 
 enum HunterSpells
 {
+    HUNTER_SPELL_READINESS                       = 23989,
     HUNTER_SPELL_BESTIAL_WRATH                   = 19574,
     HUNTER_PET_SPELL_LAST_STAND_TRIGGERED        = 53479,
     HUNTER_PET_HEART_OF_THE_PHOENIX              = 55709,
@@ -332,9 +333,9 @@ public:
                 ///! If spellId in cooldown map isn't valid, the above will return a null pointer.
                 if (spellInfo &&
                     spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER &&
+                    spellInfo->Id != HUNTER_SPELL_READINESS &&
                     spellInfo->Id != HUNTER_SPELL_BESTIAL_WRATH &&
-                    spellInfo->GetRecoveryTime() > 0 > 0 &&
-                    spellInfo->SpellLevel > 1) // excludes Readiness, Gift of the Naaru and etc
+                    spellInfo->GetRecoveryTime() > 0)
                     caster->ToPlayer()->RemoveSpellCooldown((itr++)->first, true);
                 else
                     ++itr;

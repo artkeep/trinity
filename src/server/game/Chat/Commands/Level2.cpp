@@ -730,7 +730,7 @@ bool ChatHandler::HandleLookupPlayerIpCommand(const char* args)
 
     LoginDatabase.EscapeString(ip);
 
-    QueryResult result = LoginDatabase.PQuery("SELECT id, username FROM account WHERE last_ip = '%s'", ip.c_str());
+    QueryResult result = LoginDatabase.PQuery("SELECT id, username, email, last_ip, online, joindate, last_login FROM account WHERE last_ip = '%s'", ip.c_str());
 
     return LookupPlayerSearchCommand(result, limit);
 }
@@ -749,7 +749,7 @@ bool ChatHandler::HandleLookupPlayerAccountCommand(const char* args)
 
     LoginDatabase.EscapeString (account);
 
-    QueryResult result = LoginDatabase.PQuery ("SELECT id, username FROM account WHERE username = '%s'", account.c_str ());
+    QueryResult result = LoginDatabase.PQuery ("SELECT id, username, email, last_ip, online, joindate, last_login FROM account WHERE username = '%s'", account.c_str ());
 
     return LookupPlayerSearchCommand (result, limit);
 }
@@ -766,7 +766,7 @@ bool ChatHandler::HandleLookupPlayerEmailCommand(const char* args)
 
     LoginDatabase.EscapeString (email);
 
-    QueryResult result = LoginDatabase.PQuery ("SELECT id, username FROM account WHERE email = '%s'", email.c_str ());
+    QueryResult result = LoginDatabase.PQuery ("SELECT id, username, email, last_ip, online, joindate, last_login FROM account WHERE email = '%s'", email.c_str ());
 
     return LookupPlayerSearchCommand (result, limit);
 }
@@ -794,11 +794,16 @@ bool ChatHandler::LookupPlayerSearchCommand(QueryResult result, int32 limit)
         Field* fields = result->Fetch();
         uint32 acc_id = fields[0].GetUInt32();
         std::string acc_name = fields[1].GetString();
+        std::string acc_email = fields[2].GetString();
+        std::string acc_last_ip = fields[3].GetString();
+        int8 acc_online = fields[4].GetInt8();
+        std::string acc_join_date = fields[5].GetString();
+        std::string acc_last_login = fields[6].GetString();
 
         QueryResult chars = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%u'", acc_id);
         if (chars)
         {
-            PSendSysMessage(LANG_LOOKUP_PLAYER_ACCOUNT, acc_name.c_str(), acc_id);
+            PSendSysMessage(LANG_LOOKUP_PLAYER_ACCOUNT, acc_name.c_str(), acc_id, acc_email.c_str(), acc_last_ip.c_str(), acc_online, acc_join_date.c_str(), acc_last_login.c_str());
 
             uint64 guid = 0;
             std::string name;

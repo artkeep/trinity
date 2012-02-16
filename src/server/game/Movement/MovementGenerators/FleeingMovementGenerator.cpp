@@ -153,7 +153,7 @@ bool FleeingMovementGenerator<T>::_getPoint(T &unit, float &x, float &y, float &
                 y = temp_y;
                 return true;
             }
-            float new_z = _map->GetHeight(owner.GetPhaseMask(), temp_x, temp_y, z, true);
+            float new_z = _map->GetHeight(unit.GetPhaseMask(), temp_x, temp_y, z, true);
 
             if (new_z <= INVALID_HEIGHT)
                 continue;
@@ -165,8 +165,8 @@ bool FleeingMovementGenerator<T>::_getPoint(T &unit, float &x, float &y, float &
 
             if (!(new_z - z) || distance / fabs(new_z - z) > 1.0f)
             {
-                float new_z_left = _map->GetHeight(owner.GetPhaseMask(), temp_x + 1.0f*cos(angle+static_cast<float>(M_PI/2)),temp_y + 1.0f*sin(angle+static_cast<float>(M_PI/2)),z,true);
-                float new_z_right = _map->GetHeight(owner.GetPhaseMask(), temp_x + 1.0f*cos(angle-static_cast<float>(M_PI/2)),temp_y + 1.0f*sin(angle-static_cast<float>(M_PI/2)),z,true);
+                float new_z_left = _map->GetHeight(unit.GetPhaseMask(), temp_x + 1.0f*cos(angle+static_cast<float>(M_PI/2)),temp_y + 1.0f*sin(angle+static_cast<float>(M_PI/2)),z,true);
+                float new_z_right = _map->GetHeight(unit.GetPhaseMask(), temp_x + 1.0f*cos(angle-static_cast<float>(M_PI/2)),temp_y + 1.0f*sin(angle-static_cast<float>(M_PI/2)),z,true);
                 if (fabs(new_z_left - new_z) < 1.2f && fabs(new_z_right - new_z) < 1.2f)
                 {
                     x = temp_x;

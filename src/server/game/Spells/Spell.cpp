@@ -3796,9 +3796,6 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
         case SPELL_FAILED_NEED_EXOTIC_AMMO:
             data << uint32(spellInfo->EquippedItemSubClassMask);// seems correct...
             break;
-        case SPELL_FAILED_REAGENTS:
-            data << uint32(0);                              // item id
-            break;
         case SPELL_FAILED_NEED_MORE_ITEMS:
             data << uint32(0);                              // item id
             data << uint32(0);                              // item count?

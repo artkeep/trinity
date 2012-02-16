@@ -828,7 +828,7 @@ class ObjectMgr
         }
         QuestRelations* GetCreatureQuestInvolvedRelation()
         {
-            return &mCreatureQuestInvolvedRelations;
+            return &_creatureQuestInvolvedRelations;
         }
 
         QuestRelationBounds GetCreatureQuestRelationBounds(uint32 creature_entry)

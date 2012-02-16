@@ -76,7 +76,7 @@ void WaypointMovementGenerator<Creature>::OnArrived(Creature& unit)
 
     if (i_path->at(i_currentNode)->event_id && urand(0, 99) < i_path->at(i_currentNode)->event_chance)
     {
-        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Creature movement start script %u at point %u for %u.", i_path->at(i_currentNode)->event_id, i_currentNode, unit.GetGUID());
+        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Creature movement start script %u at point %u for "UI64FMTD".", i_path->at(i_currentNode)->event_id, i_currentNode, unit.GetGUID());
         unit.GetMap()->ScriptsStart(sWaypointScripts, i_path->at(i_currentNode)->event_id, &unit, NULL/*, false*/);
     }
 
@@ -204,11 +204,9 @@ void FlightPathMovementGenerator::Finalize(Player &unit)
     unit.Dismount();
     unit.RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
 
-    if(unit.m_taxi.empty())
+    if (unit.m_taxi.empty())
     {
         unit.getHostileRefManager().setOnlineOfflineState(true);
-        if(unit.pvpInfo.inHostileArea)
-            unit.CastSpell(&unit, 2479, true);
 
         // update z position to ground and orientation for landing point
         // this prevent cheating with landing  point at lags
@@ -238,7 +236,7 @@ void FlightPathMovementGenerator::Reset(Player &unit)
     init.Launch();
 }
 
-bool FlightPathMovementGenerator::Update(Player &unit, const uint32 diff)
+bool FlightPathMovementGenerator::Update(Player &unit, const uint32 /*diff*/)
 {
     uint32 pointId = (uint32)unit.movespline->currentPathIdx();
     if (pointId > i_currentNode)

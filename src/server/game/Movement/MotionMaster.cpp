@@ -151,9 +151,6 @@ void MotionMaster::DirectExpire(bool reset)
         DirectDelete(curr);
     }
 
-    while (!top())
-        --_top;
-
     if (empty())
         Initialize();
     else if (needInitTop())
@@ -170,9 +167,6 @@ void MotionMaster::DelayedExpire()
         pop();
         DelayedDelete(curr);
     }
-
-    while (!top())
-        --_top;
 }
 
 void MotionMaster::MoveIdle()
@@ -336,7 +330,7 @@ void MotionMaster::MoveKnockbackFrom(float srcX, float srcY, float speedXY, floa
     float dist = 2 * moveTimeHalf * speedXY;
 
     _owner->GetNearPoint(_owner, x, y, z, _owner->GetObjectSize(), dist, _owner->GetAngle(srcX, srcY) + M_PI);
-    MoveJump(x, y, z, speedXY, speedZ);
+    MoveJump(x, y, z, speedXY, speedZ, MOTION_SLOT_CONTROLLED);
 }
 
 void MotionMaster::MoveJumpTo(float angle, float speedXY, float speedZ)
@@ -353,7 +347,7 @@ void MotionMaster::MoveJumpTo(float angle, float speedXY, float speedZ)
     MoveJump(x, y, z, speedXY, speedZ);
 }
 
-void MotionMaster::MoveJump(float x, float y, float z, float speedXY, float speedZ, uint32 id)
+void MotionMaster::MoveJump(float x, float y, float z, float speedXY, float speedZ, MovementSlot slot, uint32 id)
 {
     sLog->outStaticDebug("Unit (GUID: %u) jump to point (X: %f Y: %f Z: %f)", _owner->GetGUIDLow(), x, y, z);
 
@@ -365,10 +359,7 @@ void MotionMaster::MoveJump(float x, float y, float z, float speedXY, float spee
     init.SetParabolic(max_height,0);
     init.SetVelocity(speedXY);
     init.Launch();
-    if (_owner->GetTypeId() == TYPEID_PLAYER)
-        Mutate(new EffectMovementGenerator(id), MOTION_SLOT_CONTROLLED);
-    else
-        Mutate(new EffectMovementGenerator(id), MOTION_SLOT_ACTIVE);
+    Mutate(new EffectMovementGenerator(id), slot);
 }
 
 void MotionMaster::MoveFall(uint32 id/*=0*/)

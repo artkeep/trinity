@@ -84,14 +84,19 @@ class MotionMaster //: private std::stack<MovementGenerator *>
         //typedef std::stack<MovementGenerator *> Impl;
         typedef MovementGenerator* _Ty;
 
-        void pop() { Impl[_top] = NULL; --_top; }
+        void pop()
+        {
+            Impl[_top] = NULL;
+            while (!top())
+                --_top;
+        }
         void push(_Ty _Val) { ++_top; Impl[_top] = _Val; }
 
         bool needInitTop() const { return _needInit[_top]; }
         void InitTop();
     public:
 
-        explicit MotionMaster(Unit* unit) : _top(-1), _owner(unit), _expList(NULL), _cleanFlag(MMCF_NONE)
+        explicit MotionMaster(Unit* unit) : _expList(NULL), _top(-1), _owner(unit), _cleanFlag(MMCF_NONE)
         {
             for (uint8 i = 0; i < MAX_MOTION_SLOT; ++i)
             {
@@ -158,7 +163,7 @@ class MotionMaster //: private std::stack<MovementGenerator *>
         void MoveCharge(float x, float y, float z, float speed = SPEED_CHARGE, uint32 id = EVENT_CHARGE);
         void MoveKnockbackFrom(float srcX, float srcY, float speedXY, float speedZ);
         void MoveJumpTo(float angle, float speedXY, float speedZ);
-        void MoveJump(float x, float y, float z, float speedXY, float speedZ, uint32 id = 0);
+        void MoveJump(float x, float y, float z, float speedXY, float speedZ, MovementSlot slot = MOTION_SLOT_ACTIVE, uint32 id = 0);
         void MoveFall(uint32 id = 0);
 
         void MoveSeekAssistance(float x, float y, float z);

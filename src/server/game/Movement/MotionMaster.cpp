@@ -151,6 +151,9 @@ void MotionMaster::DirectExpire(bool reset)
         DirectDelete(curr);
     }
 
+    while (!top())
+        --_top;
+
     if (empty())
         Initialize();
     else if (needInitTop())
@@ -167,6 +170,9 @@ void MotionMaster::DelayedExpire()
         pop();
         DelayedDelete(curr);
     }
+
+    while (!top())
+        --_top;
 }
 
 void MotionMaster::MoveIdle()

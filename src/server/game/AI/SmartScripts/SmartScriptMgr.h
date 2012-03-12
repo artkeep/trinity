@@ -23,7 +23,6 @@
 #include "CreatureAI.h"
 #include "Unit.h"
 #include "ConditionMgr.h"
-#include "CreatureTextMgr.h"
 #include "Spell.h"
 
 //#include "SmartScript.h"
@@ -154,7 +153,7 @@ enum SMART_EVENT
     SMART_EVENT_IS_BEHIND_TARGET         = 67,      //1             // cooldownMin, CooldownMax
     SMART_EVENT_GAME_EVENT_START         = 68,      //1             // game_event.Entry
     SMART_EVENT_GAME_EVENT_END           = 69,      //1             // game_event.Entry
-    SMART_EVENT_GO_STATE_CHANGED         = 70,      //                 go state    
+    SMART_EVENT_GO_STATE_CHANGED         = 70,      //                 go state
 
     SMART_EVENT_END                      = 71,
 };
@@ -341,16 +340,16 @@ struct SmartEvent
             uint32 cooldownMax;
         } behindTarget;
 
-        struct 
+        struct
         {
             uint32 gameEventId;
         } gameEvent;
-        
+
         struct
         {
             uint32 state;
         } goStateChanged;
-        
+
         struct
         {
             uint32 param1;
@@ -442,7 +441,7 @@ enum SMART_ACTION
 
     SMART_ACTION_CREATE_TIMED_EVENT                 = 67,     // id, InitialMin, InitialMax, RepeatMin(only if it repeats), RepeatMax(only if it repeats), chance
     SMART_ACTION_PLAYMOVIE                          = 68,     // entry
-    SMART_ACTION_MOVE_TO_POS                        = 69,     // xyz
+    SMART_ACTION_MOVE_TO_POS                        = 69,     // PointId, xyz
     SMART_ACTION_RESPAWN_TARGET                     = 70,     //
     SMART_ACTION_EQUIP                              = 71,     // entry, slotmask slot1, slot2, slot3   , only slots with mask set will be sent to client, bits are 1, 2, 4, leaving mask 0 is defaulted to mask 7 (send all), slots1-3 are only used if no entry is set
     SMART_ACTION_CLOSE_GOSSIP                       = 72,     // none
@@ -872,7 +871,12 @@ struct SmartAction
         {
             uint32 goRespawnTime;
         } RespawnTarget;
-        
+
+        struct
+        {
+            uint8 pointId;
+        } MoveToPos;
+
         struct
         {
             uint32 gossipMenuId;
@@ -883,12 +887,12 @@ struct SmartAction
         {
             uint32 state;
         } setGoLootState;
-        
+
         struct
         {
             uint32 id;
         } sendTargetToTarget;
-        
+
         struct
         {
             uint32 param1;
@@ -1180,7 +1184,7 @@ enum SmartCastFlags
     //CAST_FORCE_CAST             = 0x04,                     //Forces cast even if creature is out of mana or out of range
     //CAST_NO_MELEE_IF_OOM        = 0x08,                     //Prevents creature from entering melee if out of mana or out of range
     //CAST_FORCE_TARGET_SELF      = 0x10,                     //Forces the target to cast this spell on itself
-    //CAST_AURA_NOT_PRESENT       = 0x20,                     //Only casts the spell if the target does not have an aura from the spell
+    SMARTCAST_AURA_NOT_PRESENT       = 0x20,                     //Only casts the spell if the target does not have an aura from the spell
 };
 
 // one line in DB is one event

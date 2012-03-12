@@ -1232,6 +1232,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         break;
                 }
                 break;
+
             case SPELLFAMILY_HUNTER:
                 // Animal Handler
                 if (GetId() == 68361)
@@ -1265,6 +1266,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         break;
                 }
                 break;
+
             case SPELLFAMILY_PRIEST:
                 if (!caster)
                     break;
@@ -1521,6 +1523,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     default:
                         break;
                 }
+
                 break;
             case SPELLFAMILY_PRIEST:
                 if (!caster)
@@ -2202,7 +2205,7 @@ void Aura::TriggerProcOnEvent(AuraApplication* aurApp, ProcEventInfo& eventInfo)
         if (aurApp->HasEffect(i))
             // TODO: OnEffectProc hook here (allowing prevention of selected effects)
             GetEffect(i)->HandleProc(aurApp, eventInfo);
-            // TODO: AfterEffectProc hook here 
+            // TODO: AfterEffectProc hook here
 
     // TODO: AfterProc hook here
 

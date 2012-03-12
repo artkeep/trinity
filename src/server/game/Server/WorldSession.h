@@ -26,28 +26,30 @@
 #include "Common.h"
 #include "SharedDefines.h"
 #include "AddonMgr.h"
-#include "WardenBase.h"
 #include "DatabaseEnv.h"
 #include "World.h"
 #include "WorldPacket.h"
+#include "Cryptography/BigNumber.h"
 
-struct ItemTemplate;
-struct AuctionEntry;
-struct DeclinedName;
-struct MovementInfo;
-
+class CalendarEvent;
+class CalendarInvite;
 class Creature;
+class GameObject;
+class InstanceSave;
 class Item;
+class LoginQueryHolder;
 class Object;
 class Player;
-class Unit;
-class GameObject;
 class Quest;
+class SpellCastTargets;
+class Unit;
+class Warden;
 class WorldPacket;
 class WorldSocket;
-class LoginQueryHolder;
-class SpellCastTargets;
 struct AreaTableEntry;
+struct AuctionEntry;
+struct DeclinedName;
+struct ItemTemplate;
 struct LfgJoinResultData;
 struct LfgLockStatus;
 struct LfgPlayerBoot;
@@ -55,6 +57,7 @@ struct LfgProposal;
 struct LfgReward;
 struct LfgRoleCheck;
 struct LfgUpdateData;
+struct MovementInfo;
 
 enum AccountDataType
 {
@@ -211,9 +214,8 @@ class CharacterCreateInfo
 /// Player session in the World
 class WorldSession
 {
-    friend class WardenBase;
     public:
-        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, bool isARecruiter);
+        WorldSession(uint32 id, WorldSocket* sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, bool isARecruiter);
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
@@ -224,9 +226,6 @@ class WorldSession
 
         void ReadAddonsInfo(WorldPacket& data);
         void SendAddonsInfo();
-
-        //Warden
-        void InitWarden(BigNumber* K, std::string os);
 
         void ReadMovementInfo(WorldPacket& data, MovementInfo* mi);
         void WriteMovementInfo(WorldPacket* data, MovementInfo* mi);
@@ -248,10 +247,13 @@ class WorldSession
         uint32 GetAccountId() const { return _accountId; }
         Player* GetPlayer() const { return _player; }
         char const* GetPlayerName() const;
+        uint32 GetGuidLow() const;
         void SetSecurity(AccountTypes security) { _security = security; }
         std::string const& GetRemoteAddress() { return m_Address; }
         void SetPlayer(Player* player);
         uint8 Expansion() const { return m_expansion; }
+
+        void InitWarden(BigNumber* k, std::string os);
 
         /// Session in auth.queue currently
         void SetInQueue(bool state) { m_inQueue = state; }
@@ -293,7 +295,7 @@ class WorldSession
 
         void SendAttackStop(Unit const* enemy);
 
-        void SendBattlegGroundList(uint64 guid, BattlegroundTypeId bgTypeId);
+        void SendBattleGroundList(uint64 guid, BattlegroundTypeId bgTypeId);
 
         void SendTradeStatus(TradeStatus status);
         void SendUpdateTrade(bool trader_data = true);
@@ -331,7 +333,6 @@ class WorldSession
             }
         }
         //used with item_page table
-        static void SendExternalMails();
         bool SendItemInfo(uint32 itemid, WorldPacket data);
         //auction
         void SendAuctionHello(uint64 guid, Creature* unit);
@@ -495,6 +496,7 @@ class WorldSession
         void HandleSetActionButtonOpcode(WorldPacket& recvPacket);
 
         void HandleGameObjectUseOpcode(WorldPacket& recPacket);
+        void HandleMeetingStoneInfo(WorldPacket& recPacket);
         void HandleGameobjectReportUse(WorldPacket& recvPacket);
 
         void HandleNameQueryOpcode(WorldPacket& recvPacket);
@@ -578,6 +580,7 @@ class WorldSession
         void HandleActivateTaxiOpcode(WorldPacket& recvPacket);
         void HandleActivateTaxiExpressOpcode(WorldPacket& recvPacket);
         void HandleMoveSplineDoneOpcode(WorldPacket& recvPacket);
+        void SendActivateTaxiReply(ActivateTaxiReply reply);
 
         void HandleTabardVendorActivateOpcode(WorldPacket& recvPacket);
         void HandleBankerActivateOpcode(WorldPacket& recvPacket);
@@ -863,21 +866,36 @@ class WorldSession
         void HandleAcceptGrantLevel(WorldPacket& recv_data);
 
         // Calendar
-        void HandleCalendarGetCalendar(WorldPacket& recv_data);
-        void HandleCalendarGetEvent(WorldPacket& recv_data);
-        void HandleCalendarGuildFilter(WorldPacket& recv_data);
-        void HandleCalendarArenaTeam(WorldPacket& recv_data);
-        void HandleCalendarAddEvent(WorldPacket& recv_data);
-        void HandleCalendarUpdateEvent(WorldPacket& recv_data);
-        void HandleCalendarRemoveEvent(WorldPacket& recv_data);
-        void HandleCalendarCopyEvent(WorldPacket& recv_data);
-        void HandleCalendarEventInvite(WorldPacket& recv_data);
-        void HandleCalendarEventRsvp(WorldPacket& recv_data);
-        void HandleCalendarEventRemoveInvite(WorldPacket& recv_data);
-        void HandleCalendarEventStatus(WorldPacket& recv_data);
-        void HandleCalendarEventModeratorStatus(WorldPacket& recv_data);
-        void HandleCalendarComplain(WorldPacket& recv_data);
-        void HandleCalendarGetNumPending(WorldPacket& recv_data);
+        void HandleCalendarGetCalendar(WorldPacket& recvData);
+        void HandleCalendarGetEvent(WorldPacket& recvData);
+        void HandleCalendarGuildFilter(WorldPacket& recvData);
+        void HandleCalendarArenaTeam(WorldPacket& recvData);
+        void HandleCalendarAddEvent(WorldPacket& recvData);
+        void HandleCalendarUpdateEvent(WorldPacket& recvData);
+        void HandleCalendarRemoveEvent(WorldPacket& recvData);
+        void HandleCalendarCopyEvent(WorldPacket& recvData);
+        void HandleCalendarEventInvite(WorldPacket& recvData);
+        void HandleCalendarEventRsvp(WorldPacket& recvData);
+        void HandleCalendarEventRemoveInvite(WorldPacket& recvData);
+        void HandleCalendarEventStatus(WorldPacket& recvData);
+        void HandleCalendarEventModeratorStatus(WorldPacket& recvData);
+        void HandleCalendarComplain(WorldPacket& recvData);
+        void HandleCalendarGetNumPending(WorldPacket& recvData);
+        void HandleCalendarEventSignup(WorldPacket& recvData);
+
+        void SendCalendarEvent(CalendarEvent const& calendarEvent, CalendarSendEventType sendEventType);
+        void SendCalendarEventInvite(CalendarInvite const& invite, bool pending);
+        void SendCalendarEventInviteAlert(CalendarEvent const& calendarEvent, CalendarInvite const& calendarInvite);
+        void SendCalendarEventInviteRemove(CalendarInvite const& invite, uint32 flags);
+        void SendCalendarEventInviteRemoveAlert(CalendarEvent const& calendarEvent, CalendarInviteStatus status);
+        void SendCalendarEventRemovedAlert(CalendarEvent const& calendarEvent);
+        void SendCalendarEventUpdateAlert(CalendarEvent const& calendarEvent, CalendarSendEventType sendEventType);
+        void SendCalendarEventStatus(CalendarEvent const& calendarEvent, CalendarInvite const& invite);
+        void SendCalendarEventModeratorStatusAlert(CalendarInvite const& invite);
+        void SendCalendarClearPendingAction();
+        void SendCalendarRaidLockout(InstanceSave const* save, bool add);
+        void SendCalendarRaidLockoutUpdated(InstanceSave const* save);
+        void SendCalendarCommandResult(CalendarError err, char const* param = NULL);
 
         void HandleSpellClick(WorldPacket& recv_data);
         void HandleMirrorImageDataRequest(WorldPacket& recv_data);
@@ -939,10 +957,10 @@ class WorldSession
         uint8 m_expansion;
         bool _ispremium;
 
-        // Warden 
-        WardenBase *m_Warden;
-
         typedef std::list<AddonInfo> AddonsList;
+
+        // Warden
+        Warden* _warden;                                    // Remains NULL if Warden system is not enabled by config
 
         time_t _logoutTime;
         bool m_inQueue;                                     // session wait in auth.queue

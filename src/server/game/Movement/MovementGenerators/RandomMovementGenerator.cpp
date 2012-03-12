@@ -33,16 +33,16 @@
 #endif
 
 template<>
-void RandomMovementGenerator<Creature>::_setRandomLocation(Creature &unit)
+void RandomMovementGenerator<Creature>::_setRandomLocation(Creature& creature)
 {
     float respX, respY, respZ, respO, destX, destY, destZ, travelDistZ;
-    unit.GetHomePosition(respX, respY, respZ, respO);
-    Map const* map = unit.GetBaseMap();
+    creature.GetHomePosition(respX, respY, respZ, respO);
+    Map const* map = creature.GetBaseMap();
 
     // For 2D/3D system selection
-    //bool is_land_ok  = unit.CanWalk();                // not used?
-    //bool is_water_ok = unit.CanSwim();                // not used?
-    bool is_air_ok = unit.canFly();
+    //bool is_land_ok  = creature.CanWalk();                // not used?
+    //bool is_water_ok = creature.CanSwim();                // not used?
+    bool is_air_ok = creature.CanFly();
 
     const float angle = float(rand_norm()) * static_cast<float>(M_PI*2.0f);
     const float range = float(rand_norm()) * wander_distance;
@@ -77,17 +77,17 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature &unit)
 
         // The fastest way to get an accurate result 90% of the time.
         // Better result can be obtained like 99% accuracy with a ray light, but the cost is too high and the code is too long.
-        destZ = map->GetHeight(destX, destY, respZ+travelDistZ-2.0f, false);
+        destZ = map->GetHeight(creature.GetPhaseMask(), destX, destY, respZ+travelDistZ-2.0f, false);
 
         if (fabs(destZ - respZ) > travelDistZ)              // Map check
         {
             // Vmap Horizontal or above
-            destZ = map->GetHeight(destX, destY, respZ - 2.0f, true);
+            destZ = map->GetHeight(creature.GetPhaseMask(), destX, destY, respZ - 2.0f, true);
 
             if (fabs(destZ - respZ) > travelDistZ)
             {
                 // Vmap Higher
-                destZ = map->GetHeight(destX, destY, respZ+travelDistZ-2.0f, true);
+                destZ = map->GetHeight(creature.GetPhaseMask(), destX, destY, respZ+travelDistZ-2.0f, true);
 
                 // let's forget this bad coords where a z cannot be find and retry at next tick
                 if (fabs(destZ - respZ) > travelDistZ)
@@ -101,69 +101,74 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature &unit)
     else
         i_nextMoveTime.Reset(urand(500, 10000));
 
-    Movement::MoveSplineInit init(unit);
+    creature.AddUnitState(UNIT_STATE_ROAMING_MOVE);
+
+    Movement::MoveSplineInit init(creature);
     init.MoveTo(destX, destY, destZ);
     init.SetWalk(true);
     init.Launch();
 
-    //Call for unit group update
-    if (unit.GetFormation() && unit.GetFormation()->getLeader() == &unit)
-        unit.GetFormation()->LeaderMoveTo(destX, destY, destZ);
+    //Call for creature group update
+    if (creature.GetFormation() && creature.GetFormation()->getLeader() == &creature)
+        creature.GetFormation()->LeaderMoveTo(destX, destY, destZ);
 }
 
 template<>
-void RandomMovementGenerator<Creature>::Initialize(Creature &unit)
+void RandomMovementGenerator<Creature>::Initialize(Creature &creature)
 {
-    if (!unit.isAlive())
+    if (!creature.isAlive())
         return;
 
     if (!wander_distance)
-        wander_distance = unit.GetRespawnRadius();
+        wander_distance = creature.GetRespawnRadius();
 
-    unit.AddUnitState(UNIT_STATE_ROAMING);
-    _setRandomLocation(unit);
+    creature.AddUnitState(UNIT_STATE_ROAMING|UNIT_STATE_ROAMING_MOVE);
+    _setRandomLocation(creature);
 }
 
 template<>
 void
-RandomMovementGenerator<Creature>::Reset(Creature &unit)
+RandomMovementGenerator<Creature>::Reset(Creature &creature)
 {
-    Initialize(unit);
+    Initialize(creature);
 }
 
 template<>
-void RandomMovementGenerator<Creature>::Finalize(Creature &unit)
+void RandomMovementGenerator<Creature>::Finalize(Creature &creature)
 {
-    unit.ClearUnitState(UNIT_STATE_ROAMING);
+    creature.ClearUnitState(UNIT_STATE_ROAMING|UNIT_STATE_ROAMING_MOVE);
+    creature.SetWalk(false);
 }
 
 template<>
-bool RandomMovementGenerator<Creature>::Update(Creature &unit, const uint32 diff)
+bool
+RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 diff)
 {
-    if (unit.HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED | UNIT_STATE_DISTRACTED))
+    if (creature.HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED | UNIT_STATE_DISTRACTED))
     {
         i_nextMoveTime.Reset(0);  // Expire the timer
+        creature.ClearUnitState(UNIT_STATE_ROAMING_MOVE);
         return true;
     }
 
-    if (unit.movespline->Finalized())
+    if (creature.movespline->Finalized())
     {
         i_nextMoveTime.Update(diff);
         if (i_nextMoveTime.Passed())
-            _setRandomLocation(unit);
+            _setRandomLocation(creature);
     }
     return true;
 }
 
 template<>
-bool RandomMovementGenerator<Creature>::GetResetPosition(Creature &unit, float& x, float& y, float& z)
+bool RandomMovementGenerator<Creature>::GetResetPosition(Creature &creature, float& x, float& y, float& z)
 {
     float radius;
-    unit.GetRespawnPosition(x, y, z, NULL, &radius);
+    creature.GetRespawnPosition(x, y, z, NULL, &radius);
 
     // use current if in range
-    if (unit.IsWithinDist2d(x,y,radius))
-        unit.GetPosition(x,y,z);
+    if (creature.IsWithinDist2d(x,y,radius))
+        creature.GetPosition(x,y,z);
 
     return true;
 }

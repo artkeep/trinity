@@ -170,7 +170,7 @@ void Log::Initialize()
     arenaLogFile = openLogFile("ArenaLogFile", NULL, "a");
     sqlLogFile = openLogFile("SQLDriverLogFile", NULL, "a");
     sqlDevLogFile = openLogFile("SQLDeveloperLogFile", NULL, "a");
-    wardenLogFile = openLogFile("WardenLogFile",NULL,"a");
+    wardenLogFile = openLogFile("Warden.LogFile",NULL,"a");
 
     // Main log file settings
     m_logLevel     = ConfigMgr::GetIntDefault("LogLevel", LOGL_NORMAL);
@@ -1049,26 +1049,6 @@ void Log::outChat(const char * str, ...)
     }
 }
 
-void Log::outWarden(const char * str, ...)
-{
-    if(!str)
-        return;
-
-    va_list ap;
-
-    if (wardenLogFile)
-    {
-        outTimestamp(wardenLogFile);
-        fprintf(wardenLogFile, "WARDEN: ");
-        
-        va_start(ap, str);
-        vfprintf(wardenLogFile, str, ap);
-        fprintf(wardenLogFile, "\n");
-        va_end(ap);
-
-        fflush(wardenLogFile);
-    }
-}
 void Log::outErrorST(const char * str, ...)
 {
     va_list ap;
@@ -1079,4 +1059,21 @@ void Log::outErrorST(const char * str, ...)
 
     ACE_Stack_Trace st;
     outError("%s [Stacktrace: %s]", nnew_str, st.c_str());
+}
+
+void Log::outWarden(const char * str, ...)
+{
+    if (!str)
+        return;
+
+    if (wardenLogFile)
+    {
+        outTimestamp(wardenLogFile);
+        va_list ap;
+        va_start(ap, str);
+        vfprintf(wardenLogFile, str, ap);
+        fprintf(wardenLogFile, "\n" );
+        fflush(wardenLogFile);
+        va_end(ap);
+    }
 }

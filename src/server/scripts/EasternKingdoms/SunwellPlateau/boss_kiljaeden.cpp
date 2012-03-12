@@ -264,7 +264,7 @@ public:
         {
             OrbsEmpowered = 0;
             EmpowerCount = 0;
-            me->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_LEVITATING);
+            me->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_DISABLE_GRAVITY);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             me->setActive(true);
 
@@ -451,7 +451,7 @@ public:
                     summoned->CastSpell(summoned, SPELL_SHADOW_CHANNELING, false);
                     break;
                 case CREATURE_ANVEENA:
-                    summoned->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_LEVITATING);
+                    summoned->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_DISABLE_GRAVITY);
                     summoned->CastSpell(summoned, SPELL_ANVEENA_PRISON, true);
                     summoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     break;
@@ -660,17 +660,9 @@ public:
             DoScriptText(RAND(SAY_KJ_REFLECTION1, SAY_KJ_REFLECTION2), me);
             for (uint8 i = 0; i < 4; ++i)
             {
-                float x, y, z;
-                Unit* target = NULL;
-                for (uint8 i = 0; i < 6; ++i)
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true, -SPELL_VENGEANCE_OF_THE_BLUE_FLIGHT))
                 {
-                    target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true);
-                    if (!target || !target->HasAura(SPELL_VENGEANCE_OF_THE_BLUE_FLIGHT, 0))
-                        break;
-                }
-
-                if (target)
-                {
+                    float x, y, z;
                     target->GetPosition(x, y, z);
                     if (Creature* pSinisterReflection = me->SummonCreature(CREATURE_SINISTER_REFLECTION, x, y, z, 0, TEMPSUMMON_CORPSE_DESPAWN, 0))
                     {
@@ -1196,7 +1188,7 @@ public:
 
         void Reset()
         {
-            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+            me->SetDisableGravity(true);
             bPointReached = true;
             uiTimer = urand(500, 1000);
             uiCheckTimer = 1000;

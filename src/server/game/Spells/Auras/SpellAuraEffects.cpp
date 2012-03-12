@@ -2856,25 +2856,29 @@ void AuraEffect::HandleAuraAllowFlight(AuraApplication const* aurApp, uint8 mode
     }
 
     if (target->GetTypeId() == TYPEID_UNIT)
-        target->SetFlying(apply);
+        target->SetCanFly(apply);
 
     if (Player* player = target->m_movedPlayer)
     {
         // allow flying
-        WorldPacket data;
-        if (apply)
+         WorldPacket data;
+         if (apply)
         {
-            static_cast<Player*>(target)->SetCanFly(true);
-            static_cast<Player*>(target)->m_anti_BeginFallZ=INVALID_HEIGHT;
-            data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+            if (target->GetTypeId() == TYPEID_PLAYER) 
+                target->ToPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
+             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
         }
         else
         {
             data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-            static_cast<Player*>(target)->SetCanFly(false);
+        }
+
+        if (target->GetTypeId() == TYPEID_PLAYER) 
+        {
+            target->ToPlayer()->SetCanFly(apply);
         }
         data.append(target->GetPackGUID());
-        data << uint32(0);                                      // unk
+        data << uint32(0);                                      // movement counter
         player->SendDirectMessage(&data);
     }
 }
@@ -2893,14 +2897,16 @@ void AuraEffect::HandleAuraWaterWalk(AuraApplication const* aurApp, uint8 mode, 
             return;
     }
 
-    WorldPacket data;
     if (apply)
-        data.Initialize(SMSG_MOVE_WATER_WALK, 8+4);
+    {
+        target->AddUnitMovementFlag(MOVEMENTFLAG_WATERWALKING);
+        target->SendMovementWaterWalking();
+    }
     else
-        data.Initialize(SMSG_MOVE_LAND_WALK, 8+4);
-    data.append(target->GetPackGUID());
-    data << uint32(0);
-    target->SendMessageToSet(&data, true);
+    {
+        target->RemoveUnitMovementFlag(MOVEMENTFLAG_WATERWALKING);
+        target->SendMovementFlagUpdate();
+    }
 }
 
 void AuraEffect::HandleAuraFeatherFall(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -2949,14 +2955,11 @@ void AuraEffect::HandleAuraHover(AuraApplication const* aurApp, uint8 mode, bool
             return;
     }
 
-    WorldPacket data;
+    target->SetHover(apply);    //! Sets movementflags
     if (apply)
-        data.Initialize(SMSG_MOVE_SET_HOVER, 8+4);
+        target->SendMovementHover();
     else
-        data.Initialize(SMSG_MOVE_UNSET_HOVER, 8+4);
-    data.append(target->GetPackGUID());
-    data << uint32(0);
-    target->SendMessageToSet(&data, true);
+        target->SendMovementFlagUpdate();
 }
 
 void AuraEffect::HandleWaterBreathing(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
@@ -3272,15 +3275,12 @@ void AuraEffect::HandleAuraModIncreaseFlightSpeed(AuraApplication const* aurApp,
             {
                 WorldPacket data;
                 if (apply)
-                {
-                    static_cast<Player*>(target)->SetCanFly(true);
                     data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
-                }
                 else
-                {
                     data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-                    static_cast<Player*>(target)->SetCanFly(false);
-                }
+
+                if (target->GetTypeId() == TYPEID_PLAYER)
+                    target->ToPlayer()->SetCanFly(apply);
                 data.append(player->GetPackGUID());
                 data << uint32(0);                                      // unknown
                 player->SendDirectMessage(&data);
@@ -4719,11 +4719,11 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     if (owner_aura)
                     {
                         owner_aura->SetStackAmount(owner_aura->GetSpellInfo()->StackAmount);
-                    }
-                    if (pet_aura)
-                    {
-                        pet_aura->SetCharges(0);
-                        pet_aura->SetStackAmount(owner_aura->GetSpellInfo()->StackAmount);
+                        if (pet_aura)
+                        {
+                            pet_aura->SetCharges(0);
+                            pet_aura->SetStackAmount(owner_aura->GetSpellInfo()->StackAmount);
+                        }
                     }
                     break;
                 }
@@ -5715,27 +5715,6 @@ void AuraEffect::HandlePeriodicDummyAuraTick(Unit* target, Unit* caster) const
                 target->CastSpell((Unit*)NULL, m_spellInfo->Effects[m_effIndex].TriggerSpell, true);
             break;
         }
-        case SPELLFAMILY_WARLOCK:
-        {
-            switch (GetSpellInfo()->Id)
-            {
-                // Demonic Circle
-                case 48018:
-                    if (GameObject* obj = target->GetGameObject(GetSpellInfo()->Id))
-                    {
-                        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(48020);
-                        if (target->IsWithinDist(obj, spellInfo->GetMaxRange(true)))
-                        {
-                            if (!target->HasAura(62388))
-                                target->CastSpell(target, 62388, true);
-                        }
-                        else
-                            target->RemoveAura(62388);
-                    }
-                    break;
-            }
-            break;
-        }
         case SPELLFAMILY_DRUID:
         {
             switch (GetSpellInfo()->Id)
@@ -5959,15 +5938,15 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
                         // move loot to player inventory and despawn target
                         if (caster && caster->GetTypeId() == TYPEID_PLAYER &&
                                 target->GetTypeId() == TYPEID_UNIT &&
-                                target->ToCreature()->GetCreatureInfo()->type == CREATURE_TYPE_GAS_CLOUD)
+                                target->ToCreature()->GetCreatureTemplate()->type == CREATURE_TYPE_GAS_CLOUD)
                         {
                             Player* player = caster->ToPlayer();
                             Creature* creature = target->ToCreature();
                             // missing lootid has been reported on startup - just return
-                            if (!creature->GetCreatureInfo()->SkinLootId)
+                            if (!creature->GetCreatureTemplate()->SkinLootId)
                                 return;
 
-                            player->AutoStoreLoot(creature->GetCreatureInfo()->SkinLootId, LootTemplates_Skinning, true);
+                            player->AutoStoreLoot(creature->GetCreatureTemplate()->SkinLootId, LootTemplates_Skinning, true);
 
                             creature->DespawnOrUnsummon();
                         }

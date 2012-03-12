@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
+ * Copyright (C) 2008 - 2012 Trinity <http://www.trinitycore.org/>
  *
- * Patch supported by ChaosUA & TCRU community http://trinity-core.ru/
+ * Copyright (C) 2012 Patch supported by ChaosUA & TCRU community http://trinity-core.ru/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -10,12 +10,12 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #ifndef OUTDOOR_PVP_WG_
@@ -30,7 +30,10 @@
 #define POS_X_CENTER             5100
 #define MAX_VEHICLE_PER_WORKSHOP    4
 
-const uint16 WintergraspFaction[3] = {1802, 1801, 35};
+//Creature faction. Needed for proper displaying data(count) about summoned siege machines by teams
+const uint32 WintergraspFaction[3] = {1802, 1801, 35}; //YTDB
+//const uint32 WintergraspFaction[3] = {1732, 1735, 35}; //TDB
+
 const uint32 WG_MARK_OF_HONOR = 43589;
 const uint32 VehNumWorldState[2] = {3680,3490};
 const uint32 MaxVehNumWorldState[2] = {3681,3491};
@@ -58,15 +61,15 @@ enum OutdoorPvPWGSpell
     SPELL_DAMAGED_BUILDING                       = 59201,
     SPELL_INTACT_BUILDING                        = 59203,
 
-    SPELL_TELEPORT_ALLIANCE_CAMP                 = 58632,
-    SPELL_TELEPORT_HORDE_CAMP                    = 58633,
+    SPELL_TELEPORT_ALLIENCE_CAMP                 = 58633,
+    SPELL_TELEPORT_HORDE_CAMP                    = 58632,
     SPELL_TELEPORT_FORTRESS                      = 59096,
 
     SPELL_TELEPORT_DALARAN                       = 53360,
     SPELL_VICTORY_AURA                           = 60044,
 };
 
-const uint8 GameEventWintergraspDefender[2] = {50, 51};
+const uint16 GameEventWintergraspDefender[2] = {50, 51};
 
 enum OutdoorPvP_WG_Sounds
 {
@@ -226,14 +229,13 @@ class OutdoorPvPWG : public OutdoorPvP
     public:
         OutdoorPvPWG();
         bool SetupOutdoorPvP();
-        uint32 TeamIDsound;
-        bool MaingateDestroyed;
+        int TeamIDsound;
         uint32 GetCreatureEntry(uint32 guidlow, const CreatureData *data);
         void OnCreatureCreate(Creature *creature);
         void OnGameObjectCreate(GameObject *go);
         void OnCreatureRemove(Creature *creature);
         void OnGameObjectRemove(GameObject *go);
-        void ProcessEvent(WorldObject *obj, uint32 eventId);
+        void ProcessEvent(WorldObject *objin, uint32 eventId);
         void HandlePlayerEnterZone(Player *plr, uint32 zone);
         void HandlePlayerLeaveZone(Player *plr, uint32 zone);
         void HandlePlayerResurrects(Player * plr, uint32 zone);
@@ -275,7 +277,7 @@ class OutdoorPvPWG : public OutdoorPvP
         uint32 GetReviveQueueSize() const { return m_ReviveQueue.size(); }
         // BG end
         TeamId m_defender;
-        int8 m_tenacityStack;
+        int32 m_tenacityStack;
 
         BuildingStateMap m_buildingStates;
         BuildingState *m_gate;
@@ -292,9 +294,9 @@ class OutdoorPvPWG : public OutdoorPvP
         bool m_wartime;
         bool m_changeDefender;
         uint32 m_clock[2];
-        uint8 m_workshopCount[2];
-        uint8 m_towerDestroyedCount[2];
-        uint8 m_towerDamagedCount[2];
+        uint32 m_workshopCount[2];
+        uint32 m_towerDestroyedCount[2];
+        uint32 m_towerDamagedCount[2];
         uint32 m_WSSaveTimer;
 
         OPvPCapturePointWG *GetWorkshop(uint32 lowguid) const;
@@ -315,7 +317,7 @@ class OutdoorPvPWG : public OutdoorPvP
 
         void RebuildAllBuildings();
         void RemoveOfflinePlayerWGAuras();
-        void RewardMarkOfHonor(Player *player, uint8 count);
+        void RewardMarkOfHonor(Player *player, uint32 count);
         void MoveQuestGiver(uint32 guid);
         void LoadQuestGiverMap(uint32 guid, Position posHorde, Position posAlli);
         bool UpdateQuestGiverPosition(uint32 guid, Creature *creature);

@@ -337,12 +337,7 @@ std::string GetScriptCommandName(ScriptCommands command);
 struct SpellClickInfo
 {
     uint32 spellId;
-    uint32 questStart;                                      // quest start (quest must be active or rewarded for spell apply)
-    uint32 questEnd;                                        // quest end (quest must not be rewarded for spell apply)
-    bool   questStartCanActive;                             // if true then quest start can be active (not only rewarded)
     uint8 castFlags;
-    uint32 auraRequired;
-    uint32 auraForbidden;
     SpellClickUserTypes userType;
 
     // helpers
@@ -531,6 +526,7 @@ struct GraveYardData
     uint32 safeLocId;
     uint32 team;
 };
+
 typedef std::multimap<uint32, GraveYardData> GraveYardContainer;
 
 typedef UNORDERED_MAP<uint32, VendorItemData> CacheVendorItemContainer;
@@ -645,7 +641,7 @@ class ObjectMgr
             return NULL;
         }
 
-        InstanceTemplate const* GetInstanceTemplate(uint32 mapID);
+        InstanceTemplate const* GetInstanceTemplate(uint32 mapId);
 
         PetLevelInfo const* GetPetLevelInfo(uint32 creature_id, uint8 level) const;
 
@@ -1342,7 +1338,6 @@ class ObjectMgr
             GO_TO_GO,
             GO_TO_CREATURE,         // GO is dependant on creature
         };
-
 };
 
 #define sObjectMgr ACE_Singleton<ObjectMgr, ACE_Null_Mutex>::instance()

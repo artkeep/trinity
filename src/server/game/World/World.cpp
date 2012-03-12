@@ -28,7 +28,6 @@
 #include "Opcodes.h"
 #include "WorldSession.h"
 #include "WorldPacket.h"
-#include "WardenDataStorage.h"
 #include "Player.h"
 #include "Vehicle.h"
 #include "SkillExtraItems.h"
@@ -76,6 +75,9 @@
 #include "CreatureTextMgr.h"
 #include "SmartAI.h"
 #include "Channel.h"
+#include "WardenCheckMgr.h"
+#include "Warden.h"
+#include "CalendarMgr.h"
 
 volatile bool World::m_stopEvent = false;
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
@@ -1210,6 +1212,15 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_CHATLOG_ADDON] = ConfigMgr::GetBoolDefault("ChatLogs.Addon", false);
     m_bool_configs[CONFIG_CHATLOG_BGROUND] = ConfigMgr::GetBoolDefault("ChatLogs.Battleground", false);
 
+    // Warden
+    m_bool_configs[CONFIG_WARDEN_ENABLED]              = ConfigMgr::GetBoolDefault("Warden.Enabled", false);
+    m_int_configs[CONFIG_WARDEN_NUM_MEM_CHECKS]        = ConfigMgr::GetIntDefault("Warden.NumMemChecks", 3);
+    m_int_configs[CONFIG_WARDEN_NUM_OTHER_CHECKS]      = ConfigMgr::GetIntDefault("Warden.NumOtherChecks", 7);
+    m_int_configs[CONFIG_WARDEN_CLIENT_BAN_DURATION]   = ConfigMgr::GetIntDefault("Warden.BanDuration", 86400);
+    m_int_configs[CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF]  = ConfigMgr::GetIntDefault("Warden.ClientCheckHoldOff", 30);
+    m_int_configs[CONFIG_WARDEN_CLIENT_FAIL_ACTION]    = ConfigMgr::GetIntDefault("Warden.ClientCheckFailAction", 0);
+    m_int_configs[CONFIG_WARDEN_CLIENT_RESPONSE_DELAY] = ConfigMgr::GetIntDefault("Warden.ClientResponseDelay", 600);
+
     // Dungeon finder
     m_bool_configs[CONFIG_DUNGEON_FINDER_ENABLE] = ConfigMgr::GetBoolDefault("DungeonFinder.Enable", false);
 
@@ -1227,10 +1238,6 @@ void World::LoadConfigSettings(bool reload)
     // MySQL ping time interval
     m_int_configs[CONFIG_DB_PING_INTERVAL] = ConfigMgr::GetIntDefault("MaxPingTime", 30);
     
-    // Warden
-    m_bool_configs[CONFIG_BOOL_WARDEN_KICK] = ConfigMgr::GetBoolDefault("Warden.Kick", false);
-    m_int_configs[CONFIG_INT_WARDEN_BANDAY] = ConfigMgr::GetIntDefault("Warden.BanDay", 0);
-
     //Wintergrasp
     m_bool_configs[CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED]         = ConfigMgr::GetBoolDefault("OutdoorPvP.Wintergrasp.Enabled", true);
     m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_SAVESTATE_PERIOD] = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.SaveState.Period", 10000);
@@ -1242,10 +1249,11 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_LOSE_BATTLE]      = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.CustomHonorBattleLose", 1250);
     m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_DAMAGED_TOWER]    = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.CustomHonorDamageTower", 750);
     m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_DESTROYED_TOWER]  = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.CustomHonorDestroyedTower", 750);
+    m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_DAMAGED_BUILDING] = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.CustomHonorDamagedBuilding", 750);
     m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_INTACT_BUILDING]  = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.CustomHonorIntactBuilding", 1500);
-    m_bool_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE]  = ConfigMgr::GetBoolDefault("OutdoorPvP.Wintergrasp.Antifarm.Enable", false);
-    m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK]  = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Atk", 5);
-    m_int_configs[CONFIG_CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF]  = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Def", 5);
+    m_bool_configs[CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ENABLE]  = ConfigMgr::GetBoolDefault("OutdoorPvP.Wintergrasp.Antifarm.Enable", false);
+    m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_ATK]  = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Atk", 5);
+    m_int_configs[CONFIG_OUTDOORPVP_WINTERGRASP_ANTIFARM_DEF]  = ConfigMgr::GetIntDefault("OutdoorPvP.Wintergrasp.Antifarm.Def", 5);
 
     // misc
     m_bool_configs[CONFIG_PDUMP_NO_PATHS] = ConfigMgr::GetBoolDefault("PlayerDump.DisallowPaths", true);
@@ -1336,7 +1344,7 @@ void World::SetInitialWorldSettings()
 
     sLog->outString("Loading GameObject models...");
     LoadGameObjectModelList();
-    
+
     sLog->outString("Loading Script Names...");
     sObjectMgr->LoadScriptNames();
 
@@ -1639,6 +1647,9 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading Creature Formations...");
     FormationMgr::LoadCreatureFormations();
 
+    sLog->outString("Loading World States...");              // must be loaded before battleground, outdoor PvP and conditions
+    LoadWorldStates();
+
     sLog->outString("Loading Conditions...");
     sConditionMgr->LoadConditions();
 
@@ -1696,6 +1707,9 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading Creature Texts...");
     sCreatureTextMgr->LoadCreatureTexts();
 
+    sLog->outString("Loading Creature Text Locales...");
+    sCreatureTextMgr->LoadCreatureTextLocales();
+
     sLog->outString("Initializing Scripts...");
     sScriptMgr->Initialize();
 
@@ -1704,6 +1718,9 @@ void World::SetInitialWorldSettings()
 
     sLog->outString("Loading SmartAI scripts...");
     sSmartScriptMgr->LoadSmartAIFromDB();
+
+    sLog->outString("Loading Calendar data...");
+    sCalendarMgr->LoadFromDB();
 
     ///- Initialize game time and timers
     sLog->outString("Initialize game time and timers");
@@ -1756,9 +1773,6 @@ void World::SetInitialWorldSettings()
     uint32 nextGameEvent = sGameEventMgr->StartSystem();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
 
-    sLog->outString("Loading Warden Data..." );
-    WardenDataStorage.Init();
-
     // Delete all characters which have been deleted X days before
     Player::DeleteOldCharacters();
 
@@ -1769,9 +1783,6 @@ void World::SetInitialWorldSettings()
     sGameEventMgr->StartArenaSeason();
 
     sTicketMgr->Initialize();
-
-    sLog->outString("Loading World States...");              // must be loaded before battleground and outdoor PvP
-    LoadWorldStates();
 
     ///- Initialize Battlegrounds
     sLog->outString("Starting Battleground System");
@@ -1787,6 +1798,13 @@ void World::SetInitialWorldSettings()
 
     sLog->outString("Loading Transport NPCs...");
     sMapMgr->LoadTransportNPCs();
+
+    ///- Initialize Warden
+    sLog->outString("Loading Warden Checks..." );
+    sWardenCheckMgr->LoadWardenChecks();
+
+    sLog->outString("Loading Warden Action Overrides..." );
+    sWardenCheckMgr->LoadWardenOverrides();
 
     sLog->outString("Deleting expired bans...");
     LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate <= UNIX_TIMESTAMP() AND unbandate<>bandate");
@@ -1964,17 +1982,6 @@ void World::Update(uint32 diff)
 
     if (m_gameTime > m_NextRandomBGReset)
         ResetRandomBG();
-
-    // Handle external mail
-    if (sWorld->getBoolConfig(CONFIG_EXTERNAL_MAIL))
-    {
-        extmail_timer.Update(diff);
-        if (extmail_timer.Passed())
-        {
-            WorldSession::SendExternalMails();
-            extmail_timer.Reset();
-        }
-    }
 
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
@@ -2977,29 +2984,6 @@ void World::ProcessQueryCallbacks()
     }
 }
 
-void World::SendWintergraspState()
-{
-    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
-    if (!pvpWG)
-        return;
-
-    for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
-    {
-        if (!itr->second || !itr->second->GetPlayer() || !itr->second->GetPlayer()->IsInWorld())
-            continue;
-
-        if (pvpWG->isWarTime()) // "Battle in progress"
-            itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL)));
-        else // Time to next battle
-        {
-            pvpWG->SendInitWorldStatesTo(itr->second->GetPlayer());
-            itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL) + pvpWG->GetTimer()));
-            // Hide unneeded info which in center of screen
-            itr->second->GetPlayer()->SendInitWorldStates(itr->second->GetPlayer()->GetZoneId(), itr->second->GetPlayer()->GetAreaId());
-        }
-    }
-}
-
 void World::LoadCharacterNameData()
 {
     sLog->outString("Loading character name data");
@@ -3055,4 +3039,30 @@ CharacterNameData const* World::GetCharacterNameData(uint32 guid) const
         return &itr->second;
     else
         return NULL;
+}
+
+void World::SendWintergraspState()
+{
+    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+
+    if (!pvpWG)
+        return;
+
+    for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (!itr->second || !itr->second->GetPlayer() || !itr->second->GetPlayer()->IsInWorld())
+            continue;
+
+        if (pvpWG->isWarTime()) // "Battle in progress"
+        {
+            itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL)));
+        } 
+        else // Time to next battle
+        {
+            pvpWG->SendInitWorldStatesTo(itr->second->GetPlayer());
+            itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL) + pvpWG->GetTimer()));
+            // Hide unneeded info which in center of screen
+           itr->second->GetPlayer()->SendInitWorldStates(itr->second->GetPlayer()->GetZoneId(), itr->second->GetPlayer()->GetAreaId());
+        }
+    }
 }

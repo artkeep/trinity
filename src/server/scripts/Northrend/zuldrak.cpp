@@ -92,7 +92,7 @@ public:
                     if (Creature* pRageclaw = Unit::GetCreature(*me, RageclawGUID))
                     {
                         UnlockRageclaw(pCaster);
-                        pCaster->ToPlayer()->KilledMonster(pRageclaw->GetCreatureInfo(), RageclawGUID);
+                        pCaster->ToPlayer()->KilledMonster(pRageclaw->GetCreatureTemplate(), RageclawGUID);
                         me->DisappearAndDie();
                     }
                     else
@@ -156,7 +156,7 @@ public:
 
                 me->RemoveAurasDueToSpell(SPELL_KNEEL);
 
-                me->setFaction(me->GetCreatureInfo()->faction_H);
+                me->setFaction(me->GetCreatureTemplate()->faction_H);
 
                 DoCast(me, SPELL_UNSHACKLED, true);
                 me->MonsterSay(SAY_RAGECLAW, LANG_UNIVERSAL, 0);
@@ -223,10 +223,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
             player->CastSpell(player, SPELL_GYMER, true);
@@ -617,9 +617,9 @@ public:
                 pWhisker->RemoveFromWorld();
         }
 
-        void MovementInform(uint32 uiType, uint32 /*uiId*/)
+        void MovementInform(uint32 type, uint32 /*pointId*/)
         {
-            if (uiType != POINT_MOTION_TYPE)
+            if (type != EFFECT_MOTION_TYPE)
                 return;
 
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
@@ -1328,7 +1328,7 @@ public:
                             break;
                         case 2:
                             // walk forward
-                            me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                            me->SetWalk(true);
                             me->GetMotionMaster()->MovePoint(0, me->GetPositionX() + (cos(m_heading) * 10), me->GetPositionY() + (sin(m_heading) * 10), me->GetPositionZ());
                             m_uiTimer = 5000;
                             m_uiPhase = 3;
@@ -1365,10 +1365,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF +1)
+        if (action == GOSSIP_ACTION_INFO_DEF +1)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->CastSpell(player, SPELL_QUEST_CREDIT, true);

@@ -112,6 +112,10 @@ public:
             handler->SendSysMessage(LANG_USE_BOL);
             return false;
         }
+
+        if (target->GetTypeId() == TYPEID_PLAYER)
+            target->ToPlayer()->SetCanFly(strncmp(args, "on", 3) == 0);
+
         data.append(target->GetPackGUID());
         data << uint32(0);                                      // unknown
         target->SendMessageToSet(&data, true);

@@ -31,62 +31,64 @@
 #include "MoveSplineInit.h"
 #include "MoveSpline.h"
 
-void WaypointMovementGenerator<Creature>::LoadPath(Creature &unit)
+void WaypointMovementGenerator<Creature>::LoadPath(Creature &creature)
 {
     if (!path_id)
-        path_id = unit.GetWaypointPath();
+        path_id = creature.GetWaypointPath();
 
     i_path = sWaypointMgr->GetPath(path_id);
 
     if (!i_path)
     {
         // No movement found for entry
-        sLog->outErrorDb("WaypointMovementGenerator::LoadPath: creature %s (Entry: %u GUID: %u) doesn't have waypoint path id: %u", unit.GetName(), unit.GetEntry(), unit.GetGUIDLow(), path_id);
+        sLog->outErrorDb("WaypointMovementGenerator::LoadPath: creature %s (Entry: %u GUID: %u) doesn't have waypoint path id: %u", creature.GetName(), creature.GetEntry(), creature.GetGUIDLow(), path_id);
         return;
     }
 
-    StartMoveNow(unit);
+    StartMoveNow(creature);
 }
 
-void WaypointMovementGenerator<Creature>::Initialize(Creature &unit)
+void WaypointMovementGenerator<Creature>::Initialize(Creature &creature)
 {
-    LoadPath(unit);
-    unit.AddUnitState(UNIT_STATE_ROAMING);
+    LoadPath(creature);
+    creature.AddUnitState(UNIT_STATE_ROAMING|UNIT_STATE_ROAMING_MOVE);
 }
 
-void WaypointMovementGenerator<Creature>::Finalize(Creature &unit)
+void WaypointMovementGenerator<Creature>::Finalize(Creature &creature)
 {
-    unit.ClearUnitState(UNIT_STATE_ROAMING);
+    creature.ClearUnitState(UNIT_STATE_ROAMING|UNIT_STATE_ROAMING_MOVE);
+    creature.SetWalk(false);
 }
 
-void WaypointMovementGenerator<Creature>::Reset(Creature &unit)
+void WaypointMovementGenerator<Creature>::Reset(Creature &creature)
 {
-    unit.AddUnitState(UNIT_STATE_ROAMING);
-    StartMoveNow(unit);
+    creature.AddUnitState(UNIT_STATE_ROAMING|UNIT_STATE_ROAMING_MOVE);
+    StartMoveNow(creature);
 }
 
-void WaypointMovementGenerator<Creature>::OnArrived(Creature& unit)
+void WaypointMovementGenerator<Creature>::OnArrived(Creature& creature)
 {
     if (!i_path || i_path->empty())
         return;
     if (m_isArrivalDone)
         return;
 
+    creature.ClearUnitState(UNIT_STATE_ROAMING_MOVE);
     m_isArrivalDone = true;
 
     if (i_path->at(i_currentNode)->event_id && urand(0, 99) < i_path->at(i_currentNode)->event_chance)
     {
-        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Creature movement start script %u at point %u for "UI64FMTD".", i_path->at(i_currentNode)->event_id, i_currentNode, unit.GetGUID());
-        unit.GetMap()->ScriptsStart(sWaypointScripts, i_path->at(i_currentNode)->event_id, &unit, NULL/*, false*/);
+        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Creature movement start script %u at point %u for "UI64FMTD".", i_path->at(i_currentNode)->event_id, i_currentNode, creature.GetGUID());
+        creature.GetMap()->ScriptsStart(sWaypointScripts, i_path->at(i_currentNode)->event_id, &creature, NULL);
     }
 
     // Inform script
-    MovementInform(unit);
-    unit.UpdateWaypointID(i_currentNode);
-    StopMovement(i_path->at(i_currentNode)->delay);
+    MovementInform(creature);
+    creature.UpdateWaypointID(i_currentNode);
+    Stop(i_path->at(i_currentNode)->delay);
 }
 
-bool WaypointMovementGenerator<Creature>::StartMove(Creature &unit)
+bool WaypointMovementGenerator<Creature>::StartMove(Creature &creature)
 {
     if (!i_path || i_path->empty())
         return false;
@@ -97,8 +99,8 @@ bool WaypointMovementGenerator<Creature>::StartMove(Creature &unit)
     {
         if ((i_currentNode == i_path->size() - 1) && !repeating) // If that's our last waypoint
         {
-            unit.SetHomePosition(i_path->at(i_currentNode)->x, i_path->at(i_currentNode)->y, i_path->at(i_currentNode)->z, unit.GetOrientation());
-            unit.GetMotionMaster()->Initialize();
+            creature.SetHomePosition(i_path->at(i_currentNode)->x, i_path->at(i_currentNode)->y, i_path->at(i_currentNode)->z, creature.GetOrientation());
+            creature.GetMotionMaster()->Initialize();
             return false;
         }
 
@@ -108,8 +110,10 @@ bool WaypointMovementGenerator<Creature>::StartMove(Creature &unit)
     const WaypointData *node = i_path->at(i_currentNode);
 
     m_isArrivalDone = false;
-    
-    Movement::MoveSplineInit init(unit);
+
+    creature.AddUnitState(UNIT_STATE_ROAMING_MOVE);
+
+    Movement::MoveSplineInit init(creature);
     init.MoveTo(node->x, node->y, node->z);
 
     if (node->orientation != 100 && node->delay != 0)
@@ -119,18 +123,19 @@ bool WaypointMovementGenerator<Creature>::StartMove(Creature &unit)
     init.Launch();
 
     //Call for creature group update
-    if (unit.GetFormation() && unit.GetFormation()->getLeader() == &unit)
-        unit.GetFormation()->LeaderMoveTo(node->x, node->y, node->z);
+    if (creature.GetFormation() && creature.GetFormation()->getLeader() == &creature)
+        creature.GetFormation()->LeaderMoveTo(node->x, node->y, node->z);
 
     return true;
 }
 
-bool WaypointMovementGenerator<Creature>::Update(Creature &unit, const uint32 &diff)
+bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint32 &diff)
 {
     // Waypoint movement can be switched on/off
     // This is quite handy for escort quests and other stuff
-    if (unit.HasUnitState(UNIT_STATE_NOT_MOVE))
+    if (creature.HasUnitState(UNIT_STATE_NOT_MOVE))
     {
+        creature.ClearUnitState(UNIT_STATE_ROAMING_MOVE);
         return true;
     }
     // prevent a crash at empty waypoint path.
@@ -140,25 +145,25 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &unit, const uint32 &d
     if (Stopped())
     {
         if (CanMove(diff))
-            return StartMove(unit);
+            return StartMove(creature);
     }
-    else 
+    else
     {
-        /*if (unit.IsStopped())
+        if (creature.IsStopped())
             Stop(STOP_TIME_FOR_PLAYER);
-        else */if (unit.movespline->Finalized())
+        else if (creature.movespline->Finalized())
         {
-            OnArrived(unit);
-            return StartMove(unit);
+            OnArrived(creature);
+            return StartMove(creature);
         }
     }
      return true;
  }
 
-void WaypointMovementGenerator<Creature>::MovementInform(Creature &unit)
+void WaypointMovementGenerator<Creature>::MovementInform(Creature &creature)
 {
-    if (unit.AI())
-        unit.AI()->MovementInform(WAYPOINT_MOTION_TYPE, i_currentNode);
+    if (creature.AI())
+        creature.AI()->MovementInform(WAYPOINT_MOTION_TYPE, i_currentNode);
 }
 
 bool WaypointMovementGenerator<Creature>::GetResetPosition(Creature&, float& x, float& y, float& z)
@@ -190,40 +195,39 @@ uint32 FlightPathMovementGenerator::GetPathAtMapEnd() const
     return i_path->size();
 }
 
-void FlightPathMovementGenerator::Initialize(Player &unit)
+void FlightPathMovementGenerator::Initialize(Player &player)
 {
-    Reset(unit);
+    Reset(player);
     InitEndGridInfo();
 }
 
-void FlightPathMovementGenerator::Finalize(Player &unit)
+void FlightPathMovementGenerator::Finalize(Player& player)
 {
     // remove flag to prevent send object build movement packets for flight state and crash (movement generator already not at top of stack)
-    unit.ClearUnitState(UNIT_STATE_IN_FLIGHT);
+    player.ClearUnitState(UNIT_STATE_IN_FLIGHT);
 
-    unit.Dismount();
-    unit.RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
+    player.Dismount();
+    player.RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
 
-    if (unit.m_taxi.empty())
+    if (player.m_taxi.empty())
     {
-        unit.getHostileRefManager().setOnlineOfflineState(true);
-
+        player.getHostileRefManager().setOnlineOfflineState(true);
         // update z position to ground and orientation for landing point
         // this prevent cheating with landing  point at lags
         // when client side flight end early in comparison server side
-        unit.StopMoving();
+        player.StopMoving();
     }
 }
 
 #define PLAYER_FLIGHT_SPEED 32.0f
 
-void FlightPathMovementGenerator::Reset(Player &unit)
+void FlightPathMovementGenerator::Reset(Player & player)
 {
-    unit.getHostileRefManager().setOnlineOfflineState(false);
-    unit.AddUnitState(UNIT_STATE_IN_FLIGHT);
-    unit.SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
+    player.getHostileRefManager().setOnlineOfflineState(false);
+    player.AddUnitState(UNIT_STATE_IN_FLIGHT);
+    player.SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
 
-    Movement::MoveSplineInit init(unit);
+    Movement::MoveSplineInit init(player);
     uint32 end = GetPathAtMapEnd();
     for (uint32 i = GetCurrentNode(); i != end; ++i)
     {
@@ -236,15 +240,15 @@ void FlightPathMovementGenerator::Reset(Player &unit)
     init.Launch();
 }
 
-bool FlightPathMovementGenerator::Update(Player &unit, const uint32 /*diff*/)
+bool FlightPathMovementGenerator::Update(Player &player, const uint32& /*diff*/)
 {
-    uint32 pointId = (uint32)unit.movespline->currentPathIdx();
+    uint32 pointId = (uint32)player.movespline->currentPathIdx();
     if (pointId > i_currentNode)
     {
         bool departureEvent = true;
         do
         {
-            DoEventIfAny(unit, (*i_path)[i_currentNode], departureEvent);
+            DoEventIfAny(player, (*i_path)[i_currentNode], departureEvent);
             if (pointId == i_currentNode)
                 break;
             if (i_currentNode == _preloadTargetNode)
@@ -274,12 +278,12 @@ void FlightPathMovementGenerator::SetCurrentNodeAfterTeleport()
     }
 }
 
-void FlightPathMovementGenerator::DoEventIfAny(Player &unit, TaxiPathNodeEntry const &node, bool departure)
+void FlightPathMovementGenerator::DoEventIfAny(Player& player, TaxiPathNodeEntry const& node, bool departure)
 {
     if (uint32 eventid = departure ? node.departureEventID : node.arrivalEventID)
     {
-        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Taxi %s event %u of node %u of path %u for player %s", departure ? "departure" : "arrival", eventid, node.index, node.path, unit.GetName());
-        unit.GetMap()->ScriptsStart(sEventScripts, eventid, &unit, &unit);
+        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Taxi %s event %u of node %u of path %u for player %s", departure ? "departure" : "arrival", eventid, node.index, node.path, player.GetName());
+        player.GetMap()->ScriptsStart(sEventScripts, eventid, &player, &player);
     }
 }
 
@@ -289,7 +293,7 @@ bool FlightPathMovementGenerator::GetResetPosition(Player&, float& x, float& y, 
     x = node.x; y = node.y; z = node.z;
     return true;
 }
-    
+
 void FlightPathMovementGenerator::InitEndGridInfo()
 {
     /*! Storage to preload flightmaster grid at end of flight. For multi-stop flights, this will

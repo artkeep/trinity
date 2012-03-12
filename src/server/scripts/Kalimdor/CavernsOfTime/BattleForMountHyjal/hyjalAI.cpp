@@ -492,7 +492,7 @@ void hyjalAI::SummonCreature(uint32 entry, float Base[4][3])
         // Increment Enemy Count to be used in World States and instance script
         ++EnemyCount;
 
-        creature->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+        creature->SetWalk(false);
         creature->setActive(true);
         switch (entry)
         {
@@ -947,7 +947,7 @@ void hyjalAI::HideNearPos(float x, float y)
     Trinity::AllFriendlyCreaturesInGrid creature_check(me);
     Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
 
-    TypeContainerVisitor <Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid>, GridTypeMapContainer> creature_visitor(creature_searcher); 
+    TypeContainerVisitor <Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid>, GridTypeMapContainer> creature_visitor(creature_searcher);
     cell.Visit(pair, creature_visitor, *(me->GetMap()), *me, me->GetGridActivationRange());
 
     if (!creatures.empty())
@@ -1014,7 +1014,7 @@ void hyjalAI::WaypointReached(uint32 i)
                 if ((*itr) && (*itr)->isAlive() && (*itr) != me && (*itr)->GetEntry() != JAINA)
                 {
                     if (!(*itr)->IsWithinDist(me, 60))
-                        (*itr)->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                        (*itr)->SetWalk(false);
                     float x, y, z;
                     (*itr)->SetDefaultMovementType(IDLE_MOTION_TYPE);
                     (*itr)->GetMotionMaster()->Initialize();

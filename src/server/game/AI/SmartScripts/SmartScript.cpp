@@ -33,6 +33,47 @@
 #include "Group.h"
 #include "Vehicle.h"
 #include "ScriptedGossip.h"
+#include "CreatureTextMgr.h"
+
+class TrinityStringTextBuilder
+{
+    public:
+        TrinityStringTextBuilder(WorldObject* obj, ChatMsg msgtype, int32 id, uint32 language, uint64 targetGUID)
+            : _source(obj), _msgType(msgtype), _textId(id), _language(language), _targetGUID(targetGUID)
+        {
+        }
+
+        size_t operator()(WorldPacket* data, LocaleConstant locale) const
+        {
+            std::string text = sObjectMgr->GetTrinityString(_textId, locale);
+            char const* localizedName = _source->GetNameForLocaleIdx(locale);
+
+            *data << uint8(_msgType);
+            *data << uint32(_language);
+            *data << uint64(_source->GetGUID());
+            *data << uint32(1);                                      // 2.1.0
+            *data << uint32(strlen(localizedName)+1);
+            *data << localizedName;
+            size_t whisperGUIDpos = data->wpos();
+            *data << uint64(_targetGUID);                           // Unit Target
+            if (_targetGUID && !IS_PLAYER_GUID(_targetGUID))
+            {
+                *data << uint32(1);                                  // target name length
+                *data << uint8(0);                                   // target name
+            }
+            *data << uint32(text.length() + 1);
+            *data << text;
+            *data << uint8(0);                                       // ChatTag
+
+            return whisperGUIDpos;
+        }
+
+        WorldObject* _source;
+        ChatMsg _msgType;
+        int32 _textId;
+        uint32 _language;
+        uint64 _targetGUID;
+};
 
 SmartScript::SmartScript()
 {
@@ -88,7 +129,7 @@ void SmartScript::ProcessEventsFor(SMART_EVENT e, Unit* unit, uint32 var0, uint3
             ConditionList conds = sConditionMgr->GetConditionsForSmartEvent((*i).entryOrGuid, (*i).event_id, (*i).source_type);
             ConditionSourceInfo info = ConditionSourceInfo(unit, GetBaseObject());
             meets = sConditionMgr->IsObjectMeetToConditions(info, conds);
-            
+
             if (meets)
                 ProcessEvent(*i, unit, var0, var1, bvar, spell, gob);
         }
@@ -479,7 +520,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     if (e.action.cast.flags & SMARTCAST_INTERRUPT_PREVIOUS)
                         me->InterruptNonMeleeSpells(false);
 
-                    me->CastSpell((*itr)->ToUnit(), e.action.cast.spell, (e.action.cast.flags & SMARTCAST_TRIGGERED) ? true : false);
+                    if (!(e.action.cast.flags & SMARTCAST_AURA_NOT_PRESENT) || !(*itr)->ToUnit()->HasAura(e.action.cast.spell))
+                        me->CastSpell((*itr)->ToUnit(), e.action.cast.spell, (e.action.cast.flags & SMARTCAST_TRIGGERED) ? true : false);
+                    else
+                        sLog->outDebug(LOG_FILTER_DATABASE_AI, "Spell %u not casted because it has flag SMARTCAST_AURA_NOT_PRESENT and the target (Guid: " UI64FMTD " Entry: %u Type: %u) already has the aura", e.action.cast.spell, (*itr)->GetGUID(), (*itr)->GetEntry(), uint32((*itr)->GetTypeId()));
                     sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_CAST:: Creature %u casts spell %u on target %u with castflags %u",
                         me->GetGUIDLow(), e.action.cast.spell, (*itr)->GetGUIDLow(), e.action.cast.flags);
                 }
@@ -505,7 +549,11 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     if (e.action.cast.flags & SMARTCAST_INTERRUPT_PREVIOUS)
                         tempLastInvoker->InterruptNonMeleeSpells(false);
 
-                    tempLastInvoker->CastSpell((*itr)->ToUnit(), e.action.cast.spell, (e.action.cast.flags & SMARTCAST_TRIGGERED) ? true : false);
+                    if (!(e.action.cast.flags & SMARTCAST_AURA_NOT_PRESENT) || !(*itr)->ToUnit()->HasAura(e.action.cast.spell))
+                        tempLastInvoker->CastSpell((*itr)->ToUnit(), e.action.cast.spell, (e.action.cast.flags & SMARTCAST_TRIGGERED) ? true : false);
+                    else
+                        sLog->outDebug(LOG_FILTER_DATABASE_AI, "Spell %u not casted because it has flag SMARTCAST_AURA_NOT_PRESENT and the target (Guid: " UI64FMTD " Entry: %u Type: %u) already has the aura", e.action.cast.spell, (*itr)->GetGUID(), (*itr)->GetEntry(), uint32((*itr)->GetTypeId()));
+
                     sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_INVOKER_CAST: Invoker %u casts spell %u on target %u with castflags %u",
                         tempLastInvoker->GetGUIDLow(), e.action.cast.spell, (*itr)->GetGUIDLow(), e.action.cast.flags);
                 }
@@ -688,7 +736,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
 
             me->DoFleeToGetAssistance();
             if (e.action.flee.withEmote)
-                sCreatureTextMgr->SendChatString(me, sObjectMgr->GetTrinityStringForDBCLocale(LANG_FLEE), CHAT_MSG_MONSTER_EMOTE);
+            {
+                TrinityStringTextBuilder builder(me, CHAT_MSG_MONSTER_EMOTE, LANG_FLEE, LANG_UNIVERSAL, 0);
+                sCreatureTextMgr->SendChatPacket(me, builder, CHAT_MSG_MONSTER_EMOTE);
+            }
             sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_FLEE_FOR_ASSIST: Creature %u DoFleeToGetAssistance", me->GetGUIDLow());
             break;
         }
@@ -1322,10 +1373,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                 target = targets->front();
             }
 
-            if(!target)
-                me->GetMotionMaster()->MovePoint(0, e.target.x, e.target.y, e.target.z);
+            if (!target)
+                me->GetMotionMaster()->MovePoint(e.action.MoveToPos.pointId, e.target.x, e.target.y, e.target.z);
             else
-                me->GetMotionMaster()->MovePoint(0, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
+                me->GetMotionMaster()->MovePoint(e.action.MoveToPos.pointId, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
             break;
         }
         case SMART_ACTION_RESPAWN_TARGET:
@@ -1563,8 +1614,15 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                         (*itr)->ToUnit()->InterruptNonMeleeSpells(false);
 
                     for (ObjectList::const_iterator it = targets->begin(); it != targets->end(); ++it)
+                    {
                         if (IsUnit(*it))
-                            (*itr)->ToUnit()->CastSpell((*it)->ToUnit(), e.action.cast.spell, (e.action.cast.flags & SMARTCAST_TRIGGERED) ? true : false);
+                        {
+                            if (!(e.action.cast.flags & SMARTCAST_AURA_NOT_PRESENT) || !(*it)->ToUnit()->HasAura(e.action.cast.spell))
+                                (*itr)->ToUnit()->CastSpell((*it)->ToUnit(), e.action.cast.spell, (e.action.cast.flags & SMARTCAST_TRIGGERED) ? true : false);
+                            else
+                                sLog->outDebug(LOG_FILTER_DATABASE_AI, "Spell %u not casted because it has flag SMARTCAST_AURA_NOT_PRESENT and the target (Guid: " UI64FMTD " Entry: %u Type: %u) already has the aura", e.action.cast.spell, (*it)->GetGUID(), (*it)->GetEntry(), uint32((*it)->GetTypeId()));
+                        }
+                    }
                 }
             }
 

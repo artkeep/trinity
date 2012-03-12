@@ -571,8 +571,11 @@ class mob_frost_sphere : public CreatureScript
             {
                 _isFalling = false;
                 me->SetReactState(REACT_PASSIVE);
-                me->SetFlying(true);
-                me->SetDisplayId(me->GetCreatureInfo()->Modelid2);
+                //! Confirmed sniff 3.3.5.a
+                me->SetDisableGravity(true);
+                me->SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
+                //! end
+                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
                 me->SetSpeed(MOVE_RUN, 0.5f, false);
                 me->GetMotionMaster()->MoveRandom(20.0f);
                 DoCast(SPELL_FROST_SPHERE);
@@ -604,7 +607,7 @@ class mob_frost_sphere : public CreatureScript
                 {
                     case POINT_FALL_GROUND:
                         me->RemoveAurasDueToSpell(SPELL_FROST_SPHERE);
-                        me->SetDisplayId(me->GetCreatureInfo()->Modelid1);
+                        me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
                         DoCast(SPELL_PERMAFROST_VISUAL);
                         DoCast(SPELL_PERMAFROST);
                         me->SetFloatValue(OBJECT_FIELD_SCALE_X, 2.0f);

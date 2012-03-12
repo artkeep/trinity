@@ -21,6 +21,7 @@
 #include "Util.h"
 #include "SharedDefines.h"
 #include "SpellAuraDefines.h"
+#include "Spell.h"
 #include <stack>
 
 class Unit;
@@ -323,6 +324,8 @@ class SpellScript : public _SpellScript
         Item* GetHitItem();
         // returns: target of current effect if it was GameObject otherwise NULL
         GameObject* GetHitGObj();
+        // returns: destination of current effect
+        WorldLocation const* GetHitDest();
         // setter/getter for for damage done by spell to target of spell hit
         // returns damage calculated before hit, and real dmg done after hit
         int32 GetHitDamage();
@@ -333,7 +336,7 @@ class SpellScript : public _SpellScript
         int32 GetHitHeal();
         void SetHitHeal(int32 heal);
         void PreventHitHeal() { SetHitHeal(0); }
-
+        Spell* GetSpell() { return m_spell; }
         // returns current spell hit target aura
         Aura* GetHitAura();
         // prevents applying aura on current spell hit target

@@ -27,8 +27,6 @@
 #include "Opcodes.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
-#include "WardenMac.h"
-#include "WardenWin.h"
 #include "Player.h"
 #include "Vehicle.h"
 #include "ObjectMgr.h"
@@ -44,10 +42,12 @@
 #include "zlib.h"
 #include "ScriptMgr.h"
 #include "Transport.h"
+#include "WardenWin.h"
+#include "WardenMac.h"
 
 bool MapSessionFilter::Process(WorldPacket* packet)
 {
-    OpcodeHandler const &opHandle = opcodeTable[packet->GetOpcode()];
+    OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
 
     //let's check if our opcode can be really processed in Map::Update()
     if (opHandle.packetProcessing == PROCESS_INPLACE)
@@ -69,7 +69,7 @@ bool MapSessionFilter::Process(WorldPacket* packet)
 //OR packet handler is not thread-safe!
 bool WorldSessionFilter::Process(WorldPacket* packet)
 {
-    OpcodeHandler const &opHandle = opcodeTable[packet->GetOpcode()];
+    OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
     //check if packet handler is supposed to be safe
     if (opHandle.packetProcessing == PROCESS_INPLACE)
         return true;
@@ -88,21 +88,24 @@ bool WorldSessionFilter::Process(WorldPacket* packet)
 }
 
 /// WorldSession constructor
-WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, bool isARecruiter):
+WorldSession::WorldSession(uint32 id, WorldSocket* sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, bool isARecruiter):
 m_muteTime(mute_time), m_timeOutTime(0), _player(NULL), m_Socket(sock),
 _security(sec), _ispremium(ispremium), _accountId(id), m_expansion(expansion), _logoutTime(0),
 m_inQueue(false), m_playerLoading(false), m_playerLogout(false),
 m_playerRecentlyLogout(false), m_playerSave(false),
 m_sessionDbcLocale(sWorld->GetAvailableDbcLocale(locale)),
 m_sessionDbLocaleIndex(locale),
-m_latency(0), m_TutorialsChanged(false), recruiterId(recruiter), isRecruiter(isARecruiter), m_Warden(NULL), timeLastWhoCommand(0)
+m_latency(0), m_TutorialsChanged(false), recruiterId(recruiter),
+isRecruiter(isARecruiter), timeLastWhoCommand(0)
 {
+    _warden = NULL;
+
     if (sock)
     {
         m_Address = sock->GetRemoteAddress();
         sock->AddReference();
         ResetTimeOutTime();
-        LoginDatabase.PExecute("UPDATE account SET online = 1 WHERE id = %u;", GetAccountId());     // One-time query
+        LoginDatabase.PExecute("UPDATE account SET online = 1 WHERE id = %u;", GetAccountId());
     }
 
     InitializeQueryCallbackParameters();
@@ -123,18 +126,18 @@ WorldSession::~WorldSession()
         m_Socket = NULL;
     }
 
-    if (m_Warden)
-        delete m_Warden;
+    if (_warden)
+        delete _warden;
 
     ///- empty incoming packet queue
     WorldPacket* packet = NULL;
     while (_recvQueue.next(packet))
         delete packet;
 
-    LoginDatabase.PExecute("UPDATE account SET online = 0 WHERE id = %u;", GetAccountId());     // One-time query
+    LoginDatabase.PExecute("UPDATE account SET online = 0 WHERE id = %u;", GetAccountId());
 }
 
-void WorldSession::SizeError(WorldPacket const &packet, uint32 size) const
+void WorldSession::SizeError(WorldPacket const& packet, uint32 size) const
 {
     sLog->outError("Client (account %u) send packet %s (%u) with size " SIZEFMTD " but expected %u (attempt to crash server?), skipped",
         GetAccountId(), LookupOpcodeName(packet.GetOpcode()), packet.GetOpcode(), packet.size(), size);
@@ -144,6 +147,12 @@ void WorldSession::SizeError(WorldPacket const &packet, uint32 size) const
 char const* WorldSession::GetPlayerName() const
 {
     return GetPlayer() ? GetPlayer()->GetName() : "<none>";
+}
+
+/// Get player guid if available. Use for logging purposes only
+uint32 WorldSession::GetGuidLow() const
+{
+    return GetPlayer() ? GetPlayer()->GetGUIDLow() : 0;
 }
 
 /// Send a packet to the client
@@ -336,7 +345,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
                         break;
                 }
             }
-            catch (ByteBufferException &)
+            catch(ByteBufferException &)
             {
                 sLog->outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i. Skipped packet.",
                         packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
@@ -352,10 +361,10 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
             delete packet;
     }
 
-    ProcessQueryCallbacks();
+    if (m_Socket && !m_Socket->IsClosed() && _warden)
+        _warden->Update();
 
-    if (m_Socket && !m_Socket->IsClosed() && m_Warden)
-        m_Warden->Update();
+    ProcessQueryCallbacks();
 
     //check if we are safe to proceed with logout
     //logout procedure should happen only in World::UpdateSessions() method!!!
@@ -365,6 +374,9 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
         ///- If necessary, log the player out
         if (ShouldLogOut(currTime) && !m_playerLoading)
             LogoutPlayer(true);
+
+        if (m_Socket && GetPlayer() && _warden)
+            _warden->Update();
 
         ///- Cleanup socket pointer if need
         if (m_Socket && m_Socket->IsClosed())
@@ -525,7 +537,7 @@ void WorldSession::LogoutPlayer(bool Save)
         // e.g if he got disconnected during a transfer to another map
         // calls to GetMap in this case may cause crashes
         _player->CleanupsBeforeDelete();
-        sLog->outChar("Account: %d (IP: %s) Logout Character:[%s] (GUID: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName(), _player->GetGUIDLow());
+        sLog->outChar("Account: %d (IP: %s) Logout Character:[%s] (GUID: %u) Level: %d", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName(), _player->GetGUIDLow(), _player->getLevel());
         if (Map* _map = _player->FindMap())
             _map->RemovePlayerFromMap(_player, true);
         SetPlayer(NULL);                                    // deleted in Remove call
@@ -884,7 +896,7 @@ void WorldSession::ReadAddonsInfo(WorldPacket &data)
     ByteBuffer addonInfo;
     addonInfo.resize(size);
 
-    if (uncompress(const_cast<uint8 *>(addonInfo.contents()), &uSize, const_cast<uint8 *>(data.contents() + pos), data.size() - pos) == Z_OK)
+    if (uncompress(const_cast<uint8*>(addonInfo.contents()), &uSize, const_cast<uint8*>(data.contents() + pos), data.size() - pos) == Z_OK)
     {
         uint32 addonsCount;
         addonInfo >> addonsCount;                         // addons count
@@ -1109,13 +1121,17 @@ void WorldSession::ProcessQueryCallbacks()
     }
 }
 
-void WorldSession::InitWarden(BigNumber *K, std::string os)
+void WorldSession::InitWarden(BigNumber* k, std::string os)
 {
-    if (os == "niW")                                        // Windows
-        m_Warden = (WardenBase*)new WardenWin();
-    //else                                                    // MacOS
-    //    m_Warden = (WardenBase*)new WardenMac();
-    if (m_Warden)
-        m_Warden->Init(this, K);
+    if (os == "Win")
+    {
+        _warden = new WardenWin();
+        _warden->Init(this, k);
+    }
+    else if (os == "OSX")
+    {
+        // Disabled as it is causing the client to crash
+        // _warden = new WardenMac();
+        // _warden->Init(this, k);
+    }
 }
-

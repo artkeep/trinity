@@ -27,22 +27,20 @@
 #include "MotionMaster.h"
 
 class Unit;
+
 class MovementGenerator
 {
     public:
         virtual ~MovementGenerator();
-        //! Called after adding movement generator to motion slot
+
         virtual void Initialize(Unit &) = 0;
-        //! Called after remove movement generator from motion slot
-        virtual void Finalize(Unit &unit) { unit.StopMoving(); }
-        //! Called after return movement generator to top position (after remove above movement generator)
+        virtual void Finalize(Unit &) = 0;
+
         virtual void Reset(Unit &) = 0;
-        //! Called in MotionMaster::UpdateMotion
-        virtual bool Update(Unit &, const uint32 time_diff) = 0;
-        //! Get current movement generator type
+
+        virtual bool Update(Unit &, const uint32& time_diff) = 0;
+
         virtual MovementGeneratorType GetMovementGeneratorType() = 0;
-        //! Stop current movement generator for some period of time (should be supported by movement generator)
-        virtual void StopMovement(uint32) {}
 
         virtual void unitSpeedChanged() { }
 };
@@ -51,33 +49,32 @@ template<class T, class D>
 class MovementGeneratorMedium : public MovementGenerator
 {
     public:
-        void Initialize(Unit &unit)
+        void Initialize(Unit &u)
         {
             //u->AssertIsType<T>();
-            (static_cast<D*>(this))->Initialize(*((T*)&unit));
+            (static_cast<D*>(this))->Initialize(*((T*)&u));
         }
-        void Finalize(Unit &unit)
+        void Finalize(Unit &u)
         {
             //u->AssertIsType<T>();
-            MovementGenerator::Finalize(unit);
-            (static_cast<D*>(this))->Finalize(*((T*)&unit));
+            (static_cast<D*>(this))->Finalize(*((T*)&u));
         }
-        void Reset(Unit &unit)
+        void Reset(Unit &u)
         {
             //u->AssertIsType<T>();
-            (static_cast<D*>(this))->Reset(*((T*)&unit));
+            (static_cast<D*>(this))->Reset(*((T*)&u));
         }
-        bool Update(Unit &unit, const uint32 time_diff)
+        bool Update(Unit &u, const uint32& time_diff)
         {
             //u->AssertIsType<T>();
-            return (static_cast<D*>(this))->Update(*((T*)&unit), time_diff);
+            return (static_cast<D*>(this))->Update(*((T*)&u), time_diff);
         }
     public:
         // will not link if not overridden in the generators
-        void Initialize(T &unit);
-        void Finalize(T &unit);
-        void Reset(T &unit);
-        bool Update(T &unit, const uint32 time_diff);
+        void Initialize(T &u);
+        void Finalize(T &u);
+        void Reset(T &u);
+        bool Update(T &u, const uint32& time_diff);
 };
 
 struct SelectableMovement : public FactoryHolder<MovementGenerator, MovementGeneratorType>

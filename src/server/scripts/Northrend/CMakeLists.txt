@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -56,7 +56,6 @@ set(scripts_STAT_SRCS
   Northrend/FrozenHalls/HallsOfReflection/instance_halls_of_reflection.cpp
   Northrend/FrozenHalls/HallsOfReflection/halls_of_reflection.cpp
   Northrend/FrozenHalls/HallsOfReflection/boss_marwyn.cpp
-  Northrend/FrozenHalls/HallsOfReflection/boss_the_lich_king_hor.cpp
   Northrend/FrozenHalls/PitOfSaron/boss_forgemaster_garfrost.cpp
   Northrend/FrozenHalls/PitOfSaron/boss_krickandick.cpp
   Northrend/FrozenHalls/PitOfSaron/pit_of_saron.cpp

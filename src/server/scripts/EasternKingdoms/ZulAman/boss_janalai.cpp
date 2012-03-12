@@ -226,7 +226,7 @@ class boss_janalai : public CreatureScript
                 BombCount = 0;
             }
 
-            bool HatchAllEggs(uint32 uiAction) //1: reset, 2: isHatching all
+            bool HatchAllEggs(uint32 action) //1: reset, 2: isHatching all
             {
                 std::list<Creature*> templist;
                 float x, y, z;
@@ -251,9 +251,9 @@ class boss_janalai : public CreatureScript
 
                 for (std::list<Creature*>::const_iterator i = templist.begin(); i != templist.end(); ++i)
                 {
-                    if (uiAction == 1)
+                    if (action == 1)
                        (*i)->SetDisplayId(10056);
-                    else if (uiAction == 2 &&(*i)->GetDisplayId() != 11686)
+                    else if (action == 2 &&(*i)->GetDisplayId() != 11686)
                        (*i)->CastSpell(*i, SPELL_HATCH_EGG, false);
                 }
                 return true;
@@ -501,7 +501,7 @@ class mob_janalai_hatcher : public CreatureScript
 
             void Reset()
             {
-                me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                me->SetWalk(true);
                 side =(me->GetPositionY() < 1150);
                 waypoint = 0;
                 isHatching = false;
@@ -632,7 +632,7 @@ class mob_janalai_hatchling : public CreatureScript
                 else
                     me->GetMotionMaster()->MovePoint(0, hatcherway[1][3][0]+rand()%4-2, 1150.0f+rand()%4-2, hatcherway[1][3][2]);
 
-                me->SetUnitMovementFlags(MOVEMENTFLAG_LEVITATING);
+                me->SetUnitMovementFlags(MOVEMENTFLAG_DISABLE_GRAVITY);
             }
 
             void EnterCombat(Unit* /*who*/) {/*DoZoneInCombat();*/}

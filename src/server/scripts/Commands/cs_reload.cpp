@@ -37,6 +37,7 @@ EndScriptData */
 #include "SkillExtraItems.h"
 #include "Chat.h"
 #include "WaypointManager.h"
+#include "WardenCheckMgr.h"
 
 class reload_commandscript : public CommandScript
 {
@@ -105,6 +106,7 @@ public:
             { "lfg_dungeon_rewards",          SEC_ADMINISTRATOR, true,  &HandleReloadLfgRewardsCommand,                 "", NULL },
             { "locales_achievement_reward",   SEC_ADMINISTRATOR, true,  &HandleReloadLocalesAchievementRewardCommand,   "", NULL },
             { "locales_creature",             SEC_ADMINISTRATOR, true,  &HandleReloadLocalesCreatureCommand,            "", NULL },
+            { "locales_creature_text",        SEC_ADMINISTRATOR, true,  &HandleReloadLocalesCreatureTextCommand,        "", NULL },
             { "locales_gameobject",           SEC_ADMINISTRATOR, true,  &HandleReloadLocalesGameobjectCommand,          "", NULL },
             { "locales_gossip_menu_option",   SEC_ADMINISTRATOR, true,  &HandleReloadLocalesGossipMenuOptionCommand,    "", NULL },
             { "locales_item",                 SEC_ADMINISTRATOR, true,  &HandleReloadLocalesItemCommand,                "", NULL },
@@ -151,6 +153,7 @@ public:
             { "spell_threats",                SEC_ADMINISTRATOR, true,  &HandleReloadSpellThreatsCommand,               "", NULL },
             { "spell_group_stack_rules",      SEC_ADMINISTRATOR, true,  &HandleReloadSpellGroupStackRulesCommand,       "", NULL },
             { "trinity_string",               SEC_ADMINISTRATOR, true,  &HandleReloadTrinityStringCommand,              "", NULL },
+            { "warden_action",                SEC_ADMINISTRATOR, true,  &HandleReloadWardenactionCommand,               "", NULL },
             { "waypoint_scripts",             SEC_ADMINISTRATOR, true,  &HandleReloadWpScriptsCommand,                  "", NULL },
             { "waypoint_data",                SEC_ADMINISTRATOR, true,  &HandleReloadWpCommand,                         "", NULL },
             { "vehicle_accessory",            SEC_ADMINISTRATOR, true,  &HandleReloadVehicleAccessoryCommand,           "", NULL },
@@ -317,6 +320,7 @@ public:
     {
         HandleReloadLocalesAchievementRewardCommand(handler, "a");
         HandleReloadLocalesCreatureCommand(handler, "a");
+        HandleReloadLocalesCreatureTextCommand(handler, "a");
         HandleReloadLocalesGameobjectCommand(handler, "a");
         HandleReloadLocalesGossipMenuOptionCommand(handler, "a");
         HandleReloadLocalesItemCommand(handler, "a");
@@ -409,7 +413,7 @@ public:
         for (Tokens::const_iterator itr = entries.begin(); itr != entries.end(); ++itr)
         {
             uint32 entry = uint32(atoi(*itr));
-            QueryResult result = WorldDatabase.PQuery("SELECT difficulty_entry_1, difficulty_entry_2, difficulty_entry_3, KillCredit1, KillCredit2, modelid1, modelid2, modelid3, modelid4, name, subname, IconName, gossip_menu_id, minlevel, maxlevel, exp, faction_A, faction_H, npcflag, speed_walk, speed_run, scale, rank, mindmg, maxdmg, dmgschool, attackpower, dmg_multiplier, baseattacktime, rangeattacktime, unit_class, unit_flags, dynamicflags, family, trainer_type, trainer_spell, trainer_class, trainer_race, minrangedmg, maxrangedmg, rangedattackpower, type, type_flags, lootid, pickpocketloot, skinloot, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6, spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8, PetSpellDataId, VehicleId, mingold, maxgold, AIName, MovementType, InhabitType, Health_mod, Mana_mod, Armor_mod, RacialLeader, questItem1, questItem2, questItem3, questItem4, questItem5, questItem6, movementId, RegenHealth, equipment_id, mechanic_immune_mask, flags_extra, ScriptName FROM creature_template WHERE entry = %u", entry);
+            QueryResult result = WorldDatabase.PQuery("SELECT difficulty_entry_1, difficulty_entry_2, difficulty_entry_3, KillCredit1, KillCredit2, modelid1, modelid2, modelid3, modelid4, name, subname, IconName, gossip_menu_id, minlevel, maxlevel, exp, faction_A, faction_H, npcflag, speed_walk, speed_run, scale, rank, mindmg, maxdmg, dmgschool, attackpower, dmg_multiplier, baseattacktime, rangeattacktime, unit_class, unit_flags, dynamicflags, family, trainer_type, trainer_spell, trainer_class, trainer_race, minrangedmg, maxrangedmg, rangedattackpower, type, type_flags, lootid, pickpocketloot, skinloot, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6, spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8, PetSpellDataId, VehicleId, mingold, maxgold, AIName, MovementType, InhabitType, HoverHeight, Health_mod, Mana_mod, Armor_mod, RacialLeader, questItem1, questItem2, questItem3, questItem4, questItem5, questItem6, movementId, RegenHealth, equipment_id, mechanic_immune_mask, flags_extra, ScriptName FROM creature_template WHERE entry = %u", entry);
             if (!result)
             {
                 handler->PSendSysMessage(LANG_COMMAND_CREATURETEMPLATE_NOTFOUND, entry);
@@ -494,22 +498,23 @@ public:
             const_cast<CreatureTemplate*>(cInfo)->AIName = fields[64].GetString();
             const_cast<CreatureTemplate*>(cInfo)->MovementType = fields[65].GetUInt32();
             const_cast<CreatureTemplate*>(cInfo)->InhabitType = fields[66].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->ModHealth = fields[67].GetFloat();
-            const_cast<CreatureTemplate*>(cInfo)->ModMana = fields[68].GetFloat();
-            const_cast<CreatureTemplate*>(cInfo)->ModArmor = fields[69].GetFloat();
-            const_cast<CreatureTemplate*>(cInfo)->RacialLeader = fields[70].GetBool();
-            const_cast<CreatureTemplate*>(cInfo)->questItems[0] = fields[71].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->questItems[1] = fields[72].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->questItems[2] = fields[73].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->questItems[3] = fields[74].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->questItems[4] = fields[75].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->questItems[5] = fields[76].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->movementId = fields[77].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->RegenHealth = fields[78].GetBool();
-            const_cast<CreatureTemplate*>(cInfo)->equipmentId = fields[79].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->MechanicImmuneMask = fields[80].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->flags_extra = fields[81].GetUInt32();
-            const_cast<CreatureTemplate*>(cInfo)->ScriptID = sObjectMgr->GetScriptId(fields[82].GetCString());
+            const_cast<CreatureTemplate*>(cInfo)->HoverHeight = fields[67].GetFloat();
+            const_cast<CreatureTemplate*>(cInfo)->ModHealth = fields[68].GetFloat();
+            const_cast<CreatureTemplate*>(cInfo)->ModMana = fields[69].GetFloat();
+            const_cast<CreatureTemplate*>(cInfo)->ModArmor = fields[70].GetFloat();
+            const_cast<CreatureTemplate*>(cInfo)->RacialLeader = fields[71].GetBool();
+            const_cast<CreatureTemplate*>(cInfo)->questItems[0] = fields[72].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->questItems[1] = fields[73].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->questItems[2] = fields[74].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->questItems[3] = fields[75].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->questItems[4] = fields[76].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->questItems[5] = fields[77].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->movementId = fields[78].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->RegenHealth = fields[79].GetBool();
+            const_cast<CreatureTemplate*>(cInfo)->equipmentId = fields[80].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->MechanicImmuneMask = fields[81].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->flags_extra = fields[82].GetUInt32();
+            const_cast<CreatureTemplate*>(cInfo)->ScriptID = sObjectMgr->GetScriptId(fields[83].GetCString());
 
             sObjectMgr->CheckCreatureTemplate(cInfo);
         }
@@ -721,6 +726,21 @@ public:
         sLog->outString("Re-Loading trinity_string Table!");
         sObjectMgr->LoadTrinityStrings();
         handler->SendGlobalGMSysMessage("DB table `trinity_string` reloaded.");
+        return true;
+    }
+
+    static bool HandleReloadWardenactionCommand(ChatHandler* handler, const char* /*args*/)
+    {
+        if (!sWorld->getBoolConfig(CONFIG_WARDEN_ENABLED))
+        {
+            handler->SendSysMessage("Warden system disabled by config - reloading warden_action skipped.");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        sLog->outString("Re-Loading warden_action Table!");
+        sWardenCheckMgr->LoadWardenOverrides();
+        handler->SendGlobalGMSysMessage("DB table `warden_action` reloaded.");
         return true;
     }
 
@@ -1151,6 +1171,14 @@ public:
         sLog->outString("Re-Loading Locales Creature ...");
         sObjectMgr->LoadCreatureLocales();
         handler->SendGlobalGMSysMessage("DB table `locales_creature` reloaded.");
+        return true;
+    }
+
+    static bool HandleReloadLocalesCreatureTextCommand(ChatHandler* handler, const char* /*args*/)
+    {
+        sLog->outString("Re-Loading Locales Creature Texts...");
+        sCreatureTextMgr->LoadCreatureTextLocales();
+        handler->SendGlobalGMSysMessage("DB table `locales_creature_text` reloaded.");
         return true;
     }
 

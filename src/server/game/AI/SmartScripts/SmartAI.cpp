@@ -45,7 +45,7 @@ SmartAI::SmartAI(Creature* c) : CreatureAI(c)
     mCanRepeatPath = false;
 
     // spawn in run mode
-    me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+    me->SetWalk(false);
     mRun = false;
 
     me->GetPosition(&mLastOOCPos);
@@ -450,7 +450,7 @@ void SmartAI::EnterEvadeMode()
         return;
 
     RemoveAuras();
-    
+
     me->DeleteThreatList();
     me->CombatStop(true);
     me->LoadCreaturesAddon();
@@ -480,15 +480,15 @@ void SmartAI::MoveInLineOfSight(Unit* who)
 {
     if (!who)
         return;
-    
+
     GetScript()->OnMoveInLineOfSight(who);
-    
+
     if (me->HasReactState(REACT_PASSIVE) || AssistPlayerInCombat(who))
         return;
 
     if (!CanAIAttack(who))
         return;
-    
+
     if (!me->canStartAttack(who, false))
         return;
 
@@ -524,7 +524,7 @@ bool SmartAI::AssistPlayerInCombat(Unit* who)
         return false;
 
     //experimental (unknown) flag not present
-    if (!(me->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_AID_PLAYERS))
+    if (!(me->GetCreatureTemplate()->type_flags & CREATURE_TYPEFLAGS_AID_PLAYERS))
         return false;
 
     //not a player
@@ -561,7 +561,7 @@ void SmartAI::JustRespawned()
     mDespawnState = 0;
     mEscortState = SMART_ESCORT_NONE;
     me->SetVisible(true);
-    if (me->getFaction() != me->GetCreatureInfo()->faction_A)
+    if (me->getFaction() != me->GetCreatureTemplate()->faction_A)
         me->RestoreFaction();
     GetScript()->ProcessEventsFor(SMART_EVENT_RESPAWN);
     Reset();
@@ -720,26 +720,16 @@ uint64 SmartAI::GetGUID(int32 /*id*/)
 void SmartAI::SetRun(bool run)
 {
     if (run)
-        me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+        me->SetWalk(false);
     else
-        me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+        me->SetWalk(true);
 
     mRun = run;
 }
 
 void SmartAI::SetFly(bool fly)
 {
-    if (fly)
-    {
-        me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-        me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
-    }
-    else
-    {
-        me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-        me->RemoveByteFlag(UNIT_FIELD_BYTES_1, 3, 0x01);
-    }
-    me->SetFlying(fly);
+    me->SetDisableGravity(fly);
     me->SendMovementFlagUpdate();
 }
 
@@ -827,7 +817,7 @@ void SmartAI::SetScript9(SmartScriptHolder& e, uint32 entry, Unit* invoker)
         GetScript()->mLastInvoker = invoker->GetGUID();
     GetScript()->SetScript9(e, entry);
 }
-    
+
 void SmartAI::sOnGameEvent(bool start, uint16 eventId)
 {
     GetScript()->ProcessEventsFor(start ? SMART_EVENT_GAME_EVENT_START : SMART_EVENT_GAME_EVENT_END, NULL, eventId);

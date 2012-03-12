@@ -349,6 +349,7 @@ public:
         void Reset()
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            //! HACK: Creature's can't have MOVEMENTFLAG_FLYING
             me->AddUnitMovementFlag(MOVEMENTFLAG_FLYING);
             me->setFaction(16);
             me->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
@@ -389,8 +390,10 @@ public:
     bool OnGossipHello(Player* /*player*/, GameObject* pGO)
     {
         InstanceScript* instance = pGO->GetInstanceScript();
+        if (!instance)
+            return true;
 
-        Creature* pPrinceTaldaram = Unit::GetCreature(*pGO, instance ? instance->GetData64(DATA_PRINCE_TALDARAM) : 0);
+        Creature* pPrinceTaldaram = Unit::GetCreature(*pGO, instance->GetData64(DATA_PRINCE_TALDARAM));
         if (pPrinceTaldaram && pPrinceTaldaram->isAlive())
         {
             // maybe these are hacks :(

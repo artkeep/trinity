@@ -3762,23 +3762,6 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
                  data << uint32(proto->ItemLimitCategory);
              break;
         }
-        case SPELL_FAILED_PREVENTED_BY_MECHANIC:
-            data << uint32(0);                              // SpellMechanic.dbc id
-            break;
-        case SPELL_FAILED_NEED_EXOTIC_AMMO:
-            data << uint32(spellInfo->EquippedItemSubClassMask);// seems correct...
-            break;
-        case SPELL_FAILED_NEED_MORE_ITEMS:
-            data << uint32(0);                              // item id
-            data << uint32(0);                              // item count?
-            break;
-        case SPELL_FAILED_MIN_SKILL:
-            data << uint32(0);                              // SkillLine.dbc id
-            data << uint32(0);                              // required skill value
-            break;
-        case SPELL_FAILED_FISHING_TOO_LOW:
-            data << uint32(0);                              // required fishing skill
-            break;
         case SPELL_FAILED_CUSTOM_ERROR:
             data << uint32(customError);
             break;

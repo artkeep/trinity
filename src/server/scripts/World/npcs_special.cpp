@@ -1547,6 +1547,7 @@ public:
     }
 };
 
+
 /*####
 ## npc_brewfest_reveler
 ####*/
@@ -2780,8 +2781,8 @@ public:
     bool OnGossipHello(Player* pPlayer, Creature* pCreature)
     {
         // Argent Pony Bridle options
-        const AchievementEntry * achiPonyUp = GetAchievementStore()->LookupEntry(ACHI_PONY_UP);
-        if (achiPonyUp && pPlayer->GetAchievementMgr().HasAchieved(achiPonyUp->ID))
+        const AchievementEntry * achiPonyUp = sAchievementStore.LookupEntry(ACHI_PONY_UP);
+        if (pPlayer->GetAchievementMgr().HasAchieved(ACHI_PONY_UP))
             if (!pCreature->HasAura(SPELL_SQUIRE_TIRED))
             {
                 uint8 uiBuff = (STATE_BANK | STATE_SHOP | STATE_MAIL);
@@ -3325,6 +3326,7 @@ void AddSC_npcs_special()
     new npc_snake_trap;
     new npc_mirror_image;
     new npc_ebon_gargoyle;
+    new npc_lightwell;
     new mob_mojo;
     new npc_training_dummy;
     new npc_shadowfiend;

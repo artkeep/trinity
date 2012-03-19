@@ -1219,5 +1219,4 @@ void AddSC_terokkar_forest()
     new npc_skyguard_prisoner();
     new npc_mana_bomb();
     new npc_letoll();
-    new npc_captive_child();
 }

@@ -415,12 +415,11 @@ void AddSC_boss_malygos();              // The Nexus: Eye of Eternity
 void AddSC_instance_eye_of_eternity();
 void AddSC_boss_sartharion();            //Obsidian Sanctum
 void AddSC_instance_obsidian_sanctum();
-void AddSC_instance_ruby_sanctum();      // Ruby Sanctum
-void AddSC_ruby_sanctum();
-void AddSC_boss_baltharus_the_warborn();
-void AddSC_boss_saviana_ragefire();
-void AddSC_boss_general_zarithrian();
+void AddSC_boss_baltharus();            //Ruby Sanctum
 void AddSC_boss_halion();
+void AddSC_boss_ragefire();
+void AddSC_boss_zarithrian();
+void AddSC_instance_ruby_sanctum();
 void AddSC_boss_bjarngrim();             //Ulduar Halls of Lightning
 void AddSC_boss_loken();
 void AddSC_boss_ionar();
@@ -1128,12 +1127,11 @@ void AddNorthrendScripts()
     AddSC_instance_eye_of_eternity();
     AddSC_boss_sartharion();            //Obsidian Sanctum
     AddSC_instance_obsidian_sanctum();
-    AddSC_instance_ruby_sanctum(); // Ruby Sanctum
-    AddSC_ruby_sanctum();
-    AddSC_boss_baltharus_the_warborn();
-    AddSC_boss_saviana_ragefire();
-    AddSC_boss_general_zarithrian();
+    AddSC_boss_baltharus();            //Ruby Sanctum
     AddSC_boss_halion();
+    AddSC_boss_ragefire();
+    AddSC_boss_zarithrian();
+    AddSC_instance_ruby_sanctum();
     AddSC_boss_bjarngrim();             //Ulduar Halls of Lightning
     AddSC_boss_loken();
     AddSC_boss_ionar();

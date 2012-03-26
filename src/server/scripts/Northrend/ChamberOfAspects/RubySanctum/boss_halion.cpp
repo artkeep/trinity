@@ -216,7 +216,7 @@ class boss_halion : public CreatureScript
             {
                 _EnterCombat();
                 Talk(SAY_AGGRO);
-                instance->SendEncounterUnit(ENCOUNTER_FRAME_ADD, me);
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me);
                 instance->SetBossState(DATA_HALION, IN_PROGRESS);
 
                 events.Reset();

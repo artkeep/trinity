@@ -1473,10 +1473,16 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             const PlayerSpellMap& sp_list = target->ToPlayer()->GetSpellMap();
             for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
             {
-                if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled) continue;
-                if (itr->first == spellId || itr->first == spellId2) continue;
+                if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled)
+                    continue;
+
+                if (itr->first == spellId || itr->first == spellId2)
+                    continue;
+
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
-                if (!spellInfo || !(spellInfo->Attributes & (SPELL_ATTR0_PASSIVE | SPELL_ATTR0_HIDDEN_CLIENTSIDE))) continue;
+                if (!spellInfo || !(spellInfo->Attributes & (SPELL_ATTR0_PASSIVE | SPELL_ATTR0_HIDDEN_CLIENTSIDE)))
+                    continue;
+
                 if (spellInfo->Stances & (1<<(GetMiscValue()-1)))
                     target->CastSpell(target, itr->first, true, NULL, this);
             }
@@ -2080,7 +2086,9 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
                     PlayerSpellMap const& sp_list = target->ToPlayer()->GetSpellMap();
                     for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
                     {
-                        if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled) continue;
+                        if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled)
+                            continue;
+
                         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
                         if (spellInfo && spellInfo->SpellFamilyName == SPELLFAMILY_WARRIOR && spellInfo->SpellIconID == 139)
                             Rage_val += target->CalculateSpellDamage(target, spellInfo, 0) * 10;
@@ -2855,28 +2863,24 @@ void AuraEffect::HandleAuraAllowFlight(AuraApplication const* aurApp, uint8 mode
             return;
     }
 
-    if (target->GetTypeId() == TYPEID_UNIT)
-        target->SetFlying(apply);
-
-    if (Player* player = target->m_movedPlayer)
+    //! Not entirely sure if this should be sent for creatures as well, but I don't think so.
+    target->SetCanFly(apply);
+    if (!apply)
     {
-        // allow flying
-        WorldPacket data;
-        if (apply)
-        {
-            static_cast<Player*>(target)->SetCanFly(true);
-            static_cast<Player*>(target)->m_anti_BeginFallZ=INVALID_HEIGHT;
-            data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
-        }
-        else
-        {
-            data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-            static_cast<Player*>(target)->SetCanFly(false);
-        }
-        data.append(target->GetPackGUID());
-        data << uint32(0);                                      // unk
-        player->SendDirectMessage(&data);
+        target->RemoveUnitMovementFlag(MOVEMENTFLAG_FLYING);
+        target->AddUnitMovementFlag(MOVEMENTFLAG_FALLING);
+        target->m_movementInfo.SetFallTime(0);
     }
+
+    Player* player = target->ToPlayer();
+    if (!player)
+        player = target->m_movedPlayer;
+
+    if (player)
+        player->SendMovementCanFlyChange();
+
+    //! We still need to initiate a server-side MoveFall here,
+    //! which requires MSG_MOVE_FALL_LAND on landing.
 }
 
 void AuraEffect::HandleAuraWaterWalk(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -2893,14 +2897,15 @@ void AuraEffect::HandleAuraWaterWalk(AuraApplication const* aurApp, uint8 mode, 
             return;
     }
 
-    WorldPacket data;
     if (apply)
-        data.Initialize(SMSG_MOVE_WATER_WALK, 8+4);
+        target->AddUnitMovementFlag(MOVEMENTFLAG_WATERWALKING);
     else
-        data.Initialize(SMSG_MOVE_LAND_WALK, 8+4);
-    data.append(target->GetPackGUID());
-    data << uint32(0);
-    target->SendMessageToSet(&data, true);
+    {
+        target->RemoveUnitMovementFlag(MOVEMENTFLAG_WATERWALKING);
+        target->AddUnitMovementFlag(MOVEMENTFLAG_FALLING);
+    }
+
+    target->SendMovementWaterWalking();
 }
 
 void AuraEffect::HandleAuraFeatherFall(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -2917,18 +2922,12 @@ void AuraEffect::HandleAuraFeatherFall(AuraApplication const* aurApp, uint8 mode
             return;
     }
 
-    WorldPacket data;
     if (apply)
-    {
-        data.Initialize(SMSG_MOVE_FEATHER_FALL, 8+4);
-        if (target->GetTypeId() == TYPEID_PLAYER)
-            static_cast<Player*>(target)->m_anti_BeginFallZ=INVALID_HEIGHT;
-    }
+        target->AddUnitMovementFlag(MOVEMENTFLAG_FALLING_SLOW);
     else
-        data.Initialize(SMSG_MOVE_NORMAL_FALL, 8+4);
-    data.append(target->GetPackGUID());
-    data << uint32(0);
-    target->SendMessageToSet(&data, true);
+        target->RemoveUnitMovementFlag(MOVEMENTFLAG_FALLING_SLOW);
+
+    target->SendMovementFeatherFall();
 
     // start fall from current height
     if (!apply && target->GetTypeId() == TYPEID_PLAYER)
@@ -2949,14 +2948,8 @@ void AuraEffect::HandleAuraHover(AuraApplication const* aurApp, uint8 mode, bool
             return;
     }
 
-    WorldPacket data;
-    if (apply)
-        data.Initialize(SMSG_MOVE_SET_HOVER, 8+4);
-    else
-        data.Initialize(SMSG_MOVE_UNSET_HOVER, 8+4);
-    data.append(target->GetPackGUID());
-    data << uint32(0);
-    target->SendMessageToSet(&data, true);
+    target->SetHover(apply);    //! Sets movementflags
+    target->SendMovementHover();
 }
 
 void AuraEffect::HandleWaterBreathing(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
@@ -3262,31 +3255,32 @@ void AuraEffect::HandleAuraModIncreaseFlightSpeed(AuraApplication const* aurApp,
 
     Unit* target = aurApp->GetTarget();
 
-    // Enable Fly mode for flying mounts
+    //! Update ability to fly
     if (GetAuraType() == SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED)
     {
         // do not remove unit flag if there are more than this auraEffect of that kind on unit on unit
         if (mode & AURA_EFFECT_HANDLE_SEND_FOR_CLIENT_MASK && (apply || (!target->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !target->HasAuraType(SPELL_AURA_FLY))))
         {
-            if (Player* player = target->m_movedPlayer)
+            target->SetCanFly(apply);
+            if (!apply)
             {
-                WorldPacket data;
-                if (apply)
-                {
-                    static_cast<Player*>(target)->SetCanFly(true);
-                    data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
-                }
-                else
-                {
-                    data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-                    static_cast<Player*>(target)->SetCanFly(false);
-                }
-                data.append(player->GetPackGUID());
-                data << uint32(0);                                      // unknown
-                player->SendDirectMessage(&data);
+                target->RemoveUnitMovementFlag(MOVEMENTFLAG_FLYING);
+                target->AddUnitMovementFlag(MOVEMENTFLAG_FALLING);
+                target->m_movementInfo.SetFallTime(0);
             }
+
+            Player* player = target->ToPlayer();
+            if (!player)
+                player = target->m_movedPlayer;
+
+            if (player)
+                player->SendMovementCanFlyChange();
+
+            //! We still need to initiate a server-side MoveFall here,
+            //! which requires MSG_MOVE_FALL_LAND on landing.
         }
 
+        //! Someone should clean up these hacks and remove it from this function. It doesn't even belong here.
         if (mode & AURA_EFFECT_HANDLE_REAL)
         {
             //Players on flying mounts must be immune to polymorph
@@ -4719,11 +4713,11 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     if (owner_aura)
                     {
                         owner_aura->SetStackAmount(owner_aura->GetSpellInfo()->StackAmount);
-                    }
-                    if (pet_aura)
-                    {
-                        pet_aura->SetCharges(0);
-                        pet_aura->SetStackAmount(owner_aura->GetSpellInfo()->StackAmount);
+                        if (pet_aura)
+                        {
+                            pet_aura->SetCharges(0);
+                            pet_aura->SetStackAmount(owner_aura->GetSpellInfo()->StackAmount);
+                        }
                     }
                     break;
                 }
@@ -5715,27 +5709,6 @@ void AuraEffect::HandlePeriodicDummyAuraTick(Unit* target, Unit* caster) const
                 target->CastSpell((Unit*)NULL, m_spellInfo->Effects[m_effIndex].TriggerSpell, true);
             break;
         }
-        case SPELLFAMILY_WARLOCK:
-        {
-            switch (GetSpellInfo()->Id)
-            {
-                // Demonic Circle
-                case 48018:
-                    if (GameObject* obj = target->GetGameObject(GetSpellInfo()->Id))
-                    {
-                        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(48020);
-                        if (target->IsWithinDist(obj, spellInfo->GetMaxRange(true)))
-                        {
-                            if (!target->HasAura(62388))
-                                target->CastSpell(target, 62388, true);
-                        }
-                        else
-                            target->RemoveAura(62388);
-                    }
-                    break;
-            }
-            break;
-        }
         case SPELLFAMILY_DRUID:
         {
             switch (GetSpellInfo()->Id)
@@ -5959,15 +5932,15 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
                         // move loot to player inventory and despawn target
                         if (caster && caster->GetTypeId() == TYPEID_PLAYER &&
                                 target->GetTypeId() == TYPEID_UNIT &&
-                                target->ToCreature()->GetCreatureInfo()->type == CREATURE_TYPE_GAS_CLOUD)
+                                target->ToCreature()->GetCreatureTemplate()->type == CREATURE_TYPE_GAS_CLOUD)
                         {
                             Player* player = caster->ToPlayer();
                             Creature* creature = target->ToCreature();
                             // missing lootid has been reported on startup - just return
-                            if (!creature->GetCreatureInfo()->SkinLootId)
+                            if (!creature->GetCreatureTemplate()->SkinLootId)
                                 return;
 
-                            player->AutoStoreLoot(creature->GetCreatureInfo()->SkinLootId, LootTemplates_Skinning, true);
+                            player->AutoStoreLoot(creature->GetCreatureTemplate()->SkinLootId, LootTemplates_Skinning, true);
 
                             creature->DespawnOrUnsummon();
                         }
@@ -6521,7 +6494,7 @@ void AuraEffect::HandlePeriodicHealAurasTick(Unit* target, Unit* caster) const
     caster->CalcHealAbsorb(target, GetSpellInfo(), heal, absorb);
     int32 gain = caster->DealHeal(target, heal);
 
-    SpellPeriodicAuraLogInfo pInfo(this, damage, damage - gain, absorb, 0, 0.0f, crit);
+    SpellPeriodicAuraLogInfo pInfo(this, heal, heal - gain, absorb, 0, 0.0f, crit);
     target->SendPeriodicAuraLog(&pInfo);
 
     target->getHostileRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellInfo());

@@ -38,7 +38,7 @@ class MovementGenerator
         //! Called after return movement generator to top position (after remove above movement generator)
         virtual void Reset(Unit &) = 0;
         //! Called in MotionMaster::UpdateMotion
-        virtual bool Update(Unit &, const uint32 time_diff) = 0;
+        virtual bool Update(Unit &, const uint32& time_diff) = 0;
         //! Get current movement generator type
         virtual MovementGeneratorType GetMovementGeneratorType() = 0;
         //! Stop current movement generator for some period of time (should be supported by movement generator)
@@ -67,17 +67,17 @@ class MovementGeneratorMedium : public MovementGenerator
             //u->AssertIsType<T>();
             (static_cast<D*>(this))->Reset(*((T*)&unit));
         }
-        bool Update(Unit &unit, const uint32 time_diff)
+        bool Update(Unit &u, const uint32& time_diff)
         {
             //u->AssertIsType<T>();
             return (static_cast<D*>(this))->Update(*((T*)&unit), time_diff);
         }
     public:
         // will not link if not overridden in the generators
-        void Initialize(T &unit);
-        void Finalize(T &unit);
-        void Reset(T &unit);
-        bool Update(T &unit, const uint32 time_diff);
+        void Initialize(T &u);
+        void Finalize(T &u);
+        void Reset(T &u);
+        bool Update(T &u, const uint32& time_diff);
 };
 
 struct SelectableMovement : public FactoryHolder<MovementGenerator, MovementGeneratorType>

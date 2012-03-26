@@ -37,7 +37,7 @@ GameObject::GameObject() : WorldObject(false), m_model(NULL), m_goValue(new Game
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
 
-    m_updateFlag = (UPDATEFLAG_HIGHGUID | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_POSITION | UPDATEFLAG_ROTATION);
+    m_updateFlag = (UPDATEFLAG_LOWGUID | UPDATEFLAG_STATIONARY_POSITION | UPDATEFLAG_POSITION | UPDATEFLAG_ROTATION);
 
     m_valuesCount = GAMEOBJECT_END;
     m_respawnTime = 0;
@@ -54,6 +54,8 @@ GameObject::GameObject() : WorldObject(false), m_model(NULL), m_goValue(new Game
     m_DBTableGuid = 0;
     m_rotation = 0;
 
+    m_lootRecipient = 0;
+    m_lootRecipientGroup = 0;
     m_groupLootTimer = 0;
     lootingGroupLowGUID = 0;
 
@@ -131,7 +133,8 @@ void GameObject::AddToWorld()
 
         sObjectAccessor->AddObject(this);
         bool startOpen = (GetGoType() == GAMEOBJECT_TYPE_DOOR || GetGoType() == GAMEOBJECT_TYPE_BUTTON ? GetGOInfo()->door.startOpen : false);
-        bool toggledState = (GetGOData() ? GetGOData()->go_state == GO_STATE_ACTIVE : false);
+        // The state can be changed after GameObject::Create but before GameObject::AddToWorld
+        bool toggledState = GetGoState() == GO_STATE_READY;
         if (m_model)
             GetMap()->Insert(*m_model);
         if ((startOpen && !toggledState) || (!startOpen && toggledState))
@@ -222,7 +225,6 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
     SetGoArtKit(0);                                         // unknown what this is
     SetByteValue(GAMEOBJECT_BYTES_1, 2, artKit);
 
-
     switch (goinfo->type)
     {
         case GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING:
@@ -251,7 +253,6 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
                 m_invisibility.AddFlag(INVISIBILITY_TRAP);
                 m_invisibility.AddValue(INVISIBILITY_TRAP, 300);
             }
-
             break;
         default:
             SetGoAnimProgress(animprogress);
@@ -699,29 +700,34 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     data.spawnMask = spawnMask;
     data.artKit = GetGoArtKit();
 
-    // update in DB
-    std::ostringstream ss;
-    ss << "INSERT INTO gameobject VALUES ("
-        << m_DBTableGuid << ','
-        << GetEntry() << ','
-        << mapid << ','
-        << uint32(spawnMask) << ','                         // cast to prevent save as symbol
-        << uint16(GetPhaseMask()) << ','                    // prevent out of range error
-        << GetPositionX() << ','
-        << GetPositionY() << ','
-        << GetPositionZ() << ','
-        << GetOrientation() << ','
-        << GetFloatValue(GAMEOBJECT_PARENTROTATION) << ','
-        << GetFloatValue(GAMEOBJECT_PARENTROTATION+1) << ','
-        << GetFloatValue(GAMEOBJECT_PARENTROTATION+2) << ','
-        << GetFloatValue(GAMEOBJECT_PARENTROTATION+3) << ','
-        << m_respawnDelayTime << ','
-        << uint32(GetGoAnimProgress()) << ','
-        << uint32(GetGoState()) << ')';
-
+    // Update in DB
     SQLTransaction trans = WorldDatabase.BeginTransaction();
-    trans->PAppend("DELETE FROM gameobject WHERE guid = '%u'", m_DBTableGuid);
-    trans->Append(ss.str().c_str());
+
+    uint8 index = 0;
+
+    PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAMEOBJECT);
+    stmt->setUInt32(0, m_DBTableGuid);
+    trans->Append(stmt);
+
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_INS_GAMEOBJECT);
+    stmt->setUInt32(index++, m_DBTableGuid);
+    stmt->setUInt32(index++, GetEntry());
+    stmt->setUInt16(index++, uint16(mapid));
+    stmt->setUInt8(index++, spawnMask);
+    stmt->setUInt16(index++, uint16(GetPhaseMask()));
+    stmt->setFloat(index++, GetPositionX());
+    stmt->setFloat(index++, GetPositionY());
+    stmt->setFloat(index++, GetPositionZ());
+    stmt->setFloat(index++, GetOrientation());
+    stmt->setFloat(index++, GetFloatValue(GAMEOBJECT_PARENTROTATION));
+    stmt->setFloat(index++, GetFloatValue(GAMEOBJECT_PARENTROTATION+1));
+    stmt->setFloat(index++, GetFloatValue(GAMEOBJECT_PARENTROTATION+2));
+    stmt->setFloat(index++, GetFloatValue(GAMEOBJECT_PARENTROTATION+3));
+    stmt->setInt32(index++, int32(m_respawnDelayTime));
+    stmt->setUInt8(index++, GetGoAnimProgress());
+    stmt->setUInt8(index++, uint8(GetGoState()));
+    trans->Append(stmt);
+
     WorldDatabase.CommitTransaction(trans);
 }
 
@@ -1918,7 +1924,8 @@ void GameObject::SetLootState(LootState state, Unit* unit)
         // startOpen determines whether we are going to add or remove the LoS on activation
         bool startOpen = (GetGoType() == GAMEOBJECT_TYPE_DOOR || GetGoType() == GAMEOBJECT_TYPE_BUTTON ? GetGOInfo()->door.startOpen : false);
 
-        if (GetGOData() && GetGOData()->go_state == GO_NOT_READY)
+        // Use the current go state
+        if (GetGoState() == GO_STATE_ACTIVE)
             startOpen = !startOpen;
 
         if (state == GO_ACTIVATED || state == GO_JUST_DEACTIVATED)
@@ -1939,7 +1946,7 @@ void GameObject::SetGoState(GOState state)
         // startOpen determines whether we are going to add or remove the LoS on activation
         bool startOpen = (GetGoType() == GAMEOBJECT_TYPE_DOOR || GetGoType() == GAMEOBJECT_TYPE_BUTTON ? GetGOInfo()->door.startOpen : false);
 
-        if (GetGOData() && GetGOData()->go_state == GO_NOT_READY)
+        if (GetGOData() && GetGOData()->go_state == GO_STATE_READY)
             startOpen = !startOpen;
 
         if (state == GO_STATE_ACTIVE || state == GO_STATE_ACTIVE_ALTERNATIVE)
@@ -1983,4 +1990,58 @@ void GameObject::UpdateModel()
     m_model = GameObjectModel::Create(*this);
     if (m_model)
         GetMap()->Insert(*m_model);
+}
+
+Player* GameObject::GetLootRecipient() const
+{
+    if (!m_lootRecipient)
+        return NULL;
+    return ObjectAccessor::FindPlayer(m_lootRecipient);
+}
+
+Group* GameObject::GetLootRecipientGroup() const
+{
+    if (!m_lootRecipientGroup)
+        return NULL;
+    return sGroupMgr->GetGroupByGUID(m_lootRecipientGroup);
+}
+
+void GameObject::SetLootRecipient(Unit* unit)
+{
+    // set the player whose group should receive the right
+    // to loot the creature after it dies
+    // should be set to NULL after the loot disappears
+
+    if (!unit)
+    {
+        m_lootRecipient = 0;
+        m_lootRecipientGroup = 0;
+        return;
+    }
+
+    if (unit->GetTypeId() != TYPEID_PLAYER && !unit->IsVehicle())
+        return;
+
+    Player* player = unit->GetCharmerOrOwnerPlayerOrPlayerItself();
+    if (!player)                                             // normal creature, no player involved
+        return;
+
+    m_lootRecipient = player->GetGUID();
+    if (Group* group = player->GetGroup())
+        m_lootRecipientGroup = group->GetLowGUID();
+}
+
+bool GameObject::IsLootAllowedFor(Player const* player) const
+{
+    if (!m_lootRecipient && !m_lootRecipientGroup)
+        return true;
+
+    if (player->GetGUID() == m_lootRecipient)
+        return true;
+
+    Group const* playerGroup = player->GetGroup();
+    if (!playerGroup || playerGroup != GetLootRecipientGroup()) // if we dont have a group we arent the recipient
+        return false;                                           // if go doesnt have group bound it means it was solo killed by someone else
+
+    return true;
 }

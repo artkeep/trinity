@@ -42,10 +42,10 @@ class npc_cairne_bloodhoof : public CreatureScript
 public:
     npc_cairne_bloodhoof() : CreatureScript("npc_cairne_bloodhoof") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_SENDER_INFO)
+        if (action == GOSSIP_SENDER_INFO)
         {
             player->CastSpell(player, 23123, false);
             player->SEND_GOSSIP_MENU(7014, creature->GetGUID());
@@ -73,7 +73,7 @@ public:
 
     struct npc_cairne_bloodhoofAI : public ScriptedAI
     {
-        npc_cairne_bloodhoofAI(Creature* c) : ScriptedAI(c) {}
+        npc_cairne_bloodhoofAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 BerserkerCharge_Timer;
         uint32 Cleave_Timer;

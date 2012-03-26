@@ -142,10 +142,10 @@ ChatCommand* ChatHandler::getCommandTable()
 
     static ChatCommand groupCommandTable[] =
     {
-        { "leader",         SEC_ADMINISTRATOR,     false,  OldHandler<&ChatHandler::HandleGroupLeaderCommand>,         "", NULL },
-        { "disband",        SEC_ADMINISTRATOR,     false,  OldHandler<&ChatHandler::HandleGroupDisbandCommand>,        "", NULL },
-        { "remove",         SEC_ADMINISTRATOR,     false,  OldHandler<&ChatHandler::HandleGroupRemoveCommand>,         "", NULL },
-        { NULL,             0,                     false, NULL,                                           "", NULL }
+        { "leader",         SEC_ADMINISTRATOR, false,  OldHandler<&ChatHandler::HandleGroupLeaderCommand>,         "", NULL },
+        { "disband",        SEC_ADMINISTRATOR, false,  OldHandler<&ChatHandler::HandleGroupDisbandCommand>,        "", NULL },
+        { "remove",         SEC_ADMINISTRATOR, false,  OldHandler<&ChatHandler::HandleGroupRemoveCommand>,         "", NULL },
+        { NULL,             0,                 false,  NULL,                                           "", NULL }
     };
 
     static ChatCommand guildCommandTable[] =
@@ -283,7 +283,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "corpses",        SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleServerCorpsesCommand>,     "", NULL },
         { "exit",           SEC_CONSOLE,        true,  OldHandler<&ChatHandler::HandleServerExitCommand>,        "", NULL },
         { "idlerestart",    SEC_ADMINISTRATOR,  true,  NULL,                                                     "", serverIdleRestartCommandTable },
-        { "idleshutdown",   SEC_ADMINISTRATOR,  true,  NULL,                                                     "", serverShutdownCommandTable },
+        { "idleshutdown",   SEC_ADMINISTRATOR,  true,  NULL,                                                     "", serverIdleShutdownCommandTable },
         { "info",           SEC_PLAYER,         true,  OldHandler<&ChatHandler::HandleServerInfoCommand>,        "", NULL },
         { "motd",           SEC_PLAYER,         true,  OldHandler<&ChatHandler::HandleServerMotdCommand>,        "", NULL },
         { "plimit",         SEC_ADMINISTRATOR,  true,  OldHandler<&ChatHandler::HandleServerPLimitCommand>,      "", NULL },
@@ -338,6 +338,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "lookup",         SEC_ADMINISTRATOR,  true,  NULL,                                           "", lookupCommandTable   },
         { "pdump",          SEC_ADMINISTRATOR,  true,  NULL,                                           "", pdumpCommandTable    },
         { "guild",          SEC_ADMINISTRATOR,  true,  NULL,                                           "", guildCommandTable    },
+        { "group",          SEC_ADMINISTRATOR,  false, NULL,                                           "", groupCommandTable    },
         { "cast",           SEC_ADMINISTRATOR,  false, NULL,                                           "", castCommandTable     },
         { "reset",          SEC_ADMINISTRATOR,  true,  NULL,                                           "", resetCommandTable    },
         { "instance",       SEC_ADMINISTRATOR,  true,  NULL,                                           "", instanceCommandTable },
@@ -450,7 +451,10 @@ ChatCommand* ChatHandler::getCommandTable()
                 added += appendCommandTable(commandTableCache + added, *it);
         }
 
-        QueryResult result = WorldDatabase.Query("SELECT name, security, help FROM command");
+        PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_COMMANDS);
+
+        PreparedQueryResult result = WorldDatabase.Query(stmt);
+
         if (result)
         {
             do
@@ -458,7 +462,7 @@ ChatCommand* ChatHandler::getCommandTable()
                 Field* fields = result->Fetch();
                 std::string name = fields[0].GetString();
 
-                SetDataForCommandInTable(commandTableCache, name.c_str(), fields[1].GetUInt16(), fields[2].GetString(), name);
+                SetDataForCommandInTable(commandTableCache, name.c_str(), fields[1].GetUInt8(), fields[2].GetString(), name);
 
             } while (result->NextRow());
         }

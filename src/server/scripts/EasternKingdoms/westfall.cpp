@@ -185,7 +185,6 @@ public:
             } else uiShootTimer -= diff;
         }
     };
-
 };
 
 /*######
@@ -225,7 +224,7 @@ public:
 
     struct npc_defias_traitorAI : public npc_escortAI
     {
-        npc_defias_traitorAI(Creature* c) : npc_escortAI(c) { Reset(); }
+        npc_defias_traitorAI(Creature* creature) : npc_escortAI(creature) { Reset(); }
 
         void WaypointReached(uint32 i)
         {
@@ -258,7 +257,6 @@ public:
 
         void Reset() {}
     };
-
 };
 
 void AddSC_westfall()

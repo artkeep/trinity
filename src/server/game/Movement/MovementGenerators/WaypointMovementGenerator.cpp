@@ -76,8 +76,8 @@ void WaypointMovementGenerator<Creature>::OnArrived(Creature& unit)
 
     if (i_path->at(i_currentNode)->event_id && urand(0, 99) < i_path->at(i_currentNode)->event_chance)
     {
-        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Creature movement start script %u at point %u for "UI64FMTD".", i_path->at(i_currentNode)->event_id, i_currentNode, unit.GetGUID());
-        unit.GetMap()->ScriptsStart(sWaypointScripts, i_path->at(i_currentNode)->event_id, &unit, NULL/*, false*/);
+        sLog->outDebug(LOG_FILTER_MAPSCRIPTS, "Creature movement start script %u at point %u for "UI64FMTD".", i_path->at(i_currentNode)->event_id, i_currentNode, creature.GetGUID());
+        creature.GetMap()->ScriptsStart(sWaypointScripts, i_path->at(i_currentNode)->event_id, &creature, NULL);
     }
 
     // Inform script
@@ -110,6 +110,7 @@ bool WaypointMovementGenerator<Creature>::StartMove(Creature &unit)
     m_isArrivalDone = false;
     
     Movement::MoveSplineInit init(unit);
+
     init.MoveTo(node->x, node->y, node->z);
 
     if (node->orientation != 100 && node->delay != 0)
@@ -142,7 +143,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &unit, const uint32 &d
         if (CanMove(diff))
             return StartMove(unit);
     }
-    else 
+    else
     {
         /*if (unit.IsStopped())
             Stop(STOP_TIME_FOR_PLAYER);
@@ -236,7 +237,7 @@ void FlightPathMovementGenerator::Reset(Player &unit)
     init.Launch();
 }
 
-bool FlightPathMovementGenerator::Update(Player &unit, const uint32 /*diff*/)
+bool FlightPathMovementGenerator::Update(Player &unit, const uint32& /*diff*/)
 {
     uint32 pointId = (uint32)unit.movespline->currentPathIdx();
     if (pointId > i_currentNode)
@@ -289,7 +290,7 @@ bool FlightPathMovementGenerator::GetResetPosition(Player&, float& x, float& y, 
     x = node.x; y = node.y; z = node.z;
     return true;
 }
-    
+
 void FlightPathMovementGenerator::InitEndGridInfo()
 {
     /*! Storage to preload flightmaster grid at end of flight. For multi-stop flights, this will

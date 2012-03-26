@@ -749,7 +749,8 @@ int32 Aura::CalcMaxDuration(Unit* caster) const
     if (IsPassive() && !m_spellInfo->DurationEntry)
         maxDuration = -1;
 
-    if (!IsPermanent() && modOwner)
+    // IsPermanent() checks max duration (which we are supposed to calculate here)
+    if (maxDuration != -1 && modOwner)
         modOwner->ApplySpellMod(GetId(), SPELLMOD_DURATION, maxDuration);
     return maxDuration;
 }
@@ -1232,39 +1233,6 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         break;
                 }
                 break;
-            case SPELLFAMILY_HUNTER:
-                // Animal Handler
-                if (GetId() == 68361)
-                {
-                    if (Unit* owner = target->GetOwner())
-                        if (AuraEffect* auraEff = owner->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2234, 1))
-                            GetEffect(0)->SetAmount(auraEff->GetAmount());
-                }
-                break;
-            case SPELLFAMILY_WARLOCK:
-                switch (GetId())
-                {
-                    case 6358: // Seduction
-                        if (!caster)
-                            break;
-                        if (Unit *owner = caster->GetOwner())
-                            if (owner->HasAura(56250)) // Glyph of Succubus
-                            {
-                                target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE, 0, target->GetAura(32409)); // SW:D shall not be removed.
-                                target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE_PERCENT);
-                                target->RemoveAurasByType(SPELL_AURA_PERIODIC_LEECH);
-                            }
-                        break;
-                    case 48020: // Demonic Circle
-                        if (target->GetTypeId() == TYPEID_PLAYER)
-                            if (GameObject* obj = target->GetGameObject(48018))
-                            {
-                                target->NearTeleportTo(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), obj->GetOrientation());
-                                target->RemoveMovementImpairingAuras();
-                            }
-                        break;
-                }
-                break;
             case SPELLFAMILY_PRIEST:
                 if (!caster)
                     break;
@@ -1502,24 +1470,6 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         if (spellId)
                             caster->CastSpell(target, spellId, true);
                     }
-                }
-                switch (GetId())
-                {
-                    case 6358: // Seduction
-                        // Interrupt cast if aura removed from target
-                        // maybe should be used SpellChannelInterruptFlags instead
-                        caster->InterruptNonMeleeSpells(false, 6358, false);
-                        break;
-                    case 48018: // Demonic Circle
-                        // Do not remove GO when aura is removed by stack
-                        // to prevent remove GO added by new spell
-                        // old one is already removed
-                        if (!onReapply)
-                            target->RemoveGameObject(GetId(), true);
-                        target->RemoveAura(62388);
-                        break;
-                    default:
-                        break;
                 }
                 break;
             case SPELLFAMILY_PRIEST:
@@ -2202,7 +2152,7 @@ void Aura::TriggerProcOnEvent(AuraApplication* aurApp, ProcEventInfo& eventInfo)
         if (aurApp->HasEffect(i))
             // TODO: OnEffectProc hook here (allowing prevention of selected effects)
             GetEffect(i)->HandleProc(aurApp, eventInfo);
-            // TODO: AfterEffectProc hook here 
+            // TODO: AfterEffectProc hook here
 
     // TODO: AfterProc hook here
 
@@ -2538,13 +2488,14 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8> & targets, Unit* caster)
                 switch (GetSpellInfo()->Effects[effIndex].Effect)
                 {
                     case SPELL_EFFECT_APPLY_AREA_AURA_PARTY:
-                        targetList.push_back(GetUnitOwner());
-                        GetUnitOwner()->GetPartyMemberInDist(targetList, radius);
-                        break;
                     case SPELL_EFFECT_APPLY_AREA_AURA_RAID:
+                    {
                         targetList.push_back(GetUnitOwner());
-                        GetUnitOwner()->GetRaidMember(targetList, radius);
+                        Trinity::AnyGroupedUnitInObjectRangeCheck u_check(GetUnitOwner(), GetUnitOwner(), radius, GetSpellInfo()->Effects[effIndex].Effect == SPELL_EFFECT_APPLY_AREA_AURA_RAID);
+                        Trinity::UnitListSearcher<Trinity::AnyGroupedUnitInObjectRangeCheck> searcher(GetUnitOwner(), targetList, u_check);
+                        GetUnitOwner()->VisitNearbyObject(radius, searcher);
                         break;
+                    }
                     case SPELL_EFFECT_APPLY_AREA_AURA_FRIEND:
                     {
                         targetList.push_back(GetUnitOwner());

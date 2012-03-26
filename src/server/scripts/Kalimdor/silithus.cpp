@@ -49,10 +49,10 @@ class npc_highlord_demitrian : public CreatureScript
 public:
     npc_highlord_demitrian() : CreatureScript("npc_highlord_demitrian") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
         case GOSSIP_ACTION_INFO_DEF:
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_DEMITRIAN2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
@@ -134,10 +134,10 @@ class npcs_rutgar_and_frankal : public CreatureScript
 public:
     npcs_rutgar_and_frankal() : CreatureScript("npcs_rutgar_and_frankal") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF:
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
@@ -492,7 +492,7 @@ public:
 
     struct npc_anachronos_the_ancientAI : public ScriptedAI
     {
-        npc_anachronos_the_ancientAI(Creature* c) : ScriptedAI(c) {}
+        npc_anachronos_the_ancientAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 AnimationTimer;
         uint8 AnimationCount;
@@ -576,7 +576,7 @@ public:
                         break;
                     case 10:
                         Merithra->HandleEmoteCommand(EMOTE_ONESHOT_LIFTOFF);
-                        Merithra->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                        Merithra->SetDisableGravity(true);
                         Merithra->GetMotionMaster()->MoveCharge(-8065, 1530, 6.61f, 3);
                         break;
                     case 11:
@@ -603,7 +603,7 @@ public:
                         break;
                     case 18:
                         Arygos->HandleEmoteCommand(EMOTE_ONESHOT_LIFTOFF);
-                        Arygos->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                        Arygos->SetDisableGravity(true);
                         Arygos->GetMotionMaster()->MoveCharge(-8065, 1530, 6.61f, 42);
                         break;
                     case 19:
@@ -630,7 +630,7 @@ public:
                         break;
                     case 26:
                         Caelestrasz->HandleEmoteCommand(254);
-                        Caelestrasz->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                        Caelestrasz->SetDisableGravity(true);
                         Caelestrasz->GetMotionMaster()->MoveCharge(-8065, 1530, 7.61f, 4);
                         break;
                     case 27:
@@ -769,7 +769,7 @@ public:
                         break;
                     case 63:
                         me->HandleEmoteCommand(254);
-                        me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                        me->SetDisableGravity(true);
                         break;
                     case 64:
                         me->GetMotionMaster()->MoveCharge(-8000, 1400, 150, 9);
@@ -820,7 +820,7 @@ public:
 
     struct mob_qiraj_war_spawnAI : public ScriptedAI
     {
-        mob_qiraj_war_spawnAI(Creature* c) : ScriptedAI(c) {}
+        mob_qiraj_war_spawnAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint64 MobGUID;
         uint64 PlayerGUID;
@@ -935,7 +935,7 @@ public:
 
     struct npc_anachronos_quest_triggerAI : public ScriptedAI
     {
-        npc_anachronos_quest_triggerAI(Creature* c) : ScriptedAI(c) {}
+        npc_anachronos_quest_triggerAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint64 PlayerGUID;
 

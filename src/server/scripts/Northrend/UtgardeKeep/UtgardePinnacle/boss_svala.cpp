@@ -34,7 +34,7 @@ enum Spells
     SPELL_RITUAL_DISARM                           = 54159,
     SPELL_RITUAL_STRIKE_EFF_1                     = 48277,
     SPELL_RITUAL_STRIKE_EFF_2                     = 59930,
-    
+
     SPELL_SUMMONED_VIS                            = 64446,
     SPELL_RITUAL_CHANNELER_1                      = 48271,
     SPELL_RITUAL_CHANNELER_2                      = 48274,
@@ -62,7 +62,7 @@ enum Yells
     SAY_SLAY                                      = 3,
     SAY_DEATH                                     = 4,
     SAY_SACRIFICE_PLAYER                          = 5,
-    
+
     // Image of Arthas
     SAY_DIALOG_OF_ARTHAS_1                        = 0,
     SAY_DIALOG_OF_ARTHAS_2                        = 1
@@ -94,14 +94,9 @@ enum SvalaPhase
     SVALADEAD
 };
 
-enum SvalaPoint
-{
-    POINT_FALL_GROUND = 1,
-};
-
 #define DATA_INCREDIBLE_HULK 2043
 
-static const float spectatorWP[2][3] = 
+static const float spectatorWP[2][3] =
 {
     {296.95f,-312.76f,86.36f},
     {297.69f,-275.81f,86.36f}
@@ -133,7 +128,7 @@ public:
         InstanceScript* instance;
         SummonList summons;
         SvalaPhase Phase;
-        
+
         Position pos;
         float x, y, z;
 
@@ -157,15 +152,11 @@ public:
 
             summons.DespawnAll();
             me->RemoveAllAuras();
-            
-            if (Phase > INTRO)
-            {
-                me->SetFlying(true);
-                me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-            }
 
             if (Phase > NORMAL)
                 Phase = NORMAL;
+
+            me->SetDisableGravity(Phase == NORMAL);
 
             introTimer = 1 * IN_MILLISECONDS;
             introPhase = 0;
@@ -177,34 +168,23 @@ public:
                 instance->SetData64(DATA_SACRIFICED_PLAYER, 0);
             }
         }
-        
-        void JustReachedHome()
-        {
-            if (Phase > INTRO)
-            {
-                me->SetFlying(false);
-                me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-                me->SetOrientation(1.58f);
-                me->SendMovementFlagUpdate();
-            }
-        }
-        
+
         void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
-            
+
             sinsterStrikeTimer = 7 * IN_MILLISECONDS;
             callFlamesTimer = urand(10 * IN_MILLISECONDS, 20 * IN_MILLISECONDS);
 
             if (instance)
                 instance->SetData(DATA_SVALA_SORROWGRAVE_EVENT, IN_PROGRESS);
         }
-        
+
         void JustSummoned(Creature* summon)
         {
             if (summon->GetEntry() == CREATURE_RITUAL_CHANNELER)
                 summon->CastSpell(summon, SPELL_SUMMONED_VIS, true);
-            
+
             summons.Summon(summon);
         }
 
@@ -222,7 +202,7 @@ public:
             {
                 Phase = INTRO;
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                
+
                 if (GameObject* mirror = GetClosestGameObjectWithEntry(me, OBJECT_UTGARDE_MIRROR, 100.0f))
                     mirror->SetGoState(GO_STATE_READY);
 
@@ -233,51 +213,20 @@ public:
                 }
             }
         }
-        
+
         void KilledUnit(Unit* victim)
         {
             if (victim != me)
                 Talk(SAY_SLAY);
         }
-        
-        void DamageTaken(Unit* attacker, uint32 &damage)
-        {
-            if (Phase == SVALADEAD)
-            {
-                if (attacker != me)
-                    damage = 0;
-                return;
-            }
-
-            if (damage >= me->GetHealth())
-            {
-                if (Phase == SACRIFICING)
-                    SetEquipmentSlots(false, EQUIP_UNEQUIP, EQUIP_NO_CHANGE, EQUIP_NO_CHANGE);
-
-                damage = 0;
-                Phase = SVALADEAD;
-                me->InterruptNonMeleeSpells(true);
-                me->RemoveAllAuras();
-                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                me->SetHealth(1);
-
-                SetCombatMovement(false);
-                me->HandleEmoteCommand(EMOTE_ONESHOT_FLYDEATH);
-                me->GetMotionMaster()->MoveFall(POINT_FALL_GROUND);
-            }
-        }
-
-        void MovementInform(uint32 motionType, uint32 pointId)
-        {
-            if (motionType != EFFECT_MOTION_TYPE)
-                return;
-
-            if (pointId == POINT_FALL_GROUND)
-                me->DealDamage(me, me->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
-        }
 
         void JustDied(Unit* /*killer*/)
         {
+            if (Phase == SACRIFICING)
+                SetEquipmentSlots(false, EQUIP_UNEQUIP, EQUIP_NO_CHANGE, EQUIP_NO_CHANGE);
+
+            me->HandleEmoteCommand(EMOTE_ONESHOT_FLYDEATH);
+
             summons.DespawnAll();
 
             if (instance)
@@ -325,8 +274,6 @@ public:
                             break;
                         case 2:
                             arthas->CastSpell(me, SPELL_TRANSFORMING_CHANNEL, false);
-                            me->SetFlying(true);
-                            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
                             pos.Relocate(me);
                             pos.m_positionZ += 8.0f;
                             me->GetMotionMaster()->MoveTakeoff(0, pos, 3.30078125f);
@@ -340,7 +287,7 @@ public:
                                     if ((*itr)->isAlive())
                                     {
                                         (*itr)->SetStandState(UNIT_STAND_STATE_STAND);
-                                        (*itr)->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                                        (*itr)->SetWalk(false);
                                         (*itr)->GetMotionMaster()->MovePoint(1, spectatorWP[0][0], spectatorWP[0][1], spectatorWP[0][2]);
                                     }
                                 }
@@ -382,14 +329,13 @@ public:
                             introTimer = 13800;
                             break;
                         case 8:
-                            me->SetFlying(false);
-                            me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-                            me->SendMovementFlagUpdate();
                             pos.Relocate(me);
                             pos.m_positionX = me->GetHomePosition().GetPositionX();
                             pos.m_positionY = me->GetHomePosition().GetPositionY();
                             pos.m_positionZ = 90.6065f;
                             me->GetMotionMaster()->MoveLand(0, pos, 6.247422f);
+                            me->SetDisableGravity(false, true);
+                            me->SetHover(true);
                             ++introPhase;
                             introTimer = 3000;
                             break;
@@ -403,7 +349,8 @@ public:
                             break;
                     }
                 }
-                else introTimer -= diff;
+                else
+                    introTimer -= diff;
 
                 return;
             }
@@ -414,33 +361,29 @@ public:
                 if (!UpdateVictim())
                     return;
 
-                if (me->IsWithinMeleeRange(me->getVictim()) && me->HasUnitMovementFlag(MOVEMENTFLAG_LEVITATING))
-                {
-                    me->SetFlying(false);
-                    me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-                    me->SendMovementFlagUpdate();
-                }
-
                 if (sinsterStrikeTimer <= diff)
                 {
                     DoCast(me->getVictim(), SPELL_SINSTER_STRIKE);
                     sinsterStrikeTimer = urand(5 * IN_MILLISECONDS, 9 * IN_MILLISECONDS);
-                } else sinsterStrikeTimer -= diff;
+                }
+                else
+                    sinsterStrikeTimer -= diff;
 
                 if (callFlamesTimer <= diff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100.0f, true))
                     {
                         DoCast(target, SPELL_CALL_FLAMES);
                         callFlamesTimer = urand(10 * IN_MILLISECONDS, 20 * IN_MILLISECONDS);
                     }
-                } else callFlamesTimer -= diff;
+                }
+                    else callFlamesTimer -= diff;
 
                 if (!sacrificed)
                 {
                     if (HealthBelowPct(50))
                     {
-                        if (Unit* sacrificeTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 80, true))
+                        if (Unit* sacrificeTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 80.0f, true))
                         {
                             if (instance)
                                 instance->SetData64(DATA_SACRIFICED_PLAYER, sacrificeTarget->GetGUID());
@@ -450,8 +393,6 @@ public:
                             DoCast(sacrificeTarget, SPELL_RITUAL_PREPARATION);
 
                             SetCombatMovement(false);
-                            me->SetFlying(true);
-                            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
 
                             Phase = SACRIFICING;
                             sacrePhase = 0;
@@ -532,7 +473,7 @@ public:
                 if (IsHeroic())
                     DoCast(me, SPELL_SHADOWS_IN_THE_DARK);
         }
-        
+
         void UpdateAI(const uint32 diff)
         {
             if (me->HasUnitState(UNIT_STATE_CASTING))
@@ -648,7 +589,7 @@ class npc_scourge_hulk : public CreatureScript
             {
                 return type == DATA_INCREDIBLE_HULK ? killedByRitualStrike : 0;
             }
-            
+
             void DamageTaken(Unit* attacker, uint32 &damage)
             {
                 if (damage >= me->GetHealth() && attacker->GetEntry() == CREATURE_SVALA_SORROWGRAVE)

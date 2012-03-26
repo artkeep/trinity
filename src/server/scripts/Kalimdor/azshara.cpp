@@ -50,7 +50,7 @@ public:
 
     struct mobs_spitelashesAI : public ScriptedAI
     {
-        mobs_spitelashesAI(Creature* c) : ScriptedAI(c) {}
+        mobs_spitelashesAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 morphtimer;
         bool spellhit;
@@ -120,10 +120,10 @@ class npc_loramus_thalipedes : public CreatureScript
 public:
     npc_loramus_thalipedes() : CreatureScript("npc_loramus_thalipedes") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->CLOSE_GOSSIP_MENU();
@@ -267,10 +267,10 @@ class mob_rizzle_sprysprocket : public CreatureScript
 public:
     mob_rizzle_sprysprocket() : CreatureScript("mob_rizzle_sprysprocket") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF + 1 && player->GetQuestStatus(10994) == QUEST_STATUS_INCOMPLETE)
+        if (action == GOSSIP_ACTION_INFO_DEF + 1 && player->GetQuestStatus(10994) == QUEST_STATUS_INCOMPLETE)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->CastSpell(player, SPELL_GIVE_SOUTHFURY_MOONSTONE, true);
@@ -296,7 +296,7 @@ public:
 
     struct mob_rizzle_sprysprocketAI : public ScriptedAI
     {
-        mob_rizzle_sprysprocketAI(Creature* c) : ScriptedAI(c) {}
+        mob_rizzle_sprysprocketAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 spellEscape_Timer;
         uint32 Teleport_Timer;
@@ -470,7 +470,7 @@ public:
 
     struct mob_depth_chargeAI : public ScriptedAI
     {
-        mob_depth_chargeAI(Creature* c) : ScriptedAI(c) {}
+        mob_depth_chargeAI(Creature* creature) : ScriptedAI(creature) {}
 
         bool we_must_die;
         uint32 must_die_timer;
@@ -516,7 +516,6 @@ public:
         {
         }
     };
-
 };
 
 void AddSC_azshara()

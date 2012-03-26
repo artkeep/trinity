@@ -162,7 +162,6 @@ void AddSC_boss_sulfuron();
 void AddSC_boss_majordomo();
 void AddSC_boss_ragnaros();
 void AddSC_instance_molten_core();
-void AddSC_molten_core();
 void AddSC_the_scarlet_enclave();            //Scarlet Enclave
 void AddSC_the_scarlet_enclave_c1();
 void AddSC_the_scarlet_enclave_c2();
@@ -257,7 +256,6 @@ void AddSC_ironforge();
 void AddSC_isle_of_queldanas();
 void AddSC_loch_modan();
 void AddSC_redridge_mountains();
-void AddSC_searing_gorge();
 void AddSC_silvermoon_city();
 void AddSC_silverpine_forest();
 void AddSC_stormwind_city();
@@ -783,7 +781,6 @@ void AddEasternKingdomsScripts()
     AddSC_boss_majordomo();
     AddSC_boss_ragnaros();
     AddSC_instance_molten_core();
-    AddSC_molten_core();
     AddSC_the_scarlet_enclave();            //Scarlet Enclave
     AddSC_the_scarlet_enclave_c1();
     AddSC_the_scarlet_enclave_c2();
@@ -878,7 +875,6 @@ void AddEasternKingdomsScripts()
     AddSC_isle_of_queldanas();
     AddSC_loch_modan();
     AddSC_redridge_mountains();
-    AddSC_searing_gorge();
     AddSC_silvermoon_city();
     AddSC_silverpine_forest();
     AddSC_stormwind_city();

@@ -27,12 +27,21 @@
 #include "InstanceScript.h"
 #include "ScriptedCreature.h"
 #include "GameEventMgr.h"
+#include "CreatureTextMgr.h"
 
 #include "SmartScriptMgr.h"
 
 void SmartWaypointMgr::LoadFromDB()
 {
     uint32 oldMSTime = getMSTime();
+
+    for (UNORDERED_MAP<uint32, WPPath*>::iterator itr = waypoint_map.begin(); itr != waypoint_map.end(); ++itr)
+    {
+        for (WPPath::iterator pathItr = itr->second->begin(); pathItr != itr->second->end(); ++pathItr)
+            delete pathItr->second;
+
+        delete itr->second;
+    }
 
     waypoint_map.clear();
 
@@ -48,7 +57,6 @@ void SmartWaypointMgr::LoadFromDB()
 
     uint32 count = 0;
     uint32 total = 0;
-    WPPath* path = NULL;
     uint32 last_entry = 0;
     uint32 last_id = 1;
 
@@ -62,27 +70,19 @@ void SmartWaypointMgr::LoadFromDB()
         y = fields[3].GetFloat();
         z = fields[4].GetFloat();
 
-        WayPoint* wp = new WayPoint(id, x, y, z);
-
         if (last_entry != entry)
         {
-            path = new WPPath;
+            waypoint_map[entry] = new WPPath();
             last_id = 1;
+            count++;
         }
 
         if (last_id != id)
-        {
             sLog->outErrorDb("SmartWaypointMgr::LoadFromDB: Path entry %u, unexpected point id %u, expected %u.", entry, id, last_id);
-        }
 
         last_id++;
-        (*path)[id] = wp;
+        (*waypoint_map[entry])[id] = new WayPoint(id, x, y, z);
 
-        if (last_entry != entry)
-        {
-            count++;
-            waypoint_map[entry] = path;
-        }
         last_entry = entry;
         total++;
     }
@@ -90,6 +90,19 @@ void SmartWaypointMgr::LoadFromDB()
 
     sLog->outString(">> Loaded %u SmartAI waypoint paths (total %u waypoints) in %u ms", count, total, GetMSTimeDiffToNow(oldMSTime));
     sLog->outString();
+}
+
+SmartWaypointMgr::~SmartWaypointMgr()
+{
+    for (UNORDERED_MAP<uint32, WPPath*>::iterator itr = waypoint_map.begin(); itr != waypoint_map.end(); ++itr)
+    {
+        for (WPPath::iterator pathItr = itr->second->begin(); pathItr != itr->second->end(); ++pathItr)
+            delete pathItr->second;
+
+        delete itr->second;
+    }
+
+    waypoint_map.clear();
 }
 
 void SmartAIMgr::LoadSmartAIFromDB()
@@ -260,7 +273,7 @@ bool SmartAIMgr::IsTargetValid(SmartScriptHolder const& e)
         }
         case SMART_TARGET_GAMEOBJECT_GUID:
         {
-            if (e.target.goGUID.entry && !IsGameObjectValid(e, e.target.goGUID.entry)) 
+            if (e.target.goGUID.entry && !IsGameObjectValid(e, e.target.goGUID.entry))
                 return false;
             break;
         }

@@ -89,7 +89,7 @@ public:
 
     struct boss_four_horsemenAI : public BossAI
     {
-        boss_four_horsemenAI(Creature* c) : BossAI(c, BOSS_HORSEMEN)
+        boss_four_horsemenAI(Creature* creature) : BossAI(creature, BOSS_HORSEMEN)
         {
             id = Horsemen(0);
             for (uint8 i = 0; i < 4; ++i)
@@ -113,7 +113,7 @@ public:
         void Reset()
         {
             if (!encounterActionReset)
-                DoEncounterAction(NULL, false, true, false);
+                DoEncounteraction(NULL, false, true, false);
 
             if (instance)
                 instance->SetData(DATA_HORSEMEN0 + id, NOT_STARTED);
@@ -131,7 +131,7 @@ public:
             _Reset();
         }
 
-        bool DoEncounterAction(Unit* who, bool attack, bool reset, bool checkAllDead)
+        bool DoEncounteraction(Unit* who, bool attack, bool reset, bool checkAllDead)
         {
             if (!instance)
                 return false;
@@ -194,7 +194,7 @@ public:
         {
             movementStarted = true;
             me->SetReactState(REACT_PASSIVE);
-            me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+            me->SetWalk(false);
             me->SetSpeed(MOVE_RUN, me->GetSpeedRate(MOVE_RUN), true);
 
             switch (id)
@@ -272,7 +272,7 @@ public:
                 BeginFourHorsemenMovement();
 
                 if (!encounterActionAttack)
-                    DoEncounterAction(who, true, false, false);
+                    DoEncounteraction(who, true, false, false);
             }
             else if (movementCompleted && movementStarted)
             {
@@ -302,7 +302,7 @@ public:
             if (instance)
                 instance->SetData(DATA_HORSEMEN0 + id, DONE);
 
-            if (instance && DoEncounterAction(NULL, false, false, true))
+            if (instance && DoEncounteraction(NULL, false, false, true))
             {
                 instance->SetBossState(BOSS_HORSEMEN, DONE);
                 instance->SaveToDB();

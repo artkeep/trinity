@@ -54,10 +54,10 @@ class npc_bunthen_plainswind : public CreatureScript
 public:
     npc_bunthen_plainswind() : CreatureScript("npc_bunthen_plainswind") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF + 1:
                 player->CLOSE_GOSSIP_MENU();
@@ -113,10 +113,10 @@ class npc_great_bear_spirit : public CreatureScript
 public:
     npc_great_bear_spirit() : CreatureScript("npc_great_bear_spirit") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF:
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_BEAR2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
@@ -169,10 +169,10 @@ class npc_silva_filnaveth : public CreatureScript
 public:
     npc_silva_filnaveth() : CreatureScript("npc_silva_filnaveth") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF + 1:
                 player->CLOSE_GOSSIP_MENU();
@@ -296,7 +296,7 @@ public:
     struct npc_clintar_spiritAI : public npc_escortAI
     {
     public:
-        npc_clintar_spiritAI(Creature* c) : npc_escortAI(c) {}
+        npc_clintar_spiritAI(Creature* creature) : npc_escortAI(creature) {}
 
         uint32 Step;
         uint32 CurrWP;

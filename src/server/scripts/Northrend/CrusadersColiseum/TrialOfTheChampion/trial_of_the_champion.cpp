@@ -748,7 +748,6 @@ public:
             }
         }
     };
-
 };
 
 void AddSC_trial_of_the_champion()

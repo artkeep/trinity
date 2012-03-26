@@ -31,7 +31,6 @@ Script Data End */
 #include "eye_of_eternity.h"
 #include "ScriptedEscortAI.h"
 
-// not implemented
 enum Achievements
 {
     ACHIEV_TIMED_START_EVENT                      = 20387,
@@ -241,7 +240,10 @@ public:
 
             _cannotMove = true;
 
-            me->SetFlying(true);
+            me->SetCanFly(true);
+
+            if (instance)
+                instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
         }
 
         uint32 GetData(uint32 data)
@@ -269,7 +271,7 @@ public:
         {
             me->SetHomePosition(_homePosition);
 
-            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+            me->SetDisableGravity(true);
 
             BossAI::EnterEvadeMode();
 
@@ -352,14 +354,17 @@ public:
         {
             _EnterCombat();
 
-            me->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-            me->SetFlying(false);
+            me->SetDisableGravity(false);
+            me->SetCanFly(false);
 
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
             Talk(SAY_AGGRO_P_ONE);
 
-            DoCast(SPELL_BERSEKER);
+            DoCast(SPELL_BERSEKER); // periodic aura, first tick in 10 minutes
+
+            if (instance)
+                instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
         }
 
         void KilledUnit(Unit* who)
@@ -407,8 +412,8 @@ public:
 
         void PrepareForVortex()
         {
-            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-            me->SetFlying(true);
+            me->SetDisableGravity(true);
+            me->SetCanFly(true);
 
             me->GetMotionMaster()->MovementExpired();
             me->GetMotionMaster()->MovePoint(MOVE_VORTEX, MalygosPositions[1].GetPositionX(), MalygosPositions[1].GetPositionY(), MalygosPositions[1].GetPositionZ());
@@ -456,8 +461,8 @@ public:
         {
             SetPhase(PHASE_TWO, true);
 
-            me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-            me->SetFlying(true);
+            me->SetDisableGravity(true);
+            me->SetCanFly(true);
 
             me->GetMotionMaster()->MoveIdle();
             me->GetMotionMaster()->MovePoint(MOVE_DEEP_BREATH_ROTATION, MalygosPhaseTwoWaypoints[0]);
@@ -699,8 +704,8 @@ class spell_malygos_vortex_visual : public SpellScriptLoader
                         // Anyway even with this issue, the boss does not enter in evade mode - this prevents iterate an empty list in the next vortex execution.
                         malygos->SetInCombatWithZone();
 
-                        malygos->RemoveUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
-                        malygos->SetFlying(false);
+                        malygos->SetDisableGravity(false);
+                        malygos->SetCanFly(false);
 
                         malygos->GetMotionMaster()->MoveChase(caster->getVictim());
                         malygos->RemoveAura(SPELL_VORTEX_1);

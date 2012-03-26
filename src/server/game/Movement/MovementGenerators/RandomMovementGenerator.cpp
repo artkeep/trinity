@@ -40,9 +40,9 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature &unit)
     Map const* map = unit.GetBaseMap();
 
     // For 2D/3D system selection
-    //bool is_land_ok  = unit.CanWalk();                // not used?
-    //bool is_water_ok = unit.CanSwim();                // not used?
-    bool is_air_ok = unit.canFly();
+    //bool is_land_ok  = creature.CanWalk();                // not used?
+    //bool is_water_ok = creature.CanSwim();                // not used?
+    bool is_air_ok = creature.CanFly();
 
     const float angle = float(rand_norm()) * static_cast<float>(M_PI*2.0f);
     const float range = float(rand_norm()) * wander_distance;

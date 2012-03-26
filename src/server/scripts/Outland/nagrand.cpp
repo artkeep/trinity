@@ -57,10 +57,10 @@ class npc_greatmother_geyah : public CreatureScript
 public:
     npc_greatmother_geyah() : CreatureScript("npc_greatmother_geyah") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF + 1:
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SGG1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
@@ -258,7 +258,7 @@ public:
             if (summoned->isTotem())
                 return;
 
-            summoned->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+            summoned->SetWalk(false);
             summoned->GetMotionMaster()->MovePoint(0, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ());
             summoned->AI()->AttackStart(me);
 
@@ -330,7 +330,7 @@ public:
 
     struct npc_creditmarker_visit_with_ancestorsAI : public ScriptedAI
     {
-        npc_creditmarker_visit_with_ancestorsAI(Creature* c) : ScriptedAI(c) {}
+        npc_creditmarker_visit_with_ancestorsAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset() {}
 
@@ -444,18 +444,22 @@ public:
 
       void Reset()
       {
+          Say_Timer = 5000;
           ReleasedFromCage = false;
       }
 
       void UpdateAI(uint32 const diff)
       {
-          if (Say_Timer <= diff && ReleasedFromCage)
+          if (ReleasedFromCage)
           {
-              me->ForcedDespawn();
-              ReleasedFromCage = false;
+              if (Say_Timer <= diff)
+              {
+                  me->ForcedDespawn();
+                  ReleasedFromCage = false;
+              }
+              else
+                  Say_Timer -= diff;
           }
-          else
-              Say_Timer -= diff;
       }
 
       void MovementInform(uint32 type, uint32 id)
@@ -603,7 +607,7 @@ public:
             if (summoned->isTotem())
                 return;
 
-            summoned->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+            summoned->SetWalk(false);
             summoned->GetMotionMaster()->MovePoint(0, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ());
             summoned->AI()->AttackStart(me);
         }

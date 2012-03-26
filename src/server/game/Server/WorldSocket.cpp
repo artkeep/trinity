@@ -779,11 +779,11 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     LocaleConstant locale;
     std::string account;
     bool isPremium = false;
-    SHA1Hash sha1;
+    SHA1Hash sha;
     BigNumber v, s, g, N;
     WorldPacket packet, SendAddonPacked;
 
-    BigNumber K;
+    BigNumber k;
 
     if (sWorld->IsClosed())
     {
@@ -813,25 +813,11 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                 clientSeed);
 
     // Get the account information from the realmd database
-    std::string safe_account = account; // Duplicate, else will screw the SHA hash verification below
-    LoginDatabase.EscapeString (safe_account);
-    // No SQL injection, username escaped.
+    PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_INFO_BY_NAME);
 
-    QueryResult result =
-          LoginDatabase.PQuery ("SELECT "
-                                "id, "                      //0
-                                "sessionkey, "              //1
-                                "last_ip, "                 //2
-                                "locked, "                  //3
-                                "v, "                       //4
-                                "s, "                       //5
-                                "expansion, "               //6
-                                "mutetime, "                //7
-                                "locale, "                  //8
-                                "recruiter "                //9
-                                "FROM account "
-                                "WHERE username = '%s'",
-                                safe_account.c_str());
+    stmt->setString(0, account);
+
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
 
     // Stop if the account is not found
     if (!result)
@@ -883,7 +869,12 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     }
 
     id = fields[0].GetUInt32();
-    K.SetHexStr (fields[1].GetCString());
+    /*
+    if (security > SEC_ADMINISTRATOR)                        // prevent invalid security settings in DB
+        security = SEC_ADMINISTRATOR;
+        */
+
+    k.SetHexStr (fields[1].GetCString());
 
     int64 mutetime = fields[7].GetInt64();
     //! Negative mutetime indicates amount of seconds to be muted effective on next login - which is now.
@@ -904,31 +895,31 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
         locale = LOCALE_enUS;
 
     uint32 recruiter = fields[9].GetUInt32();
+    std::string os = fields[10].GetString();
 
     // Checks gmlevel per Realm
-    result =
-        LoginDatabase.PQuery ("SELECT "
-                              "RealmID, "            //0
-                              "gmlevel "             //1
-                              "FROM account_access "
-                              "WHERE id = '%d'"
-                              " AND (RealmID = '%d'"
-                              " OR RealmID = '-1')",
-                              id, realmID);
+    stmt = LoginDatabase.GetPreparedStatement(LOGIN_GET_GMLEVEL_BY_REALMID);
+
+    stmt->setUInt32(0, id);
+    stmt->setInt32(1, int32(realmID));
+
+    result = LoginDatabase.Query(stmt);
+
     if (!result)
         security = 0;
     else
     {
         fields = result->Fetch();
-        security = fields[1].GetInt32();
+        security = fields[0].GetUInt8();
     }
 
     // Re-check account ban (same check as in realmd)
-    QueryResult banresult =
-          LoginDatabase.PQuery ("SELECT 1 FROM account_banned WHERE id = %u AND active = 1 "
-                                "UNION "
-                                "SELECT 1 FROM ip_banned WHERE ip = '%s'",
-                                id, GetRemoteAddress().c_str());
+    stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BANS);
+
+    stmt->setUInt32(0, id);
+    stmt->setString(1, GetRemoteAddress());
+
+    PreparedQueryResult banresult = LoginDatabase.Query(stmt);
 
     if (banresult) // if account banned
     {
@@ -965,8 +956,6 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     }
 
     // Check that Key and account name are the same on client and server
-    SHA1Hash sha;
-
     uint32 t = 0;
     uint32 seed = m_Seed;
 
@@ -974,7 +963,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     sha.UpdateData ((uint8 *) & t, 4);
     sha.UpdateData ((uint8 *) & clientSeed, 4);
     sha.UpdateData ((uint8 *) & seed, 4);
-    sha.UpdateBigNumbers (&K, NULL);
+    sha.UpdateBigNumbers (&k, NULL);
     sha.Finalize();
 
     if (memcmp (sha.GetDigest(), digest, 20))
@@ -995,7 +984,11 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                 address.c_str());
 
     // Check if this user is by any chance a recruiter
-    result = LoginDatabase.PQuery ("SELECT 1  FROM account WHERE recruiter = %u", id);
+    stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_RECRUITER);
+
+    stmt->setUInt32(0, id);
+
+    result = LoginDatabase.Query(stmt);
 
     bool isRecruiter = false;
     if (result)
@@ -1003,7 +996,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     // Update the last_ip in the database
 
-    PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_LAST_IP);
+    stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_LAST_IP);
 
     stmt->setString(0, address);
     stmt->setString(1, account);
@@ -1013,11 +1006,15 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     // NOTE ATM the socket is single-threaded, have this in mind ...
     ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), isPremium, expansion, mutetime, locale, recruiter, isRecruiter), -1);
 
-    m_Crypt.Init(&K);
+    m_Crypt.Init(&k);
 
     m_Session->LoadGlobalAccountData();
     m_Session->LoadTutorialsData();
     m_Session->ReadAddonsInfo(recvPacket);
+
+    // Initialize Warden system only if it is enabled by config
+    if (sWorld->getBoolConfig(CONFIG_WARDEN_ENABLED))
+        m_Session->InitWarden(&k, os);
 
     // Sleep this Network thread for
     uint32 sleepTime = sWorld->getIntConfig(CONFIG_SESSION_ADD_DELAY);

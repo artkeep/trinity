@@ -75,6 +75,9 @@
 #include "CreatureTextMgr.h"
 #include "SmartAI.h"
 #include "Channel.h"
+#include "WardenCheckMgr.h"
+#include "Warden.h"
+#include "CalendarMgr.h"
 
 volatile bool World::m_stopEvent = false;
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
@@ -1209,6 +1212,15 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_CHATLOG_ADDON] = ConfigMgr::GetBoolDefault("ChatLogs.Addon", false);
     m_bool_configs[CONFIG_CHATLOG_BGROUND] = ConfigMgr::GetBoolDefault("ChatLogs.Battleground", false);
 
+    // Warden
+    m_bool_configs[CONFIG_WARDEN_ENABLED]              = ConfigMgr::GetBoolDefault("Warden.Enabled", false);
+    m_int_configs[CONFIG_WARDEN_NUM_MEM_CHECKS]        = ConfigMgr::GetIntDefault("Warden.NumMemChecks", 3);
+    m_int_configs[CONFIG_WARDEN_NUM_OTHER_CHECKS]      = ConfigMgr::GetIntDefault("Warden.NumOtherChecks", 7);
+    m_int_configs[CONFIG_WARDEN_CLIENT_BAN_DURATION]   = ConfigMgr::GetIntDefault("Warden.BanDuration", 86400);
+    m_int_configs[CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF]  = ConfigMgr::GetIntDefault("Warden.ClientCheckHoldOff", 30);
+    m_int_configs[CONFIG_WARDEN_CLIENT_FAIL_ACTION]    = ConfigMgr::GetIntDefault("Warden.ClientCheckFailAction", 0);
+    m_int_configs[CONFIG_WARDEN_CLIENT_RESPONSE_DELAY] = ConfigMgr::GetIntDefault("Warden.ClientResponseDelay", 600);
+
     // Dungeon finder
     m_bool_configs[CONFIG_DUNGEON_FINDER_ENABLE] = ConfigMgr::GetBoolDefault("DungeonFinder.Enable", false);
 
@@ -1326,20 +1338,20 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading SpellInfo store...");
     sSpellMgr->LoadSpellInfoStore();
 
+    sLog->outString("Loading SkillLineAbilityMultiMap Data...");
+    sSpellMgr->LoadSkillLineAbilityMap();
+
     sLog->outString("Loading spell custom attributes...");
     sSpellMgr->LoadSpellCustomAttr();
 
     sLog->outString("Loading GameObject models...");
     LoadGameObjectModelList();
-    
+
     sLog->outString("Loading Script Names...");
     sObjectMgr->LoadScriptNames();
 
     sLog->outString("Loading Instance Template...");
     sObjectMgr->LoadInstanceTemplate();
-
-    sLog->outString("Loading SkillLineAbilityMultiMap Data...");
-    sSpellMgr->LoadSkillLineAbilityMap();
 
     // Must be called before `creature_respawn`/`gameobject_respawn` tables
     sLog->outString("Loading instances...");
@@ -1632,7 +1644,10 @@ void World::SetInitialWorldSettings()
     sSmartWaypointMgr->LoadFromDB();
 
     sLog->outString("Loading Creature Formations...");
-    FormationMgr::LoadCreatureFormations();
+    sFormationMgr->LoadCreatureFormations();
+
+    sLog->outString("Loading World States...");              // must be loaded before battleground, outdoor PvP and conditions
+    LoadWorldStates();
 
     sLog->outString("Loading Conditions...");
     sConditionMgr->LoadConditions();
@@ -1665,6 +1680,9 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading Autobroadcasts...");
     LoadAutobroadcasts();
 
+    sLog->outString("Loading Ip2nation...");
+    LoadIp2nation();
+
     ///- Load and initialize scripts
     sObjectMgr->LoadQuestStartScripts();                         // must be after load Creature/Gameobject(Template/Data) and QuestTemplate
     sObjectMgr->LoadQuestEndScripts();                           // must be after load Creature/Gameobject(Template/Data) and QuestTemplate
@@ -1691,6 +1709,9 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading Creature Texts...");
     sCreatureTextMgr->LoadCreatureTexts();
 
+    sLog->outString("Loading Creature Text Locales...");
+    sCreatureTextMgr->LoadCreatureTextLocales();
+
     sLog->outString("Initializing Scripts...");
     sScriptMgr->Initialize();
 
@@ -1699,6 +1720,9 @@ void World::SetInitialWorldSettings()
 
     sLog->outString("Loading SmartAI scripts...");
     sSmartScriptMgr->LoadSmartAIFromDB();
+
+    sLog->outString("Loading Calendar data...");
+    sCalendarMgr->LoadFromDB();
 
     ///- Initialize game time and timers
     sLog->outString("Initialize game time and timers");
@@ -1762,9 +1786,6 @@ void World::SetInitialWorldSettings()
 
     sTicketMgr->Initialize();
 
-    sLog->outString("Loading World States...");              // must be loaded before battleground and outdoor PvP
-    LoadWorldStates();
-
     ///- Initialize Battlegrounds
     sLog->outString("Starting Battleground System");
     sBattlegroundMgr->CreateInitialBattlegrounds();
@@ -1780,8 +1801,15 @@ void World::SetInitialWorldSettings()
     sLog->outString("Loading Transport NPCs...");
     sMapMgr->LoadTransportNPCs();
 
+    ///- Initialize Warden
+    sLog->outString("Loading Warden Checks..." );
+    sWardenCheckMgr->LoadWardenChecks();
+
+    sLog->outString("Loading Warden Action Overrides..." );
+    sWardenCheckMgr->LoadWardenOverrides();
+
     sLog->outString("Deleting expired bans...");
-    LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate <= UNIX_TIMESTAMP() AND unbandate<>bandate");
+    LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate <= UNIX_TIMESTAMP() AND unbandate<>bandate");      // One-time query
 
     sLog->outString("Calculate next daily quest reset time...");
     InitDailyQuestResetTime();
@@ -1909,6 +1937,23 @@ void World::LoadAutobroadcasts()
     } while (result->NextRow());
 
     sLog->outString(">> Loaded %u autobroadcasts definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    sLog->outString();
+}
+
+void World::LoadIp2nation()
+{
+    uint32 oldMSTime = getMSTime();
+
+    QueryResult result = WorldDatabase.Query("SELECT count(c.code) FROM ip2nationCountries c, ip2nation i WHERE c.code = i.country");
+    uint32 count = 0;
+
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        count = fields[0].GetUInt32();
+    }
+
+    sLog->outString(">> Loaded %u ip2nation definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
     sLog->outString();
 }
 
@@ -2356,7 +2401,7 @@ BanReturn World::BanAccount(BanMode mode, std::string nameOrIP, std::string dura
     do
     {
         Field* fieldsAccount = resultAccounts->Fetch();
-        uint32 account = fieldsAccount->GetUInt32();
+        uint32 account = fieldsAccount[0].GetUInt32();
 
         if (mode != BAN_IP)
         {
@@ -2694,7 +2739,7 @@ void World::_UpdateRealmCharCount(PreparedQueryResult resultCharCount)
         uint32 accountId = fields[0].GetUInt32();
         uint32 charCount = fields[1].GetUInt32();
 
-        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_DEL_REALM_CHARACTERS);
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_DEL_REALM_CHARACTERS_BY_REALM);
         stmt->setUInt32(0, accountId);
         stmt->setUInt32(1, realmID);
         LoginDatabase.Execute(stmt);
@@ -2792,9 +2837,12 @@ void World::ResetDailyQuests()
 
 void World::LoadDBAllowedSecurityLevel()
 {
-    QueryResult result = LoginDatabase.PQuery("SELECT allowedSecurityLevel from realmlist WHERE id = '%d'", realmID);
+    PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_REALMLIST_SECURITY_LEVEL);
+    stmt->setInt32(0, int32(realmID));
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
+
     if (result)
-        SetPlayerSecurityLimit(AccountTypes(result->Fetch()->GetUInt16()));
+        SetPlayerSecurityLimit(AccountTypes(result->Fetch()->GetUInt8()));
 }
 
 void World::SetPlayerSecurityLimit(AccountTypes _sec)

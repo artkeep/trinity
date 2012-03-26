@@ -61,10 +61,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             DoScriptText(SAY_AGGRO, creature);
             player->CLOSE_GOSSIP_MENU();
@@ -106,10 +106,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
         case GOSSIP_ACTION_INFO_DEF+1:
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
@@ -166,10 +166,10 @@ public:
         return false;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->ADD_GOSSIP_ITEM(0, GOSSIP_SN1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
@@ -189,43 +189,6 @@ public:
                 break;
         }
         return true;
-    }
-};
-
-/*######
-## npc_goblin_prisoner
-######*/
-
-enum eGoblinPrisoner
-{
-    GO_RUSTY_CAGE = 191544
-};
-
-class npc_goblin_prisoner : public CreatureScript
-{
-public:
-    npc_goblin_prisoner() : CreatureScript("npc_goblin_prisoner") { }
-
-    struct npc_goblin_prisonerAI : public ScriptedAI
-    {
-        npc_goblin_prisonerAI(Creature* creature) : ScriptedAI (creature){}
-
-        void Reset()
-        {
-            me->SetReactState(REACT_PASSIVE);
-
-            if (GameObject* pGO = me->FindNearestGameObject(GO_RUSTY_CAGE, 5.0f))
-            {
-                if (pGO->GetGoState() == GO_STATE_ACTIVE)
-                    pGO->SetGoState(GO_STATE_READY);
-            }
-        }
-
-    };
-
-    CreatureAI* GetAI(Creature* creature) const
-    {
-        return new npc_goblin_prisonerAI(creature);
     }
 };
 
@@ -307,10 +270,10 @@ public:
         return false;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->setFaction(14);
@@ -363,10 +326,10 @@ public:
         return false;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_LOKLIRACRONE1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
@@ -474,12 +437,12 @@ public:
         return false;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         npc_escortAI* pEscortAI = CAST_AI(npc_injured_goblin::npc_injured_goblinAI, creature->AI());
 
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             pEscortAI->Start(true, true, player->GetGUID());
             creature->setFaction(113);
@@ -746,7 +709,7 @@ class npc_hyldsmeet_protodrake : public CreatureScript
         class npc_hyldsmeet_protodrakeAI : public CreatureAI
         {
             public:
-                npc_hyldsmeet_protodrakeAI(Creature* c) : CreatureAI(c), _accessoryRespawnTimer(0), _vehicleKit(c->GetVehicleKit()) {}
+                npc_hyldsmeet_protodrakeAI(Creature* creature) : CreatureAI(creature), _accessoryRespawnTimer(0), _vehicleKit(creature->GetVehicleKit()) {}
 
                 void PassengerBoarded(Unit* who, int8 /*seat*/, bool apply)
                 {
@@ -786,7 +749,6 @@ void AddSC_storm_peaks()
     new npc_agnetta_tyrsdottar;
     new npc_frostborn_scout;
     new npc_thorim;
-    new npc_goblin_prisoner;
     new npc_victorious_challenger;
     new npc_loklira_crone;
     new npc_injured_goblin;

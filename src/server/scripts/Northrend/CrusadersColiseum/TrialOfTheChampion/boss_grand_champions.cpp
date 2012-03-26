@@ -153,10 +153,10 @@ public:
         {
             SetDespawnAtEnd(false);
             uiWaypointPath = 0;
-            pInstance = pCreature->GetInstanceScript();
+            instance = pCreature->GetInstanceScript();
         }
 
-        InstanceScript* pInstance;
+        InstanceScript* instance;
         Vehicle *vehicle;
 
         uint32 uiShieldBreakerTimer;
@@ -216,12 +216,12 @@ public:
             switch(i)
             {
                 case 2:
-                    if (pInstance && uiWaypointPath == 3 || uiWaypointPath == 2)
-                        pInstance->SetData(DATA_MOVEMENT_DONE, pInstance->GetData(DATA_MOVEMENT_DONE)+1);
+                    if (instance && (uiWaypointPath == 3 || uiWaypointPath == 2))
+                        instance->SetData(DATA_MOVEMENT_DONE, instance->GetData(DATA_MOVEMENT_DONE)+1);
                     break;
                 case 3:
-                    if (pInstance)
-                        pInstance->SetData(DATA_MOVEMENT_DONE, pInstance->GetData(DATA_MOVEMENT_DONE)+1);
+                    if (instance)
+                        instance->SetData(DATA_MOVEMENT_DONE, instance->GetData(DATA_MOVEMENT_DONE)+1);
                     break;
             }
         }

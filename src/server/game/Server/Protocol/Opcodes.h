@@ -26,7 +26,7 @@
 #include "Common.h"
 
 // Note: this include need for be sure have full definition of class WorldSession
-//       if this class definition not complite then VS for x64 release use different size for
+//       if this class definition not complete then VS for x64 release use different size for
 //       struct OpcodeHandler in this header and Opcode.cpp and get totally wrong data from
 //       table opcodeTable in source when Opcode.h included but WorldSession.h not included
 #include "WorldSession.h"
@@ -1344,7 +1344,7 @@ enum Opcodes
     CMSG_COMMENTATOR_SKIRMISH_QUEUE_COMMAND         = 0x51B,
     SMSG_COMMENTATOR_SKIRMISH_QUEUE_RESULT1         = 0x51C,
     SMSG_COMMENTATOR_SKIRMISH_QUEUE_RESULT2         = 0x51D,
-    SMSG_COMPRESSED_UNKNOWN_1310                    = 0x51E, // some compressed packet?
+    SMSG_MULTIPLE_MOVES                             = 0x51E, // uncompressed version of SMSG_COMPRESSED_MOVES
     NUM_MSG_TYPES                                   = 0x51F
 };
 

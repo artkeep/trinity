@@ -44,10 +44,10 @@ class npc_budd_nedreck : public CreatureScript
 public:
     npc_budd_nedreck() : CreatureScript("npc_budd_nedreck") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF)
+        if (action == GOSSIP_ACTION_INFO_DEF)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->CastSpell(player, 42540, false);
@@ -66,7 +66,6 @@ public:
         player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
         return true;
     }
-
 };
 
 /*######
@@ -78,10 +77,10 @@ class npc_rathis_tomber : public CreatureScript
 public:
     npc_rathis_tomber() : CreatureScript("npc_rathis_tomber") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_TRADE)
+        if (action == GOSSIP_ACTION_TRADE)
             player->GetSession()->SendListInventory(creature->GetGUID());
         return true;
     }
@@ -100,7 +99,6 @@ public:
 
         return true;
     }
-
 };
 
 /*######
@@ -130,7 +128,7 @@ public:
 
     struct npc_ranger_lilathaAI : public npc_escortAI
     {
-        npc_ranger_lilathaAI(Creature* c) : npc_escortAI(c) {}
+        npc_ranger_lilathaAI(Creature* creature) : npc_escortAI(creature) {}
 
         void WaypointReached(uint32 i)
         {
@@ -168,8 +166,10 @@ public:
                 me->AI()->AttackStart(Summ1);
                 break;
                 }
-            case 19: me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING); break;
-            case 25: me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING); break;
+            case 19: me->SetWalk(false);
+                break;
+            case 25: me->SetWalk(true);
+                break;
             case 30:
                 if (player && player->GetTypeId() == TYPEID_PLAYER)
                     CAST_PLR(player)->GroupEventHappens(QUEST_ESCAPE_FROM_THE_CATACOMBS, me);
@@ -183,7 +183,7 @@ public:
                 DoScriptText(SAY_END2, me, player);
                 Unit* CaptainHelios = me->FindNearestCreature(NPC_CAPTAIN_HELIOS, 50);
                 if (CaptainHelios)
-                DoScriptText(SAY_CAPTAIN_ANSWER, CaptainHelios, player);
+                    DoScriptText(SAY_CAPTAIN_ANSWER, CaptainHelios, player);
                 break;
             }
         }

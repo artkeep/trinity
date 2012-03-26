@@ -181,7 +181,7 @@ void DoScriptText(int32 iTextEntry, WorldObject* pSource, Unit* target)
 
     if (pData->uiSoundId)
     {
-        if (GetSoundEntriesStore()->LookupEntry(pData->uiSoundId))
+        if (sSoundEntriesStore.LookupEntry(pData->uiSoundId))
             pSource->SendPlaySound(pData->uiSoundId, false);
         else
             sLog->outError("TSCR: DoScriptText entry %i tried to process invalid sound id %u.", iTextEntry, pData->uiSoundId);
@@ -262,7 +262,7 @@ void ScriptMgr::Initialize()
 void ScriptMgr::Unload()
 {
     #define SCR_CLEAR(T) \
-        FOR_SCRIPTS(T, itr, end) \
+        for (SCR_REG_ITR(T) itr = SCR_REG_LST(T).begin(); itr != SCR_REG_LST(T).end(); ++itr) \
             delete itr->second; \
         SCR_REG_LST(T).clear();
 
@@ -1295,6 +1295,11 @@ void ScriptMgr::OnPlayerDelete(uint64 guid)
 void ScriptMgr::OnPlayerBindToInstance(Player* player, Difficulty difficulty, uint32 mapid, bool permanent)
 {
     FOREACH_SCRIPT(PlayerScript)->OnBindToInstance(player, difficulty, mapid, permanent);
+}
+
+void ScriptMgr::OnPlayerUpdateZone(Player* player, uint32 newZone, uint32 newArea)
+{
+    FOREACH_SCRIPT(PlayerScript)->OnUpdateZone(player, newZone, newArea);
 }
 
 // Guild

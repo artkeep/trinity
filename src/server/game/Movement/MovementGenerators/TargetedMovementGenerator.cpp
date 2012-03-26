@@ -38,16 +38,18 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &unit)
         return;
 
     float x, y, z;
-
+    //! Following block of code deleted by MrSmite in issue 4891
+    //! Code kept for learning and diagnostical purposes
+//
+//     if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+//     {
+//         if (!owner.movespline->Finalized())
+//             return;
+//
+//         owner.GetPosition(x, y, z);
+//     }
+//     else
     if (!i_offset)
-    {
-        if (i_target->IsWithinMeleeRange(&unit))
-            return;
-
-        // to nearest random contact position
-        i_target->GetRandomContactPoint(&unit, x, y, z, 0, MELEE_RANGE - 0.5f);
-    }
-    else if (!i_angle && unit.HasUnitState(UNIT_STATE_CHASE))
     {
         if (i_target->IsWithinDist(&unit, i_offset * 0.8f))
             return;

@@ -60,7 +60,7 @@ public:
 
     struct npc_sinkhole_kill_creditAI : public ScriptedAI
     {
-        npc_sinkhole_kill_creditAI(Creature* c) : ScriptedAI(c){}
+        npc_sinkhole_kill_creditAI(Creature* creature) : ScriptedAI(creature){}
 
         uint32 uiPhaseTimer;
         uint8  Phase;
@@ -139,7 +139,7 @@ public:
                     case 7:
                         DoCast(me, SPELL_EXPLODE_CART, true);
                         if (Player* caster = Unit::GetPlayer(*me, casterGuid))
-                            caster->KilledMonster(me->GetCreatureInfo(), me->GetGUID());
+                            caster->KilledMonster(me->GetCreatureTemplate(), me->GetGUID());
                         uiPhaseTimer = 5000;
                         Phase = 8;
                         break;
@@ -170,7 +170,7 @@ public:
 
     struct npc_khunok_the_behemothAI : public ScriptedAI
     {
-        npc_khunok_the_behemothAI(Creature* c) : ScriptedAI(c) {}
+        npc_khunok_the_behemothAI(Creature* creature) : ScriptedAI(creature) {}
 
         void MoveInLineOfSight(Unit* who)
         {
@@ -228,10 +228,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF + 1)
+        if (action == GOSSIP_ACTION_INFO_DEF + 1)
         {
             player->CLOSE_GOSSIP_MENU();
             player->CastSpell(player, SPELL_TELEPORT_TO_SARAGOSA, true);
@@ -273,10 +273,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
 
@@ -362,7 +362,6 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature)
     {
-
         if (player->GetQuestStatus(QUEST_SPIRITS_WATCH_OVER_US) == QUEST_STATUS_INCOMPLETE)
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_I, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
 
@@ -370,10 +369,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->CastSpell(player, SPELL_CREATURE_TOTEM_OF_ISSLIRUK, true);
@@ -403,7 +402,7 @@ public:
 
     struct mob_nerubar_victimAI : public ScriptedAI
     {
-        mob_nerubar_victimAI(Creature* c) : ScriptedAI(c) {}
+        mob_nerubar_victimAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset() {}
         void EnterCombat(Unit* /*who*/) {}
@@ -456,9 +455,9 @@ public:
         {
             me->SetReactState(REACT_PASSIVE);
 
-            if (GameObject* pGO = me->FindNearestGameObject(GO_SCOURGE_CAGE, 5.0f))
-                if (pGO->GetGoState() == GO_STATE_ACTIVE)
-                    pGO->SetGoState(GO_STATE_READY);
+            if (GameObject* go = me->FindNearestGameObject(GO_SCOURGE_CAGE, 5.0f))
+                if (go->GetGoState() == GO_STATE_ACTIVE)
+                    go->SetGoState(GO_STATE_READY);
         }
 
     };
@@ -628,7 +627,7 @@ public:
 
     struct npc_nesingwary_trapperAI : public ScriptedAI
     {
-        npc_nesingwary_trapperAI(Creature* c) : ScriptedAI(c) { c->SetVisible(false); }
+        npc_nesingwary_trapperAI(Creature* creature) : ScriptedAI(creature) { creature->SetVisible(false); }
 
         uint64 go_caribouGUID;
         uint8  Phase;
@@ -641,6 +640,7 @@ public:
             Phase = 1;
             go_caribouGUID = 0;
         }
+
         void EnterCombat(Unit* /*who*/) {}
         void MoveInLineOfSight(Unit* /*who*/) {}
 
@@ -670,7 +670,6 @@ public:
                         uiPhaseTimer = 2000;
                         Phase = 2;
                         break;
-
                     case 2:
                         if (GameObject* go_fur = me->FindNearestGameObject(GO_HIGH_QUALITY_FUR, 11.0f))
                             me->GetMotionMaster()->MovePoint(0, go_fur->GetPositionX(), go_fur->GetPositionY(), go_fur->GetPositionZ());
@@ -698,7 +697,6 @@ public:
                         uiPhaseTimer = 500;
                         Phase = 7;
                         break;
-
                     case 7:
                     {
                         GameObject* go_caribou = NULL;
@@ -715,7 +713,7 @@ public:
                         Phase = 8;
                         uiPhaseTimer = 1000;
                     }
-                        break;
+                    break;
                     case 8:
                         DoCast(me, SPELL_TRAPPED, true);
                         Phase = 0;
@@ -902,7 +900,7 @@ public:
 
     struct npc_nexus_drake_hatchlingAI : public FollowerAI //The spell who makes the npc follow the player is missing, also we can use FollowerAI!
     {
-        npc_nexus_drake_hatchlingAI(Creature* c) : FollowerAI(c) {}
+        npc_nexus_drake_hatchlingAI(Creature* creature) : FollowerAI(creature) {}
 
         uint64 HarpoonerGUID;
         bool WithRedDragonBlood;
@@ -1070,7 +1068,6 @@ public:
         void WaypointReached(uint32 uiPointId)
         {
             Player* player = GetPlayerForEscort();
-
             if (!player)
                 return;
 
@@ -1083,16 +1080,16 @@ public:
                         uiArthas = pArthas->GetGUID();
                         pArthas->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         pArthas->SetReactState(REACT_PASSIVE);
-                        pArthas->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                        pArthas->SetWalk(true);
                         pArthas->GetMotionMaster()->MovePoint(0, 3737.374756f, 3564.841309f, 477.433014f);
                     }
                     if (Creature* pTalbot = me->SummonCreature(NPC_COUNSELOR_TALBOT, 3747.23f, 3614.936f, 473.321f, 4.462012f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 120000))
                     {
                         uiTalbot = pTalbot->GetGUID();
-                        pTalbot->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                        pTalbot->SetWalk(true);
                         pTalbot->GetMotionMaster()->MovePoint(0, 3738.000977f, 3568.882080f, 477.433014f);
                     }
-                    me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                    me->SetWalk(false);
                     break;
 
                 case 4:
@@ -1171,13 +1168,13 @@ public:
                         if (Creature* pArlos = me->SummonCreature(NPC_GENERAL_ARLOS, 3745.527100f, 3615.655029f, 473.321533f, 4.447805f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 120000))
                         {
                             uiArlos = pArlos->GetGUID();
-                            pArlos->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                            pArlos->SetWalk(true);
                             pArlos->GetMotionMaster()->MovePoint(0, 3735.570068f, 3572.419922f, 477.441010f);
                         }
                         if (Creature* pLeryssa = me->SummonCreature(NPC_LERYSSA, 3749.654541f, 3614.959717f, 473.323486f, 4.524959f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 120000))
                         {
                             uiLeryssa = pLeryssa->GetGUID();
-                            pLeryssa->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                            pLeryssa->SetWalk(false);
                             pLeryssa->SetReactState(REACT_PASSIVE);
                             pLeryssa->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                             pLeryssa->GetMotionMaster()->MovePoint(0, 3741.969971f, 3571.439941f, 477.441010f);
@@ -1309,10 +1306,10 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 CAST_AI(npc_escortAI, (creature->AI()))->Start(true, false, player->GetGUID());
@@ -1499,7 +1496,7 @@ public:
             pArlos->Kill(pArlos, false);
             pLeryssa->RemoveAura(SPELL_STUN);
             pLeryssa->ClearUnitState(UNIT_STATE_STUNNED);
-            pLeryssa->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
+            pLeryssa->SetWalk(false);
             pLeryssa->GetMotionMaster()->MovePoint(0, 3722.114502f, 3564.201660f, 477.441437f);
 
             if (killer->GetTypeId() == TYPEID_PLAYER)
@@ -1894,7 +1891,7 @@ public:
 
     struct npc_mootoo_the_youngerAI : public npc_escortAI
     {
-        npc_mootoo_the_youngerAI(Creature* c) : npc_escortAI(c) {}
+        npc_mootoo_the_youngerAI(Creature* creature) : npc_escortAI(creature) {}
 
         void Reset()
         {
@@ -1979,7 +1976,7 @@ public:
 
     struct npc_bonker_togglevoltAI : public npc_escortAI
     {
-        npc_bonker_togglevoltAI(Creature* c) : npc_escortAI(c) {}
+        npc_bonker_togglevoltAI(Creature* creature) : npc_escortAI(creature) {}
         uint32 Bonker_agro;
 
         void Reset()
@@ -2018,8 +2015,7 @@ public:
             switch (i)
             {
                 case 29:
-                    if (player)
-                        player->GroupEventHappens(QUEST_GET_ME_OUTA_HERE, me);
+                    player->GroupEventHappens(QUEST_GET_ME_OUTA_HERE, me);
                     break;
             }
         }
@@ -2079,7 +2075,7 @@ public:
 
     struct npc_trapped_mammoth_calfAI : public ScriptedAI
     {
-        npc_trapped_mammoth_calfAI(Creature* c) : ScriptedAI(c) {}
+        npc_trapped_mammoth_calfAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 uiTimer;
         bool bStarted;
@@ -2089,7 +2085,7 @@ public:
             uiTimer = 1500;
             bStarted = false;
 
-            GameObject* pTrap;
+            GameObject* pTrap = NULL;
             for (uint8 i = 0; i < MammothTrapsNum; ++i)
             {
                 pTrap = me->FindNearestGameObject(MammothTraps[i], 11.0f);
@@ -2124,11 +2120,12 @@ public:
 
         void MovementInform(uint32 uiType, uint32 /*uiId*/)
         {
-
             if (uiType != POINT_MOTION_TYPE)
                 return;
+
             me->DisappearAndDie();
-            GameObject* pTrap;
+
+            GameObject* pTrap = NULL;
             for (uint8 i = 0; i < MammothTrapsNum; ++i)
             {
                 pTrap = me->FindNearestGameObject(MammothTraps[i], 11.0f);
@@ -2167,7 +2164,7 @@ public:
 
     struct npc_magmoth_crusherAI : public ScriptedAI
     {
-        npc_magmoth_crusherAI(Creature* c) : ScriptedAI(c) {}
+        npc_magmoth_crusherAI(Creature* creature) : ScriptedAI(creature) {}
 
         void JustDied(Unit* killer)
         {
@@ -2203,13 +2200,15 @@ public:
 
     struct npc_seaforium_depth_chargeAI : public ScriptedAI
     {
-        npc_seaforium_depth_chargeAI(Creature* c) : ScriptedAI(c) {}
+        npc_seaforium_depth_chargeAI(Creature* creature) : ScriptedAI(creature) { }
 
         uint32 uiExplosionTimer;
+
         void Reset()
         {
             uiExplosionTimer = urand(5000, 10000);
         }
+
         void UpdateAI(const uint32 diff)
         {
             if (uiExplosionTimer < diff)
@@ -2256,7 +2255,7 @@ public:
 
     struct npc_valiance_keep_cannoneerAI : public ScriptedAI
     {
-        npc_valiance_keep_cannoneerAI(Creature* c) : ScriptedAI(c) {}
+        npc_valiance_keep_cannoneerAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 uiTimer;
 
@@ -2282,7 +2281,6 @@ public:
             if (!UpdateVictim())
                 return;
         }
-
     };
 
     CreatureAI* GetAI(Creature* creature) const
@@ -2593,18 +2591,18 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
 
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->AI()->SetGUID(player->GetGUID());
             creature->AI()->DoAction(1);
         }
 
-        if (uiAction == GOSSIP_ACTION_TRADE)
+        if (action == GOSSIP_ACTION_TRADE)
             player->GetSession()->SendListInventory(creature->GetGUID());
 
         return true;

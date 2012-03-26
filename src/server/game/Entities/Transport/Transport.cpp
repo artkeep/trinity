@@ -129,8 +129,8 @@ void MapManager::LoadTransportNPCs()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                         0    1          2                3             4             5             6             7
-    QueryResult result = WorldDatabase.PQuery("SELECT guid, npc_entry, transport_entry, TransOffsetX, TransOffsetY, TransOffsetZ, TransOffsetO, emote FROM creature_transport");
+    //                                                 0       1            2                3             4             5             6        7
+    QueryResult result = WorldDatabase.Query("SELECT guid, npc_entry, transport_entry, TransOffsetX, TransOffsetY, TransOffsetZ, TransOffsetO, emote FROM creature_transport");
 
     if (!result)
     {
@@ -173,7 +173,7 @@ void MapManager::LoadTransportNPCs()
 Transport::Transport(uint32 period, uint32 script) : GameObject(), m_pathTime(0), m_timer(0),
 currenttguid(0), m_period(period), ScriptId(script), m_nextNodeTime(0)
 {
-    m_updateFlag = (UPDATEFLAG_TRANSPORT | UPDATEFLAG_HIGHGUID | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_ROTATION);
+    m_updateFlag = (UPDATEFLAG_TRANSPORT | UPDATEFLAG_LOWGUID | UPDATEFLAG_STATIONARY_POSITION | UPDATEFLAG_ROTATION);
 }
 
 Transport::~Transport()

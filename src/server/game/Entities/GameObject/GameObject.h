@@ -402,7 +402,6 @@ struct GameObjectTemplate
         } raw;
     };
 
-
     std::string AIName;
     uint32 ScriptId;
 
@@ -710,7 +709,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
         uint8 GetGoAnimProgress() const { return GetByteValue(GAMEOBJECT_BYTES_1, 3); }
         void SetGoAnimProgress(uint8 animprogress) { SetByteValue(GAMEOBJECT_BYTES_1, 3, animprogress); }
         static void SetGoArtKit(uint8 artkit, GameObject* go, uint32 lowguid = 0);
-        
+
         void SetPhaseMask(uint32 newPhaseMask, bool update);
         void EnableCollision(bool enable);
 
@@ -746,6 +745,11 @@ class GameObject : public WorldObject, public GridObject<GameObject>
 
         Loot        loot;
 
+        Player* GetLootRecipient() const;
+        Group* GetLootRecipientGroup() const;
+        void SetLootRecipient(Unit* unit);
+        bool IsLootAllowedFor(Player const* player) const;
+        bool HasLootRecipient() const { return m_lootRecipient || m_lootRecipientGroup; }
         uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
         uint32 lootingGroupLowGUID;                         // used to find group which is looting
 
@@ -796,7 +800,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
         std::string GetAIName() const;
         bool IsTemporary;
         void SetDisplayId(uint32 displayid);
-        
+
         GameObjectModel * m_model;
     protected:
         bool AIM_Initialize();
@@ -823,6 +827,8 @@ class GameObject : public WorldObject, public GridObject<GameObject>
 
         uint64 m_rotation;
 
+        uint64 m_lootRecipient;
+        uint32 m_lootRecipientGroup;
         uint16 m_LootMode;                                  // bitmask, default LOOT_MODE_DEFAULT, determines what loot will be lootable
     private:
         void RemoveFromOwner();

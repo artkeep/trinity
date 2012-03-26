@@ -41,6 +41,7 @@ totalPlayersRolling(0), totalNeed(0), totalGreed(0), totalPass(0), itemSlot(0),
 rollVoteMask(ROLL_ALL_TYPE_NO_DISENCHANT)
 {
 }
+
 Roll::~Roll()
 {
 }
@@ -715,13 +716,21 @@ void Group::Disband(bool hideDestroy /* = false */)
     if (!isBGGroup())
     {
         SQLTransaction trans = CharacterDatabase.BeginTransaction();
-        trans->PAppend("DELETE FROM groups WHERE guid = %u", m_dbStoreId);
-        trans->PAppend("DELETE FROM group_member WHERE guid = %u", m_dbStoreId);
+
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GROUP);
+        stmt->setUInt32(0, m_dbStoreId);
+        trans->Append(stmt);
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GROUP_MEMBER_ALL);
+        stmt->setUInt32(0, m_dbStoreId);
+        trans->Append(stmt);
+
         CharacterDatabase.CommitTransaction(trans);
+
         ResetInstances(INSTANCE_RESET_GROUP_DISBAND, false, NULL);
         ResetInstances(INSTANCE_RESET_GROUP_DISBAND, true, NULL);
 
-        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_LFG_DATA);
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_LFG_DATA);
         stmt->setUInt32(0, m_dbStoreId);
         CharacterDatabase.Execute(stmt);
 
@@ -1745,7 +1754,7 @@ bool Group::InCombatToInstance(uint32 instanceId)
         Player* player = itr->getSource();
         if (player && !player->getAttackers().empty() && player->GetInstanceId() == instanceId && (player->GetMap()->IsRaidOrHeroicDungeon()))
             for (std::set<Unit*>::const_iterator i = player->getAttackers().begin(); i != player->getAttackers().end(); ++i)
-                if ((*i) && (*i)->GetTypeId() == TYPEID_UNIT && (*i)->ToCreature()->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
+                if ((*i) && (*i)->GetTypeId() == TYPEID_UNIT && (*i)->ToCreature()->GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
                     return true;
     }
     return false;

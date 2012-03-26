@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.5.9, for Win64 (x86)
+-- MySQL dump 10.13  Distrib 5.5.21, for Win64 (x86)
 --
 -- Host: localhost    Database: characters
 -- ------------------------------------------------------
--- Server version    5.5.9
+-- Server version	5.5.21
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -1953,11 +1953,11 @@ DROP TABLE IF EXISTS `lfg_data`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `lfg_data` (
-  `guid` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Global Unique Identifier',
-  `dungeon` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-  `state` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+  `guid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Global Unique Identifier',
+  `dungeon` int(10) unsigned NOT NULL DEFAULT '0',
+  `state` tinyint(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`guid`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8 COMMENT='LFG Data';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='LFG Data';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2215,6 +2215,29 @@ LOCK TABLES `reserved_name` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `warden_action`
+--
+
+DROP TABLE IF EXISTS `warden_action`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `warden_action` (
+  `wardenId` smallint(5) unsigned NOT NULL,
+  `action` tinyint(3) unsigned DEFAULT NULL,
+  PRIMARY KEY (`wardenId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `warden_action`
+--
+
+LOCK TABLES `warden_action` WRITE;
+/*!40000 ALTER TABLE `warden_action` DISABLE KEYS */;
+/*!40000 ALTER TABLE `warden_action` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `worldstates`
 --
 
@@ -2247,3 +2270,5 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2012-03-25 21:14:19

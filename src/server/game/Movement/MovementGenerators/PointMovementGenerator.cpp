@@ -55,7 +55,7 @@ bool PointMovementGenerator<T>::Update(T &unit, const uint32 & /*diff*/)
 }
 
 template<class T>
-void PointMovementGenerator<T>:: Finalize(T &unit)
+void PointMovementGenerator<T>::Finalize(T &unit)
 {
     unit.ClearUnitState(UNIT_STATE_ROAMING);
 
@@ -105,7 +105,7 @@ void AssistanceMovementGenerator::Finalize(Unit &unit)
         unit.GetMotionMaster()->MoveSeekAssistanceDistract(sWorld->getIntConfig(CONFIG_CREATURE_FAMILY_ASSISTANCE_DELAY));
 }
 
-bool EffectMovementGenerator::Update(Unit &unit, const uint32)
+bool EffectMovementGenerator::Update(Unit &unit, const uint32&)
 {
     return !unit.movespline->Finalized();
 }
@@ -115,6 +115,6 @@ void EffectMovementGenerator::Finalize(Unit &unit)
     if (unit.GetTypeId() != TYPEID_UNIT)
         return;
 
-    if (((Creature&)unit).AI() && unit.movespline->Finalized())
+    if (((Creature&)unit).AI())
         ((Creature&)unit).AI()->MovementInform(EFFECT_MOTION_TYPE, m_Id);
 }

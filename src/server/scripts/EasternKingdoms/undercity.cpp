@@ -88,7 +88,7 @@ public:
 
     struct npc_lady_sylvanas_windrunnerAI : public ScriptedAI
     {
-        npc_lady_sylvanas_windrunnerAI(Creature* c) : ScriptedAI(c) {}
+        npc_lady_sylvanas_windrunnerAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 LamentEvent_Timer;
         bool LamentEvent;
@@ -114,7 +114,7 @@ public:
                     summoned->CastSpell(target, SPELL_RIBBON_OF_SOULS, false);
                 }
 
-                summoned->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                summoned->SetDisableGravity(true);
                 targetGUID = summoned->GetGUID();
             }
         }
@@ -143,7 +143,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 /*######
@@ -162,7 +161,7 @@ public:
 
     struct npc_highborne_lamenterAI : public ScriptedAI
     {
-        npc_highborne_lamenterAI(Creature* c) : ScriptedAI(c) {}
+        npc_highborne_lamenterAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 EventMove_Timer;
         uint32 EventCast_Timer;
@@ -185,7 +184,7 @@ public:
             {
                 if (EventMove_Timer <= diff)
                 {
-                    me->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                    me->SetDisableGravity(true);
                     me->MonsterMoveWithSpeed(me->GetPositionX(), me->GetPositionY(), HIGHBORNE_LOC_Y_NEW, me->GetDistance(me->GetPositionX(), me->GetPositionY(), HIGHBORNE_LOC_Y_NEW) / (5000 * 0.001f));
                     me->SetPosition(me->GetPositionX(), me->GetPositionY(), HIGHBORNE_LOC_Y_NEW, me->GetOrientation());
                     EventMove = false;
@@ -201,7 +200,6 @@ public:
             }
         }
     };
-
 };
 
 /*######
@@ -219,15 +217,15 @@ class npc_parqual_fintallas : public CreatureScript
 public:
     npc_parqual_fintallas() : CreatureScript("npc_parqual_fintallas") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->CastSpell(player, SPELL_MARK_OF_SHAME, false);
         }
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+2)
+        if (action == GOSSIP_ACTION_INFO_DEF+2)
         {
             player->CLOSE_GOSSIP_MENU();
             player->AreaExploredOrEventHappens(6628);
@@ -252,7 +250,6 @@ public:
 
         return true;
     }
-
 };
 
 /*######

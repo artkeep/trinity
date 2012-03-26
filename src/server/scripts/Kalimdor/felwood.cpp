@@ -40,10 +40,10 @@ class npcs_riverbreeze_and_silversky : public CreatureScript
 public:
     npcs_riverbreeze_and_silversky() : CreatureScript("npcs_riverbreeze_and_silversky") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->CastSpell(player, 15120, false);
@@ -53,12 +53,12 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature)
     {
-        uint32 eCreature = creature->GetEntry();
-
         if (creature->isQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
 
-        if (eCreature == 9528)
+        uint32 creatureId = creature->GetEntry();
+
+        if (creatureId == 9528)
         {
             if (player->GetQuestRewardStatus(4101))
             {
@@ -70,7 +70,7 @@ public:
                 player->SEND_GOSSIP_MENU(2844, creature->GetGUID());
         }
 
-        if (eCreature == 9529)
+        if (creatureId == 9529)
         {
             if (player->GetQuestRewardStatus(4102))
             {
@@ -84,7 +84,6 @@ public:
 
         return true;
     }
-
 };
 
 void AddSC_felwood()

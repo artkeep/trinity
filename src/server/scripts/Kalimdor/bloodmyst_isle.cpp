@@ -49,7 +49,7 @@ public:
 
     struct mob_webbed_creatureAI : public ScriptedAI
     {
-        mob_webbed_creatureAI(Creature* c) : ScriptedAI(c) {}
+        mob_webbed_creatureAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset()
         {
@@ -101,10 +101,10 @@ class npc_captured_sunhawk_agent : public CreatureScript
 public:
     npc_captured_sunhawk_agent() : CreatureScript("npc_captured_sunhawk_agent") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SELECT_CSA1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);

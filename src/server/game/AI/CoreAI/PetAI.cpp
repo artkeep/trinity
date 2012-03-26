@@ -174,7 +174,7 @@ void PetAI::UpdateAI(const uint32 diff)
 
                     if (spell->CanAutoCast(target))
                     {
-                        targetSpellStore.push_back(std::make_pair<Unit*, Spell*>(target, spell));
+                        targetSpellStore.push_back(std::make_pair(target, spell));
                         spellUsed = true;
                         break;
                     }
@@ -186,7 +186,7 @@ void PetAI::UpdateAI(const uint32 diff)
             {
                 Spell* spell = new Spell(me, spellInfo, TRIGGERED_NONE, 0);
                 if (spell->CanAutoCast(me->getVictim()))
-                    targetSpellStore.push_back(std::make_pair<Unit*, Spell*>(me->getVictim(), spell));
+                    targetSpellStore.push_back(std::make_pair(me->getVictim(), spell));
                 else
                     delete spell;
             }
@@ -278,6 +278,7 @@ void PetAI::KilledUnit(Unit* victim)
     // next target selection
     me->AttackStop();
     me->GetCharmInfo()->SetIsCommandAttack(false);
+    me->SendMeleeAttackStop();  // Stops the pet's 'Attack' button from flashing
 
     Unit* nextTarget = SelectNextTarget();
 
@@ -457,7 +458,7 @@ bool PetAI::CanAttack(Unit* target)
 
     // Stay - can attack if target is within range or commanded to
     if (me->GetCharmInfo()->HasCommandState(COMMAND_STAY))
-        return (me->IsWithinMeleeRange(target, MIN_MELEE_REACH) || me->GetCharmInfo()->IsCommandAttack());
+        return (me->IsWithinMeleeRange(target, MELEE_RANGE) || me->GetCharmInfo()->IsCommandAttack());
 
     // Follow
     if (me->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))

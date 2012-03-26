@@ -51,6 +51,7 @@ BattlegroundWS::BattlegroundWS()
     StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_WS_START_ONE_MINUTE;
     StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_BG_WS_START_HALF_MINUTE;
     StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;
+    _flagDebuffState = 0;
 }
 
 BattlegroundWS::~BattlegroundWS()
@@ -436,8 +437,8 @@ void BattlegroundWS::EventPlayerClickedOnFlag(Player* Source, GameObject* target
     ChatMsg type = CHAT_MSG_BG_SYSTEM_NEUTRAL;
 
     //alliance flag picked up from base
-    if (Source->GetTeam() == HORDE && this->GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_BASE
-        && this->BgObjects[BG_WS_OBJECT_A_FLAG] == target_obj->GetGUID())
+    if (Source->GetTeam() == HORDE && GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_BASE
+        && BgObjects[BG_WS_OBJECT_A_FLAG] == target_obj->GetGUID())
     {
         message_id = LANG_BG_WS_PICKEDUP_AF;
         type = CHAT_MSG_BG_SYSTEM_HORDE;
@@ -455,8 +456,8 @@ void BattlegroundWS::EventPlayerClickedOnFlag(Player* Source, GameObject* target
     }
 
     //horde flag picked up from base
-    if (Source->GetTeam() == ALLIANCE && this->GetFlagState(HORDE) == BG_WS_FLAG_STATE_ON_BASE
-        && this->BgObjects[BG_WS_OBJECT_H_FLAG] == target_obj->GetGUID())
+    if (Source->GetTeam() == ALLIANCE && GetFlagState(HORDE) == BG_WS_FLAG_STATE_ON_BASE
+        && BgObjects[BG_WS_OBJECT_H_FLAG] == target_obj->GetGUID())
     {
         message_id = LANG_BG_WS_PICKEDUP_HF;
         type = CHAT_MSG_BG_SYSTEM_ALLIANCE;
@@ -474,7 +475,7 @@ void BattlegroundWS::EventPlayerClickedOnFlag(Player* Source, GameObject* target
     }
 
     //Alliance flag on ground(not in base) (returned or picked up again from ground!)
-    if (GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_GROUND && Source->IsWithinDistInMap(target_obj, 10))
+    if (GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_GROUND && Source->IsWithinDistInMap(target_obj, 10) && BgObjects[BG_WS_OBJECT_A_FLAG] == target_obj->GetGUID())
     {
         if (Source->GetTeam() == ALLIANCE)
         {
@@ -508,7 +509,7 @@ void BattlegroundWS::EventPlayerClickedOnFlag(Player* Source, GameObject* target
     }
 
     //Horde flag on ground(not in base) (returned or picked up again)
-    if (GetFlagState(HORDE) == BG_WS_FLAG_STATE_ON_GROUND && Source->IsWithinDistInMap(target_obj, 10))
+    if (GetFlagState(HORDE) == BG_WS_FLAG_STATE_ON_GROUND && Source->IsWithinDistInMap(target_obj, 10) && BgObjects[BG_WS_OBJECT_H_FLAG] == target_obj->GetGUID())
     {
         if (Source->GetTeam() == HORDE)
         {

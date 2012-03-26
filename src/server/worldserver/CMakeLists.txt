@@ -129,9 +129,12 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/game/Spells
   ${CMAKE_SOURCE_DIR}/src/server/game/Spells/Auras
   ${CMAKE_SOURCE_DIR}/src/server/game/Tools
+  ${CMAKE_SOURCE_DIR}/src/server/game/Warden
+  ${CMAKE_SOURCE_DIR}/src/server/game/Warden/Modules
   ${CMAKE_SOURCE_DIR}/src/server/game/Weather
   ${CMAKE_SOURCE_DIR}/src/server/game/World
   ${CMAKE_SOURCE_DIR}/src/server/authserver/Server
+  ${CMAKE_SOURCE_DIR}/src/server/authserver/Realms
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/CommandLine
   ${CMAKE_CURRENT_SOURCE_DIR}/RemoteAccess
@@ -199,4 +202,3 @@ if( USE_COREPCH )
     add_native_precompiled_header(worldserver ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/worldPCH)
   endif()
 endif()
-

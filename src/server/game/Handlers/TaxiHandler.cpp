@@ -103,7 +103,7 @@ void WorldSession::SendTaxiMenu(Creature* unit)
 
     sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_TAXINODE_STATUS_QUERY %u ", curloc);
 
-    WorldPacket data(SMSG_SHOWTAXINODES, (4+8+4+8*4));
+    WorldPacket data(SMSG_SHOWTAXINODES, (4 + 8 + 4 + 8 * 4));
     data << uint32(1);
     data << uint64(unit->GetGUID());
     data << uint32(curloc);
@@ -291,4 +291,13 @@ void WorldSession::HandleActivateTaxiOpcode(WorldPacket & recv_data)
     }
 
     GetPlayer()->ActivateTaxiPathTo(nodes, npc);
+}
+
+void WorldSession::SendActivateTaxiReply(ActivateTaxiReply reply)
+{
+    WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
+    data << uint32(reply);
+    SendPacket(&data);
+
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent SMSG_ACTIVATETAXIREPLY");
 }

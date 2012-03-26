@@ -184,11 +184,8 @@ class boss_kologarn : public CreatureScript
 
                     if (Creature* rubbleStalker = who->FindNearestCreature(NPC_RUBBLE_STALKER, 70.0f))
                     {
-                        if (rubbleStalker)
-                        {
-                            rubbleStalker->CastSpell(rubbleStalker, SPELL_FALLING_RUBBLE, true);
-                            rubbleStalker->CastSpell(rubbleStalker, SPELL_SUMMON_RUBBLE, true);
-                        }
+                        rubbleStalker->CastSpell(rubbleStalker, SPELL_FALLING_RUBBLE, true);
+                        rubbleStalker->CastSpell(rubbleStalker, SPELL_SUMMON_RUBBLE, true);
                     }
 
                     if (!right && !left)
@@ -485,6 +482,8 @@ class spell_ulduar_squeezed_lifeless : public SpellScriptLoader
                 if (!GetHitPlayer() || !GetHitPlayer()->GetVehicle())
                     return;
 
+                //! Proper exit position does not work currently,
+                //! See documentation in void Unit::ExitVehicle(Position const* exitPosition)
                 Position pos;
                 pos.m_positionX = 1756.25f + irand(-3, 3);
                 pos.m_positionY = -8.3f + irand(-3, 3);

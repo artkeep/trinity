@@ -62,7 +62,7 @@ public:
 
     struct mob_unkor_the_ruthlessAI : public ScriptedAI
     {
-        mob_unkor_the_ruthlessAI(Creature* c) : ScriptedAI(c) {}
+        mob_unkor_the_ruthlessAI(Creature* creature) : ScriptedAI(creature) {}
 
         bool CanDoQuest;
         uint32 UnkorUnfriendly_Timer;
@@ -99,12 +99,12 @@ public:
                 {
                     for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
                     {
-                        Player* pGroupie = itr->getSource();
-                        if (pGroupie &&
-                            pGroupie->GetQuestStatus(QUEST_DONTKILLTHEFATONE) == QUEST_STATUS_INCOMPLETE &&
-                            pGroupie->GetReqKillOrCastCurrentCount(QUEST_DONTKILLTHEFATONE, 18260) == 10)
+                        Player* groupie = itr->getSource();
+                        if (groupie &&
+                            groupie->GetQuestStatus(QUEST_DONTKILLTHEFATONE) == QUEST_STATUS_INCOMPLETE &&
+                            groupie->GetReqKillOrCastCurrentCount(QUEST_DONTKILLTHEFATONE, 18260) == 10)
                         {
-                            pGroupie->AreaExploredOrEventHappens(QUEST_DONTKILLTHEFATONE);
+                            groupie->AreaExploredOrEventHappens(QUEST_DONTKILLTHEFATONE);
                             if (!CanDoQuest)
                                 CanDoQuest = true;
                         }
@@ -150,7 +150,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 /*######
@@ -169,7 +168,7 @@ public:
 
     struct mob_infested_root_walkerAI : public ScriptedAI
     {
-        mob_infested_root_walkerAI(Creature* c) : ScriptedAI(c) {}
+        mob_infested_root_walkerAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset() { }
         void EnterCombat(Unit* /*who*/) { }
@@ -183,7 +182,6 @@ public:
                         DoCast(me, 39130, true);
         }
     };
-
 };
 
 /*######
@@ -202,7 +200,7 @@ public:
     struct npc_skywingAI : public npc_escortAI
     {
     public:
-        npc_skywingAI(Creature* c) : npc_escortAI(c) {}
+        npc_skywingAI(Creature* creature) : npc_escortAI(creature) {}
 
         void WaypointReached(uint32 i)
         {
@@ -245,7 +243,6 @@ public:
             npc_escortAI::UpdateAI(diff);
         }
     };
-
 };
 
 /*######
@@ -264,7 +261,7 @@ public:
 
     struct mob_rotting_forest_ragerAI : public ScriptedAI
     {
-        mob_rotting_forest_ragerAI(Creature* c) : ScriptedAI(c) {}
+        mob_rotting_forest_ragerAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset() { }
         void EnterCombat(Unit* /*who*/) { }
@@ -278,7 +275,6 @@ public:
                         DoCast(me, 39134, true);
         }
     };
-
 };
 
 /*######
@@ -304,7 +300,7 @@ public:
 
     struct mob_netherweb_victimAI : public ScriptedAI
     {
-        mob_netherweb_victimAI(Creature* c) : ScriptedAI(c) {}
+        mob_netherweb_victimAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset() { }
         void EnterCombat(Unit* /*who*/) { }
@@ -331,7 +327,6 @@ public:
             }
         }
     };
-
 };
 
 /*######
@@ -358,15 +353,15 @@ class npc_floon : public CreatureScript
 public:
     npc_floon() : CreatureScript("npc_floon") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF)
+        if (action == GOSSIP_ACTION_INFO_DEF)
         {
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_FLOON2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
             player->SEND_GOSSIP_MENU(9443, creature->GetGUID());
         }
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->CLOSE_GOSSIP_MENU();
             creature->setFaction(FACTION_HOSTILE_FL);
@@ -392,9 +387,9 @@ public:
 
     struct npc_floonAI : public ScriptedAI
     {
-        npc_floonAI(Creature* c) : ScriptedAI(c)
+        npc_floonAI(Creature* creature) : ScriptedAI(creature)
         {
-            m_uiNormFaction = c->getFaction();
+            m_uiNormFaction = creature->getFaction();
         }
 
         uint32 m_uiNormFaction;
@@ -439,7 +434,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 /*######
@@ -465,7 +459,7 @@ public:
 
     struct npc_isla_starmaneAI : public npc_escortAI
     {
-        npc_isla_starmaneAI(Creature* c) : npc_escortAI(c) {}
+        npc_isla_starmaneAI(Creature* creature) : npc_escortAI(creature) {}
 
         void WaypointReached(uint32 i)
         {
@@ -497,7 +491,8 @@ public:
                 me->SetInFront(player); break;
             case 30: me->HandleEmoteCommand(EMOTE_ONESHOT_WAVE); break;
             case 31: DoCast(me, SPELL_CAT);
-                me->RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING); break;
+                me->SetWalk(false);
+                break;
             }
         }
 
@@ -532,7 +527,6 @@ public:
     {
         return new npc_isla_starmaneAI(creature);
     }
-
 };
 
 /*######
@@ -548,12 +542,12 @@ class go_skull_pile : public GameObjectScript
 public:
     go_skull_pile() : GameObjectScript("go_skull_pile") { }
 
-    bool OnGossipSelect(Player* player, GameObject* go, uint32 uiSender, uint32 uiAction)
+    bool OnGossipSelect(Player* player, GameObject* go, uint32 sender, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiSender)
+        switch (sender)
         {
-            case GOSSIP_SENDER_MAIN:    SendActionMenu(player, go, uiAction); break;
+            case GOSSIP_SENDER_MAIN:    SendActionMenu(player, go, action); break;
         }
         return true;
     }
@@ -572,9 +566,9 @@ public:
         return true;
     }
 
-    void SendActionMenu(Player* player, GameObject* /*go*/, uint32 uiAction)
+    void SendActionMenu(Player* player, GameObject* /*go*/, uint32 action)
     {
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF + 1:
                   player->CastSpell(player, 40642, false);
@@ -606,10 +600,10 @@ class npc_slim : public CreatureScript
 public:
     npc_slim() : CreatureScript("npc_slim") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_TRADE)
+        if (action == GOSSIP_ACTION_TRADE)
             player->GetSession()->SendListInventory(creature->GetGUID());
 
         return true;
@@ -627,7 +621,6 @@ public:
 
         return true;
     }
-
 };
 
 /*########
@@ -667,7 +660,7 @@ public:
 
     struct npc_akunoAI : public npc_escortAI
     {
-        npc_akunoAI(Creature* c) : npc_escortAI(c) {}
+        npc_akunoAI(Creature* creature) : npc_escortAI(creature) {}
 
         void WaypointReached(uint32 i)
         {
@@ -694,7 +687,6 @@ public:
             summon->AI()->AttackStart(me);
         }
     };
-
 };
 
 /*######

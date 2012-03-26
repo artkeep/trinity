@@ -120,7 +120,7 @@ DBCStorage <ItemRandomSuffixEntry> sItemRandomSuffixStore(ItemRandomSuffixfmt);
 DBCStorage <ItemSetEntry> sItemSetStore(ItemSetEntryfmt);
 
 DBCStorage <LFGDungeonEntry> sLFGDungeonStore(LFGDungeonEntryfmt);
-//DBCStorage <LiquidTypeEntry> sLiquidTypeStore(LiquidTypeEntryfmt);
+DBCStorage <LiquidTypeEntry> sLiquidTypeStore(LiquidTypefmt);
 DBCStorage <LockEntry> sLockStore(LockEntryfmt);
 
 DBCStorage <MailTemplateEntry> sMailTemplateStore(MailTemplateEntryfmt);
@@ -359,6 +359,7 @@ void LoadDBCStores(const std::string& dataPath)
     LoadDBC(availableDbcLocales, bad_dbc_files, sItemSetStore,                dbcPath, "ItemSet.dbc");
 
     LoadDBC(availableDbcLocales, bad_dbc_files, sLFGDungeonStore,             dbcPath, "LFGDungeons.dbc");
+    LoadDBC(availableDbcLocales, bad_dbc_files, sLiquidTypeStore,             dbcPath, "LiquidType.dbc");
     LoadDBC(availableDbcLocales, bad_dbc_files, sLockStore,                   dbcPath, "Lock.dbc");
 
     LoadDBC(availableDbcLocales, bad_dbc_files, sMailTemplateStore,           dbcPath, "MailTemplate.dbc");
@@ -475,7 +476,9 @@ void LoadDBCStores(const std::string& dataPath)
     for (unsigned int i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
         TalentEntry const* talentInfo = sTalentStore.LookupEntry(i);
-        if (!talentInfo) continue;
+        if (!talentInfo)
+            continue;
+
         for (int j = 0; j < MAX_TALENT_RANK; j++)
             if (talentInfo->RankID[j])
                 sTalentSpellPosMap[talentInfo->RankID[j]] = TalentSpellPos(i, j);
@@ -874,12 +877,11 @@ uint32 GetCreatureModelRace(uint32 model_id)
     return extraEntry ? extraEntry->Race : 0;
 }
 
-// script support functions
- DBCStorage <SoundEntriesEntry>        const* GetSoundEntriesStore()    { return &sSoundEntriesStore;   }
- DBCStorage <SpellRangeEntry>          const* GetSpellRangeStore()      { return &sSpellRangeStore;     }
- DBCStorage <FactionEntry>             const* GetFactionStore()         { return &sFactionStore;        }
- DBCStorage <ItemEntry>                const* GetItemDisplayStore()     { return &sItemStore;           }
- DBCStorage <CreatureDisplayInfoEntry> const* GetCreatureDisplayStore() { return &sCreatureDisplayInfoStore; }
- DBCStorage <EmotesEntry>              const* GetEmotesStore()          { return &sEmotesStore;              }
- DBCStorage <EmotesTextEntry>          const* GetEmotesTextStore()      { return &sEmotesTextStore;          }
- DBCStorage <AchievementEntry>         const* GetAchievementStore()     { return &sAchievementStore;         }
+uint32 GetLiquidFlags(uint32 liquidType)
+{
+    if (LiquidTypeEntry const* liq = sLiquidTypeStore.LookupEntry(liquidType))
+        return 1 << liq->Type;
+
+    return 0;
+}
+

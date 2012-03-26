@@ -51,10 +51,10 @@ class npc_erozion : public CreatureScript
 public:
     npc_erozion() : CreatureScript("npc_erozion") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             ItemPosCountVec dest;
             uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, ITEM_ENTRY_BOMBS, 1);
@@ -64,7 +64,7 @@ public:
             }
             player->SEND_GOSSIP_MENU(9515, creature->GetGUID());
         }
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+2)
+        if (action == GOSSIP_ACTION_INFO_DEF+2)
         {
             player->CLOSE_GOSSIP_MENU();
         }
@@ -139,9 +139,9 @@ public:
 #define SPEED_RUN               (1.0f)
 #define SPEED_MOUNT             (1.6f)
 
-#define THRALL_WEAPON_MODEL     22106
+#define THRALL_WEAPON_ITEM     927
 #define THRALL_WEAPON_INFO      218169346
-#define THRALL_SHIELD_MODEL     18662
+#define THRALL_SHIELD_ITEM     2129
 #define THRALL_SHIELD_INFO      234948100
 #define THRALL_MODEL_UNEQUIPPED 17292
 #define THRALL_MODEL_EQUIPPED   18165
@@ -198,11 +198,11 @@ public:
         return new npc_thrall_old_hillsbradAI(creature);
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         InstanceScript* instance = creature->GetInstanceScript();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->CLOSE_GOSSIP_MENU();
@@ -282,9 +282,9 @@ public:
 
     struct npc_thrall_old_hillsbradAI : public npc_escortAI
     {
-        npc_thrall_old_hillsbradAI(Creature* c) : npc_escortAI(c)
+        npc_thrall_old_hillsbradAI(Creature* creature) : npc_escortAI(creature)
         {
-            instance = c->GetInstanceScript();
+            instance = creature->GetInstanceScript();
             HadMount = false;
             me->setActive(true);
         }
@@ -309,10 +309,10 @@ public:
                     break;
                 case 9:
                     DoScriptText(SAY_TH_ARMORY, me);
-                    me->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, THRALL_WEAPON_MODEL);
+                    me->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, THRALL_WEAPON_ITEM);
                     //me->SetUInt32Value(UNIT_VIRTUAL_ITEM_INFO, THRALL_WEAPON_INFO);
                     //me->SetUInt32Value(UNIT_VIRTUAL_ITEM_INFO+1, 781);
-                    me->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID+1, THRALL_SHIELD_MODEL);
+                    me->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID+1, THRALL_SHIELD_ITEM);
                     //me->SetUInt32Value(UNIT_VIRTUAL_ITEM_INFO+2, THRALL_SHIELD_INFO);
                     //me->SetUInt32Value(UNIT_VIRTUAL_ITEM_INFO+3, 1038);
                     break;
@@ -401,7 +401,7 @@ public:
                     SetRun();
                     break;
                 case 91:
-                    me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
+                    me->SetWalk(true);
                     SetRun(false);
                     break;
                 case 93:
@@ -581,16 +581,16 @@ public:
         return new npc_tarethaAI(creature);
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         InstanceScript* instance = creature->GetInstanceScript();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_EPOCH2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
             player->SEND_GOSSIP_MENU(GOSSIP_ID_EPOCH2, creature->GetGUID());
         }
-        if (uiAction == GOSSIP_ACTION_INFO_DEF+2)
+        if (action == GOSSIP_ACTION_INFO_DEF+2)
         {
             player->CLOSE_GOSSIP_MENU();
 
@@ -624,9 +624,9 @@ public:
 
     struct npc_tarethaAI : public npc_escortAI
     {
-        npc_tarethaAI(Creature* c) : npc_escortAI(c)
+        npc_tarethaAI(Creature* creature) : npc_escortAI(creature)
         {
-            instance = c->GetInstanceScript();
+            instance = creature->GetInstanceScript();
         }
 
         InstanceScript* instance;

@@ -299,10 +299,10 @@ class npc_plucky : public CreatureScript
 public:
     npc_plucky() : CreatureScript("npc_plucky") { }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 player->CLOSE_GOSSIP_MENU();
@@ -328,7 +328,7 @@ public:
 
     struct npc_pluckyAI : public ScriptedAI
     {
-        npc_pluckyAI(Creature* c) : ScriptedAI(c) { m_uiNormFaction = c->getFaction(); }
+        npc_pluckyAI(Creature* creature) : ScriptedAI(creature) { m_uiNormFaction = creature->getFaction(); }
 
         uint32 m_uiNormFaction;
         uint32 m_uiResetTimer;
@@ -437,7 +437,7 @@ public:
 
     struct npc_enraged_pantherAI : public ScriptedAI
     {
-        npc_enraged_pantherAI(Creature* c) : ScriptedAI(c) {}
+        npc_enraged_pantherAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset()
         {

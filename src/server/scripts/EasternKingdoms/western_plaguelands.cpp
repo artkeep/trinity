@@ -49,10 +49,10 @@ class npcs_dithers_and_arbington : public CreatureScript
 public:
     npcs_dithers_and_arbington() : CreatureScript("npcs_dithers_and_arbington") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        switch (uiAction)
+        switch (action)
         {
             case GOSSIP_ACTION_TRADE:
                 player->GetSession()->SendListInventory(creature->GetGUID());
@@ -100,7 +100,6 @@ public:
 
         return true;
     }
-
 };
 
 /*######
@@ -121,10 +120,10 @@ class npc_myranda_the_hag : public CreatureScript
 public:
     npc_myranda_the_hag() : CreatureScript("npc_myranda_the_hag") { }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (uiAction == GOSSIP_ACTION_INFO_DEF + 1)
+        if (action == GOSSIP_ACTION_INFO_DEF + 1)
         {
             player->CLOSE_GOSSIP_MENU();
             player->CastSpell(player, SPELL_SCARLET_ILLUSION, false);
@@ -149,7 +148,6 @@ public:
 
         return true;
     }
-
 };
 
 /*######
@@ -168,7 +166,7 @@ public:
 
     struct npc_the_scourge_cauldronAI : public ScriptedAI
     {
-        npc_the_scourge_cauldronAI(Creature* c) : ScriptedAI(c) {}
+        npc_the_scourge_cauldronAI(Creature* creature) : ScriptedAI(creature) {}
 
         void Reset() {}
 
@@ -229,7 +227,6 @@ public:
             }
         }
     };
-
 };
 
 /*######
@@ -253,7 +250,7 @@ public:
 
     struct npc_andorhal_towerAI : public Scripted_NoMovementAI
     {
-        npc_andorhal_towerAI(Creature* c) : Scripted_NoMovementAI(c) {}
+        npc_andorhal_towerAI(Creature* creature) : Scripted_NoMovementAI(creature) {}
 
         void MoveInLineOfSight(Unit* who)
         {
@@ -264,7 +261,6 @@ public:
                 CAST_PLR(who)->KilledMonsterCredit(me->GetEntry(), me->GetGUID());
         }
     };
-
 };
 
 /*######
@@ -359,7 +355,7 @@ public:
                     break;
                 case 23:
                     Ughost = me->SummonCreature(NPC_GHOST_UTHER, 971.86f, -1825.42f, 81.99f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-                    Ughost->AddUnitMovementFlag(MOVEMENTFLAG_LEVITATING);
+                    Ughost->SetDisableGravity(true);
                     DoScriptText(SAY_WP_4, Ughost, me);
                     m_uiChatTimer = 4000;
                     break;
@@ -395,7 +391,6 @@ public:
                 m_uiChatTimer = 6000;
         }
     };
-
 };
 
 /*######

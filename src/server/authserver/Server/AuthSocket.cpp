@@ -342,11 +342,6 @@ bool AuthSocket::_HandleLogonChallenge()
 
     _login = (const char*)ch->I;
     _build = ch->build;
-    _os = (const char*)ch->os;
-
-     if(_os.size() > 4)
-         return false;
-
     _expversion = (AuthHelper::IsPostBCAcceptedClientBuild(_build) ? POST_BC_EXP_FLAG : NO_VALID_EXP_FLAG) | (AuthHelper::IsPreBCAcceptedClientBuild(_build) ? PRE_BC_EXP_FLAG : NO_VALID_EXP_FLAG);
 
     pkt << (uint8)AUTH_LOGON_CHALLENGE;
@@ -607,8 +602,7 @@ bool AuthSocket::_HandleLogonProof()
         stmt->setString(0, K_hex);
         stmt->setString(1, socket().getRemoteAddress().c_str());
         stmt->setUInt32(2, GetLocaleByName(_localizationName));
-        stmt->setString(3, _os);
-        stmt->setString(4, _login);
+        stmt->setString(3, _login);
         LoginDatabase.Execute(stmt);
 
         OPENSSL_free((void*)K_hex);
@@ -746,11 +740,6 @@ bool AuthSocket::_HandleReconnectChallenge()
 
     // Reinitialize build, expansion and the account securitylevel
     _build = ch->build;
-    _os = (const char*)ch->os;
-
-    if(_os.size() > 4)
-         return false;
-
     _expversion = (AuthHelper::IsPostBCAcceptedClientBuild(_build) ? POST_BC_EXP_FLAG : NO_VALID_EXP_FLAG) | (AuthHelper::IsPreBCAcceptedClientBuild(_build) ? PRE_BC_EXP_FLAG : NO_VALID_EXP_FLAG);
 
     Field* fields = result->Fetch();

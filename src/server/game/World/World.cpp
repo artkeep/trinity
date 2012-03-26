@@ -28,7 +28,6 @@
 #include "Opcodes.h"
 #include "WorldSession.h"
 #include "WorldPacket.h"
-#include "WardenDataStorage.h"
 #include "Player.h"
 #include "Vehicle.h"
 #include "SkillExtraItems.h"
@@ -1226,10 +1225,6 @@ void World::LoadConfigSettings(bool reload)
 
     // MySQL ping time interval
     m_int_configs[CONFIG_DB_PING_INTERVAL] = ConfigMgr::GetIntDefault("MaxPingTime", 30);
-    
-    // Warden
-    m_bool_configs[CONFIG_BOOL_WARDEN_KICK] = ConfigMgr::GetBoolDefault("Warden.Kick", false);
-    m_int_configs[CONFIG_INT_WARDEN_BANDAY] = ConfigMgr::GetIntDefault("Warden.BanDay", 0);
 
     //Wintergrasp
     m_bool_configs[CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED]         = ConfigMgr::GetBoolDefault("OutdoorPvP.Wintergrasp.Enabled", true);
@@ -1755,9 +1750,6 @@ void World::SetInitialWorldSettings()
     sLog->outString("Starting Game Event system...");
     uint32 nextGameEvent = sGameEventMgr->StartSystem();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
-
-    sLog->outString("Loading Warden Data..." );
-    WardenDataStorage.Init();
 
     // Delete all characters which have been deleted X days before
     Player::DeleteOldCharacters();

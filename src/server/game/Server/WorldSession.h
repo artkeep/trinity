@@ -26,7 +26,6 @@
 #include "Common.h"
 #include "SharedDefines.h"
 #include "AddonMgr.h"
-#include "WardenBase.h"
 #include "DatabaseEnv.h"
 #include "World.h"
 #include "WorldPacket.h"
@@ -211,7 +210,6 @@ class CharacterCreateInfo
 /// Player session in the World
 class WorldSession
 {
-    friend class WardenBase;
     public:
         WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, bool ispremium, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, bool isARecruiter);
         ~WorldSession();
@@ -224,9 +222,6 @@ class WorldSession
 
         void ReadAddonsInfo(WorldPacket& data);
         void SendAddonsInfo();
-
-        //Warden
-        void InitWarden(BigNumber* K, std::string os);
 
         void ReadMovementInfo(WorldPacket& data, MovementInfo* mi);
         void WriteMovementInfo(WorldPacket* data, MovementInfo* mi);
@@ -938,9 +933,6 @@ class WorldSession
         uint32 _accountId;
         uint8 m_expansion;
         bool _ispremium;
-
-        // Warden 
-        WardenBase *m_Warden;
 
         typedef std::list<AddonInfo> AddonsList;
 

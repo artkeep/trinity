@@ -391,17 +391,6 @@ CleanCharacterDB = 0
 
 PersistentCharacterCleanFlags = 0
 
-#    Warden.Kick
-#        Kick player on failed check
-#        Default: 0 (Disabled)
-#                 1 (Enabled)
-#	Warden.BanDay
-#		Ban player in failed chaeck
-#		Default: 0 (Disabled)
-
-Warden.Kick = 1
-Warden.BanDay = 3
-
 #
 ###################################################################################################
 
@@ -799,13 +788,6 @@ ChatLogs.Addon = 0
 #                     1 - (Enabled)
 
 ChatLogs.BattleGround = 0
-
-#    WardenLogFile
-#        Log file of Warden
-#        Default: "Warden.log"
-#                 "" - Empty name for disable
-
-WardenLogFile = "warden.log"
 
 #
 ###################################################################################################

@@ -67,7 +67,7 @@ class MovementGeneratorMedium : public MovementGenerator
             //u->AssertIsType<T>();
             (static_cast<D*>(this))->Reset(*((T*)&unit));
         }
-        bool Update(Unit &u, const uint32& time_diff)
+        bool Update(Unit &unit, const uint32& time_diff)
         {
             //u->AssertIsType<T>();
             return (static_cast<D*>(this))->Update(*((T*)&unit), time_diff);

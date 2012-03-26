@@ -609,7 +609,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket & recv_data)
         // Check for waterwalking
         if(((movementInfo.flags & MOVEMENTFLAG_WATERWALKING) != 0) &&
            ((movementInfo.flags ^ MOVEMENTFLAG_WATERWALKING) != 0) && // Client sometimes set waterwalk where it shouldn't do that...
-           ((movementInfo.flags & MOVEMENTFLAG_JUMPING) == 0) &&
+           ((movementInfo.flags & MOVEMENTFLAG_FALLING) == 0) &&
            GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ()-4.0f) &&
            !(GetPlayer()->HasAuraType(SPELL_AURA_WATER_WALK) || GetPlayer()->HasAuraType(SPELL_AURA_GHOST)))
         {

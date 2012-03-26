@@ -234,7 +234,7 @@ class boss_halion : public CreatureScript
 
             void Reset()
             {
-                instance->SendEncounterUnit(ENCOUNTER_FRAME_REMOVE, me);
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
                 instance->SetData(DATA_HALION_SHARED_HEALTH, me->GetMaxHealth());
             }
 
@@ -243,7 +243,7 @@ class boss_halion : public CreatureScript
             {
                 _JustDied();
                 Talk(SAY_DEATH);
-                instance->SendEncounterUnit(ENCOUNTER_FRAME_REMOVE, me);
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
                 instance->SetBossState(DATA_HALION, DONE);
 
                 instance->DoCastSpellOnPlayers(SPELL_LEAVE_TWILIGHT_REALM);
@@ -264,7 +264,7 @@ class boss_halion : public CreatureScript
             void JustReachedHome()
             {
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-                instance->SendEncounterUnit(ENCOUNTER_FRAME_REMOVE, me);
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
                 instance->SetBossState(DATA_HALION, FAIL);
                 instance->DoCastSpellOnPlayers(SPELL_LEAVE_TWILIGHT_REALM);
 

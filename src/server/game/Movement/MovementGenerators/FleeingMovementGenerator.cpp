@@ -393,7 +393,7 @@ void TimedFleeingMovementGenerator::Finalize(Unit &unit)
     }
 }
 
-bool TimedFleeingMovementGenerator::Update(Unit & owner, const uint32& time_diff)
+bool TimedFleeingMovementGenerator::Update(Unit &unit, const uint32& time_diff)
 {
     if (!unit.isAlive())
         return false;

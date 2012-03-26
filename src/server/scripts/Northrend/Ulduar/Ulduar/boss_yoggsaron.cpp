@@ -416,7 +416,7 @@ public:
             me->ApplySpellImmune(0, IMMUNITY_ID, SPELL_FORTITUDE_OF_FROST, true);
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
-            me->SetFlying(true);
+            me->SetDisableGravity(true);
             wipe = false;
         }
 
@@ -1024,7 +1024,7 @@ public:
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
             me->SetReactState(REACT_PASSIVE);
-            me->SetFlying(true);
+            me->SetDisableGravity(true);
         }
 
         int32 tentacleCount;
@@ -1081,11 +1081,6 @@ public:
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         if (GameObject* pDoor = me->FindNearestGameObject(GOB_CHAMBER_DOOR + illusion, 60))
                             pDoor->SetGoState(GO_STATE_ACTIVE);
-                        // The Illusion shatters and a path to the central chamber opens!
-                        std::list<Unit*> unitList;
-                        me->GetRaidMember(unitList, 80);
-                        for (std::list<Unit*>::iterator itr = unitList.begin(); itr != unitList.end(); ++itr)
-                            DoScriptText(EMOTE_OPEN_CHAMBER, me, *itr);
                     }
                     break;
                 case ACTION_CHAMBER_ILLUSION:
@@ -1913,7 +1908,7 @@ class OrientationCheck
 
         bool operator() (Unit* unit)
         {
-            return !unit->isInFront(caster, 40.0f, 2.5f);
+            return !unit->isInFront(caster, 2.5f) || !unit->isInFront(caster, 40.0f);
         }
 
     private:

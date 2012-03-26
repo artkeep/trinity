@@ -777,7 +777,6 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
     m_anti_lastalarmtime = 0;    //last time when alarm generated
     m_anti_alarmcount = 0;       //alarm counter
     m_anti_TeleTime = 0;
-    m_CanFly=false;
     /////////////////////////////////
 
     m_mailsLoaded = false;

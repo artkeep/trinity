@@ -745,8 +745,7 @@ void Spell::SelectSpellTargets()
         // some spell effects use explicit target as a default target added to target map (like SPELL_EFFECT_LEARN_SPELL)
         // some spell effects add target to target map only when target type specified (like SPELL_EFFECT_WEAPON)
         // some spell effects don't add anything to target map (confirmed with sniffs) (like SPELL_EFFECT_DESTROY_ALL_TOTEMS)
-        if (!targetA && !targetB)
-            SelectEffectTypeImplicitTargets(i);
+        SelectEffectTypeImplicitTargets(i);
 
         if (m_targets.HasDst())
             AddDestTarget(*m_targets.GetDst(), i);
@@ -3763,20 +3762,6 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
                  data << uint32(proto->ItemLimitCategory);
              break;
         }
-        case SPELL_FAILED_PREVENTED_BY_MECHANIC:
-            data << uint32(0);                              // SpellMechanic.dbc id
-            break;
-        case SPELL_FAILED_NEED_EXOTIC_AMMO:
-            data << uint32(spellInfo->EquippedItemSubClassMask);// seems correct...
-            break;
-        case SPELL_FAILED_NEED_MORE_ITEMS:
-            data << uint32(0);                              // item id
-            data << uint32(0);                              // item count?
-            break;
-        case SPELL_FAILED_MIN_SKILL:
-            data << uint32(0);                              // SkillLine.dbc id
-            data << uint32(0);                              // required skill value
-            break;
         case SPELL_FAILED_FISHING_TOO_LOW:
             data << uint32(0);                              // required fishing skill
             break;
@@ -3817,9 +3802,6 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
         case SPELL_FAILED_MIN_SKILL:
             data << uint32(0); // SkillLine.dbc Id
             data << uint32(0); // Amount
-            break;
-        case SPELL_FAILED_FISHING_TOO_LOW:
-            data << uint32(0); // Skill level
             break;
         default:
             break;

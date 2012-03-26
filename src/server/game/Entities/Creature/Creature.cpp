@@ -557,7 +557,7 @@ void Creature::Update(uint32 diff)
                 break;
 
             // Wintergrasp feature: mechanical units should take damage if isInWater
-            if (GetCreatureInfo()->type == CREATURE_TYPE_MECHANICAL && GetZoneId() == 4197)
+            if (GetCreatureTemplate()->type == CREATURE_TYPE_MECHANICAL && GetZoneId() == 4197)
             {
                 if (IsInWater())
                 {

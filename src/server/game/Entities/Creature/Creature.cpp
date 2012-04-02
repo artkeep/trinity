@@ -199,7 +199,7 @@ void Creature::RemoveFromWorld()
         if (m_zoneScript)
             m_zoneScript->OnCreatureRemove(this);
         if (m_formation)
-            FormationMgr::RemoveCreatureFromGroup(m_formation, this);
+            sFormationMgr->RemoveCreatureFromGroup(m_formation, this);
         Unit::RemoveFromWorld();
         sObjectAccessor->RemoveObject(this);
     }
@@ -224,9 +224,9 @@ void Creature::SearchFormation()
     if (!lowguid)
         return;
 
-    CreatureGroupInfoType::iterator frmdata = CreatureGroupMap.find(lowguid);
-    if (frmdata != CreatureGroupMap.end())
-        FormationMgr::AddCreatureToGroup(frmdata->second->leaderGUID, this);
+    CreatureGroupInfoType::iterator frmdata = sFormationMgr->CreatureGroupMap.find(lowguid);
+    if (frmdata != sFormationMgr->CreatureGroupMap.end())
+        sFormationMgr->AddCreatureToGroup(frmdata->second->leaderGUID, this);
 }
 
 void Creature::RemoveCorpse(bool setSpawnTime)
@@ -433,8 +433,8 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData* data)
         in relation to DisableGravity also.
 
     else if (GetByteValue(UNIT_FIELD_BYTES_1, 3) & UNIT_BYTE_1_FLAG_HOVER)
-        SetHover(true); 
-        
+        SetHover(true);
+
     */
 
     // TODO: Shouldn't we check whether or not the creature is in water first?
@@ -770,15 +770,13 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
         return false;
     }
 
+    //! Relocate before CreateFromProto, to initialize coords and allow
+    //! returning correct zone id for selecting OutdoorPvP/Battlefield script
+    Relocate(x, y, z, ang);
+
     //oX = x;     oY = y;    dX = x;    dY = y;    m_moveTime = 0;    m_startMove = 0;
     if (!CreateFromProto(guidlow, Entry, vehId, team, data))
         return false;
-
-    //! Need to be called after CreateFromProto
-    if (HasUnitMovementFlag(MOVEMENTFLAG_HOVER))
-        z += GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
-
-    Relocate(x, y, z, ang);
 
     if (!IsPositionValid())
     {
@@ -806,6 +804,14 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
     }
 
     LoadCreaturesAddon();
+
+    //! Need to be called after LoadCreaturesAddon - MOVEMENTFLAG_HOVER is set there
+    if (HasUnitMovementFlag(MOVEMENTFLAG_HOVER))
+        z += GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
+
+    //! Relocate again with updated Z coord
+    Relocate(x, y, z, ang);
+
     uint32 displayID = GetNativeDisplayId();
     CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
     if (minfo && !isTotem())                               // Cancel load if no model defined or if totem
@@ -1105,32 +1111,34 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     // update in DB
     SQLTransaction trans = WorldDatabase.BeginTransaction();
 
-    trans->PAppend("DELETE FROM creature WHERE guid = '%u'", m_DBTableGuid);
+    PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_CREATURE);
+    stmt->setUInt32(0, m_DBTableGuid);
+    trans->Append(stmt);
 
-    std::ostringstream ss;
-    ss << "INSERT INTO creature VALUES ("
-        << m_DBTableGuid << ','
-        << GetEntry() << ','
-        << mapid << ','
-        << uint32(spawnMask) << ','                         // cast to prevent save as symbol
-        << uint16(GetPhaseMask()) << ','                    // prevent out of range error
-        << displayId << ','
-        << GetEquipmentId() << ','
-        << GetPositionX() << ','
-        << GetPositionY() << ','
-        << GetPositionZ() << ','
-        << GetOrientation() << ','
-        << m_respawnDelay << ','                            //respawn time
-        << (float) m_respawnradius << ','                   //spawn distance (float)
-        << (uint32) (0) << ','                              //currentwaypoint
-        << GetHealth() << ','                               //curhealth
-        << GetPower(POWER_MANA) << ','                      //curmana
-        << GetDefaultMovementType() << ','                  //default movement generator type
-        << npcflag << ','
-        << unit_flags << ','
-        << dynamicflags << ')';
+    uint8 index = 0;
 
-    trans->Append(ss.str().c_str());
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_INS_CREATURE);
+    stmt->setUInt32(index++, m_DBTableGuid);
+    stmt->setUInt32(index++, GetEntry());
+    stmt->setUInt16(index++, uint16(mapid));
+    stmt->setUInt8(index++, spawnMask);
+    stmt->setUInt16(index++, uint16(GetPhaseMask()));
+    stmt->setUInt32(index++, displayId);
+    stmt->setInt32(index++, int32(GetEquipmentId()));
+    stmt->setFloat(index++, GetPositionX());
+    stmt->setFloat(index++, GetPositionY());
+    stmt->setFloat(index++, GetPositionZ());
+    stmt->setFloat(index++, GetOrientation());
+    stmt->setUInt32(index++, m_respawnDelay);
+    stmt->setFloat(index++, m_respawnradius);
+    stmt->setUInt32(index++, 0);
+    stmt->setUInt32(index++, GetHealth());
+    stmt->setUInt32(index++, GetPower(POWER_MANA));
+    stmt->setUInt8(index++, uint8(GetDefaultMovementType()));
+    stmt->setUInt32(index++, npcflag);
+    stmt->setUInt32(index++, unit_flags);
+    stmt->setUInt32(index, dynamicflags);
+    trans->Append(stmt);
 
     WorldDatabase.CommitTransaction(trans);
 }
@@ -1407,10 +1415,23 @@ void Creature::DeleteFromDB()
     sObjectMgr->DeleteCreatureData(m_DBTableGuid);
 
     SQLTransaction trans = WorldDatabase.BeginTransaction();
-    trans->PAppend("DELETE FROM creature WHERE guid = '%u'", m_DBTableGuid);
-    trans->PAppend("DELETE FROM creature_addon WHERE guid = '%u'", m_DBTableGuid);
-    trans->PAppend("DELETE FROM game_event_creature WHERE guid = '%u'", m_DBTableGuid);
-    trans->PAppend("DELETE FROM game_event_model_equip WHERE guid = '%u'", m_DBTableGuid);
+
+    PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_CREATURE);
+    stmt->setUInt32(0, m_DBTableGuid);
+    trans->Append(stmt);
+
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_CREATURE_ADDON);
+    stmt->setUInt32(0, m_DBTableGuid);
+    trans->Append(stmt);
+
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAME_EVENT_CREATURE);
+    stmt->setUInt32(0, m_DBTableGuid);
+    trans->Append(stmt);
+
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAME_EVENT_MODEL_EQUIP);
+    stmt->setUInt32(0, m_DBTableGuid);
+    trans->Append(stmt);
+
     WorldDatabase.CommitTransaction(trans);
 }
 

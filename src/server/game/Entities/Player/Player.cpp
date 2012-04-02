@@ -4852,7 +4852,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
                     Field* fields = resultMail->Fetch();
 
                     uint32 mail_id       = fields[0].GetUInt32();
-                    uint16 mailType      = fields[1].GetUInt16();
+                    uint8 mailType       = fields[1].GetUInt8();
                     uint16 mailTemplateId= fields[2].GetUInt16();
                     uint32 sender        = fields[3].GetUInt32();
                     std::string subject  = fields[4].GetString();
@@ -18418,7 +18418,7 @@ void Player::UnbindInstance(BoundInstancesMap::iterator &itr, Difficulty difficu
     {
         if (!unload)
         {
-            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_INSTANCE_BY_INSTANCE);
+            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_INSTANCE_BY_INSTANCE_GUID);
 
             stmt->setUInt32(0, GetGUIDLow());
             stmt->setUInt32(1, itr->second.save->GetInstanceId());
@@ -19107,7 +19107,7 @@ void Player::_SaveActions(SQLTransaction& trans)
 
 void Player::_SaveAuras(SQLTransaction& trans)
 {
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_AURA);
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_AURA);
     stmt->setUInt32(0, GetGUIDLow());
     trans->Append(stmt);
 
@@ -19270,7 +19270,7 @@ void Player::_SaveInventory(SQLTransaction& trans)
                 trans->Append(stmt);
                 break;
             case ITEM_REMOVED:
-                stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_INVENTORY_ITEM);
+                stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_INVENTORY_BY_ITEM);
                 stmt->setUInt32(0, item->GetGUIDLow());
                 trans->Append(stmt);
             case ITEM_UNCHANGED:
@@ -20598,7 +20598,7 @@ void Player::SendProficiency(ItemClass itemClass, uint32 itemSubclassMask)
 {
     WorldPacket data(SMSG_SET_PROFICIENCY, 1 + 4);
     data << uint8(itemClass) << uint32(itemSubclassMask);
-    GetSession()->SendPacket (&data);
+    GetSession()->SendPacket(&data);
 }
 
 void Player::RemovePetitionsAndSigns(uint64 guid, uint32 type)

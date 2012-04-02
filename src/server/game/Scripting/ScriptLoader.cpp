@@ -607,6 +607,7 @@ void AddSC_outdoorpvp_tf();
 void AddSC_outdoorpvp_zm();
 void AddSC_outdoorpvp_wg();
 void AddSC_outdoorpvp_gh();
+void AddSC_wintergrasp();
 
 // player
 void AddSC_chat_log();

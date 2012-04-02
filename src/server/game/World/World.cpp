@@ -3057,7 +3057,7 @@ void World::SendWintergraspState()
             pvpWG->SendInitWorldStatesTo(itr->second->GetPlayer());
             itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL) + pvpWG->GetTimer()));
             // Hide unneeded info which in center of screen
-           itr->second->GetPlayer()->SendInitWorldStates(itr->second->GetPlayer()->GetZoneId(), itr->second->GetPlayer()->GetAreaId());
+            itr->second->GetPlayer()->SendInitWorldStates(itr->second->GetPlayer()->GetZoneId(), itr->second->GetPlayer()->GetAreaId());
         }
     }
 }

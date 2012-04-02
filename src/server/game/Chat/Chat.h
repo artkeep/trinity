@@ -360,15 +360,23 @@ class ChatHandler
         void HandleCharacterLevel(Player* player, uint64 playerGuid, uint32 oldLevel, uint32 newLevel);
         void HandleLearnSkillRecipesHelper(Player* player, uint32 skill_id);
 
-		//VIP
-		bool HandleVipBankCommand(const char* args);
-		bool HandleVipRepairitemsCommand(const char* args);
-		bool HandleVipResetTalentsCommand(const char* args);
-		bool HandleVipUnAuraCommand(const char* args);
-		bool HandleVipTaxiCommand(const char* args);
-		bool HandleVipSaveCommand(const char* args);
-		bool HandleVipWhispersCommand(const char* args);
-		bool HandleVipHomeCommand(const char* args);
+        //Wintergrasp
+        bool HandleWintergraspStatusCommand(const char *args);
+        bool HandleWintergraspStartCommand(const char *args);
+        bool HandleWintergraspStopCommand(const char *args);
+        bool HandleWintergraspEnableCommand(const char *args);
+        bool HandleWintergraspSwitchTeamCommand(const char *args);
+        bool HandleWintergraspTimerCommand(const char *args);
+
+	//VIP
+	bool HandleVipBankCommand(const char* args);
+	bool HandleVipRepairitemsCommand(const char* args);
+	bool HandleVipResetTalentsCommand(const char* args);
+	bool HandleVipUnAuraCommand(const char* args);
+	bool HandleVipTaxiCommand(const char* args);
+	bool HandleVipSaveCommand(const char* args);
+	bool HandleVipWhispersCommand(const char* args);
+	bool HandleVipHomeCommand(const char* args);
 
         // Stores informations about a deleted character
         struct DeletedInfo

@@ -1058,7 +1058,7 @@ void Spell::SelectImplicitConeTargets(SpellEffIndex effIndex, SpellImplicitTarge
                     if ((*j)->IsAffectedOnSpell(m_spellInfo))
                         maxTargets += (*j)->GetAmount();
 
-                Trinity::RandomResizeList(targets, maxTargets);
+                Trinity::Containers::RandomResizeList(targets, maxTargets);
             }
 
             // for compability with older code - add only unit and go targets
@@ -1353,7 +1353,7 @@ void Spell::SelectImplicitAreaTargets(SpellEffIndex effIndex, SpellImplicitTarge
 
             if (m_spellInfo->Id == 5246) //Intimidating Shout
                 unitTargets.remove(m_targets.GetUnitTarget());
-            Trinity::RandomResizeList(unitTargets, maxTargets);
+            Trinity::Containers::RandomResizeList(unitTargets, maxTargets);
         }
 
         CallScriptAfterUnitTargetSelectHandlers(unitTargets, effIndex);
@@ -1371,7 +1371,7 @@ void Spell::SelectImplicitAreaTargets(SpellEffIndex effIndex, SpellImplicitTarge
                 if ((*j)->IsAffectedOnSpell(m_spellInfo))
                     maxTargets += (*j)->GetAmount();
 
-            Trinity::RandomResizeList(gObjTargets, maxTargets);
+            Trinity::Containers::RandomResizeList(gObjTargets, maxTargets);
         }
         for (std::list<GameObject*>::iterator itr = gObjTargets.begin(); itr != gObjTargets.end(); ++itr)
             AddGOTarget(*itr, effMask);
@@ -5309,10 +5309,8 @@ SpellCastResult Spell::CheckCast(bool strict)
             case SPELL_EFFECT_SUMMON_DEAD_PET:
             {
                 Creature* pet = m_caster->GetGuardianPet();
-                if (!pet)
-                    return SPELL_FAILED_NO_PET;
 
-                if (pet->isAlive())
+                if (pet && pet->isAlive())
                     return SPELL_FAILED_ALREADY_HAVE_SUMMON;
 
                 break;
@@ -5362,7 +5360,6 @@ SpellCastResult Spell::CheckCast(bool strict)
 
                 if (m_caster->GetCharmGUID())
                     return SPELL_FAILED_ALREADY_HAVE_CHARM;
-
                 break;
             }
             case SPELL_EFFECT_TRANS_DOOR:

@@ -98,15 +98,9 @@ public:
 
         WorldPacket data(12);
         if (strncmp(args, "on", 3) == 0)
-        {
             data.SetOpcode(SMSG_MOVE_SET_CAN_FLY);
-            static_cast<Player*>((target))->SetCanFly(true);
-        }
         else if (strncmp(args, "off", 4) == 0)
-        {
             data.SetOpcode(SMSG_MOVE_UNSET_CAN_FLY);
-            static_cast<Player*>((target))->SetCanFly(false);
-        }
         else
         {
             handler->SendSysMessage(LANG_USE_BOL);

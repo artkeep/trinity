@@ -108,8 +108,11 @@ void SmartScript::OnReset()
     ResetBaseObject();
     for (SmartAIEventList::iterator i = mEvents.begin(); i != mEvents.end(); ++i)
     {
-        InitTimer((*i));
-        (*i).runOnce = false;
+        if (!((*i).event.event_flags & SMART_EVENT_FLAG_DONT_RESET))
+        {
+            InitTimer((*i));
+            (*i).runOnce = false;
+        }
     }
     ProcessEventsFor(SMART_EVENT_RESET);
     mLastInvoker = 0;
@@ -1043,9 +1046,9 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                 break;
 
             if (e.action.invincHP.percent)
-                ai->SetInvinceabilityHpLevel(me->CountPctFromMaxHealth(e.action.invincHP.percent));
+                ai->SetInvincibilityHpLevel(me->CountPctFromMaxHealth(e.action.invincHP.percent));
             else
-                ai->SetInvinceabilityHpLevel(e.action.invincHP.minHP);
+                ai->SetInvincibilityHpLevel(e.action.invincHP.minHP);
             break;
         }
         case SMART_ACTION_SET_DATA:
@@ -1862,19 +1865,26 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             if (!targets)
                 break;
 
+            ObjectList* storedTargets = GetTargetList(e.action.sendTargetToTarget.id);
+            if (!storedTargets)
+            {
+                delete targets;
+                return;
+            }
+
             for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
             {
                 if (IsCreature(*itr))
                 {
                     if (SmartAI* ai = CAST_AI(SmartAI, (*itr)->ToCreature()->AI()))
-                        ai->GetScript()->StoreTargetList(GetTargetList(e.action.sendTargetToTarget.id), e.action.sendTargetToTarget.id);
+                        ai->GetScript()->StoreTargetList(new ObjectList(*storedTargets), e.action.sendTargetToTarget.id);   // store a copy of target list
                     else
                         sLog->outErrorDb("SmartScript: Action target for SMART_ACTION_SEND_TARGET_TO_TARGET is not using SmartAI, skipping");
                 }
                 else if (IsGameObject(*itr))
                 {
                     if (SmartGameObjectAI* ai = CAST_AI(SmartGameObjectAI, (*itr)->ToGameObject()->AI()))
-                        ai->GetScript()->StoreTargetList(GetTargetList(e.action.sendTargetToTarget.id), e.action.sendTargetToTarget.id);
+                        ai->GetScript()->StoreTargetList(new ObjectList(*storedTargets), e.action.sendTargetToTarget.id);   // store a copy of target list
                     else
                         sLog->outErrorDb("SmartScript: Action target for SMART_ACTION_SEND_TARGET_TO_TARGET is not using SmartGameObjectAI, skipping");
                 }
@@ -1954,7 +1964,8 @@ void SmartScript::InstallTemplate(SmartScriptHolder const& e)
             }
         case SMARTAI_TEMPLATE_CAGED_NPC_PART:
             {
-                if (!me) return;
+                if (!me)
+                    return;
                 //store cage as id1
                 AddEvent(SMART_EVENT_DATA_SET, 0, 0, 0, 0, 0, SMART_ACTION_STORE_TARGET_LIST, 1, 0, 0, 0, 0, 0, SMART_TARGET_CLOSEST_GAMEOBJECT, e.action.installTtemplate.param1, 10, 0, 0);
 
@@ -1976,7 +1987,8 @@ void SmartScript::InstallTemplate(SmartScriptHolder const& e)
             }
         case SMARTAI_TEMPLATE_CAGED_GO_PART:
             {
-                if (!go) return;
+                if (!go)
+                    return;
                 //store hostage as id1
                 AddEvent(SMART_EVENT_GOSSIP_HELLO, 0, 0, 0, 0, 0, SMART_ACTION_STORE_TARGET_LIST, 1, 0, 0, 0, 0, 0, SMART_TARGET_CLOSEST_CREATURE, e.action.installTtemplate.param1, 10, 0, 0);
                 //store invoker as id2
@@ -2839,8 +2851,12 @@ void SmartScript::InstallEvents()
 
 bool SmartScript::ConditionValid(Unit* u, int32 c, int32 v1, int32 v2, int32 v3)
 {
-    if (c == 0) return true;
-    if (!u || !u->ToPlayer()) return false;
+    if (c == 0)
+        return true;
+
+    if (!u || !u->ToPlayer())
+        return false;
+
     Condition cond;
     cond.ConditionType = ConditionTypes(uint32(c));
     cond.ConditionValue1 = uint32(v1);
@@ -3007,7 +3023,9 @@ void SmartScript::OnMoveInLineOfSight(Unit* who)
 {
     ProcessEventsFor(SMART_EVENT_OOC_LOS, who);
 
-    if (!me) return;
+    if (!me)
+        return;
+
     if (me->getVictim())
         return;
 

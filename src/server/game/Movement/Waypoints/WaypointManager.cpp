@@ -43,6 +43,7 @@ void WaypointMgr::Load()
 {
     uint32 oldMSTime = getMSTime();
 
+    //                                                0    1         2           3          4            5           6        7      8           9
     QueryResult result = WorldDatabase.Query("SELECT id, point, position_x, position_y, position_z, orientation, move_flag, delay, action, action_chance FROM waypoint_data ORDER BY id, point");
 
     if (!result)
@@ -78,7 +79,7 @@ void WaypointMgr::Load()
         wp->run = fields[6].GetBool();
         wp->delay = fields[7].GetUInt32();
         wp->event_id = fields[8].GetUInt32();
-        wp->event_chance = fields[9].GetUInt8();
+        wp->event_chance = fields[9].GetInt16();
 
         path.push_back(wp);
         ++count;

@@ -125,8 +125,7 @@ void RandomMovementGenerator<Creature>::Initialize(Creature &unit)
 }
 
 template<>
-void
-RandomMovementGenerator<Creature>::Reset(Creature &unit)
+void RandomMovementGenerator<Creature>::Reset(Creature &unit)
 {
     Initialize(unit);
 }

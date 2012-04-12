@@ -497,9 +497,9 @@ public:
             SetEscortPaused(bOnHold);
         }
 
-        void WaypointReached(uint32 wpId)
+        void WaypointReached(uint32 waypointId)
         {
-            switch (wpId)
+            switch (waypointId)
             {
                 case 0:
                     me->SetWalk(false);
@@ -507,7 +507,6 @@ public:
                     break;
                 case 1:
                     SetHoldState(true);
-
                     SpawnNPC();
                     if (Creature* temp = Unit::GetCreature(*me, uiKorfaxGUID))
                         DoScriptText(SAY_LIGHT_OF_DAWN07, temp);
@@ -1011,8 +1010,7 @@ public:
 
                                 if (fLichPositionX && fLichPositionY)
                                 {
-                                    Unit* temp;
-                                    temp = me->SummonCreature(NPC_DEFENDER_OF_THE_LIGHT, LightofDawnLoc[0].x+rand()%10, LightofDawnLoc[0].y+rand()%10, LightofDawnLoc[0].z, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 10000);
+                                    Unit* temp = me->SummonCreature(NPC_DEFENDER_OF_THE_LIGHT, LightofDawnLoc[0].x+rand()%10, LightofDawnLoc[0].y+rand()%10, LightofDawnLoc[0].z, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 10000);
                                     temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
                                     temp->SetWalk(false);
                                     temp->SetSpeed(MOVE_RUN, 2.0f);

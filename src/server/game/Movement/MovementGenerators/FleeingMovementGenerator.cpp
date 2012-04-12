@@ -61,7 +61,7 @@ bool FleeingMovementGenerator<T>::_getPoint(T &unit, float &x, float &y, float &
 
     float temp_x, temp_y, angle;
     const Map* _map = unit.GetBaseMap();
-    //primitive path-finding
+    // primitive path-finding
     for (uint8 i = 0; i < 18; ++i)
     {
         if (i_only_forward && i > 2)
@@ -196,12 +196,12 @@ bool FleeingMovementGenerator<T>::_setMoveData(T &unit)
            (i_last_distance_from_caster < i_to_distance_from_caster && cur_dist_xyz > i_to_distance_from_caster)   ||
                                                             // if we reach bigger distance
            (cur_dist_xyz > MAX_QUIET_DISTANCE) ||           // if we are too far
-           (i_last_distance_from_caster > MIN_QUIET_DISTANCE && cur_dist_xyz < MIN_QUIET_DISTANCE) )
+           (i_last_distance_from_caster > MIN_QUIET_DISTANCE && cur_dist_xyz < MIN_QUIET_DISTANCE))
                                                             // if we leave 'quiet zone'
         {
             // we are very far or too close, stopping
             i_to_distance_from_caster = 0.0f;
-            i_nextCheckTime.Reset( urand(500,1000) );
+            i_nextCheckTime.Reset(urand(500,1000));
             return false;
         }
         else
@@ -317,8 +317,7 @@ void FleeingMovementGenerator<Creature>::_Init(Creature &unit)
 }
 
 template<>
-void
-FleeingMovementGenerator<Player>::_Init(Player &)
+void FleeingMovementGenerator<Player>::_Init(Player &)
 {
     is_water_ok = true;
     is_land_ok  = true;

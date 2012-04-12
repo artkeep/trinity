@@ -135,7 +135,7 @@ public:
             DoScriptText(RAND(SAY_KILL_1, SAY_KILL_2, SAY_KILL_3), me);
         }
 
-        void JustDied(Unit* /*victim*/)
+        void JustDied(Unit* /*killer*/)
         {
             DoScriptText(SAY_DEATH, me);
 
@@ -201,7 +201,7 @@ public:
 
         void DeSpawnAdds()
         {
-            for (uint8 i = 0; i < 4 ; ++i)
+            for (uint8 i = 0; i < 4; ++i)
             {
                 Creature* Temp = NULL;
                 if (AddGUID[i])
@@ -358,7 +358,7 @@ struct boss_moroes_guestAI : public ScriptedAI
         uint64 TempGUID = GuestGUID[rand()%4];
         if (TempGUID)
         {
-            Unit* unit = Unit::GetUnit((*me), TempGUID);
+            Unit* unit = Unit::GetUnit(*me, TempGUID);
             if (unit && unit->isAlive())
                 return unit;
         }

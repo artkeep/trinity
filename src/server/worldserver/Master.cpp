@@ -137,13 +137,6 @@ int Master::Run()
     sLog->outString("                                 C O R E  /\\___/");
     sLog->outString("http://TrinityCore.org                    \\/__/\n");
 
-#ifdef USE_SFMT_FOR_RNG
-    sLog->outString("\n");
-    sLog->outString("SFMT has been enabled as the random number generator, if worldserver");
-    sLog->outString("freezes or crashes randomly, first, try disabling SFMT in CMAKE configuration");
-    sLog->outString("\n");
-#endif //USE_SFMT_FOR_RNG
-
     /// worldserver PID file creation
     std::string pidfile = ConfigMgr::GetStringDefault("PidFile", "");
     if (!pidfile.empty())
@@ -277,7 +270,11 @@ int Master::Run()
     LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag & ~%u, population = 0 WHERE id = '%u'", REALM_FLAG_INVALID, realmID);
 
     sLog->outString("%s (worldserver-daemon) ready...", _FULLVERSION);
-    sWorldSocketMgr->Wait();
+
+    // when the main thread closes the singletons get unloaded
+    // since worldrunnable uses them, it will crash if unloaded after master
+    world_thread.wait();
+    rar_thread.wait();
 
     if (soap_thread)
     {
@@ -288,11 +285,6 @@ int Master::Run()
 
     // set server offline
     LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, realmID);
-
-    // when the main thread closes the singletons get unloaded
-    // since worldrunnable uses them, it will crash if unloaded after master
-    world_thread.wait();
-    rar_thread.wait();
 
     ///- Clean database before leaving
     ClearOnlineAccounts();
@@ -362,6 +354,8 @@ int Master::Run()
 /// Initialize connection to the databases
 bool Master::_StartDB()
 {
+    MySQL::Library_Init();
+
     sLog->SetLogDB(false);
     std::string dbstring;
     uint8 async_threads, synch_threads;

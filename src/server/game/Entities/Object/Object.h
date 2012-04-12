@@ -122,7 +122,7 @@ typedef UNORDERED_MAP<Player*, UpdateData> UpdateDataMapType;
 class Object
 {
     public:
-        virtual ~Object ();
+        virtual ~Object();
 
         bool IsInWorld() const { return m_inWorld; }
 
@@ -227,7 +227,9 @@ class Object
 
         bool HasFlag(uint16 index, uint32 flag) const
         {
-            if (index >= m_valuesCount && !PrintIndexError(index, false)) return false;
+            if (index >= m_valuesCount && !PrintIndexError(index, false))
+                return false;
+
             return (m_uint32Values[index] & flag) != 0;
         }
 
@@ -313,7 +315,7 @@ class Object
         Corpse const* ToCorpse() const { if (GetTypeId() == TYPEID_CORPSE) return (const Corpse*)((Corpse*)this); else return NULL; }
     protected:
 
-        Object ();
+        Object();
 
         void _InitValues();
         void _Create (uint32 guidlow, uint32 entry, HighGuid guidhigh);
@@ -883,20 +885,6 @@ class WorldObject : public Object, public WorldLocation
 
 namespace Trinity
 {
-    template<class T>
-    void RandomResizeList(std::list<T> &_list, uint32 _size)
-    {
-        size_t list_size = _list.size();
-
-        while (list_size > _size)
-        {
-            typename std::list<T>::iterator itr = _list.begin();
-            std::advance(itr, urand(0, list_size - 1));
-            _list.erase(itr);
-            --list_size;
-        }
-    }
-
     // Binary predicate to sort WorldObjects based on the distance to a reference WorldObject
     class ObjectDistanceOrderPred
     {

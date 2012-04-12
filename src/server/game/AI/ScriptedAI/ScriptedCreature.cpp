@@ -30,18 +30,6 @@ void SummonList::DoZoneInCombat(uint32 entry)
     }
 }
 
-void SummonList::DoAction(uint32 entry, int32 info)
-{
-    for (iterator i = begin(); i != end();)
-    {
-        Creature* summon = Unit::GetCreature(*me, *i);
-        ++i;
-        if (summon && summon->IsAIEnabled
-            && (!entry || summon->GetEntry() == entry))
-            summon->AI()->DoAction(info);
-    }
-}
-
 void SummonList::DespawnEntry(uint32 entry)
 {
     for (iterator i = begin(); i != end();)
@@ -189,11 +177,11 @@ SpellInfo const* ScriptedAI::SelectSpell(Unit* target, uint32 school, uint32 mec
 {
     //No target so we can't cast
     if (!target)
-        return false;
+        return NULL;
 
     //Silenced so we can't cast
     if (me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED))
-        return false;
+        return NULL;
 
     //Using the extended script system we first create a list of viable spells
     SpellInfo const* apSpell[CREATURE_MAX_SPELLS];
@@ -274,7 +262,7 @@ void ScriptedAI::DoResetThreat()
 
     for (std::list<HostileReference*>::iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
     {
-        Unit* unit = Unit::GetUnit((*me), (*itr)->getUnitGuid());
+        Unit* unit = Unit::GetUnit(*me, (*itr)->getUnitGuid());
 
         if (unit && DoGetThreat(unit))
             DoModifyThreatPercent(unit, -100);
@@ -309,14 +297,13 @@ void ScriptedAI::DoTeleportTo(const float position[4])
 
 void ScriptedAI::DoTeleportPlayer(Unit* unit, float x, float y, float z, float o)
 {
-    if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
-    {
-        if (unit)
-            sLog->outError("TSCR: Creature " UI64FMTD " (Entry: %u) Tried to teleport non-player unit (Type: %u GUID: " UI64FMTD ") to x: %f y:%f z: %f o: %f. Aborted.", me->GetGUID(), me->GetEntry(), unit->GetTypeId(), unit->GetGUID(), x, y, z, o);
+    if (!unit)
         return;
-    }
 
-    CAST_PLR(unit)->TeleportTo(unit->GetMapId(), x, y, z, o, TELE_TO_NOT_LEAVE_COMBAT);
+    if (Player* player = unit->ToPlayer())
+        player->TeleportTo(unit->GetMapId(), x, y, z, o, TELE_TO_NOT_LEAVE_COMBAT);
+    else
+        sLog->outError("TSCR: Creature " UI64FMTD " (Entry: %u) Tried to teleport non-player unit (Type: %u GUID: " UI64FMTD ") to x: %f y:%f z: %f o: %f. Aborted.", me->GetGUID(), me->GetEntry(), unit->GetTypeId(), unit->GetGUID(), x, y, z, o);
 }
 
 void ScriptedAI::DoTeleportAll(float x, float y, float z, float o)

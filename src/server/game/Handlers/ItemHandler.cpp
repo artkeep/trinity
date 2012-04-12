@@ -115,7 +115,7 @@ void WorldSession::HandleSwapItem(WorldPacket & recv_data)
     //sLog->outDebug(LOG_FILTER_PACKETIO, "WORLD: CMSG_SWAP_ITEM");
     uint8 dstbag, dstslot, srcbag, srcslot;
 
-    recv_data >> dstbag >> dstslot >> srcbag >> srcslot ;
+    recv_data >> dstbag >> dstslot >> srcbag >> srcslot;
     //sLog->outDebug("STORAGE: receive srcbag = %u, srcslot = %u, dstbag = %u, dstslot = %u", srcbag, srcslot, dstbag, dstslot);
 
     uint16 src = ((srcbag << 8) | srcslot);
@@ -1126,9 +1126,9 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_GIFT);
     stmt->setUInt32(0, GUID_LOPART(item->GetOwnerGUID()));
-    stmt->setUInt32(0, item->GetGUIDLow());
-    stmt->setUInt32(0, item->GetEntry());
-    stmt->setUInt32(0, item->GetUInt32Value(ITEM_FIELD_FLAGS));
+    stmt->setUInt32(1, item->GetGUIDLow());
+    stmt->setUInt32(2, item->GetEntry());
+    stmt->setUInt32(3, item->GetUInt32Value(ITEM_FIELD_FLAGS));
     trans->Append(stmt);
 
     item->SetEntry(gift->GetEntry());

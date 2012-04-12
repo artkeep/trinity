@@ -1041,8 +1041,9 @@ public:
             }
         }
 
-        void WaypointReached(uint32 /*point*/)
+        void WaypointReached(uint32 /*waypointId*/)
         {
+
         }
 
         void UpdateAI(uint32 const diff)
@@ -3325,6 +3326,7 @@ void AddSC_npcs_special()
     new npc_snake_trap;
     new npc_mirror_image;
     new npc_ebon_gargoyle;
+    new npc_lightwell;
     new mob_mojo;
     new npc_training_dummy;
     new npc_shadowfiend;

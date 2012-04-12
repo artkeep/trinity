@@ -139,7 +139,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data)
         if (result)
         {
             Field* fields = result->Fetch();
-            mails_count = fields[0].GetUInt32();
+            mails_count = fields[0].GetUInt64();
         }
 
         stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_LEVEL);
@@ -379,7 +379,7 @@ void WorldSession::HandleMailReturnToSender(WorldPacket & recv_data)
     //so firstly delete the old one
     SQLTransaction trans = CharacterDatabase.BeginTransaction();
 
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_MAIL);
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_MAIL_BY_ID);
     stmt->setUInt32(0, mailId);
     trans->Append(stmt);
 
@@ -565,7 +565,7 @@ void WorldSession::HandleGetMailList(WorldPacket & recv_data)
 
     //load players mails, and mailed items
     if (!player->m_mailsLoaded)
-        player ->_LoadMail();
+        player->_LoadMail();
 
     // client can't work with packets > max int16 value
     const uint32 maxPacketSize = 32767;

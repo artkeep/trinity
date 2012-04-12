@@ -343,8 +343,8 @@ void Item::SaveToDB(SQLTransaction& trans)
             }
             stmt->setString(++index, ssEnchants.str());
 
-            stmt->setInt32 (++index, GetItemRandomPropertyId());
-            stmt->setUInt32(++index, GetUInt32Value(ITEM_FIELD_DURABILITY));
+            stmt->setInt16 (++index, GetItemRandomPropertyId());
+            stmt->setUInt16(++index, GetUInt32Value(ITEM_FIELD_DURABILITY));
             stmt->setUInt32(++index, GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME));
             stmt->setString(++index, m_text);
             stmt->setUInt32(++index, guid);
@@ -486,7 +486,7 @@ void Item::DeleteFromDB(SQLTransaction& trans)
 /*static*/
 void Item::DeleteFromInventoryDB(SQLTransaction& trans, uint32 itemGuid)
 {
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_INVENTORY_ITEM);
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_INVENTORY_BY_ITEM);
     stmt->setUInt32(0, itemGuid);
     trans->Append(stmt);
 }
@@ -765,7 +765,7 @@ bool Item::CanBeTraded(bool mail, bool trade) const
 
     if (Player* owner = GetOwner())
     {
-        if (owner->CanUnequipItem(GetPos(), false) !=  EQUIP_ERR_OK)
+        if (owner->CanUnequipItem(GetPos(), false) != EQUIP_ERR_OK)
             return false;
         if (owner->GetLootGUID() == GetGUID())
             return false;
@@ -791,16 +791,16 @@ bool Item::HasEnchantRequiredSkill(const Player* player) const
 
 uint32 Item::GetEnchantRequiredLevel() const
 {
-  uint32 level = 0;
+    uint32 level = 0;
 
-  // Check all enchants for required level
-  for (uint32 enchant_slot = PERM_ENCHANTMENT_SLOT; enchant_slot < MAX_ENCHANTMENT_SLOT; ++enchant_slot)
-    if (uint32 enchant_id = GetEnchantmentId(EnchantmentSlot(enchant_slot)))
-      if (SpellItemEnchantmentEntry const* enchantEntry = sSpellItemEnchantmentStore.LookupEntry(enchant_id))
-    if (enchantEntry->requiredLevel > level)
-      level = enchantEntry->requiredLevel;
+    // Check all enchants for required level
+    for (uint32 enchant_slot = PERM_ENCHANTMENT_SLOT; enchant_slot < MAX_ENCHANTMENT_SLOT; ++enchant_slot)
+        if (uint32 enchant_id = GetEnchantmentId(EnchantmentSlot(enchant_slot)))
+            if (SpellItemEnchantmentEntry const* enchantEntry = sSpellItemEnchantmentStore.LookupEntry(enchant_id))
+                if (enchantEntry->requiredLevel > level)
+                    level = enchantEntry->requiredLevel;
 
-  return level;
+    return level;
 }
 
 bool Item::IsBoundByEnchant() const
@@ -1089,9 +1089,9 @@ void Item::SaveRefundDataToDB()
 
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ITEM_REFUND_INSTANCE);
     stmt->setUInt32(0, GetGUIDLow());
-    stmt->setUInt32(0, GetRefundRecipient());
-    stmt->setUInt32(0, GetPaidMoney());
-    stmt->setUInt16(0, uint16(GetPaidExtendedCost()));
+    stmt->setUInt32(1, GetRefundRecipient());
+    stmt->setUInt32(2, GetPaidMoney());
+    stmt->setUInt16(3, uint16(GetPaidExtendedCost()));
     trans->Append(stmt);
 
     CharacterDatabase.CommitTransaction(trans);

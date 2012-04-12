@@ -124,9 +124,9 @@ public:
     {
         npc_oox22feAI(Creature* creature) : npc_escortAI(creature) { }
 
-        void WaypointReached(uint32 i)
+        void WaypointReached(uint32 waypointId)
         {
-            switch (i)
+            switch (waypointId)
             {
                 // First Ambush(3 Yetis)
                 case 11:
@@ -154,9 +154,7 @@ public:
                     DoScriptText(SAY_OOX_END, me);
                     // Award quest credit
                     if (Player* player = GetPlayerForEscort())
-                    {
-                            player->GroupEventHappens(QUEST_RESCUE_OOX22FE, me);
-                    }
+                        player->GroupEventHappens(QUEST_RESCUE_OOX22FE, me);
                     break;
             }
         }

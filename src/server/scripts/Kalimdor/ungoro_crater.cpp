@@ -78,14 +78,13 @@ public:
 
         uint32 DEMORALIZINGSHOUT_Timer;
 
-        void WaypointReached(uint32 i)
+        void WaypointReached(uint32 waypointId)
         {
             Player* player = GetPlayerForEscort();
-
             if (!player)
                 return;
 
-            switch (i)
+            switch (waypointId)
             {
                 case 19:
                     me->SummonCreature(ENTRY_STOMPER, -6391.69f, -1730.49f, -272.83f, 4.96f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 25000);
@@ -104,8 +103,7 @@ public:
                     break;
                 case 55:
                     DoScriptText(SAY_FINISH, me, player);
-                    if (player)
-                        player->GroupEventHappens(QUEST_CHASING_AME, me);
+                    player->GroupEventHappens(QUEST_CHASING_AME, me);
                     break;
             }
         }

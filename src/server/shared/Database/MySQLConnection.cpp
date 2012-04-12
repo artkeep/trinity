@@ -58,23 +58,15 @@ MySQLConnection::~MySQLConnection()
 {
     ASSERT (m_Mysql); /// MySQL context must be present at this point
 
-    sLog->outSQLDriver("MySQLConnection::~MySQLConnection()");
     for (size_t i = 0; i < m_stmts.size(); ++i)
         delete m_stmts[i];
 
     for (PreparedStatementMap::const_iterator itr = m_queries.begin(); itr != m_queries.end(); ++itr)
-    {
         free((void *)m_queries[itr->first].first);
-    }
 
     mysql_close(m_Mysql);
-    MySQL::Thread_End();
-    Unlock();   /// Unlock while we die, how ironic
 }
 
-//! Can be called synchronously in DatabaseWorkerPool, in which thread-specific variables initialized in the main thread
-//! are deallocated.
-//! Can also be called by worker threads, in which their respective thread-specific variables are deallocated.
 void MySQLConnection::Close()
 {
     /// Only close us if we're not operating

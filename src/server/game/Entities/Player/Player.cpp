@@ -725,7 +725,6 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
     for (uint8 i=0; i<MAX_TIMERS; i++)
         m_MirrorTimer[i] = DISABLED_MIRROR_TIMER;
 
-    _lastLiquid = NULL;
     m_MirrorTimerFlags = UNDERWATER_NONE;
     m_MirrorTimerFlagsLast = UNDERWATER_NONE;
     m_isInWater = false;
@@ -6846,11 +6845,6 @@ bool Player::UpdatePosition(float x, float y, float z, float orientation, bool t
     // group update
     if (GetGroup())
         SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POSITION);
-
-    // code block for underwater state update
-    // Unit::UpdatePosition() checks for validity and updates our coordinates
-    // so we re-fetch them instead of using "raw" coordinates from function params
-    UpdateUnderwaterState(GetMap(), GetPositionX(), GetPositionY(), GetPositionZ());
 
     if (GetTrader() && !IsWithinDistInMap(GetTrader(), INTERACTION_DISTANCE))
         GetSession()->SendCancelTrade();
@@ -17755,11 +17749,7 @@ void Player::_LoadInventory(PreparedQueryResult result, uint32 timeDiff)
                         ItemPosCountVec dest;
                         err = CanStoreItem(itr->second->GetSlot(), slot, dest, item);
                         if (err == EQUIP_ERR_OK)
-                        { 
-                            itr->second->StoreItem(slot, item, true);
-                            //THIS IS A HACK. NEED CORRECT WAY.
-                            AddItemDurations(item);
-                        } 
+                            item = StoreItem(dest, item, true);
                     }
                 }
 
@@ -18420,10 +18410,10 @@ void Player::UnbindInstance(BoundInstancesMap::iterator &itr, Difficulty difficu
             CharacterDatabase.Execute(stmt);
         }
 
-        itr->second.save->RemovePlayer(this);               // save can become invalid
         if (itr->second.perm)
             GetSession()->SendCalendarRaidLockout(itr->second.save, false);
 
+        itr->second.save->RemovePlayer(this);               // save can become invalid
         m_boundInstances[difficulty].erase(itr++);
     }
 }
@@ -19893,7 +19883,11 @@ void Player::SendResetInstanceSuccess(uint32 MapId)
 
 void Player::SendResetInstanceFailed(uint32 reason, uint32 MapId)
 {
-    // TODO: find what other fail reasons there are besides players in the instance
+    /*reasons for instance reset failure:
+    // 0: There are players inside the instance.
+    // 1: There are players offline in your party.
+    // 2>: There are players in your party attempting to zone into an instance.
+    */
     WorldPacket data(SMSG_INSTANCE_RESET_FAILED, 4);
     data << uint32(reason);
     data << uint32(MapId);

@@ -180,7 +180,7 @@ public:
             if (!pInstance) return;
             if (pWho->GetTypeId() != TYPEID_PLAYER) return;
 
-            if (pDummyTarget) pDummyTarget->ForcedDespawn();
+            if (pDummyTarget) pDummyTarget->DespawnOrUnsummon();
 
             SetEquipmentSlots(false, EQUIP_MAIN, EQUIP_OFFHAND, EQUIP_RANGED);
 
@@ -369,7 +369,7 @@ public:
             if (!pInstance) return;
 
             if (pInstance->GetData(TYPE_BALTHARUS) != IN_PROGRESS)
-                me->ForcedDespawn();
+                me->DespawnOrUnsummon();
 
             if (!UpdateVictim())
                 return;

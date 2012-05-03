@@ -9277,6 +9277,9 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 4100:  // The Culling of Stratholme
             NumberOfFields = 13;
             break;
+        case 4273:  // Ulduar
+            NumberOfFields = 10;
+            break;
          default:
             NumberOfFields = 12;
             break;
@@ -9821,15 +9824,14 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(3932) << uint32(0);              // 13 WORLDSTATE_TIME_GUARDIAN_SHOW
             }
             break;
-        // The Ruby Sanctum
-        case 4987:
-            if (instance && mapid == 724)
+        // Ulduar
+        case 4273:
+            if (instance && mapid == 603)
                 instance->FillInitialWorldStates(data);
             else
             {
-                data << uint32(5049) << uint32(0);              // 9  WORLDSTATE_CORPOREALITY_MATERIAL
-                data << uint32(5050) << uint32(50);             // 10 WORLDSTATE_CORPOREALITY_TWILIGHT
-                data << uint32(5051) << uint32(50);             // 11 WORLDSTATE_CORPOREALITY_TOGGLE
+                data << uint32(4132) << uint32(0);              // 9  WORLDSTATE_SHOW_CRATES
+                data << uint32(4131) << uint32(0);              // 10 WORLDSTATE_CRATES_REVEALED
             }
             break;
         default:

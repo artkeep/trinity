@@ -230,7 +230,7 @@ void buyGuildhouse(Player *player, Creature *_creature, uint32 guildhouseId)
 
  if (result)
  player->ModifyMoney(-COST_GH_BUY);
- player->DestroyItemCount(20880, 1, true, false);
+ player->DestroyItemCount(30, 1, true, false);
  _creature->MonsterSay(MSG_CONGRATULATIONS, LANG_UNIVERSAL, player->GetGUID());
 }
 
